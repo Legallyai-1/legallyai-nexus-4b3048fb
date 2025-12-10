@@ -13,6 +13,8 @@ import LoginPage from "@/pages/LoginPage";
 import AuthPage from "@/pages/AuthPage";
 import DashboardPage from "@/pages/DashboardPage";
 import CasesPage from "@/pages/CasesPage";
+import ClientsPage from "@/pages/ClientsPage";
+import SettingsPage from "@/pages/SettingsPage";
 import AppointmentsPage from "@/pages/AppointmentsPage";
 import MessagesPage from "@/pages/MessagesPage";
 import TimeClockPage from "@/pages/TimeClockPage";
@@ -57,6 +59,8 @@ export function AnimatedRoutes() {
         <Route path="/auth" element={<PageTransition><AuthPage /></PageTransition>} />
         <Route path="/dashboard" element={<PageTransition><DashboardPage /></PageTransition>} />
         <Route path="/cases" element={<PageTransition><CasesPage /></PageTransition>} />
+        <Route path="/clients" element={<PageTransition><ClientsPage /></PageTransition>} />
+        <Route path="/settings" element={<PageTransition><SettingsPage /></PageTransition>} />
         <Route path="/appointments" element={<PageTransition><AppointmentsPage /></PageTransition>} />
         <Route path="/messages" element={<PageTransition><MessagesPage /></PageTransition>} />
         <Route path="/timeclock" element={<PageTransition><TimeClockPage /></PageTransition>} />
