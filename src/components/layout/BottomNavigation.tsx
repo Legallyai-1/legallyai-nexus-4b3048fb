@@ -1,13 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, FileText, Bot, Scale, DollarSign } from "lucide-react";
+import { Home, FileText, Bot, Briefcase, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { name: "Home", path: "/", icon: Home },
   { name: "Generate", path: "/generate", icon: FileText },
   { name: "AI", path: "/ai-assistants", icon: Bot },
-  { name: "Custody", path: "/custody", icon: Scale },
-  { name: "Pricing", path: "/pricing", icon: DollarSign },
+  { name: "Jobs", path: "/jobs", icon: Briefcase },
+  { name: "Account", path: "/dashboard", icon: User },
 ];
 
 export function BottomNavigation() {
