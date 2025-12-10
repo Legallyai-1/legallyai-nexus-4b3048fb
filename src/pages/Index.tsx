@@ -1,249 +1,216 @@
-import { Link } from "react-router-dom";
-import { Layout } from "@/components/layout/Layout";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { 
-  Scale, FileText, MessageSquare, Users, Shield, Zap, 
-  CheckCircle, ArrowRight, Star, Clock, Lock, Sparkles 
-} from "lucide-react";
-
-const features = [
-  {
-    icon: FileText,
-    title: "Document Generator",
-    description: "Generate NDAs, contracts, wills, and 50+ legal documents instantly with AI precision.",
-    href: "/generate",
-  },
-  {
-    icon: MessageSquare,
-    title: "AI Legal Chat",
-    description: "Get instant answers to your legal questions from our AI trained on US law.",
-    href: "/chat",
-  },
-  {
-    icon: Users,
-    title: "Custody Helper",
-    description: "Navigate child custody with AI-guided questionnaires and document generation.",
-    href: "/custody",
-  },
-  {
-    icon: Scale,
-    title: "For Lawyers",
-    description: "Professional tools for attorneys to streamline document drafting and research.",
-    href: "/lawyers",
-  },
-];
-
-const benefits = [
-  { icon: Clock, text: "Documents in under 60 seconds" },
-  { icon: Lock, text: "Bank-level encryption" },
-  { icon: Shield, text: "US Law 2025 compliant" },
-  { icon: Zap, text: "AI-powered accuracy" },
-];
-
-const testimonials = [
-  {
-    name: "Sarah Mitchell",
-    role: "Small Business Owner",
-    content: "LegallyAI saved me thousands in legal fees. Generated my entire LLC operating agreement in minutes.",
-    rating: 5,
-  },
-  {
-    name: "James Cooper",
-    role: "Freelance Developer",
-    content: "Finally, contracts I can trust without hiring an expensive lawyer for every project.",
-    rating: 5,
-  },
-  {
-    name: "Maria Rodriguez",
-    role: "Real Estate Agent",
-    content: "The custody helper feature helped my clients navigate their divorce paperwork seamlessly.",
-    rating: 5,
-  },
-];
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowRight, Copy, Download, Smartphone } from "lucide-react";
+import legallyAIIcon from "@/assets/legallyai-icon.jpg";
 
 export default function Index() {
+  const [prompt, setPrompt] = useState("");
+  const [document, setDocument] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const navigate = useNavigate();
+
+  const handleGenerate = async () => {
+    if (!prompt.trim()) return;
+    
+    // Navigate to generate page with prompt
+    navigate(`/generate?prompt=${encodeURIComponent(prompt)}`);
+  };
+
+  const copyToClipboard = () => {
+    if (document) {
+      navigator.clipboard.writeText(document);
+    }
+  };
+
   return (
-    <Layout>
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-primary text-primary-foreground">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 legal-pattern opacity-30" />
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-legal-gold/10 to-transparent" />
-        
-        <div className="container mx-auto px-4 py-24 lg:py-32 relative">
-          <div className="max-w-4xl mx-auto text-center">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-legal-gold/10 border border-legal-gold/30 mb-8 animate-fade-up">
-              <Sparkles className="h-4 w-4 text-legal-gold" />
-              <span className="text-sm font-medium text-legal-gold">Trusted by 50,000+ Users</span>
-            </div>
+    <div className="min-h-screen bg-legal-navy relative overflow-hidden">
+      {/* Animated Particles Background */}
+      <div className="absolute inset-0 overflow-hidden">
+        {/* Generate multiple particles */}
+        {[...Array(60)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute rounded-full animate-float"
+            style={{
+              width: `${Math.random() * 6 + 2}px`,
+              height: `${Math.random() * 6 + 2}px`,
+              backgroundColor: i % 3 === 0 
+                ? 'hsl(45 93% 58% / 0.6)' 
+                : i % 3 === 1 
+                  ? 'hsl(187 100% 42% / 0.5)' 
+                  : 'hsl(0 0% 100% / 0.3)',
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 6}s`,
+              animationDuration: `${Math.random() * 4 + 4}s`,
+            }}
+          />
+        ))}
+      </div>
 
-            {/* Headline */}
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold mb-6 animate-fade-up" style={{ animationDelay: "0.1s" }}>
-              Your AI-Powered{" "}
-              <span className="text-legal-gold">Legal Assistant</span>
-            </h1>
-
-            {/* Subheadline */}
-            <p className="text-xl md:text-2xl text-primary-foreground/80 mb-10 max-w-2xl mx-auto animate-fade-up" style={{ animationDelay: "0.2s" }}>
-              Generate professional legal documents in seconds. NDAs, contracts, 
-              wills, custody agreements, and more – powered by AI trained on US law.
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12 animate-fade-up" style={{ animationDelay: "0.3s" }}>
-              <Link to="/generate">
-                <Button variant="hero" size="xl" className="w-full sm:w-auto">
-                  Generate Document Free
-                  <ArrowRight className="h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/chat">
-                <Button variant="outline" size="xl" className="w-full sm:w-auto border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
-                  Try AI Chat
-                </Button>
-              </Link>
-            </div>
-
-            {/* Trust Badges */}
-            <div className="flex flex-wrap justify-center gap-6 animate-fade-up" style={{ animationDelay: "0.4s" }}>
-              {benefits.map((benefit, i) => (
-                <div key={i} className="flex items-center gap-2 text-sm text-primary-foreground/70">
-                  <benefit.icon className="h-4 w-4 text-legal-gold" />
-                  <span>{benefit.text}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+      {/* Main Content */}
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-12">
+        {/* App Icon */}
+        <div className="mb-8 animate-fade-up">
+          <img 
+            src={legallyAIIcon} 
+            alt="LegallyAI App Icon" 
+            className="w-28 h-28 rounded-2xl shadow-2xl border-2 border-legal-gold/30"
+          />
         </div>
 
-        {/* Wave Divider */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="hsl(var(--background))"/>
-          </svg>
-        </div>
-      </section>
+        {/* Title */}
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-center mb-4 animate-fade-up" style={{ animationDelay: "0.1s" }}>
+          <span className="text-foreground dark:text-white">Legally</span>
+          <span className="text-legal-gold">AI</span>
+        </h1>
 
-      {/* Features Section */}
-      <section className="py-24 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Everything You Need for Legal Documents
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              From simple contracts to complex custody agreements, our AI handles it all.
-            </p>
-          </div>
+        {/* Tagline */}
+        <p className="text-lg md:text-xl text-muted-foreground text-center mb-10 animate-fade-up" style={{ animationDelay: "0.2s" }}>
+          Your AI Lawyer - Perfect Documents in 20 Seconds
+        </p>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature, i) => (
-              <Link
-                key={i}
-                to={feature.href}
-                className="group p-6 rounded-2xl bg-card border border-border shadow-card hover:shadow-lg hover:border-legal-gold/30 transition-all duration-300"
-              >
-                <div className="w-12 h-12 rounded-xl bg-legal-gold/10 flex items-center justify-center mb-4 group-hover:bg-legal-gold/20 transition-colors">
-                  <feature.icon className="h-6 w-6 text-legal-gold" />
-                </div>
-                <h3 className="font-display text-xl font-semibold text-foreground mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-muted-foreground">
-                  {feature.description}
-                </p>
-                <div className="mt-4 flex items-center text-legal-gold font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span>Get Started</span>
-                  <ArrowRight className="h-4 w-4 ml-1" />
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="py-24 bg-muted">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Legal Documents in 3 Simple Steps
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {[
-              { step: "1", title: "Describe Your Need", desc: "Tell our AI what legal document you need in plain English." },
-              { step: "2", title: "AI Generates", desc: "Our AI creates a professional, legally-accurate document instantly." },
-              { step: "3", title: "Download & Use", desc: "Review, customize, and download your document as PDF or Word." },
-            ].map((item, i) => (
-              <div key={i} className="text-center">
-                <div className="w-16 h-16 rounded-full bg-legal-gold text-legal-navy text-2xl font-bold flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  {item.step}
-                </div>
-                <h3 className="font-display text-xl font-semibold text-foreground mb-2">
-                  {item.title}
-                </h3>
-                <p className="text-muted-foreground">{item.desc}</p>
+        {/* Document Output (shown after generation) */}
+        {document && (
+          <div className="w-full max-w-2xl mb-8 animate-fade-up">
+            <div className="bg-card/10 backdrop-blur-sm border border-border/30 rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-legal-gold mb-4">Legal Document Generated</h2>
+              <div className="bg-background/5 rounded-lg p-4 mb-4 max-h-64 overflow-y-auto">
+                <pre className="text-sm text-foreground/80 whitespace-pre-wrap font-body">{document}</pre>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-24 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Trusted by Thousands
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {testimonials.map((testimonial, i) => (
-              <div key={i} className="p-6 rounded-2xl bg-card border border-border shadow-card">
-                <div className="flex gap-1 mb-4">
-                  {[...Array(testimonial.rating)].map((_, j) => (
-                    <Star key={j} className="h-5 w-5 fill-legal-gold text-legal-gold" />
-                  ))}
-                </div>
-                <p className="text-foreground mb-4">"{testimonial.content}"</p>
-                <div>
-                  <p className="font-semibold text-foreground">{testimonial.name}</p>
-                  <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                </div>
+              <div className="flex gap-3">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={copyToClipboard}
+                  className="border-border/30 text-foreground/80 hover:bg-foreground/10"
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy to Clipboard
+                </Button>
+                <Button 
+                  variant="gold" 
+                  size="sm"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download PDF - $5
+                </Button>
               </div>
-            ))}
+            </div>
           </div>
-        </div>
-      </section>
+        )}
 
-      {/* CTA Section */}
-      <section className="py-24 bg-primary text-primary-foreground">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="font-display text-3xl md:text-4xl font-bold mb-6">
-            Ready to Get Your Legal Document?
-          </h2>
-          <p className="text-xl text-primary-foreground/80 mb-10 max-w-2xl mx-auto">
-            Join 50,000+ users who trust LegallyAI for their legal document needs.
+        {/* Input Area */}
+        <div className="w-full max-w-2xl animate-fade-up" style={{ animationDelay: "0.3s" }}>
+          <Textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="Ex: Create NDA for California startup hiring Texas developer..."
+            className="w-full min-h-[120px] bg-card/10 backdrop-blur-sm border-2 border-legal-cyan/30 rounded-xl text-foreground placeholder:text-muted-foreground/50 resize-none focus:border-legal-cyan/60 focus:ring-0 text-base p-4"
+          />
+        </div>
+
+        {/* Generate Button */}
+        <div className="mt-6 animate-fade-up" style={{ animationDelay: "0.4s" }}>
+          <Button 
+            variant="gold" 
+            size="xl" 
+            onClick={handleGenerate}
+            disabled={isGenerating || !prompt.trim()}
+            className="px-10"
+          >
+            {isGenerating ? "Generating..." : "Generate Document"}
+            <ArrowRight className="h-5 w-5 ml-2" />
+          </Button>
+        </div>
+
+        {/* Divider */}
+        <div className="w-full max-w-lg h-px bg-gradient-to-r from-transparent via-border/30 to-transparent my-12" />
+
+        {/* Mobile App Section */}
+        <div className="text-center animate-fade-up" style={{ animationDelay: "0.5s" }}>
+          <p className="text-muted-foreground mb-6 flex items-center justify-center gap-2">
+            <Smartphone className="h-4 w-4" />
+            Get the full experience on mobile
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/generate">
-              <Button variant="hero" size="xl">
-                Start Free – No Card Required
-                <ArrowRight className="h-5 w-5" />
-              </Button>
-            </Link>
-            <Link to="/pricing">
-              <Button variant="outline" size="xl" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
-                View Pricing
-              </Button>
-            </Link>
+
+          <div className="flex flex-wrap justify-center gap-4">
+            {/* Expo Go Button */}
+            <a 
+              href="#" 
+              className="flex items-center gap-3 px-5 py-3 bg-card/10 backdrop-blur-sm border border-border/30 rounded-xl hover:bg-card/20 transition-colors"
+            >
+              <div className="w-8 h-8 bg-foreground/10 rounded-lg flex items-center justify-center">
+                <Smartphone className="h-5 w-5 text-foreground/80" />
+              </div>
+              <span className="text-foreground/80 font-medium">Open in Expo Go</span>
+            </a>
+
+            {/* App Store Button */}
+            <a 
+              href="https://apps.apple.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 px-5 py-3 bg-card/10 backdrop-blur-sm border border-border/30 rounded-xl hover:bg-card/20 transition-colors"
+            >
+              <div className="w-8 h-8 bg-foreground/10 rounded-lg flex items-center justify-center">
+                <svg className="h-5 w-5 text-foreground/80" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                </svg>
+              </div>
+              <span className="text-foreground/80 font-medium">App Store</span>
+            </a>
+
+            {/* Google Play Button */}
+            <a 
+              href="https://play.google.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 px-5 py-3 bg-legal-gold text-legal-navy rounded-xl hover:brightness-110 transition-all font-semibold"
+            >
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z"/>
+              </svg>
+              <span>Google Play</span>
+            </a>
           </div>
         </div>
-      </section>
-    </Layout>
+
+        {/* Legal Disclaimer */}
+        <div className="mt-12 max-w-xl text-center animate-fade-up" style={{ animationDelay: "0.6s" }}>
+          <div className="bg-legal-gold/10 border border-legal-gold/20 rounded-xl px-6 py-4">
+            <p className="text-sm text-muted-foreground">
+              LegallyAI generates templates for informational purposes only. This is not legal advice. 
+              Please consult a licensed attorney for your specific legal needs.
+            </p>
+          </div>
+        </div>
+
+        {/* Navigation Links */}
+        <div className="mt-8 flex flex-wrap justify-center gap-4 text-sm">
+          <Link to="/chat" className="text-muted-foreground hover:text-legal-gold transition-colors">
+            AI Chat
+          </Link>
+          <span className="text-muted-foreground/30">•</span>
+          <Link to="/custody" className="text-muted-foreground hover:text-legal-gold transition-colors">
+            Custody Helper
+          </Link>
+          <span className="text-muted-foreground/30">•</span>
+          <Link to="/lawyers" className="text-muted-foreground hover:text-legal-gold transition-colors">
+            For Lawyers
+          </Link>
+          <span className="text-muted-foreground/30">•</span>
+          <Link to="/pricing" className="text-muted-foreground hover:text-legal-gold transition-colors">
+            Pricing
+          </Link>
+          <span className="text-muted-foreground/30">•</span>
+          <Link to="/login" className="text-muted-foreground hover:text-legal-gold transition-colors">
+            Login
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 }
