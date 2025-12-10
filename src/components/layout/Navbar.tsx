@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Scale, Sparkles, Zap, ChevronDown } from "lucide-react";
+import { Menu, X, Scale, Sparkles, Zap, ChevronDown, ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -31,6 +31,15 @@ const moreLinks = [
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  const handleForward = () => {
+    navigate(1);
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
@@ -58,6 +67,24 @@ export function Navbar() {
               <span className="text-[9px] text-legal-cyan/70 tracking-widest uppercase">Legal Intelligence</span>
             </div>
           </Link>
+
+          {/* Back/Forward Navigation Buttons */}
+          <div className="hidden md:flex items-center gap-1 ml-4">
+            <button
+              onClick={handleBack}
+              className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200 text-muted-foreground hover:text-foreground"
+              aria-label="Go back"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <button
+              onClick={handleForward}
+              className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200 text-muted-foreground hover:text-foreground"
+              aria-label="Go forward"
+            >
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-1 bg-white/5 backdrop-blur-sm rounded-full px-2 py-1.5 border border-white/10">
