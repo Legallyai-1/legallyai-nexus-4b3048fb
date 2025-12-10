@@ -4,13 +4,45 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, FileText, MessageSquare, Video, CreditCard, Clock, User } from "lucide-react";
+import { Calendar, FileText, MessageSquare, Video, CreditCard, Clock, User, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+
+interface Case {
+  id: string;
+  title: string;
+  case_number: string | null;
+  status: string;
+  description: string | null;
+  assigned_lawyer_id: string | null;
+}
+
+interface Appointment {
+  id: string;
+  title: string;
+  start_time: string;
+  end_time: string;
+  status: string;
+  is_virtual: boolean;
+  meeting_link: string | null;
+}
+
+interface Invoice {
+  id: string;
+  invoice_number: string | null;
+  amount: number;
+  status: string | null;
+  due_date: string | null;
+  created_at: string;
+}
 
 const ClientPortalPage = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [cases, setCases] = useState<Case[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,16 +53,79 @@ const ClientPortalPage = () => {
         return;
       }
       setUser(session.user);
+      await loadData(session.user.id);
       setLoading(false);
     };
     checkAuth();
   }, [navigate]);
 
+  const loadData = async (userId: string) => {
+    try {
+      // Load client record first
+      const { data: clientData } = await supabase
+        .from("clients")
+        .select("id, organization_id")
+        .eq("user_id", userId)
+        .single();
+
+      if (clientData) {
+        // Load cases for this client
+        const { data: casesData } = await supabase
+          .from("cases")
+          .select("id, title, case_number, status, description, assigned_lawyer_id")
+          .eq("client_id", clientData.id)
+          .order("created_at", { ascending: false });
+
+        if (casesData) setCases(casesData);
+
+        // Load appointments for this client
+        const { data: appointmentsData } = await supabase
+          .from("appointments")
+          .select("id, title, start_time, end_time, status, is_virtual, meeting_link")
+          .eq("client_id", clientData.id)
+          .gte("start_time", new Date().toISOString())
+          .order("start_time", { ascending: true });
+
+        if (appointmentsData) setAppointments(appointmentsData);
+
+        // Load invoices for this client
+        const { data: invoicesData } = await supabase
+          .from("invoices")
+          .select("id, invoice_number, amount, status, due_date, created_at")
+          .eq("client_id", clientData.id)
+          .order("created_at", { ascending: false });
+
+        if (invoicesData) setInvoices(invoicesData);
+      }
+    } catch (error) {
+      console.error("Error loading client data:", error);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const colors: Record<string, string> = {
+      active: "bg-blue-500/20 text-blue-400",
+      pending: "bg-yellow-500/20 text-yellow-400",
+      intake: "bg-purple-500/20 text-purple-400",
+      closed: "bg-gray-500/20 text-gray-400",
+      scheduled: "bg-green-500/20 text-green-400",
+      confirmed: "bg-blue-500/20 text-blue-400",
+      completed: "bg-gray-500/20 text-gray-400",
+      paid: "bg-green-500/20 text-green-400",
+      unpaid: "bg-red-500/20 text-red-400",
+    };
+    return colors[status] || "bg-muted text-muted-foreground";
+  };
+
+  const totalOutstanding = invoices
+    .filter(inv => inv.status !== "paid")
+    .reduce((sum, inv) => sum + inv.amount, 0);
+
   if (loading) {
     return (
       <Layout>
         <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
       </Layout>
     );
@@ -62,18 +157,22 @@ const ClientPortalPage = () => {
                     <CardTitle className="text-sm font-medium text-muted-foreground">Active Cases</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-foreground">2</div>
-                    <p className="text-xs text-muted-foreground mt-1">1 pending review</p>
+                    <div className="text-2xl font-bold text-foreground">
+                      {cases.filter(c => c.status === "active").length}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {cases.filter(c => c.status === "pending").length} pending
+                    </p>
                   </CardContent>
                 </Card>
 
                 <Card className="bg-card border-border">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">Pending Documents</CardTitle>
+                    <CardTitle className="text-sm font-medium text-muted-foreground">Total Cases</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-foreground">3</div>
-                    <p className="text-xs text-muted-foreground mt-1">Awaiting your signature</p>
+                    <div className="text-2xl font-bold text-foreground">{cases.length}</div>
+                    <p className="text-xs text-muted-foreground mt-1">All time</p>
                   </CardContent>
                 </Card>
 
@@ -82,8 +181,12 @@ const ClientPortalPage = () => {
                     <CardTitle className="text-sm font-medium text-muted-foreground">Upcoming Appointments</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-foreground">1</div>
-                    <p className="text-xs text-muted-foreground mt-1">Next: Dec 15, 2024</p>
+                    <div className="text-2xl font-bold text-foreground">{appointments.length}</div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {appointments[0] 
+                        ? `Next: ${new Date(appointments[0].start_time).toLocaleDateString()}` 
+                        : "None scheduled"}
+                    </p>
                   </CardContent>
                 </Card>
 
@@ -92,8 +195,10 @@ const ClientPortalPage = () => {
                     <CardTitle className="text-sm font-medium text-muted-foreground">Outstanding Balance</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-foreground">$0.00</div>
-                    <p className="text-xs text-green-500 mt-1">All paid</p>
+                    <div className="text-2xl font-bold text-foreground">${totalOutstanding.toFixed(2)}</div>
+                    <p className={`text-xs mt-1 ${totalOutstanding === 0 ? "text-green-500" : "text-yellow-500"}`}>
+                      {totalOutstanding === 0 ? "All paid" : "Payment due"}
+                    </p>
                   </CardContent>
                 </Card>
               </div>
@@ -103,24 +208,23 @@ const ClientPortalPage = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <FileText className="h-5 w-5 text-primary" />
-                      Documents Requiring Action
+                      Recent Cases
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                      <div>
-                        <p className="font-medium text-foreground">Retainer Agreement</p>
-                        <p className="text-sm text-muted-foreground">Sent by Smith & Associates</p>
-                      </div>
-                      <Button size="sm" className="bg-primary text-primary-foreground">Sign Now</Button>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                      <div>
-                        <p className="font-medium text-foreground">Settlement Terms</p>
-                        <p className="text-sm text-muted-foreground">Review required</p>
-                      </div>
-                      <Button size="sm" variant="outline">Review</Button>
-                    </div>
+                    {cases.length === 0 ? (
+                      <p className="text-muted-foreground text-sm">No cases yet</p>
+                    ) : (
+                      cases.slice(0, 3).map(c => (
+                        <div key={c.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                          <div>
+                            <p className="font-medium text-foreground">{c.title}</p>
+                            <p className="text-sm text-muted-foreground">{c.case_number || "No case number"}</p>
+                          </div>
+                          <Badge className={getStatusBadge(c.status)}>{c.status}</Badge>
+                        </div>
+                      ))
+                    )}
                   </CardContent>
                 </Card>
 
@@ -132,14 +236,24 @@ const ClientPortalPage = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                      <div>
-                        <p className="font-medium text-foreground">Case Review Meeting</p>
-                        <p className="text-sm text-muted-foreground">Dec 15, 2024 at 2:00 PM</p>
-                      </div>
-                      <Badge className="bg-green-500/20 text-green-400">Virtual</Badge>
-                    </div>
-                    <Button variant="outline" className="w-full">
+                    {appointments.length === 0 ? (
+                      <p className="text-muted-foreground text-sm">No upcoming appointments</p>
+                    ) : (
+                      appointments.slice(0, 3).map(apt => (
+                        <div key={apt.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                          <div>
+                            <p className="font-medium text-foreground">{apt.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(apt.start_time).toLocaleString()}
+                            </p>
+                          </div>
+                          <Badge className={apt.is_virtual ? "bg-green-500/20 text-green-400" : "bg-blue-500/20 text-blue-400"}>
+                            {apt.is_virtual ? "Virtual" : "In-Person"}
+                          </Badge>
+                        </div>
+                      ))
+                    )}
+                    <Button variant="outline" className="w-full" onClick={() => navigate("/consultations")}>
                       <Video className="h-4 w-4 mr-2" />
                       Schedule New Consultation
                     </Button>
@@ -155,43 +269,33 @@ const ClientPortalPage = () => {
                   <CardDescription>View all your legal cases and their status</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="p-4 border border-border rounded-lg">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-semibold text-foreground">Contract Dispute - ABC Corp</h3>
-                          <p className="text-sm text-muted-foreground">Case #: 2024-001234</p>
-                          <p className="text-sm text-muted-foreground mt-1">Attorney: John Smith</p>
+                  {cases.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">No cases found</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {cases.map(c => (
+                        <div key={c.id} className="p-4 border border-border rounded-lg">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h3 className="font-semibold text-foreground">{c.title}</h3>
+                              <p className="text-sm text-muted-foreground">Case #: {c.case_number || "N/A"}</p>
+                              {c.description && (
+                                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{c.description}</p>
+                              )}
+                            </div>
+                            <Badge className={getStatusBadge(c.status)}>{c.status}</Badge>
+                          </div>
+                          <div className="mt-4 flex gap-2">
+                            <Button size="sm" variant="outline">View Details</Button>
+                            <Button size="sm" variant="outline" onClick={() => navigate("/messages")}>
+                              <MessageSquare className="h-4 w-4 mr-1" />
+                              Message Attorney
+                            </Button>
+                          </div>
                         </div>
-                        <Badge className="bg-blue-500/20 text-blue-400">Active</Badge>
-                      </div>
-                      <div className="mt-4 flex gap-2">
-                        <Button size="sm" variant="outline">View Details</Button>
-                        <Button size="sm" variant="outline">
-                          <MessageSquare className="h-4 w-4 mr-1" />
-                          Message Attorney
-                        </Button>
-                      </div>
+                      ))}
                     </div>
-
-                    <div className="p-4 border border-border rounded-lg">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-semibold text-foreground">Employment Matter</h3>
-                          <p className="text-sm text-muted-foreground">Case #: 2024-001198</p>
-                          <p className="text-sm text-muted-foreground mt-1">Attorney: Sarah Johnson</p>
-                        </div>
-                        <Badge className="bg-yellow-500/20 text-yellow-400">Pending</Badge>
-                      </div>
-                      <div className="mt-4 flex gap-2">
-                        <Button size="sm" variant="outline">View Details</Button>
-                        <Button size="sm" variant="outline">
-                          <MessageSquare className="h-4 w-4 mr-1" />
-                          Message Attorney
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -203,35 +307,13 @@ const ClientPortalPage = () => {
                   <CardDescription>View and sign your legal documents</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 border border-border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5 text-primary" />
-                        <div>
-                          <p className="font-medium text-foreground">Retainer Agreement.pdf</p>
-                          <p className="text-sm text-muted-foreground">Uploaded Dec 1, 2024</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge className="bg-red-500/20 text-red-400">Needs Signature</Badge>
-                        <Button size="sm">Sign</Button>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between p-3 border border-border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium text-foreground">Case Summary.pdf</p>
-                          <p className="text-sm text-muted-foreground">Uploaded Nov 28, 2024</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge className="bg-green-500/20 text-green-400">Signed</Badge>
-                        <Button size="sm" variant="outline">Download</Button>
-                      </div>
-                    </div>
-                  </div>
+                  <Button onClick={() => navigate("/document-signing")} className="w-full mb-4">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Go to Document Signing
+                  </Button>
+                  <p className="text-sm text-muted-foreground text-center">
+                    View and sign documents shared by your attorney
+                  </p>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -243,33 +325,43 @@ const ClientPortalPage = () => {
                   <CardDescription>Schedule and manage your consultations</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <Button className="w-full bg-primary text-primary-foreground">
-                      <Video className="h-4 w-4 mr-2" />
-                      Schedule Virtual Consultation
-                    </Button>
+                  <Button className="w-full mb-6 bg-primary text-primary-foreground" onClick={() => navigate("/consultations")}>
+                    <Video className="h-4 w-4 mr-2" />
+                    Schedule Virtual Consultation
+                  </Button>
 
+                  {appointments.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-4">No upcoming appointments</p>
+                  ) : (
                     <div className="space-y-3">
                       <h3 className="font-medium text-foreground">Upcoming</h3>
-                      <div className="p-4 border border-border rounded-lg">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className="font-medium text-foreground">Case Review Meeting</p>
-                            <p className="text-sm text-muted-foreground">With John Smith</p>
-                            <p className="text-sm text-muted-foreground">Dec 15, 2024 at 2:00 PM EST</p>
+                      {appointments.map(apt => (
+                        <div key={apt.id} className="p-4 border border-border rounded-lg">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <p className="font-medium text-foreground">{apt.title}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {new Date(apt.start_time).toLocaleString()}
+                              </p>
+                            </div>
+                            <Badge className={apt.is_virtual ? "bg-green-500/20 text-green-400" : "bg-blue-500/20 text-blue-400"}>
+                              {apt.is_virtual ? "Virtual" : "In-Person"}
+                            </Badge>
                           </div>
-                          <Badge className="bg-green-500/20 text-green-400">Virtual</Badge>
+                          {apt.is_virtual && apt.meeting_link && (
+                            <div className="mt-3 flex gap-2">
+                              <Button size="sm" className="bg-primary text-primary-foreground" asChild>
+                                <a href={apt.meeting_link} target="_blank" rel="noopener noreferrer">
+                                  <Video className="h-4 w-4 mr-1" />
+                                  Join Meeting
+                                </a>
+                              </Button>
+                            </div>
+                          )}
                         </div>
-                        <div className="mt-3 flex gap-2">
-                          <Button size="sm" className="bg-primary text-primary-foreground">
-                            <Video className="h-4 w-4 mr-1" />
-                            Join Meeting
-                          </Button>
-                          <Button size="sm" variant="outline">Reschedule</Button>
-                        </div>
-                      </div>
+                      ))}
                     </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -281,23 +373,9 @@ const ClientPortalPage = () => {
                   <CardDescription>Communicate with your legal team</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/30 cursor-pointer">
-                      <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                        <User className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="font-medium text-foreground">John Smith</p>
-                          <p className="text-xs text-muted-foreground">2h ago</p>
-                        </div>
-                        <p className="text-sm text-muted-foreground truncate">I've reviewed the documents and...</p>
-                      </div>
-                    </div>
-                  </div>
-                  <Button className="w-full mt-4" variant="outline">
+                  <Button className="w-full" variant="outline" onClick={() => navigate("/messages")}>
                     <MessageSquare className="h-4 w-4 mr-2" />
-                    New Message
+                    Go to Messages
                   </Button>
                 </CardContent>
               </Card>
@@ -311,29 +389,45 @@ const ClientPortalPage = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <div className={`p-4 ${totalOutstanding === 0 ? "bg-green-500/10 border-green-500/20" : "bg-yellow-500/10 border-yellow-500/20"} border rounded-lg`}>
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium text-green-400">Current Balance</p>
-                          <p className="text-2xl font-bold text-foreground">$0.00</p>
+                          <p className={`font-medium ${totalOutstanding === 0 ? "text-green-400" : "text-yellow-400"}`}>
+                            Outstanding Balance
+                          </p>
+                          <p className="text-2xl font-bold text-foreground">${totalOutstanding.toFixed(2)}</p>
                         </div>
-                        <CreditCard className="h-8 w-8 text-green-400" />
+                        <CreditCard className={`h-8 w-8 ${totalOutstanding === 0 ? "text-green-400" : "text-yellow-400"}`} />
                       </div>
                     </div>
 
-                    <h3 className="font-medium text-foreground">Recent Invoices</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between p-3 border border-border rounded-lg">
-                        <div>
-                          <p className="font-medium text-foreground">Invoice #INV-2024-0045</p>
-                          <p className="text-sm text-muted-foreground">Nov 15, 2024</p>
+                    {invoices.length > 0 && (
+                      <>
+                        <h3 className="font-medium text-foreground">Invoices</h3>
+                        <div className="space-y-2">
+                          {invoices.map(inv => (
+                            <div key={inv.id} className="flex items-center justify-between p-3 border border-border rounded-lg">
+                              <div>
+                                <p className="font-medium text-foreground">{inv.invoice_number || `Invoice`}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {new Date(inv.created_at).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-medium text-foreground">${inv.amount.toFixed(2)}</p>
+                                <Badge className={getStatusBadge(inv.status || "unpaid")}>
+                                  {inv.status || "unpaid"}
+                                </Badge>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                        <div className="text-right">
-                          <p className="font-medium text-foreground">$1,500.00</p>
-                          <Badge className="bg-green-500/20 text-green-400">Paid</Badge>
-                        </div>
-                      </div>
-                    </div>
+                      </>
+                    )}
+
+                    <Button onClick={() => navigate("/invoices")} variant="outline" className="w-full">
+                      View All Invoices
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
