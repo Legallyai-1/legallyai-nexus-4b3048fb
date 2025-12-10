@@ -69,8 +69,8 @@ serve(async (req) => {
 
     // Calculate metrics
     const totalRevenue = charges.data
-      .filter(c => c.paid && !c.refunded)
-      .reduce((sum, c) => sum + c.amount, 0) / 100;
+      .filter((c: { paid: boolean; refunded: boolean }) => c.paid && !c.refunded)
+      .reduce((sum: number, c: { amount: number }) => sum + c.amount, 0) / 100;
 
     const subscriptionRevenue = subscriptions.data.length * 99; // $99/month per sub
     const documentRevenue = totalRevenue - subscriptionRevenue;
@@ -82,7 +82,14 @@ serve(async (req) => {
     ];
 
     // Recent transactions
-    const recentTransactions = charges.data.slice(0, 10).map(charge => ({
+    const recentTransactions = charges.data.slice(0, 10).map((charge: {
+      id: string;
+      amount: number;
+      billing_details?: { name?: string };
+      customer?: string;
+      created: number;
+      paid: boolean;
+    }) => ({
       id: charge.id,
       type: charge.amount === 9900 ? "subscription" : "document",
       user: charge.billing_details?.name || charge.customer || "Unknown",
@@ -94,7 +101,7 @@ serve(async (req) => {
     const analytics = {
       totalRevenue,
       subscriptions: subscriptions.data.length,
-      documentsThisMonth: payments.data.filter(p => p.amount === 500).length,
+      documentsThisMonth: payments.data.filter((p: { amount: number }) => p.amount === 500).length,
       revenueStreams,
       recentTransactions,
       period: "30_days"
