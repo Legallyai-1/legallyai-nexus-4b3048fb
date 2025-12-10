@@ -30,9 +30,7 @@ export default function AdBanner({ slot, format = "auto", className = "" }: AdBa
     }
   }, []);
 
-  // Get the AdSense client ID from environment (for client-side, we use a placeholder)
-  // The actual ID is loaded via the script in index.html
-  const adClient = "ca-pub-XXXXXXXXXXXXXXXX"; // Will be replaced by actual ID from env
+  const adClient = "ca-pub-4991947741196600";
 
   return (
     <div ref={adRef} className={`ad-container ${className}`}>
