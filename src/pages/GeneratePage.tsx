@@ -204,6 +204,7 @@ export default function GeneratePage() {
     
     const printWindow = window.open('', '_blank');
     if (printWindow) {
+      // Create document structure safely without string interpolation of user content
       printWindow.document.write(`
         <html>
           <head>
@@ -214,11 +215,18 @@ export default function GeneratePage() {
             </style>
           </head>
           <body>
-            <pre>${generatedDoc}</pre>
+            <pre id="doc-content"></pre>
           </body>
         </html>
       `);
       printWindow.document.close();
+      
+      // Safely set content using textContent to prevent XSS
+      const contentElement = printWindow.document.getElementById('doc-content');
+      if (contentElement) {
+        contentElement.textContent = generatedDoc;
+      }
+      
       printWindow.print();
     }
   };
