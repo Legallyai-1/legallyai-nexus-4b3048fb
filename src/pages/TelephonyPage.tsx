@@ -95,14 +95,19 @@ export default function TelephonyPage() {
     setIsInCall(true);
     setIsTranscribing(true);
     toast({
-      title: "Call Connected",
-      description: `Connected to ${phoneNumber}. AI transcription active.`,
+      title: "CallAI Connected",
+      description: `Connected to ${phoneNumber}. AI transcription & analysis active.`,
     });
 
-    // Simulate transcription
+    // Simulate AI-powered transcription
     setTimeout(() => {
-      setTranscription("Call started. AI transcription is active and will capture the conversation...");
-    }, 2000);
+      setTranscription("🎙️ CallAI is transcribing...\n\n[00:00] Call connected. AI listening and analyzing conversation...\n\n[00:02] Waiting for speech input...");
+    }, 1000);
+
+    // Simulate real-time transcription updates
+    setTimeout(() => {
+      setTranscription(prev => prev + "\n\n[00:05] \"Hello, this is regarding your case inquiry...\" - Caller");
+    }, 4000);
   };
 
   const handleEndCall = () => {
