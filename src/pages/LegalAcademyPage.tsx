@@ -221,7 +221,11 @@ export default function LegalAcademyPage() {
                               </div>
                               <Progress value={0} className="h-2" />
                             </div>
-                            <Button variant="neon" className="w-full group-hover:shadow-glow-sm">
+                            <Button 
+                              variant="neon" 
+                              className="w-full group-hover:shadow-glow-sm"
+                              onClick={() => navigate(`/quiz?id=${course.id}`)}
+                            >
                               <Play className="w-4 h-4 mr-2" /> Start Course
                             </Button>
                           </div>

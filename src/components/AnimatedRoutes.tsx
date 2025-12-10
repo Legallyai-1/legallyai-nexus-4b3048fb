@@ -11,6 +11,8 @@ import PricingPage from "@/pages/PricingPage";
 import SignupPage from "@/pages/SignupPage";
 import LoginPage from "@/pages/LoginPage";
 import AuthPage from "@/pages/AuthPage";
+import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import DashboardPage from "@/pages/DashboardPage";
 import CasesPage from "@/pages/CasesPage";
 import ClientsPage from "@/pages/ClientsPage";
@@ -37,6 +39,7 @@ import DocumentTemplatesPage from "@/pages/DocumentTemplatesPage";
 import TicketsDefensePage from "@/pages/TicketsDefensePage";
 import ProbationParolePage from "@/pages/ProbationParolePage";
 import LegalAcademyPage from "@/pages/LegalAcademyPage";
+import QuizPage from "@/pages/QuizPage";
 import TelephonyPage from "@/pages/TelephonyPage";
 import CustomerSupportPage from "@/pages/CustomerSupportPage";
 import MonetizationPage from "@/pages/MonetizationPage";
@@ -57,6 +60,8 @@ export function AnimatedRoutes() {
         <Route path="/signup" element={<PageTransition><SignupPage /></PageTransition>} />
         <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
         <Route path="/auth" element={<PageTransition><AuthPage /></PageTransition>} />
+        <Route path="/forgot-password" element={<PageTransition><ForgotPasswordPage /></PageTransition>} />
+        <Route path="/reset-password" element={<PageTransition><ResetPasswordPage /></PageTransition>} />
         <Route path="/dashboard" element={<PageTransition><DashboardPage /></PageTransition>} />
         <Route path="/cases" element={<PageTransition><CasesPage /></PageTransition>} />
         <Route path="/clients" element={<PageTransition><ClientsPage /></PageTransition>} />
@@ -83,6 +88,7 @@ export function AnimatedRoutes() {
         <Route path="/tickets-defense" element={<PageTransition><TicketsDefensePage /></PageTransition>} />
         <Route path="/probation-parole" element={<PageTransition><ProbationParolePage /></PageTransition>} />
         <Route path="/legal-academy" element={<PageTransition><LegalAcademyPage /></PageTransition>} />
+        <Route path="/quiz" element={<PageTransition><QuizPage /></PageTransition>} />
         <Route path="/telephony" element={<PageTransition><TelephonyPage /></PageTransition>} />
         <Route path="/support" element={<PageTransition><CustomerSupportPage /></PageTransition>} />
         <Route path="/monetization" element={<PageTransition><MonetizationPage /></PageTransition>} />
