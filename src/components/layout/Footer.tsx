@@ -4,21 +4,21 @@ import { Scale, Sparkles, Mail, MapPin, Phone } from "lucide-react";
 const footerLinks = {
   product: [
     { name: "Document Generator", path: "/generate" },
-    { name: "AI Chat", path: "/chat" },
+    { name: "AI Assistants", path: "/ai-assistants" },
+    { name: "Templates", path: "/templates" },
     { name: "Custody Helper", path: "/custody" },
     { name: "Pricing", path: "/pricing" },
   ],
-  company: [
-    { name: "About Us", path: "/about" },
+  resources: [
+    { name: "Workplace Legal Aid", path: "/workplace-legal-aid" },
+    { name: "Pro Bono", path: "/pro-bono" },
+    { name: "Job Board", path: "/jobs" },
     { name: "For Lawyers", path: "/lawyers" },
-    { name: "Careers", path: "/careers" },
-    { name: "Contact", path: "/contact" },
+    { name: "Client Portal", path: "/client-portal" },
   ],
   legal: [
     { name: "Privacy Policy", path: "/privacy" },
     { name: "Terms of Service", path: "/terms" },
-    { name: "Disclaimer", path: "/disclaimer" },
-    { name: "Cookie Policy", path: "/cookies" },
   ],
 };
 
@@ -78,13 +78,13 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Company Links */}
+          {/* Resources Links */}
           <div>
             <h4 className="font-display text-lg font-semibold mb-4 text-legal-gold">
-              Company
+              Resources
             </h4>
             <ul className="space-y-2">
-              {footerLinks.company.map((link) => (
+              {footerLinks.resources.map((link) => (
                 <li key={link.path}>
                   <Link
                     to={link.path}

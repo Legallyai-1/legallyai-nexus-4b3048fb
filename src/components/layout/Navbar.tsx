@@ -1,16 +1,31 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Scale, Sparkles, Zap } from "lucide-react";
+import { Menu, X, Scale, Sparkles, Zap, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navLinks = [
   { name: "Home", path: "/" },
   { name: "Generate", path: "/generate" },
   { name: "AI Assistants", path: "/ai-assistants" },
-  { name: "Custody", path: "/custody" },
+  { name: "Templates", path: "/templates" },
   { name: "For Lawyers", path: "/lawyers" },
   { name: "Pricing", path: "/pricing" },
+];
+
+const moreLinks = [
+  { name: "Custody Helper", path: "/custody" },
+  { name: "Workplace Legal Aid", path: "/workplace-legal-aid" },
+  { name: "Pro Bono", path: "/pro-bono" },
+  { name: "Job Board", path: "/jobs" },
+  { name: "Client Portal", path: "/client-portal" },
+  { name: "Dashboard", path: "/dashboard" },
 ];
 
 export function Navbar() {
@@ -67,6 +82,22 @@ export function Navbar() {
                 <span className="relative">{link.name}</span>
               </Link>
             ))}
+            
+            {/* More Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="px-4 py-2 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-all duration-300 flex items-center gap-1">
+                More <ChevronDown className="h-3 w-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                {moreLinks.map((link) => (
+                  <DropdownMenuItem key={link.path} asChild>
+                    <Link to={link.path} className="w-full cursor-pointer">
+                      {link.name}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Desktop CTA */}
@@ -132,6 +163,21 @@ export function Navbar() {
                 {link.name}
               </Link>
             ))}
+            
+            {/* More Links in Mobile */}
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <p className="text-xs text-muted-foreground px-4 mb-2">More</p>
+              {moreLinks.map((link, index) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  onClick={() => setIsOpen(false)}
+                  className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-lg"
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
             
             <div className="flex gap-2 mt-4 pt-4 border-t border-white/10">
               <Link to="/login" className="flex-1" onClick={() => setIsOpen(false)}>
