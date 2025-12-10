@@ -38,26 +38,34 @@ interface Course {
 
 const categoryIcons: Record<string, typeof Scale> = {
   contracts: FileText,
+  constitutional: Scale,
   procedure: BookOpen,
   criminal: Briefcase,
   family: Scale,
-  bar_prep: GraduationCap,
-  skills: Brain,
-  evidence: FileText,
+  civil: BookOpen,
+  property: FileText,
+  torts: Scale,
   business: Briefcase,
+  evidence: FileText,
+  skills: Brain,
+  bar_prep: GraduationCap,
   general: BookOpen
 };
 
 const categoryColors: Record<string, string> = {
   contracts: "cyan",
+  constitutional: "blue",
   procedure: "purple",
   criminal: "pink",
   family: "orange",
-  bar_prep: "purple",
+  civil: "purple",
+  property: "green",
+  torts: "orange",
+  business: "cyan",
+  evidence: "blue",
   skills: "green",
-  evidence: "cyan",
-  business: "orange",
-  general: "blue"
+  bar_prep: "purple",
+  general: "cyan"
 };
 
 const barPrepModules = [
