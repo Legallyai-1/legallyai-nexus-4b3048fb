@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
-import { MessageSquare, Heart, Shield, Scale } from "lucide-react";
+import { Layout } from "@/components/layout/Layout";
+import { MessageSquare, Heart, Shield, Scale, Briefcase, Building2, FileText, Gavel } from "lucide-react";
 
 const assistants = [
   {
@@ -55,6 +56,58 @@ const assistants = [
     glow: "shadow-[0_0_30px_rgba(249,115,22,0.2)]",
     iconBg: "bg-orange-500/20",
     questions: ["Contested vs uncontested divorce", "How is property divided?", "What about child support?"]
+  },
+  {
+    id: "workplace",
+    name: "Workplace Legal Aid",
+    description: "Know your rights as an employee. Get help with workplace discrimination, harassment, wages, and labor law questions.",
+    icon: Building2,
+    variant: "orange" as const,
+    path: "/workplace-legal-aid",
+    gradient: "from-orange-500/20 to-yellow-500/20",
+    border: "border-orange-500/30",
+    glow: "shadow-[0_0_30px_rgba(249,115,22,0.2)]",
+    iconBg: "bg-orange-500/20",
+    questions: ["Workplace discrimination", "Overtime and wage laws", "Wrongful termination"]
+  },
+  {
+    id: "lawyer-case",
+    name: "Lawyer Case Assistant",
+    description: "AI-powered case analysis for legal professionals. Research case law, analyze arguments, and get strategic insights.",
+    icon: Gavel,
+    variant: "green" as const,
+    path: "/chat?type=lawyer",
+    gradient: "from-green-500/20 to-emerald-500/20",
+    border: "border-green-500/30",
+    glow: "shadow-[0_0_30px_rgba(34,197,94,0.2)]",
+    iconBg: "bg-green-500/20",
+    questions: ["Case law research", "Argument analysis", "Legal strategy"]
+  },
+  {
+    id: "document",
+    name: "Document Assistant",
+    description: "Get help drafting and reviewing legal documents. From contracts to agreements, get AI assistance with your documents.",
+    icon: FileText,
+    variant: "blue" as const,
+    path: "/generate",
+    gradient: "from-blue-500/20 to-indigo-500/20",
+    border: "border-blue-500/30",
+    glow: "shadow-[0_0_30px_rgba(59,130,246,0.2)]",
+    iconBg: "bg-blue-500/20",
+    questions: ["Draft NDA", "Create lease agreement", "Review contract"]
+  },
+  {
+    id: "business",
+    name: "Business Legal Helper",
+    description: "Start and protect your business. Get help with formation, contracts, IP, and compliance matters.",
+    icon: Briefcase,
+    variant: "cyan" as const,
+    path: "/chat?type=business",
+    gradient: "from-cyan-500/20 to-teal-500/20",
+    border: "border-cyan-500/30",
+    glow: "shadow-[0_0_30px_rgba(0,255,255,0.2)]",
+    iconBg: "bg-cyan-500/20",
+    questions: ["LLC vs Corporation", "Trademark basics", "Business contracts"]
   }
 ];
 
@@ -62,6 +115,7 @@ export default function AIAssistantsPage() {
   const navigate = useNavigate();
 
   return (
+    <Layout>
     <FuturisticBackground>
       <div className="min-h-screen py-12 px-4">
         <div className="max-w-6xl mx-auto">
@@ -174,5 +228,6 @@ export default function AIAssistantsPage() {
         </div>
       </div>
     </FuturisticBackground>
+    </Layout>
   );
 }
