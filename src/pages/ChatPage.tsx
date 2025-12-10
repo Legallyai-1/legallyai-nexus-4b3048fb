@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Bot, User, Sparkles, AlertCircle } from "lucide-react";
+import { Send, Bot, User, Sparkles, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   id: string;
@@ -24,6 +26,9 @@ const suggestedQuestions = [
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/legal-chat`;
 
 export default function ChatPage() {
+  const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -36,6 +41,23 @@ export default function ChatPage() {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+      setIsCheckingAuth(false);
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -46,6 +68,13 @@ export default function ChatPage() {
 
   const handleSend = async () => {
     if (!input.trim() || isTyping) return;
+
+    // Require authentication
+    if (!user) {
+      toast.error("Please sign in to use the chat");
+      navigate("/auth");
+      return;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -60,6 +89,14 @@ export default function ChatPage() {
     setIsTyping(true);
 
     try {
+      // Get the user's session token for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error("Session expired. Please sign in again.");
+        navigate("/auth");
+        return;
+      }
+
       // Prepare messages for API (excluding welcome message)
       const apiMessages = messages
         .filter(m => m.id !== "welcome")
@@ -70,7 +107,7 @@ export default function ChatPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ messages: apiMessages }),
       });
@@ -179,9 +216,27 @@ export default function ChatPage() {
     setInput(question);
   };
 
+  if (isCheckingAuth) {
+    return (
+      <Layout showFooter={false}>
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader2 className="h-8 w-8 animate-spin text-legal-gold" />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout showFooter={false}>
       <div className="flex flex-col h-[calc(100vh-4rem)] bg-background">
+        {!user && (
+          <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-3">
+            <div className="container mx-auto flex items-center justify-center gap-2 text-amber-600">
+              <AlertCircle className="h-4 w-4" />
+              <span className="text-sm">Please <button onClick={() => navigate("/auth")} className="underline font-medium">sign in</button> to use the AI assistant</span>
+            </div>
+          </div>
+        )}
         {/* Header */}
         <div className="border-b border-border bg-card px-4 py-3">
           <div className="container mx-auto flex items-center gap-3">
