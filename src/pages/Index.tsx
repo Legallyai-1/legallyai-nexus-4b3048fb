@@ -118,13 +118,53 @@ export default function Index() {
         </AdContainer>
 
         {/* Feature Links - Glassmorphism Cards */}
-        <div className="w-full max-w-3xl mt-12 animate-fade-up" style={{ animationDelay: "0.5s" }}>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="w-full max-w-4xl mt-12 animate-fade-up" style={{ animationDelay: "0.5s" }}>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             {[
               { name: "AI Chat", path: "/chat", icon: "💬", color: "cyan" },
               { name: "Custody", path: "/custody", icon: "👨‍👩‍👧", color: "purple" },
               { name: "Lawyers", path: "/lawyers", icon: "⚖️", color: "green" },
               { name: "Pricing", path: "/pricing", icon: "💎", color: "orange" },
+            ].map((item) => (
+              <Link 
+                key={item.path}
+                to={item.path}
+                className={`glass-card-hover rounded-xl p-4 text-center group`}
+              >
+                <div className="text-2xl mb-2">{item.icon}</div>
+                <span className={`text-sm font-medium text-neon-${item.color} group-hover:text-glow-${item.color}`}>
+                  {item.name}
+                </span>
+              </Link>
+            ))}
+          </div>
+          {/* Additional Feature Tabs */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            {[
+              { name: "Templates", path: "/templates", icon: "📄", color: "blue" },
+              { name: "Job Board", path: "/jobs", icon: "💼", color: "cyan" },
+              { name: "Worker Rights", path: "/workplace-legal-aid", icon: "🛡️", color: "orange" },
+              { name: "Pro Bono", path: "/pro-bono", icon: "❤️", color: "pink" },
+            ].map((item) => (
+              <Link 
+                key={item.path}
+                to={item.path}
+                className={`glass-card-hover rounded-xl p-4 text-center group`}
+              >
+                <div className="text-2xl mb-2">{item.icon}</div>
+                <span className={`text-sm font-medium text-neon-${item.color} group-hover:text-glow-${item.color}`}>
+                  {item.name}
+                </span>
+              </Link>
+            ))}
+          </div>
+          {/* More Features */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { name: "AI Assistants", path: "/ai-assistants", icon: "🤖", color: "cyan" },
+              { name: "Client Portal", path: "/client-portal", icon: "👤", color: "purple" },
+              { name: "Dashboard", path: "/dashboard", icon: "📊", color: "green" },
+              { name: "Consultations", path: "/consultations", icon: "📅", color: "blue" },
             ].map((item) => (
               <Link 
                 key={item.path}
@@ -192,23 +232,25 @@ export default function Index() {
         </div>
 
         {/* Navigation Links */}
-        <div className="mt-8 flex flex-wrap justify-center gap-4 text-sm">
+        <div className="mt-8 flex flex-wrap justify-center gap-3 text-sm">
           {[
             { name: "AI Chat", path: "/chat" },
-            { name: "Custody Helper", path: "/custody" },
-            { name: "For Lawyers", path: "/lawyers" },
+            { name: "Templates", path: "/templates" },
+            { name: "Custody", path: "/custody" },
+            { name: "Lawyers", path: "/lawyers" },
+            { name: "Jobs", path: "/jobs" },
+            { name: "Pro Bono", path: "/pro-bono" },
+            { name: "Worker Rights", path: "/workplace-legal-aid" },
             { name: "Pricing", path: "/pricing" },
             { name: "Login", path: "/login" },
           ].map((link, i) => (
-            <span key={link.path} className="flex items-center gap-4">
-              <Link 
-                to={link.path} 
-                className="text-muted-foreground hover:text-neon-cyan transition-colors"
-              >
-                {link.name}
-              </Link>
-              {i < 4 && <span className="text-border">•</span>}
-            </span>
+            <Link 
+              key={link.path}
+              to={link.path} 
+              className="text-muted-foreground hover:text-neon-cyan transition-colors px-2"
+            >
+              {link.name}
+            </Link>
           ))}
         </div>
 
