@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,25 +25,54 @@ const documentTypes = [
 
 export default function GeneratePage() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedDoc, setGeneratedDoc] = useState<string | null>(null);
   const [isPaid, setIsPaid] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+      setIsCheckingAuth(false);
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Check for prompt in URL params (from homepage)
   useEffect(() => {
     const urlPrompt = searchParams.get("prompt");
     if (urlPrompt) {
       setPrompt(urlPrompt);
-      // Auto-generate if coming from homepage
-      handleGenerate(urlPrompt);
+      // Only auto-generate if user is authenticated
+      if (user) {
+        handleGenerate(urlPrompt);
+      }
     }
-  }, [searchParams]);
+  }, [searchParams, user]);
 
   const handleGenerate = async (inputPrompt?: string) => {
     const finalPrompt = inputPrompt || prompt;
     if (!finalPrompt.trim()) {
       toast.error("Please describe your legal document needs");
+      return;
+    }
+
+    // Check authentication before generating
+    if (!user) {
+      toast.error("Please sign in to generate documents");
+      navigate("/auth");
       return;
     }
 
@@ -56,12 +85,23 @@ export default function GeneratePage() {
 
       if (error) {
         console.error("Generation error:", error);
+        // Handle authentication errors
+        if (error.message?.includes("401") || error.message?.includes("Authentication")) {
+          toast.error("Please sign in to generate documents");
+          navigate("/auth");
+          return;
+        }
         toast.error("Failed to generate document. Please try again.");
         setIsGenerating(false);
         return;
       }
 
       if (data.error) {
+        if (data.error.includes("Authentication") || data.error.includes("sign in")) {
+          toast.error(data.error);
+          navigate("/auth");
+          return;
+        }
         toast.error(data.error);
         setIsGenerating(false);
         return;
@@ -77,12 +117,31 @@ export default function GeneratePage() {
     }
   };
 
-  const handleUnlock = () => {
-    // TODO: Integrate Stripe payment
-    toast.info("Payment integration coming soon! Contact us for early access.");
-    // For demo, unlock the document
-    setIsPaid(true);
-    toast.success("Document unlocked!");
+  const handleUnlock = async () => {
+    if (!user) {
+      toast.error("Please sign in first");
+      navigate("/auth");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { priceId: 'price_1SckVt0QhWGUtGKvl9YdmQqk' } // Document generation price
+      });
+
+      if (error) {
+        console.error("Checkout error:", error);
+        toast.error("Failed to start checkout. Please try again.");
+        return;
+      }
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("An error occurred. Please try again.");
+    }
   };
 
   const handleDownload = () => {
@@ -136,6 +195,16 @@ export default function GeneratePage() {
     }
   };
 
+  if (isCheckingAuth) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader2 className="h-8 w-8 animate-spin text-legal-gold" />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <section className="py-12 md:py-20 bg-background min-h-screen">
@@ -153,6 +222,14 @@ export default function GeneratePage() {
               Describe your legal needs in plain English. Our AI will generate a professional, 
               legally-accurate document in seconds.
             </p>
+            {!user && (
+              <div className="mt-4 p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 max-w-md mx-auto">
+                <p className="text-sm text-amber-600">
+                  <AlertCircle className="h-4 w-4 inline mr-2" />
+                  Please <button onClick={() => navigate("/auth")} className="underline font-medium">sign in</button> to generate documents
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
@@ -173,7 +250,7 @@ export default function GeneratePage() {
 
                 <Button
                   onClick={() => handleGenerate()}
-                  disabled={isGenerating || !prompt.trim()}
+                  disabled={isGenerating || !prompt.trim() || !user}
                   variant="gold"
                   size="lg"
                   className="w-full"
@@ -254,11 +331,10 @@ export default function GeneratePage() {
                         Unlock Full Document
                       </h3>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Download as PDF with professional formatting for just $29.
-                        Free tier: 1 document per day.
+                        Download as PDF with professional formatting for just $5.
                       </p>
                       <Button onClick={handleUnlock} variant="gold" className="w-full sm:w-auto">
-                        Pay $29 – Unlock PDF Download
+                        Pay $5 – Unlock PDF Download
                       </Button>
                     </div>
                   </div>
