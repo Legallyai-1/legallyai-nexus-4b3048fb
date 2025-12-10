@@ -7,6 +7,8 @@ import { Send, Bot, User, Sparkles, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import AdBanner from "@/components/ads/AdBanner";
+import AdContainer from "@/components/ads/AdContainer";
 
 interface Message {
   id: string;
@@ -369,6 +371,11 @@ export default function ChatPage() {
               <AlertCircle className="h-3 w-3" />
               This is AI-generated information, not legal advice. Consult a licensed attorney.
             </p>
+            
+            {/* Ad Banner */}
+            <AdContainer position="bottom" className="mt-4">
+              <AdBanner slot="2468013579" format="horizontal" />
+            </AdContainer>
           </div>
         </div>
       </div>
