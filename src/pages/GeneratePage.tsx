@@ -30,25 +30,57 @@ export default function GeneratePage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedDoc, setGeneratedDoc] = useState<string | null>(null);
   const [isPaid, setIsPaid] = useState(false);
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  // Check authentication status
+  // Check authentication status and verify payment server-side
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
       setIsCheckingAuth(false);
+      
+      // If user is authenticated, verify payment status server-side
+      if (session?.user) {
+        verifyPaymentStatus();
+      }
     };
 
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        verifyPaymentStatus();
+      } else {
+        setIsPaid(false);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Server-side payment verification
+  const verifyPaymentStatus = async () => {
+    setIsVerifyingPayment(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-payment');
+      
+      if (error) {
+        console.error("Payment verification error:", error);
+        setIsPaid(false);
+        return;
+      }
+      
+      setIsPaid(data?.hasPaid === true);
+    } catch (error) {
+      console.error("Error verifying payment:", error);
+      setIsPaid(false);
+    } finally {
+      setIsVerifyingPayment(false);
+    }
+  };
 
   // Check for prompt in URL params (from homepage)
   useEffect(() => {
