@@ -7,12 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Scale, ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { loginSchema } from "@/lib/validations/auth";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -24,8 +26,32 @@ export default function LoginPage() {
     checkAuth();
   }, [navigate]);
 
+  const validateField = (field: "email" | "password", value: string) => {
+    const result = loginSchema.shape[field].safeParse(value);
+    if (!result.success) {
+      setErrors(prev => ({ ...prev, [field]: result.error.errors[0].message }));
+    } else {
+      setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const validation = loginSchema.safeParse({ email, password });
+    if (!validation.success) {
+      const fieldErrors: { email?: string; password?: string } = {};
+      validation.error.errors.forEach(err => {
+        const field = err.path[0] as keyof typeof fieldErrors;
+        if (!fieldErrors[field]) {
+          fieldErrors[field] = err.message;
+        }
+      });
+      setErrors(fieldErrors);
+      toast.error("Please fix the form errors");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -71,11 +97,18 @@ export default function LoginPage() {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errors.email) validateField("email", e.target.value);
+                  }}
+                  onBlur={() => validateField("email", email)}
                   placeholder="you@example.com"
-                  required
-                  className="h-12"
+                  className={`h-12 ${errors.email ? "border-destructive" : ""}`}
+                  aria-invalid={!!errors.email}
                 />
+                {errors.email && (
+                  <p className="text-sm text-destructive">{errors.email}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -92,11 +125,18 @@ export default function LoginPage() {
                   id="password"
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errors.password) validateField("password", e.target.value);
+                  }}
+                  onBlur={() => validateField("password", password)}
                   placeholder="••••••••"
-                  required
-                  className="h-12"
+                  className={`h-12 ${errors.password ? "border-destructive" : ""}`}
+                  aria-invalid={!!errors.password}
                 />
+                {errors.password && (
+                  <p className="text-sm text-destructive">{errors.password}</p>
+                )}
               </div>
 
               <Button

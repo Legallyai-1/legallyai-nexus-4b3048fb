@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Scale, Sparkles, ArrowRight, CheckCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { signupSchema } from "@/lib/validations/auth";
 
 const benefits = [
   "Generate unlimited legal documents",
@@ -21,6 +22,7 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({});
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -32,8 +34,32 @@ export default function SignupPage() {
     checkAuth();
   }, [navigate]);
 
+  const validateField = (field: "name" | "email" | "password", value: string) => {
+    const result = signupSchema.shape[field].safeParse(value);
+    if (!result.success) {
+      setErrors(prev => ({ ...prev, [field]: result.error.errors[0].message }));
+    } else {
+      setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const validation = signupSchema.safeParse({ name, email, password });
+    if (!validation.success) {
+      const fieldErrors: { name?: string; email?: string; password?: string } = {};
+      validation.error.errors.forEach(err => {
+        const field = err.path[0] as keyof typeof fieldErrors;
+        if (!fieldErrors[field]) {
+          fieldErrors[field] = err.message;
+        }
+      });
+      setErrors(fieldErrors);
+      toast.error("Please fix the form errors");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -41,6 +67,7 @@ export default function SignupPage() {
         email,
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
             full_name: name,
           },
@@ -85,11 +112,18 @@ export default function SignupPage() {
                   id="name"
                   type="text"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (errors.name) validateField("name", e.target.value);
+                  }}
+                  onBlur={() => validateField("name", name)}
                   placeholder="John Doe"
-                  required
-                  className="h-12"
+                  className={`h-12 ${errors.name ? "border-destructive" : ""}`}
+                  aria-invalid={!!errors.name}
                 />
+                {errors.name && (
+                  <p className="text-sm text-destructive">{errors.name}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -98,11 +132,18 @@ export default function SignupPage() {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errors.email) validateField("email", e.target.value);
+                  }}
+                  onBlur={() => validateField("email", email)}
                   placeholder="you@example.com"
-                  required
-                  className="h-12"
+                  className={`h-12 ${errors.email ? "border-destructive" : ""}`}
+                  aria-invalid={!!errors.email}
                 />
+                {errors.email && (
+                  <p className="text-sm text-destructive">{errors.email}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -111,11 +152,21 @@ export default function SignupPage() {
                   id="password"
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errors.password) validateField("password", e.target.value);
+                  }}
+                  onBlur={() => validateField("password", password)}
                   placeholder="••••••••"
-                  required
-                  className="h-12"
+                  className={`h-12 ${errors.password ? "border-destructive" : ""}`}
+                  aria-invalid={!!errors.password}
                 />
+                {errors.password && (
+                  <p className="text-sm text-destructive">{errors.password}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Min 8 characters with uppercase, lowercase, and number
+                </p>
               </div>
 
               <Button

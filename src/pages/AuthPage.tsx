@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Scale, Building2, User } from "lucide-react";
+import { loginSchema, signupSchema } from "@/lib/validations/auth";
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -15,9 +16,44 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [loginErrors, setLoginErrors] = useState<{ email?: string; password?: string }>({});
+  const [signupErrors, setSignupErrors] = useState<{ name?: string; email?: string; password?: string }>({});
+
+  const validateLoginField = (field: "email" | "password", value: string) => {
+    const result = loginSchema.shape[field].safeParse(value);
+    if (!result.success) {
+      setLoginErrors(prev => ({ ...prev, [field]: result.error.errors[0].message }));
+    } else {
+      setLoginErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const validateSignupField = (field: "name" | "email" | "password", value: string) => {
+    const result = signupSchema.shape[field].safeParse(value);
+    if (!result.success) {
+      setSignupErrors(prev => ({ ...prev, [field]: result.error.errors[0].message }));
+    } else {
+      setSignupErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const validation = loginSchema.safeParse({ email, password });
+    if (!validation.success) {
+      const fieldErrors: { email?: string; password?: string } = {};
+      validation.error.errors.forEach(err => {
+        const field = err.path[0] as keyof typeof fieldErrors;
+        if (!fieldErrors[field]) {
+          fieldErrors[field] = err.message;
+        }
+      });
+      setLoginErrors(fieldErrors);
+      toast.error("Please fix the form errors");
+      return;
+    }
+
     setIsLoading(true);
     
     const { error } = await supabase.auth.signInWithPassword({
@@ -36,6 +72,21 @@ export default function AuthPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const validation = signupSchema.safeParse({ name: fullName, email, password });
+    if (!validation.success) {
+      const fieldErrors: { name?: string; email?: string; password?: string } = {};
+      validation.error.errors.forEach(err => {
+        const field = err.path[0] as keyof typeof fieldErrors;
+        if (!fieldErrors[field]) {
+          fieldErrors[field] = err.message;
+        }
+      });
+      setSignupErrors(fieldErrors);
+      toast.error("Please fix the form errors");
+      return;
+    }
+
     setIsLoading(true);
     
     const redirectUrl = `${window.location.origin}/dashboard`;
@@ -109,10 +160,18 @@ export default function AuthPage() {
                     id="login-email"
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (loginErrors.email) validateLoginField("email", e.target.value);
+                    }}
+                    onBlur={() => validateLoginField("email", email)}
                     placeholder="your@email.com"
-                    required
+                    className={loginErrors.email ? "border-destructive" : ""}
+                    aria-invalid={!!loginErrors.email}
                   />
+                  {loginErrors.email && (
+                    <p className="text-sm text-destructive">{loginErrors.email}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="login-password">Password</Label>
@@ -120,10 +179,18 @@ export default function AuthPage() {
                     id="login-password"
                     type="password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (loginErrors.password) validateLoginField("password", e.target.value);
+                    }}
+                    onBlur={() => validateLoginField("password", password)}
                     placeholder="••••••••"
-                    required
+                    className={loginErrors.password ? "border-destructive" : ""}
+                    aria-invalid={!!loginErrors.password}
                   />
+                  {loginErrors.password && (
+                    <p className="text-sm text-destructive">{loginErrors.password}</p>
+                  )}
                 </div>
                 <Button type="submit" variant="gold" className="w-full" disabled={isLoading}>
                   {isLoading ? "Signing in..." : "Sign In"}
@@ -139,10 +206,18 @@ export default function AuthPage() {
                     id="signup-name"
                     type="text"
                     value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
+                    onChange={(e) => {
+                      setFullName(e.target.value);
+                      if (signupErrors.name) validateSignupField("name", e.target.value);
+                    }}
+                    onBlur={() => validateSignupField("name", fullName)}
                     placeholder="John Doe"
-                    required
+                    className={signupErrors.name ? "border-destructive" : ""}
+                    aria-invalid={!!signupErrors.name}
                   />
+                  {signupErrors.name && (
+                    <p className="text-sm text-destructive">{signupErrors.name}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
@@ -150,10 +225,18 @@ export default function AuthPage() {
                     id="signup-email"
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (signupErrors.email) validateSignupField("email", e.target.value);
+                    }}
+                    onBlur={() => validateSignupField("email", email)}
                     placeholder="your@email.com"
-                    required
+                    className={signupErrors.email ? "border-destructive" : ""}
+                    aria-invalid={!!signupErrors.email}
                   />
+                  {signupErrors.email && (
+                    <p className="text-sm text-destructive">{signupErrors.email}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>
@@ -161,11 +244,21 @@ export default function AuthPage() {
                     id="signup-password"
                     type="password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (signupErrors.password) validateSignupField("password", e.target.value);
+                    }}
+                    onBlur={() => validateSignupField("password", password)}
                     placeholder="••••••••"
-                    minLength={6}
-                    required
+                    className={signupErrors.password ? "border-destructive" : ""}
+                    aria-invalid={!!signupErrors.password}
                   />
+                  {signupErrors.password && (
+                    <p className="text-sm text-destructive">{signupErrors.password}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Min 8 chars with uppercase, lowercase, and number
+                  </p>
                 </div>
                 <Button type="submit" variant="gold" className="w-full" disabled={isLoading}>
                   {isLoading ? "Creating Account..." : "Create Account"}

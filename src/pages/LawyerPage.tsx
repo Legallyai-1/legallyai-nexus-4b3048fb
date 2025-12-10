@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
+import { loginSchema, lawyerSignupSchema } from "@/lib/validations/auth";
 
 const features = [
   {
@@ -55,6 +56,7 @@ export default function LawyerPage() {
   const [password, setPassword] = useState("");
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -66,8 +68,34 @@ export default function LawyerPage() {
     checkAuth();
   }, [navigate]);
 
+  const validateField = (field: "email" | "password", value: string) => {
+    const schema = isLogin ? loginSchema : lawyerSignupSchema;
+    const result = schema.shape[field].safeParse(value);
+    if (!result.success) {
+      setErrors(prev => ({ ...prev, [field]: result.error.errors[0].message }));
+    } else {
+      setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const schema = isLogin ? loginSchema : lawyerSignupSchema;
+    const validation = schema.safeParse({ email, password });
+    if (!validation.success) {
+      const fieldErrors: { email?: string; password?: string } = {};
+      validation.error.errors.forEach(err => {
+        const field = err.path[0] as keyof typeof fieldErrors;
+        if (!fieldErrors[field]) {
+          fieldErrors[field] = err.message;
+        }
+      });
+      setErrors(fieldErrors);
+      toast.error("Please fix the form errors");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -84,6 +112,7 @@ export default function LawyerPage() {
           email,
           password,
           options: {
+            emailRedirectTo: `${window.location.origin}/dashboard`,
             data: {
               role: "lawyer",
             },
@@ -92,6 +121,7 @@ export default function LawyerPage() {
         if (error) throw error;
         toast.success("Account created! You can now sign in.");
         setIsLogin(true);
+        setErrors({});
       }
     } catch (error: any) {
       toast.error(error.message || "Authentication failed");
@@ -187,11 +217,18 @@ export default function LawyerPage() {
                         id="email"
                         type="email"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          if (errors.email) validateField("email", e.target.value);
+                        }}
+                        onBlur={() => validateField("email", email)}
                         placeholder="you@lawfirm.com"
-                        required
-                        className="bg-muted/50 border-border/50 focus:border-neon-green/50 focus:shadow-glow-green transition-all"
+                        className={`bg-muted/50 border-border/50 focus:border-neon-green/50 focus:shadow-glow-green transition-all ${errors.email ? "border-destructive" : ""}`}
+                        aria-invalid={!!errors.email}
                       />
+                      {errors.email && (
+                        <p className="text-sm text-destructive">{errors.email}</p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -200,11 +237,23 @@ export default function LawyerPage() {
                         id="password"
                         type="password"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          if (errors.password) validateField("password", e.target.value);
+                        }}
+                        onBlur={() => validateField("password", password)}
                         placeholder="••••••••"
-                        required
-                        className="bg-muted/50 border-border/50 focus:border-neon-green/50 focus:shadow-glow-green transition-all"
+                        className={`bg-muted/50 border-border/50 focus:border-neon-green/50 focus:shadow-glow-green transition-all ${errors.password ? "border-destructive" : ""}`}
+                        aria-invalid={!!errors.password}
                       />
+                      {errors.password && (
+                        <p className="text-sm text-destructive">{errors.password}</p>
+                      )}
+                      {!isLogin && (
+                        <p className="text-xs text-muted-foreground">
+                          Min 8 chars with uppercase, lowercase, and number
+                        </p>
+                      )}
                     </div>
 
                     {!isLogin && (
@@ -233,7 +282,10 @@ export default function LawyerPage() {
                   <div className="mt-6 text-center">
                     <button
                       type="button"
-                      onClick={() => setIsLogin(!isLogin)}
+                      onClick={() => {
+                        setIsLogin(!isLogin);
+                        setErrors({});
+                      }}
                       className="text-sm text-muted-foreground hover:text-neon-green transition-colors"
                     >
                       {isLogin
