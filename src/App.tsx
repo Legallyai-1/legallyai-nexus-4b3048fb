@@ -19,6 +19,9 @@ import MessagesPage from "./pages/MessagesPage";
 import TimeClockPage from "./pages/TimeClockPage";
 import EmployeePortalPage from "./pages/EmployeePortalPage";
 import AdminPage from "./pages/AdminPage";
+import TermsPage from "./pages/TermsPage";
+import PrivacyPage from "./pages/PrivacyPage";
+import ClientPortalPage from "./pages/ClientPortalPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +49,9 @@ const App = () => (
           <Route path="/timeclock" element={<TimeClockPage />} />
           <Route path="/employee" element={<EmployeePortalPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/client-portal" element={<ClientPortalPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
