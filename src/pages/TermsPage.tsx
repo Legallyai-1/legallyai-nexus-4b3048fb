@@ -1,10 +1,17 @@
 import { Layout } from "@/components/layout/Layout";
+import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const TermsPage = () => {
   return (
     <Layout>
       <div className="min-h-screen bg-background py-16">
         <div className="container mx-auto px-4 max-w-4xl">
+          <Button variant="ghost" className="mb-6" asChild>
+            <Link to="/"><ArrowLeft className="h-4 w-4 mr-2" />Back to Home</Link>
+          </Button>
+          
           <h1 className="text-4xl font-bold text-foreground mb-8">Terms of Service</h1>
           <p className="text-muted-foreground mb-8">Last Updated: December 10, 2024</p>
           
