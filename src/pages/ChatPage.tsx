@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Bot, User, Sparkles, AlertCircle, Loader2 } from "lucide-react";
+import { Send, User, Sparkles, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import AdBanner from "@/components/ads/AdBanner";
 import AdContainer from "@/components/ads/AdContainer";
 
@@ -43,7 +44,6 @@ export default function ChatPage() {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Check authentication status
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -71,7 +71,6 @@ export default function ChatPage() {
   const handleSend = async () => {
     if (!input.trim() || isTyping) return;
 
-    // Require authentication
     if (!user) {
       toast.error("Please sign in to use the chat");
       navigate("/auth");
@@ -91,7 +90,6 @@ export default function ChatPage() {
     setIsTyping(true);
 
     try {
-      // Get the user's session token for authentication
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         toast.error("Session expired. Please sign in again.");
@@ -99,7 +97,6 @@ export default function ChatPage() {
         return;
       }
 
-      // Prepare messages for API (excluding welcome message)
       const apiMessages = messages
         .filter(m => m.id !== "welcome")
         .map(m => ({ role: m.role, content: m.content }));
@@ -123,14 +120,12 @@ export default function ChatPage() {
         throw new Error("No response body");
       }
 
-      // Stream the response
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let textBuffer = "";
       let assistantContent = "";
       let assistantMessageId = (Date.now() + 1).toString();
 
-      // Add empty assistant message
       setMessages(prev => [...prev, {
         id: assistantMessageId,
         role: "assistant",
@@ -144,7 +139,6 @@ export default function ChatPage() {
         
         textBuffer += decoder.decode(value, { stream: true });
 
-        // Process line-by-line
         let newlineIndex: number;
         while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
           let line = textBuffer.slice(0, newlineIndex);
@@ -171,14 +165,12 @@ export default function ChatPage() {
               );
             }
           } catch {
-            // Incomplete JSON, put it back
             textBuffer = line + "\n" + textBuffer;
             break;
           }
         }
       }
 
-      // Final flush
       if (textBuffer.trim()) {
         for (let raw of textBuffer.split("\n")) {
           if (!raw) continue;
@@ -206,8 +198,6 @@ export default function ChatPage() {
     } catch (error) {
       console.error("Chat error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to get response");
-      
-      // Remove the empty assistant message if there was an error
       setMessages(prev => prev.filter(m => m.content !== ""));
     } finally {
       setIsTyping(false);
@@ -221,8 +211,11 @@ export default function ChatPage() {
   if (isCheckingAuth) {
     return (
       <Layout showFooter={false}>
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-legal-gold" />
+        <div className="flex items-center justify-center min-h-screen bg-background">
+          <div className="flex flex-col items-center gap-4">
+            <AnimatedAIHead variant="cyan" size="lg" />
+            <Loader2 className="h-6 w-6 animate-spin text-neon-cyan" />
+          </div>
         </div>
       </Layout>
     );
@@ -232,19 +225,18 @@ export default function ChatPage() {
     <Layout showFooter={false}>
       <div className="flex flex-col h-[calc(100vh-4rem)] bg-background">
         {!user && (
-          <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-3">
-            <div className="container mx-auto flex items-center justify-center gap-2 text-amber-600">
+          <div className="bg-neon-purple/10 border-b border-neon-purple/30 px-4 py-3">
+            <div className="container mx-auto flex items-center justify-center gap-2 text-neon-purple">
               <AlertCircle className="h-4 w-4" />
-              <span className="text-sm">Please <button onClick={() => navigate("/auth")} className="underline font-medium">sign in</button> to use the AI assistant</span>
+              <span className="text-sm">Please <button onClick={() => navigate("/auth")} className="underline font-medium hover:text-neon-cyan transition-colors">sign in</button> to use the AI assistant</span>
             </div>
           </div>
         )}
+        
         {/* Header */}
-        <div className="border-b border-border bg-card px-4 py-3">
+        <div className="border-b border-border glass-card px-4 py-3">
           <div className="container mx-auto flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-legal-gold/10">
-              <Bot className="h-5 w-5 text-legal-gold" />
-            </div>
+            <AnimatedAIHead variant="cyan" size="sm" />
             <div>
               <h1 className="font-display text-lg font-semibold text-foreground">
                 AI Legal Assistant
@@ -254,7 +246,7 @@ export default function ChatPage() {
               </p>
             </div>
             <div className="ml-auto flex items-center gap-2 text-sm">
-              <Sparkles className="h-4 w-4 text-legal-gold" />
+              <Sparkles className="h-4 w-4 text-neon-cyan animate-pulse" />
               <span className="text-muted-foreground">Powered by AI</span>
             </div>
           </div>
@@ -272,16 +264,16 @@ export default function ChatPage() {
                 )}
               >
                 {message.role === "assistant" && (
-                  <div className="shrink-0 p-2 rounded-lg bg-legal-gold/10 h-fit">
-                    <Bot className="h-5 w-5 text-legal-gold" />
+                  <div className="shrink-0">
+                    <AnimatedAIHead variant="cyan" size="sm" isActive={isTyping && message.content === ""} />
                   </div>
                 )}
                 <div
                   className={cn(
                     "max-w-[80%] rounded-2xl px-4 py-3",
                     message.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-foreground"
+                      ? "bg-gradient-to-r from-neon-cyan to-neon-blue text-background"
+                      : "glass-card border-neon-cyan/20"
                   )}
                 >
                   <p className="whitespace-pre-wrap text-sm leading-relaxed">
@@ -295,8 +287,8 @@ export default function ChatPage() {
                   </span>
                 </div>
                 {message.role === "user" && (
-                  <div className="shrink-0 p-2 rounded-lg bg-primary h-fit">
-                    <User className="h-5 w-5 text-primary-foreground" />
+                  <div className="shrink-0 p-2 rounded-xl bg-gradient-to-r from-neon-purple to-neon-pink h-fit">
+                    <User className="h-5 w-5 text-white" />
                   </div>
                 )}
               </div>
@@ -304,14 +296,14 @@ export default function ChatPage() {
 
             {isTyping && messages[messages.length - 1]?.role !== "assistant" && (
               <div className="flex gap-3 justify-start">
-                <div className="shrink-0 p-2 rounded-lg bg-legal-gold/10 h-fit">
-                  <Bot className="h-5 w-5 text-legal-gold" />
+                <div className="shrink-0">
+                  <AnimatedAIHead variant="cyan" size="sm" isActive={true} />
                 </div>
-                <div className="bg-muted rounded-2xl px-4 py-3">
+                <div className="glass-card border-neon-cyan/20 rounded-2xl px-4 py-3">
                   <div className="flex gap-1">
-                    <span className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" />
-                    <span className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "0.1s" }} />
-                    <span className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "0.2s" }} />
+                    <span className="w-2 h-2 rounded-full bg-neon-cyan animate-bounce" />
+                    <span className="w-2 h-2 rounded-full bg-neon-cyan animate-bounce" style={{ animationDelay: "0.1s" }} />
+                    <span className="w-2 h-2 rounded-full bg-neon-cyan animate-bounce" style={{ animationDelay: "0.2s" }} />
                   </div>
                 </div>
               </div>
@@ -323,15 +315,18 @@ export default function ChatPage() {
 
         {/* Suggested Questions */}
         {messages.length === 1 && (
-          <div className="border-t border-border bg-muted/50 px-4 py-4">
+          <div className="border-t border-border glass-card px-4 py-4">
             <div className="container mx-auto max-w-3xl">
-              <p className="text-sm text-muted-foreground mb-3">Suggested questions:</p>
+              <p className="text-sm text-muted-foreground mb-3 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-neon-purple" />
+                Suggested questions:
+              </p>
               <div className="flex flex-wrap gap-2">
                 {suggestedQuestions.map((question, i) => (
                   <button
                     key={i}
                     onClick={() => handleSuggestedQuestion(question)}
-                    className="px-3 py-2 text-sm rounded-lg bg-background border border-border hover:border-legal-gold/50 hover:bg-legal-gold/5 transition-colors text-left"
+                    className="px-3 py-2 text-sm rounded-xl glass-card border-neon-cyan/20 hover:border-neon-cyan/50 hover:shadow-glow-sm transition-all text-left"
                   >
                     {question}
                   </button>
@@ -342,7 +337,7 @@ export default function ChatPage() {
         )}
 
         {/* Input */}
-        <div className="border-t border-border bg-card px-4 py-4">
+        <div className="border-t border-border glass-card px-4 py-4">
           <div className="container mx-auto max-w-3xl">
             <form
               onSubmit={(e) => {
@@ -355,24 +350,24 @@ export default function ChatPage() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask me anything about legal matters..."
-                className="flex-1 h-12 text-base"
+                className="flex-1 h-12 text-base bg-muted/50 border-border/50 focus:border-neon-cyan/50 focus:shadow-glow-sm transition-all rounded-xl"
                 disabled={isTyping}
               />
               <Button
                 type="submit"
-                variant="gold"
+                variant="neon"
                 size="lg"
                 disabled={!input.trim() || isTyping}
+                className="rounded-xl"
               >
                 <Send className="h-5 w-5" />
               </Button>
             </form>
             <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
-              <AlertCircle className="h-3 w-3" />
+              <AlertCircle className="h-3 w-3 text-neon-purple" />
               This is AI-generated information, not legal advice. Consult a licensed attorney.
             </p>
             
-            {/* Ad Banner (Replace slot with your Chat Page ad unit ID) */}
             <AdContainer position="bottom" className="mt-4">
               <AdBanner slot="CHAT_PAGE_SLOT" format="horizontal" />
             </AdContainer>
