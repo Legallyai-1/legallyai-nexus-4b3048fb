@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,12 +7,23 @@ import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import AdBanner from "@/components/ads/AdBanner";
 import AdContainer from "@/components/ads/AdContainer";
+import { LexiAssistant } from "@/components/dashboard/LexiAssistant";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Index() {
   const [prompt, setPrompt] = useState("");
   const [document, setDocument] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [userName, setUserName] = useState<string | undefined>(undefined);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.user_metadata?.full_name) {
+        setUserName(user.user_metadata.full_name.split(" ")[0]);
+      }
+    });
+  }, []);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -110,6 +121,11 @@ export default function Index() {
             {isGenerating ? "Generating..." : "Generate Document"}
             <ArrowRight className="h-5 w-5 ml-2" />
           </Button>
+        </div>
+
+        {/* Lexi Assistant */}
+        <div className="w-full max-w-2xl mt-8 animate-fade-up" style={{ animationDelay: "0.45s" }}>
+          <LexiAssistant userName={userName} />
         </div>
 
         {/* Ad Banner */}

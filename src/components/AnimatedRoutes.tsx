@@ -37,6 +37,7 @@ import ProbationParolePage from "@/pages/ProbationParolePage";
 import LegalAcademyPage from "@/pages/LegalAcademyPage";
 import TelephonyPage from "@/pages/TelephonyPage";
 import CustomerSupportPage from "@/pages/CustomerSupportPage";
+import MonetizationPage from "@/pages/MonetizationPage";
 import NotFound from "@/pages/NotFound";
 
 export function AnimatedRoutes() {
@@ -80,6 +81,7 @@ export function AnimatedRoutes() {
         <Route path="/legal-academy" element={<PageTransition><LegalAcademyPage /></PageTransition>} />
         <Route path="/telephony" element={<PageTransition><TelephonyPage /></PageTransition>} />
         <Route path="/support" element={<PageTransition><CustomerSupportPage /></PageTransition>} />
+        <Route path="/monetization" element={<PageTransition><MonetizationPage /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
