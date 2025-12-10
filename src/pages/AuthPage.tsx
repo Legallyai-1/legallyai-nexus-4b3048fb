@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Scale, Building2, User } from "lucide-react";
+import { Scale, Building2, User, KeyRound } from "lucide-react";
 import { loginSchema, signupSchema } from "@/lib/validations/auth";
 
 export default function AuthPage() {
@@ -195,6 +195,12 @@ export default function AuthPage() {
                 <Button type="submit" variant="gold" className="w-full" disabled={isLoading}>
                   {isLoading ? "Signing in..." : "Sign In"}
                 </Button>
+                <Link to="/forgot-password" className="block mt-3">
+                  <Button variant="ghost" type="button" className="w-full text-sm text-muted-foreground hover:text-legal-gold gap-2">
+                    <KeyRound className="h-4 w-4" />
+                    Forgot Password?
+                  </Button>
+                </Link>
               </form>
             </TabsContent>
             
