@@ -25,6 +25,7 @@ import ClientPortalPage from "./pages/ClientPortalPage";
 import DocumentSigningPage from "./pages/DocumentSigningPage";
 import InvoicesPage from "./pages/InvoicesPage";
 import ConsultationsPage from "./pages/ConsultationsPage";
+import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -58,6 +59,7 @@ const App = () => (
           <Route path="/document-signing" element={<DocumentSigningPage />} />
           <Route path="/invoices" element={<InvoicesPage />} />
           <Route path="/consultations" element={<ConsultationsPage />} />
+          <Route path="/payment-success" element={<PaymentSuccessPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
