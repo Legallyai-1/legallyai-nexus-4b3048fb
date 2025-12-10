@@ -2,13 +2,13 @@ import { useNavigate } from "react-router-dom";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { Layout } from "@/components/layout/Layout";
-import { MessageSquare, Heart, Shield, Scale, Briefcase, Building2, FileText, Gavel } from "lucide-react";
+import { MessageSquare, Heart, Shield, Scale, Briefcase, Building2, FileText, Gavel, GraduationCap, Phone, Headphones, Users } from "lucide-react";
 
 const assistants = [
   {
     id: "general",
-    name: "General Legal Chat",
-    description: "Get answers to your general legal questions. Our AI can help you understand legal concepts, processes, and your rights.",
+    name: "Lexi - General Legal",
+    description: "Your main legal assistant for general questions, navigation, and personalized tips.",
     icon: MessageSquare,
     variant: "cyan" as const,
     path: "/chat",
@@ -16,12 +16,12 @@ const assistants = [
     border: "border-cyan-500/30",
     glow: "shadow-[0_0_30px_rgba(0,255,255,0.2)]",
     iconBg: "bg-cyan-500/20",
-    questions: ["What are my tenant rights?", "How do I file a small claims case?", "What is a power of attorney?"]
+    questions: ["What are my rights?", "How do I file a case?", "Legal processes"]
   },
   {
     id: "custody",
-    name: "Child Custody Helper",
-    description: "Navigate child custody matters with AI guidance. Get help understanding custody types, visitation rights, and parenting plans.",
+    name: "CustodiAI - Child Custody",
+    description: "Navigate custody matters with AI guidance. Intake, contracts, enforceable orders, court prep.",
     icon: Heart,
     variant: "purple" as const,
     path: "/custody",
@@ -29,38 +29,38 @@ const assistants = [
     border: "border-purple-500/30",
     glow: "shadow-[0_0_30px_rgba(168,85,247,0.2)]",
     iconBg: "bg-purple-500/20",
-    questions: ["Types of custody arrangements", "How to modify custody orders", "Best interests of the child"]
+    questions: ["Custody arrangements", "Modify orders", "Parenting plans"]
   },
   {
-    id: "restraining",
-    name: "Restraining Order Helper",
-    description: "Learn about protective orders and restraining orders. Understand the process, requirements, and your legal protections.",
-    icon: Shield,
+    id: "defense",
+    name: "Defendr - Tickets & Criminal",
+    description: "Traffic tickets to criminal charges. Court prep, scenario simulation, sentencing guidance.",
+    icon: Gavel,
     variant: "pink" as const,
-    path: "/chat?type=restraining",
+    path: "/tickets-defense",
     gradient: "from-pink-500/20 to-rose-500/20",
     border: "border-pink-500/30",
     glow: "shadow-[0_0_30px_rgba(236,72,153,0.2)]",
     iconBg: "bg-pink-500/20",
-    questions: ["How to file a restraining order", "Types of protective orders", "What evidence do I need?"]
+    questions: ["Fight traffic ticket", "Criminal defense", "Court preparation"]
   },
   {
-    id: "divorce",
-    name: "Divorce Helper",
-    description: "Get guidance through the divorce process. Understand property division, spousal support, and legal requirements.",
-    icon: Scale,
-    variant: "orange" as const,
-    path: "/chat?type=divorce",
-    gradient: "from-orange-500/20 to-amber-500/20",
-    border: "border-orange-500/30",
-    glow: "shadow-[0_0_30px_rgba(249,115,22,0.2)]",
-    iconBg: "bg-orange-500/20",
-    questions: ["Contested vs uncontested divorce", "How is property divided?", "What about child support?"]
+    id: "probation",
+    name: "RehabilitAI - Probation/Parole",
+    description: "Compassionate support for probation, parole, incarceration, and reentry resources.",
+    icon: Users,
+    variant: "green" as const,
+    path: "/probation-parole",
+    gradient: "from-green-500/20 to-emerald-500/20",
+    border: "border-green-500/30",
+    glow: "shadow-[0_0_30px_rgba(34,197,94,0.2)]",
+    iconBg: "bg-green-500/20",
+    questions: ["Probation terms", "Parole hearings", "Reentry support"]
   },
   {
     id: "workplace",
-    name: "Workplace Legal Aid",
-    description: "Know your rights as an employee. Get help with workplace discrimination, harassment, wages, and labor law questions.",
+    name: "WorkAI - Workplace Rights",
+    description: "Know your employee rights. Discrimination, harassment, wages, and labor law.",
     icon: Building2,
     variant: "orange" as const,
     path: "/workplace-legal-aid",
@@ -68,25 +68,51 @@ const assistants = [
     border: "border-orange-500/30",
     glow: "shadow-[0_0_30px_rgba(249,115,22,0.2)]",
     iconBg: "bg-orange-500/20",
-    questions: ["Workplace discrimination", "Overtime and wage laws", "Wrongful termination"]
+    questions: ["Workplace discrimination", "Overtime laws", "Wrongful termination"]
   },
   {
-    id: "lawyer-case",
-    name: "Lawyer Case Assistant",
-    description: "AI-powered case analysis for legal professionals. Research case law, analyze arguments, and get strategic insights.",
-    icon: Gavel,
+    id: "academy",
+    name: "ScholarAI - Legal Academy",
+    description: "Virtual law school with AI tutoring, bar exam prep, courses, and certifications.",
+    icon: GraduationCap,
+    variant: "blue" as const,
+    path: "/legal-academy",
+    gradient: "from-blue-500/20 to-indigo-500/20",
+    border: "border-blue-500/30",
+    glow: "shadow-[0_0_30px_rgba(59,130,246,0.2)]",
+    iconBg: "bg-blue-500/20",
+    questions: ["Law courses", "Bar exam prep", "Legal certificates"]
+  },
+  {
+    id: "telephony",
+    name: "CallAI - Telephony",
+    description: "AI-powered calling with live transcription and case integration.",
+    icon: Phone,
+    variant: "cyan" as const,
+    path: "/telephony",
+    gradient: "from-cyan-500/20 to-teal-500/20",
+    border: "border-cyan-500/30",
+    glow: "shadow-[0_0_30px_rgba(0,255,255,0.2)]",
+    iconBg: "bg-cyan-500/20",
+    questions: ["Make calls", "Transcription", "Call history"]
+  },
+  {
+    id: "support",
+    name: "ServeAI - Customer Support",
+    description: "24/7 autonomous support. Billing, accounts, refunds, and troubleshooting.",
+    icon: Headphones,
     variant: "green" as const,
-    path: "/chat?type=lawyer",
-    gradient: "from-green-500/20 to-emerald-500/20",
+    path: "/support",
+    gradient: "from-green-500/20 to-cyan-500/20",
     border: "border-green-500/30",
     glow: "shadow-[0_0_30px_rgba(34,197,94,0.2)]",
     iconBg: "bg-green-500/20",
-    questions: ["Case law research", "Argument analysis", "Legal strategy"]
+    questions: ["Billing help", "Refund request", "Account issues"]
   },
   {
     id: "document",
-    name: "Document Assistant",
-    description: "Get help drafting and reviewing legal documents. From contracts to agreements, get AI assistance with your documents.",
+    name: "DocuAI - Documents",
+    description: "Draft, review, sign, and store legal documents with AI assistance.",
     icon: FileText,
     variant: "blue" as const,
     path: "/generate",
@@ -94,20 +120,20 @@ const assistants = [
     border: "border-blue-500/30",
     glow: "shadow-[0_0_30px_rgba(59,130,246,0.2)]",
     iconBg: "bg-blue-500/20",
-    questions: ["Draft NDA", "Create lease agreement", "Review contract"]
+    questions: ["Draft NDA", "Create contract", "Review agreement"]
   },
   {
     id: "business",
-    name: "Business Legal Helper",
-    description: "Start and protect your business. Get help with formation, contracts, IP, and compliance matters.",
+    name: "BarristerAI - Law Firm Ops",
+    description: "Complete firm management: clients, cases, billing, documents, and staff.",
     icon: Briefcase,
-    variant: "cyan" as const,
-    path: "/chat?type=business",
-    gradient: "from-cyan-500/20 to-teal-500/20",
-    border: "border-cyan-500/30",
-    glow: "shadow-[0_0_30px_rgba(0,255,255,0.2)]",
-    iconBg: "bg-cyan-500/20",
-    questions: ["LLC vs Corporation", "Trademark basics", "Business contracts"]
+    variant: "purple" as const,
+    path: "/dashboard",
+    gradient: "from-purple-500/20 to-pink-500/20",
+    border: "border-purple-500/30",
+    glow: "shadow-[0_0_30px_rgba(168,85,247,0.2)]",
+    iconBg: "bg-purple-500/20",
+    questions: ["Case management", "Client intake", "Firm billing"]
   }
 ];
 
