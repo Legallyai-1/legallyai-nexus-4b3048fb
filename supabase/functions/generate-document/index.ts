@@ -6,6 +6,52 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Blocked patterns for prompt injection and harmful content
+const BLOCKED_PATTERNS = [
+  /ignore\s+(all\s+)?(previous|prior|above)\s+(instructions?|rules?|prompts?)/i,
+  /disregard\s+(all\s+)?(previous|prior|above)/i,
+  /you\s+are\s+now\s+(?!legallyai)/i,
+  /act\s+as\s+(?!a\s+legal)/i,
+  /pretend\s+(you\s+are|to\s+be)/i,
+  /forget\s+(everything|all|your)/i,
+  /new\s+instructions?:/i,
+  /system\s*:\s*/i,
+  /\[system\]/i,
+  /\<\s*system\s*\>/i,
+];
+
+// Blocked document types that could be harmful
+const BLOCKED_CONTENT = [
+  /how\s+to\s+(commit|do|perform)\s+(fraud|crime|illegal)/i,
+  /fake\s+(passport|id|identity|document)/i,
+  /forge(d|ry)?\s+(signature|document)/i,
+  /money\s+launder/i,
+  /tax\s+evasion/i,
+  /hack(ing)?\s+(into|account|system)/i,
+];
+
+function validatePrompt(prompt: string): { valid: boolean; reason?: string } {
+  const normalizedPrompt = prompt.toLowerCase().trim();
+  
+  // Check for prompt injection attempts
+  for (const pattern of BLOCKED_PATTERNS) {
+    if (pattern.test(prompt)) {
+      console.warn("Blocked prompt injection attempt:", prompt.substring(0, 100));
+      return { valid: false, reason: "Invalid request format. Please describe your legal document needs clearly." };
+    }
+  }
+  
+  // Check for harmful content requests
+  for (const pattern of BLOCKED_CONTENT) {
+    if (pattern.test(prompt)) {
+      console.warn("Blocked harmful content request:", prompt.substring(0, 100));
+      return { valid: false, reason: "We cannot generate documents for illegal or harmful purposes." };
+    }
+  }
+  
+  return { valid: true };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -58,6 +104,15 @@ serve(async (req) => {
       );
     }
 
+    // Validate prompt content for injection and harmful requests
+    const validation = validatePrompt(prompt);
+    if (!validation.valid) {
+      return new Response(
+        JSON.stringify({ error: validation.reason }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       console.error("LOVABLE_API_KEY is not configured");
@@ -77,6 +132,8 @@ IMPORTANT RULES:
 5. Add state-specific provisions when mentioned
 6. Include standard legal boilerplate (severability, entire agreement, etc.)
 7. Always end with: "DISCLAIMER: This document is a template for informational purposes only. This is not legal advice. Please consult a licensed attorney for your specific legal needs."
+8. NEVER generate documents for illegal purposes, fraud, or harmful activities
+9. If a request seems harmful or illegal, politely decline and explain why
 
 Document types you can generate:
 - NDAs (Non-Disclosure Agreements)

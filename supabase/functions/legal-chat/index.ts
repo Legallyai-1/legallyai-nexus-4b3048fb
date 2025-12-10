@@ -6,6 +6,32 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Blocked patterns for prompt injection attempts
+const BLOCKED_PATTERNS = [
+  /ignore\s+(all\s+)?(previous|prior|above)\s+(instructions?|rules?|prompts?)/i,
+  /disregard\s+(all\s+)?(previous|prior|above)/i,
+  /you\s+are\s+now\s+(?!legallyai)/i,
+  /act\s+as\s+(?!a\s+legal)/i,
+  /pretend\s+(you\s+are|to\s+be)/i,
+  /forget\s+(everything|all|your)/i,
+  /new\s+instructions?:/i,
+  /system\s*:\s*/i,
+  /\[system\]/i,
+  /\<\s*system\s*\>/i,
+];
+
+function validateMessage(content: string): { valid: boolean; reason?: string } {
+  // Check for prompt injection attempts
+  for (const pattern of BLOCKED_PATTERNS) {
+    if (pattern.test(content)) {
+      console.warn("Blocked prompt injection attempt in chat:", content.substring(0, 100));
+      return { valid: false, reason: "Invalid request format. Please ask your legal question clearly." };
+    }
+  }
+  
+  return { valid: true };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -66,6 +92,19 @@ serve(async (req) => {
       );
     }
 
+    // Validate each message for injection attempts
+    for (const message of messages) {
+      if (message.content) {
+        const validation = validateMessage(message.content);
+        if (!validation.valid) {
+          return new Response(
+            JSON.stringify({ error: validation.reason }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       console.error("LOVABLE_API_KEY is not configured");
@@ -85,6 +124,8 @@ IMPORTANT RULES:
 5. Be professional but approachable
 6. If asked to generate a document, explain you can help with that on the Generate page
 7. Always remind users this is informational, not legal advice
+8. NEVER provide advice on how to commit crimes or illegal activities
+9. If a question seems to be asking for help with illegal activities, politely decline
 
 Areas you can help with:
 - Contract law and agreements
