@@ -26,6 +26,12 @@ import InvoicesPage from "@/pages/InvoicesPage";
 import ConsultationsPage from "@/pages/ConsultationsPage";
 import PaymentSuccessPage from "@/pages/PaymentSuccessPage";
 import AIAssistantsPage from "@/pages/AIAssistantsPage";
+import OnboardingPage from "@/pages/OnboardingPage";
+import PayrollPage from "@/pages/PayrollPage";
+import JobBoardPage from "@/pages/JobBoardPage";
+import WorkplaceLegalAidPage from "@/pages/WorkplaceLegalAidPage";
+import ProBonoPage from "@/pages/ProBonoPage";
+import DocumentTemplatesPage from "@/pages/DocumentTemplatesPage";
 import NotFound from "@/pages/NotFound";
 
 export function AnimatedRoutes() {
@@ -58,6 +64,12 @@ export function AnimatedRoutes() {
         <Route path="/consultations" element={<PageTransition><ConsultationsPage /></PageTransition>} />
         <Route path="/payment-success" element={<PageTransition><PaymentSuccessPage /></PageTransition>} />
         <Route path="/ai-assistants" element={<PageTransition><AIAssistantsPage /></PageTransition>} />
+        <Route path="/onboarding" element={<PageTransition><OnboardingPage /></PageTransition>} />
+        <Route path="/payroll" element={<PageTransition><PayrollPage /></PageTransition>} />
+        <Route path="/jobs" element={<PageTransition><JobBoardPage /></PageTransition>} />
+        <Route path="/workplace-legal-aid" element={<PageTransition><WorkplaceLegalAidPage /></PageTransition>} />
+        <Route path="/pro-bono" element={<PageTransition><ProBonoPage /></PageTransition>} />
+        <Route path="/templates" element={<PageTransition><DocumentTemplatesPage /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
