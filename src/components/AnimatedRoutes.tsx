@@ -32,6 +32,11 @@ import JobBoardPage from "@/pages/JobBoardPage";
 import WorkplaceLegalAidPage from "@/pages/WorkplaceLegalAidPage";
 import ProBonoPage from "@/pages/ProBonoPage";
 import DocumentTemplatesPage from "@/pages/DocumentTemplatesPage";
+import TicketsDefensePage from "@/pages/TicketsDefensePage";
+import ProbationParolePage from "@/pages/ProbationParolePage";
+import LegalAcademyPage from "@/pages/LegalAcademyPage";
+import TelephonyPage from "@/pages/TelephonyPage";
+import CustomerSupportPage from "@/pages/CustomerSupportPage";
 import NotFound from "@/pages/NotFound";
 
 export function AnimatedRoutes() {
@@ -70,6 +75,11 @@ export function AnimatedRoutes() {
         <Route path="/workplace-legal-aid" element={<PageTransition><WorkplaceLegalAidPage /></PageTransition>} />
         <Route path="/pro-bono" element={<PageTransition><ProBonoPage /></PageTransition>} />
         <Route path="/templates" element={<PageTransition><DocumentTemplatesPage /></PageTransition>} />
+        <Route path="/tickets-defense" element={<PageTransition><TicketsDefensePage /></PageTransition>} />
+        <Route path="/probation-parole" element={<PageTransition><ProbationParolePage /></PageTransition>} />
+        <Route path="/legal-academy" element={<PageTransition><LegalAcademyPage /></PageTransition>} />
+        <Route path="/telephony" element={<PageTransition><TelephonyPage /></PageTransition>} />
+        <Route path="/support" element={<PageTransition><CustomerSupportPage /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
