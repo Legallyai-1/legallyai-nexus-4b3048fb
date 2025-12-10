@@ -26,6 +26,7 @@ import DocumentSigningPage from "./pages/DocumentSigningPage";
 import InvoicesPage from "./pages/InvoicesPage";
 import ConsultationsPage from "./pages/ConsultationsPage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
+import AIAssistantsPage from "./pages/AIAssistantsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -60,6 +61,7 @@ const App = () => (
           <Route path="/invoices" element={<InvoicesPage />} />
           <Route path="/consultations" element={<ConsultationsPage />} />
           <Route path="/payment-success" element={<PaymentSuccessPage />} />
+          <Route path="/ai-assistants" element={<AIAssistantsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
