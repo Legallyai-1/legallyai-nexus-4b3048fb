@@ -135,12 +135,14 @@ export default function Index() {
 
         {/* Feature Links - Glassmorphism Cards */}
         <div className="w-full max-w-4xl mt-12 animate-fade-up" style={{ animationDelay: "0.5s" }}>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          {/* AI Assistants Row */}
+          <h3 className="text-sm font-medium text-neon-cyan mb-4 text-center uppercase tracking-wider">AI Legal Assistants</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {[
-              { name: "AI Chat", path: "/chat", icon: "💬", color: "cyan" },
-              { name: "Custody", path: "/custody", icon: "👨‍👩‍👧", color: "purple" },
-              { name: "Lawyers", path: "/lawyers", icon: "⚖️", color: "green" },
-              { name: "Pricing", path: "/pricing", icon: "💎", color: "orange" },
+              { name: "Lexi Chat", path: "/chat", icon: "💬", color: "cyan", desc: "General Legal" },
+              { name: "CustodiAI", path: "/custody", icon: "👨‍👩‍👧", color: "purple", desc: "Child Custody" },
+              { name: "Defendr", path: "/tickets-defense", icon: "⚖️", color: "pink", desc: "Criminal Defense" },
+              { name: "RehabilitAI", path: "/probation-parole", icon: "🔓", color: "green", desc: "Probation/Parole" },
             ].map((item) => (
               <Link 
                 key={item.path}
@@ -148,19 +150,22 @@ export default function Index() {
                 className={`glass-card-hover rounded-xl p-4 text-center group`}
               >
                 <div className="text-2xl mb-2">{item.icon}</div>
-                <span className={`text-sm font-medium text-neon-${item.color} group-hover:text-glow-${item.color}`}>
+                <span className={`text-sm font-medium text-neon-${item.color} group-hover:text-glow-${item.color} block`}>
                   {item.name}
                 </span>
+                <span className="text-xs text-muted-foreground">{item.desc}</span>
               </Link>
             ))}
           </div>
-          {/* Additional Feature Tabs */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+
+          {/* Tools Row */}
+          <h3 className="text-sm font-medium text-neon-purple mb-4 text-center uppercase tracking-wider">Legal Tools</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {[
-              { name: "Templates", path: "/templates", icon: "📄", color: "blue" },
-              { name: "Job Board", path: "/jobs", icon: "💼", color: "cyan" },
-              { name: "Worker Rights", path: "/workplace-legal-aid", icon: "🛡️", color: "orange" },
-              { name: "Pro Bono", path: "/pro-bono", icon: "❤️", color: "pink" },
+              { name: "DocuAI", path: "/generate", icon: "📄", color: "blue", desc: "Generate Docs" },
+              { name: "Templates", path: "/templates", icon: "📋", color: "cyan", desc: "Legal Templates" },
+              { name: "WorkAI", path: "/workplace-legal-aid", icon: "🛡️", color: "orange", desc: "Worker Rights" },
+              { name: "CallAI", path: "/telephony", icon: "📞", color: "cyan", desc: "Telephony" },
             ].map((item) => (
               <Link 
                 key={item.path}
@@ -168,19 +173,22 @@ export default function Index() {
                 className={`glass-card-hover rounded-xl p-4 text-center group`}
               >
                 <div className="text-2xl mb-2">{item.icon}</div>
-                <span className={`text-sm font-medium text-neon-${item.color} group-hover:text-glow-${item.color}`}>
+                <span className={`text-sm font-medium text-neon-${item.color} group-hover:text-glow-${item.color} block`}>
                   {item.name}
                 </span>
+                <span className="text-xs text-muted-foreground">{item.desc}</span>
               </Link>
             ))}
           </div>
-          {/* More Features */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+          {/* Business Row */}
+          <h3 className="text-sm font-medium text-neon-green mb-4 text-center uppercase tracking-wider">For Law Firms</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {[
-              { name: "AI Assistants", path: "/ai-assistants", icon: "🤖", color: "cyan" },
-              { name: "Client Portal", path: "/client-portal", icon: "👤", color: "purple" },
-              { name: "Dashboard", path: "/dashboard", icon: "📊", color: "green" },
-              { name: "Consultations", path: "/consultations", icon: "📅", color: "blue" },
+              { name: "BarristerAI", path: "/dashboard", icon: "💼", color: "purple", desc: "Firm Management" },
+              { name: "Job Board", path: "/jobs", icon: "👔", color: "cyan", desc: "Legal Careers" },
+              { name: "ScholarAI", path: "/legal-academy", icon: "🎓", color: "blue", desc: "Legal Academy" },
+              { name: "Pro Bono", path: "/pro-bono", icon: "❤️", color: "pink", desc: "Free Legal Aid" },
             ].map((item) => (
               <Link 
                 key={item.path}
@@ -188,7 +196,31 @@ export default function Index() {
                 className={`glass-card-hover rounded-xl p-4 text-center group`}
               >
                 <div className="text-2xl mb-2">{item.icon}</div>
-                <span className={`text-sm font-medium text-neon-${item.color} group-hover:text-glow-${item.color}`}>
+                <span className={`text-sm font-medium text-neon-${item.color} group-hover:text-glow-${item.color} block`}>
+                  {item.name}
+                </span>
+                <span className="text-xs text-muted-foreground">{item.desc}</span>
+              </Link>
+            ))}
+          </div>
+
+          {/* Quick Links */}
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+            {[
+              { name: "All AI Assistants", path: "/ai-assistants", icon: "🤖" },
+              { name: "Client Portal", path: "/client-portal", icon: "👤" },
+              { name: "Consultations", path: "/consultations", icon: "📅" },
+              { name: "ServeAI Support", path: "/support", icon: "🎧" },
+              { name: "PayAI", path: "/monetization", icon: "💰" },
+              { name: "Pricing", path: "/pricing", icon: "💎" },
+            ].map((item) => (
+              <Link 
+                key={item.path}
+                to={item.path}
+                className="glass-card-hover rounded-lg p-3 text-center group"
+              >
+                <div className="text-lg mb-1">{item.icon}</div>
+                <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
                   {item.name}
                 </span>
               </Link>

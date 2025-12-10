@@ -13,7 +13,7 @@ interface LexiTip {
 }
 
 interface LexiAssistantProps {
-  userType?: "individual" | "lawyer" | "student";
+  userType?: "individual" | "lawyer" | "student" | "probation" | "business";
   userName?: string;
 }
 
@@ -89,6 +89,52 @@ export function LexiAssistant({ userType = "individual", userName = "there" }: L
         description: "Build experience while helping those in need with pro bono cases.",
         action: { label: "Pro Bono", href: "/pro-bono" },
         icon: <Target className="w-5 h-5 text-neon-pink" />
+      }
+    ],
+    probation: [
+      {
+        id: "1",
+        title: "Know Your Rights",
+        description: "RehabilitAI can help you understand your probation/parole rights.",
+        action: { label: "Get Help", href: "/probation-parole" },
+        icon: <Sparkles className="w-5 h-5 text-neon-green" />
+      },
+      {
+        id: "2",
+        title: "Track Important Dates",
+        description: "Never miss a check-in, court date, or important deadline.",
+        action: { label: "View Calendar", href: "/appointments" },
+        icon: <Target className="w-5 h-5 text-neon-cyan" />
+      },
+      {
+        id: "3",
+        title: "Reentry Resources",
+        description: "Find jobs, housing, and support for successful reintegration.",
+        action: { label: "Explore Resources", href: "/probation-parole" },
+        icon: <Zap className="w-5 h-5 text-neon-orange" />
+      }
+    ],
+    business: [
+      {
+        id: "1",
+        title: "Manage Your Firm",
+        description: "BarristerAI handles cases, clients, billing, and staff management.",
+        action: { label: "Open Dashboard", href: "/dashboard" },
+        icon: <Sparkles className="w-5 h-5 text-neon-purple" />
+      },
+      {
+        id: "2",
+        title: "Track Revenue",
+        description: "PayAI monitors subscriptions, payments, and revenue analytics.",
+        action: { label: "View Analytics", href: "/monetization" },
+        icon: <Target className="w-5 h-5 text-neon-green" />
+      },
+      {
+        id: "3",
+        title: "Hire Legal Talent",
+        description: "Post jobs and find qualified legal professionals.",
+        action: { label: "Job Board", href: "/jobs" },
+        icon: <Zap className="w-5 h-5 text-neon-cyan" />
       }
     ]
   };
