@@ -21,6 +21,8 @@ const suggestedQuestions = [
   "What is the difference between a will and a trust?",
 ];
 
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/legal-chat`;
+
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -43,7 +45,7 @@ export default function ChatPage() {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || isTyping) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -53,27 +55,124 @@ export default function ChatPage() {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const currentInput = input;
     setInput("");
     setIsTyping(true);
 
-    // Simulate AI response (will be replaced with real AI when backend is connected)
-    setTimeout(() => {
-      const responses = [
-        "That's a great question about legal matters. Based on current US law (2025), here's what you should know...\n\nThis is a preview response. When the full AI is connected, you'll receive detailed, accurate legal information tailored to your specific situation.\n\n**Disclaimer:** This is general information only and should not be considered legal advice. Please consult with a licensed attorney for specific legal matters.",
-        "I understand you're asking about legal processes. Let me explain the key points...\n\nIn the full version, I'll provide comprehensive guidance with relevant statutes, case law references, and practical steps you can take.\n\n**Remember:** Always verify legal information with a qualified attorney.",
-        "Thank you for your question. This is an important legal topic that affects many people...\n\nThe AI-powered response system will provide detailed analysis of your situation once connected to the backend.\n\n**Note:** Legal requirements vary by state and individual circumstances.",
-      ];
+    try {
+      // Prepare messages for API (excluding welcome message)
+      const apiMessages = messages
+        .filter(m => m.id !== "welcome")
+        .map(m => ({ role: m.role, content: m.content }));
+      apiMessages.push({ role: "user", content: currentInput });
 
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
+      const resp = await fetch(CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ messages: apiMessages }),
+      });
+
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to get response");
+      }
+
+      if (!resp.body) {
+        throw new Error("No response body");
+      }
+
+      // Stream the response
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let textBuffer = "";
+      let assistantContent = "";
+      let assistantMessageId = (Date.now() + 1).toString();
+
+      // Add empty assistant message
+      setMessages(prev => [...prev, {
+        id: assistantMessageId,
         role: "assistant",
-        content: responses[Math.floor(Math.random() * responses.length)],
+        content: "",
         timestamp: new Date(),
-      };
+      }]);
 
-      setMessages((prev) => [...prev, assistantMessage]);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        textBuffer += decoder.decode(value, { stream: true });
+
+        // Process line-by-line
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") break;
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              assistantContent += content;
+              setMessages(prev => 
+                prev.map(m => 
+                  m.id === assistantMessageId 
+                    ? { ...m, content: assistantContent }
+                    : m
+                )
+              );
+            }
+          } catch {
+            // Incomplete JSON, put it back
+            textBuffer = line + "\n" + textBuffer;
+            break;
+          }
+        }
+      }
+
+      // Final flush
+      if (textBuffer.trim()) {
+        for (let raw of textBuffer.split("\n")) {
+          if (!raw) continue;
+          if (raw.endsWith("\r")) raw = raw.slice(0, -1);
+          if (!raw.startsWith("data: ")) continue;
+          const jsonStr = raw.slice(6).trim();
+          if (jsonStr === "[DONE]") continue;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              assistantContent += content;
+              setMessages(prev => 
+                prev.map(m => 
+                  m.id === assistantMessageId 
+                    ? { ...m, content: assistantContent }
+                    : m
+                )
+              );
+            }
+          } catch { /* ignore */ }
+        }
+      }
+
+    } catch (error) {
+      console.error("Chat error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to get response");
+      
+      // Remove the empty assistant message if there was an error
+      setMessages(prev => prev.filter(m => m.content !== ""));
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const handleSuggestedQuestion = (question: string) => {
@@ -129,7 +228,7 @@ export default function ChatPage() {
                   )}
                 >
                   <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                    {message.content}
+                    {message.content || (isTyping && message.role === "assistant" ? "..." : "")}
                   </p>
                   <span className="text-xs opacity-60 mt-2 block">
                     {message.timestamp.toLocaleTimeString([], {
@@ -146,7 +245,7 @@ export default function ChatPage() {
               </div>
             ))}
 
-            {isTyping && (
+            {isTyping && messages[messages.length - 1]?.role !== "assistant" && (
               <div className="flex gap-3 justify-start">
                 <div className="shrink-0 p-2 rounded-lg bg-legal-gold/10 h-fit">
                   <Bot className="h-5 w-5 text-legal-gold" />
