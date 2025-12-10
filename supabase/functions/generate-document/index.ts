@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,11 +12,48 @@ serve(async (req) => {
   }
 
   try {
+    // Initialize Supabase client for auth verification
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    );
+
+    // Verify authentication
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Authentication required. Please sign in to generate documents." }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: authError } = await supabaseClient.auth.getUser(token);
+    
+    if (authError || !userData.user) {
+      console.error("Auth error:", authError);
+      return new Response(
+        JSON.stringify({ error: "Invalid or expired session. Please sign in again." }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const user = userData.user;
+    console.log("Authenticated user:", user.id);
+
     const { prompt, documentType } = await req.json();
     
     if (!prompt) {
       return new Response(
         JSON.stringify({ error: "Prompt is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate prompt length to prevent abuse
+    if (prompt.length > 10000) {
+      return new Response(
+        JSON.stringify({ error: "Prompt is too long. Maximum 10,000 characters allowed." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -57,7 +95,7 @@ Document types you can generate:
 
 Generate the document based on the user's request. Make it comprehensive and legally sound.`;
 
-    console.log("Generating document for prompt:", prompt.substring(0, 100));
+    console.log("Generating document for user:", user.id, "prompt:", prompt.substring(0, 100));
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -110,7 +148,7 @@ Generate the document based on the user's request. Make it comprehensive and leg
       );
     }
 
-    console.log("Document generated successfully, length:", document.length);
+    console.log("Document generated successfully for user:", user.id, "length:", document.length);
 
     return new Response(
       JSON.stringify({ document, success: true }),
