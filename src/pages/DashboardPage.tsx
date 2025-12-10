@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import type { User } from "@supabase/supabase-js";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -70,6 +71,7 @@ export default function DashboardPage() {
   ];
 
   return (
+    <DashboardLayout adSlot="DASHBOARD_SIDEBAR_SLOT">
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card">
@@ -206,5 +208,6 @@ export default function DashboardPage() {
         </div>
       </main>
     </div>
+    </DashboardLayout>
   );
 }
