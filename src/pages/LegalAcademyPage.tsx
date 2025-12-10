@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   GraduationCap, 
   BookOpen, 
@@ -20,55 +21,44 @@ import {
   Brain,
   FileText,
   Scale,
-  Briefcase
+  Briefcase,
+  Loader2
 } from "lucide-react";
 
-const courses = [
-  {
-    id: "intro-law",
-    title: "Introduction to U.S. Law",
-    description: "Fundamentals of the American legal system",
-    duration: "4 hours",
-    lessons: 12,
-    progress: 0,
-    icon: Scale,
-    color: "cyan",
-    free: true
-  },
-  {
-    id: "contracts",
-    title: "Contract Law Essentials",
-    description: "Understanding contract formation and enforcement",
-    duration: "6 hours",
-    lessons: 18,
-    progress: 0,
-    icon: FileText,
-    color: "purple",
-    free: true
-  },
-  {
-    id: "constitutional",
-    title: "Constitutional Law",
-    description: "Your rights under the Constitution",
-    duration: "8 hours",
-    lessons: 24,
-    progress: 0,
-    icon: BookOpen,
-    color: "orange",
-    free: false
-  },
-  {
-    id: "criminal",
-    title: "Criminal Law & Procedure",
-    description: "Criminal justice system and defendant rights",
-    duration: "10 hours",
-    lessons: 30,
-    progress: 0,
-    icon: Briefcase,
-    color: "pink",
-    free: false
-  }
-];
+interface Course {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string;
+  difficulty: string;
+  duration_hours: number | null;
+  is_bar_prep: boolean | null;
+  is_premium: boolean | null;
+}
+
+const categoryIcons: Record<string, typeof Scale> = {
+  contracts: FileText,
+  procedure: BookOpen,
+  criminal: Briefcase,
+  family: Scale,
+  bar_prep: GraduationCap,
+  skills: Brain,
+  evidence: FileText,
+  business: Briefcase,
+  general: BookOpen
+};
+
+const categoryColors: Record<string, string> = {
+  contracts: "cyan",
+  procedure: "purple",
+  criminal: "pink",
+  family: "orange",
+  bar_prep: "purple",
+  skills: "green",
+  evidence: "cyan",
+  business: "orange",
+  general: "blue"
+};
 
 const barPrepModules = [
   { name: "MBE Practice", questions: 200, completed: 0, color: "cyan" },
@@ -86,7 +76,29 @@ const achievements = [
 
 export default function LegalAcademyPage() {
   const [activeTab, setActiveTab] = useState("courses");
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  const fetchCourses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('academy_courses')
+        .select('*')
+        .order('created_at', { ascending: true });
+      
+      if (error) throw error;
+      setCourses(data || []);
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Layout>
@@ -152,47 +164,64 @@ export default function LegalAcademyPage() {
 
               {/* Courses Tab */}
               <TabsContent value="courses">
-                <div className="grid md:grid-cols-2 gap-6">
-                  {courses.map((course) => (
-                    <Card key={course.id} className="glass-card overflow-hidden group hover:border-neon-cyan/50 transition-all">
-                      <div className={`h-2 bg-gradient-to-r from-neon-${course.color} to-neon-${course.color}/50`} />
-                      <div className="p-6">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className={`p-3 rounded-xl bg-neon-${course.color}/20`}>
-                            <course.icon className={`w-6 h-6 text-neon-${course.color}`} />
+                {loading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-8 h-8 text-neon-cyan animate-spin" />
+                  </div>
+                ) : (
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {courses.map((course) => {
+                      const color = categoryColors[course.category] || "cyan";
+                      const IconComponent = categoryIcons[course.category] || BookOpen;
+                      const isFree = !course.is_premium;
+                      
+                      return (
+                        <Card key={course.id} className="glass-card overflow-hidden group hover:border-neon-cyan/50 transition-all">
+                          <div className={`h-2 bg-gradient-to-r from-neon-${color} to-neon-${color}/50`} />
+                          <div className="p-6">
+                            <div className="flex items-start justify-between mb-4">
+                              <div className={`p-3 rounded-xl bg-neon-${color}/20`}>
+                                <IconComponent className={`w-6 h-6 text-neon-${color}`} />
+                              </div>
+                              {isFree ? (
+                                <span className="text-xs px-2 py-1 rounded-full bg-neon-green/20 text-neon-green">Free</span>
+                              ) : (
+                                <span className="text-xs px-2 py-1 rounded-full bg-neon-orange/20 text-neon-orange flex items-center gap-1">
+                                  <Lock className="w-3 h-3" /> Pro
+                                </span>
+                              )}
+                            </div>
+                            <h3 className="text-xl font-display font-semibold text-foreground mb-2">{course.title}</h3>
+                            <p className="text-sm text-muted-foreground mb-4">{course.description}</p>
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" /> {course.duration_hours || 0} hours
+                              </span>
+                              <span className="flex items-center gap-1 capitalize">
+                                <BookOpen className="w-3 h-3" /> {course.difficulty}
+                              </span>
+                              {course.is_bar_prep && (
+                                <span className="flex items-center gap-1 text-neon-purple">
+                                  <GraduationCap className="w-3 h-3" /> Bar Prep
+                                </span>
+                              )}
+                            </div>
+                            <div className="mb-4">
+                              <div className="flex justify-between text-xs mb-1">
+                                <span className="text-muted-foreground">Progress</span>
+                                <span className={`text-neon-${color}`}>0%</span>
+                              </div>
+                              <Progress value={0} className="h-2" />
+                            </div>
+                            <Button variant="neon" className="w-full group-hover:shadow-glow-sm">
+                              <Play className="w-4 h-4 mr-2" /> Start Course
+                            </Button>
                           </div>
-                          {course.free ? (
-                            <span className="text-xs px-2 py-1 rounded-full bg-neon-green/20 text-neon-green">Free</span>
-                          ) : (
-                            <span className="text-xs px-2 py-1 rounded-full bg-neon-orange/20 text-neon-orange flex items-center gap-1">
-                              <Lock className="w-3 h-3" /> Pro
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="text-xl font-display font-semibold text-foreground mb-2">{course.title}</h3>
-                        <p className="text-sm text-muted-foreground mb-4">{course.description}</p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" /> {course.duration}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <BookOpen className="w-3 h-3" /> {course.lessons} lessons
-                          </span>
-                        </div>
-                        <div className="mb-4">
-                          <div className="flex justify-between text-xs mb-1">
-                            <span className="text-muted-foreground">Progress</span>
-                            <span className={`text-neon-${course.color}`}>{course.progress}%</span>
-                          </div>
-                          <Progress value={course.progress} className="h-2" />
-                        </div>
-                        <Button variant="neon" className="w-full group-hover:shadow-glow-sm">
-                          <Play className="w-4 h-4 mr-2" /> Start Course
-                        </Button>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
               </TabsContent>
 
               {/* Bar Prep Tab */}

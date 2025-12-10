@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { Layout } from "@/components/layout/Layout";
-import { MessageSquare, Heart, Shield, Scale, Briefcase, Building2, FileText, Gavel, GraduationCap, Phone, Headphones, Users } from "lucide-react";
+import { MessageSquare, Heart, Shield, Scale, Briefcase, Building2, FileText, Gavel, GraduationCap, Phone, Headphones, Users, DollarSign, BarChart3 } from "lucide-react";
 
 const assistants = [
   {
@@ -134,6 +134,32 @@ const assistants = [
     glow: "shadow-[0_0_30px_rgba(168,85,247,0.2)]",
     iconBg: "bg-purple-500/20",
     questions: ["Case management", "Client intake", "Firm billing"]
+  },
+  {
+    id: "monetization",
+    name: "PayAI - Payments & Revenue",
+    description: "Track subscriptions, payments, and revenue analytics with AI optimization.",
+    icon: DollarSign,
+    variant: "green" as const,
+    path: "/monetization",
+    gradient: "from-green-500/20 to-emerald-500/20",
+    border: "border-green-500/30",
+    glow: "shadow-[0_0_30px_rgba(34,197,94,0.2)]",
+    iconBg: "bg-green-500/20",
+    questions: ["Revenue stats", "Subscription status", "Payment analytics"]
+  },
+  {
+    id: "ads",
+    name: "AdAI - Ad Management",
+    description: "Optimize ad placements and track monetization performance.",
+    icon: BarChart3,
+    variant: "orange" as const,
+    path: "/monetization",
+    gradient: "from-orange-500/20 to-yellow-500/20",
+    border: "border-orange-500/30",
+    glow: "shadow-[0_0_30px_rgba(249,115,22,0.2)]",
+    iconBg: "bg-orange-500/20",
+    questions: ["Ad performance", "Revenue optimization", "Ad placement"]
   }
 ];
 

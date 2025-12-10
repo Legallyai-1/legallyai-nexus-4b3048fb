@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import {
   DollarSign, TrendingUp, Users, FileText, CreditCard, 
   BarChart3, PieChart, ArrowUpRight, ArrowDownRight,
   Zap, Gift, Target, Sparkles
@@ -12,6 +14,31 @@ import {
 
 export default function MonetizationPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<"day" | "week" | "month">("week");
+  const [loading, setLoading] = useState(true);
+  const [analyticsData, setAnalyticsData] = useState<{
+    totalRevenue: number;
+    subscriptions: number;
+    documentsThisMonth: number;
+    revenueStreams: { name: string; amount: number; percentage: number }[];
+    recentTransactions: { id: string; type: string; user: string; amount: number; time: string; status: string }[];
+  } | null>(null);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, []);
+
+  const fetchAnalytics = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('get-stripe-analytics');
+      if (error) throw error;
+      setAnalyticsData(data);
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      toast.error('Could not load analytics. Using demo data.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const stats = [
     { 
