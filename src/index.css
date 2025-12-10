@@ -108,6 +108,16 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+  
+  /* Apply dark theme to legal-navy backgrounds */
+  .bg-legal-navy {
+    --background: 222 47% 8%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+    --muted-foreground: 215 20% 65%;
+    --border: 222 47% 20%;
+  }
 }
 
 @layer base {
