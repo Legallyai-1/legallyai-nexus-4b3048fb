@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import AdBanner from "@/components/ads/AdBanner";
+import AdContainer from "@/components/ads/AdContainer";
 
 const documentTypes = [
   "NDA (Non-Disclosure Agreement)",
@@ -399,6 +401,11 @@ export default function GeneratePage() {
               </p>
             </div>
           </div>
+
+          {/* Ad Banner */}
+          <AdContainer position="bottom" className="max-w-3xl mx-auto mt-8">
+            <AdBanner slot="1357924680" format="horizontal" />
+          </AdContainer>
         </div>
       </section>
     </Layout>

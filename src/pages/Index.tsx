@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowRight, Copy, Download, Smartphone } from "lucide-react";
+import AdBanner from "@/components/ads/AdBanner";
+import AdContainer from "@/components/ads/AdContainer";
 import legallyAIIcon from "@/assets/legallyai-icon.jpg";
 
 export default function Index() {
@@ -126,8 +128,13 @@ export default function Index() {
           </Button>
         </div>
 
+        {/* Ad Banner - Top */}
+        <AdContainer position="inline" className="w-full max-w-2xl">
+          <AdBanner slot="1234567890" format="horizontal" />
+        </AdContainer>
+
         {/* Divider */}
-        <div className="w-full max-w-lg h-px bg-gradient-to-r from-transparent via-border/30 to-transparent my-12" />
+        <div className="w-full max-w-lg h-px bg-gradient-to-r from-transparent via-border/30 to-transparent my-8" />
 
         {/* Mobile App Section */}
         <div className="text-center animate-fade-up" style={{ animationDelay: "0.5s" }}>
@@ -210,6 +217,11 @@ export default function Index() {
             Login
           </Link>
         </div>
+
+        {/* Bottom Ad Banner */}
+        <AdContainer position="bottom" className="w-full max-w-2xl mt-8">
+          <AdBanner slot="0987654321" format="horizontal" />
+        </AdContainer>
       </div>
     </div>
   );
