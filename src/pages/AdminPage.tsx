@@ -14,9 +14,10 @@ import { toast } from "sonner";
 import { 
   Shield, ChevronLeft, Users, Plus, Search, Settings,
   Edit, Trash2, MoreVertical, Building2, DollarSign, 
-  TrendingUp, Briefcase, UserPlus, Key
+  TrendingUp, Briefcase, UserPlus, Key, Loader2
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/integrations/supabase/client";
 
 type AppRole = "owner" | "admin" | "manager" | "lawyer" | "paralegal" | "employee" | "client";
 
@@ -65,8 +66,54 @@ export default function AdminPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Server-side role verification
+  useEffect(() => {
+    const checkAdminAccess = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          navigate('/auth');
+          return;
+        }
+
+        const { data: roleData, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .in('role', ['admin', 'owner'])
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error checking role:', error);
+          toast.error('Failed to verify access');
+          navigate('/dashboard');
+          return;
+        }
+
+        if (!roleData) {
+          toast.error('Access denied. Admin privileges required.');
+          navigate('/dashboard');
+          return;
+        }
+
+        setIsAuthorized(true);
+      } catch (error) {
+        console.error('Auth check error:', error);
+        navigate('/dashboard');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAdminAccess();
+  }, [navigate]);
 
   useEffect(() => {
+    if (!isAuthorized) return;
     // Demo employees
     setEmployees([
       {
@@ -132,6 +179,23 @@ export default function AdminPage() {
     { label: "Monthly Payroll", value: "$125,400", icon: DollarSign, color: "text-green-400" },
     { label: "Revenue MTD", value: "$89,500", icon: TrendingUp, color: "text-purple-400" },
   ];
+
+  // Show loading state while checking authorization
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-legal-gold" />
+          <p className="text-muted-foreground">Verifying access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if not authorized (redirect will happen)
+  if (!isAuthorized) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background">

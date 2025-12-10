@@ -22,11 +22,37 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_ANON_KEY") ?? ""
   );
 
+  // Valid price IDs allowlist
+  const VALID_PRICES = [
+    'price_1SckV70QhWGUtGKvvg1tH7lu', // Pro subscription ($99/month)
+    'price_1SckVt0QhWGUtGKvl9YdmQqk'  // Document generation ($5 one-time)
+  ];
+
+  const VALID_MODES = ['subscription', 'payment'];
+
   try {
     logStep("Function started");
 
     const { priceId, mode } = await req.json();
     logStep("Request params", { priceId, mode });
+
+    // Validate priceId against allowlist
+    if (!priceId || !VALID_PRICES.includes(priceId)) {
+      logStep("Invalid price ID", { priceId });
+      return new Response(
+        JSON.stringify({ error: 'Invalid price ID' }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
+    }
+
+    // Validate mode
+    if (mode && !VALID_MODES.includes(mode)) {
+      logStep("Invalid mode", { mode });
+      return new Response(
+        JSON.stringify({ error: 'Invalid payment mode' }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
+    }
 
     const authHeader = req.headers.get("Authorization")!;
     const token = authHeader.replace("Bearer ", "");
