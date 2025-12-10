@@ -2,13 +2,15 @@ import { ReactNode } from "react";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 import { BottomNavigation } from "./BottomNavigation";
+import { FloatingActionButton } from "@/components/ui/FloatingActionButton";
 
 interface LayoutProps {
   children: ReactNode;
   showFooter?: boolean;
+  showFab?: boolean;
 }
 
-export function Layout({ children, showFooter = true }: LayoutProps) {
+export function Layout({ children, showFooter = true, showFab = true }: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -17,6 +19,7 @@ export function Layout({ children, showFooter = true }: LayoutProps) {
       </main>
       {showFooter && <Footer />}
       <BottomNavigation />
+      {showFab && <FloatingActionButton />}
     </div>
   );
 }
