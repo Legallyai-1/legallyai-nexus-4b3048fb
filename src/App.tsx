@@ -22,6 +22,9 @@ import AdminPage from "./pages/AdminPage";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import ClientPortalPage from "./pages/ClientPortalPage";
+import DocumentSigningPage from "./pages/DocumentSigningPage";
+import InvoicesPage from "./pages/InvoicesPage";
+import ConsultationsPage from "./pages/ConsultationsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +55,9 @@ const App = () => (
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/client-portal" element={<ClientPortalPage />} />
+          <Route path="/document-signing" element={<DocumentSigningPage />} />
+          <Route path="/invoices" element={<InvoicesPage />} />
+          <Route path="/consultations" element={<ConsultationsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
