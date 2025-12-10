@@ -372,9 +372,9 @@ export default function ChatPage() {
               This is AI-generated information, not legal advice. Consult a licensed attorney.
             </p>
             
-            {/* Ad Banner */}
+            {/* Ad Banner (Replace slot with your Chat Page ad unit ID) */}
             <AdContainer position="bottom" className="mt-4">
-              <AdBanner slot="2468013579" format="horizontal" />
+              <AdBanner slot="CHAT_PAGE_SLOT" format="horizontal" />
             </AdContainer>
           </div>
         </div>

@@ -402,9 +402,9 @@ export default function GeneratePage() {
             </div>
           </div>
 
-          {/* Ad Banner */}
+          {/* Ad Banner (Replace slot with your Generate Page ad unit ID) */}
           <AdContainer position="bottom" className="max-w-3xl mx-auto mt-8">
-            <AdBanner slot="1357924680" format="horizontal" />
+            <AdBanner slot="GENERATE_PAGE_SLOT" format="horizontal" />
           </AdContainer>
         </div>
       </section>
