@@ -128,9 +128,9 @@ export default function Index() {
           </Button>
         </div>
 
-        {/* Ad Banner - Top */}
+        {/* Ad Banner - Top (Replace slot with your Homepage Top ad unit ID) */}
         <AdContainer position="inline" className="w-full max-w-2xl">
-          <AdBanner slot="1234567890" format="horizontal" />
+          <AdBanner slot="HOMEPAGE_TOP_SLOT" format="horizontal" />
         </AdContainer>
 
         {/* Divider */}
@@ -218,9 +218,9 @@ export default function Index() {
           </Link>
         </div>
 
-        {/* Bottom Ad Banner */}
+        {/* Bottom Ad Banner (Replace slot with your Homepage Bottom ad unit ID) */}
         <AdContainer position="bottom" className="w-full max-w-2xl mt-8">
-          <AdBanner slot="0987654321" format="horizontal" />
+          <AdBanner slot="HOMEPAGE_BOTTOM_SLOT" format="horizontal" />
         </AdContainer>
       </div>
     </div>
