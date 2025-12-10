@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DollarSign, Plus, Send, Download, FileText, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import SidebarAd from "@/components/ads/SidebarAd";
 
 interface InvoiceItem {
   description: string;
@@ -53,7 +54,8 @@ const InvoicesPage = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-background py-8">
+      <div className="flex">
+        <div className="flex-1 min-h-screen bg-background py-8">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -292,6 +294,13 @@ const InvoicesPage = () => {
             </CardContent>
           </Card>
         </div>
+        </div>
+        {/* Sidebar Ad */}
+        <aside className="hidden xl:block w-[160px] shrink-0 p-4 border-l border-border bg-card/50">
+          <div className="sticky top-4">
+            <SidebarAd slot="INVOICES_SIDEBAR_SLOT" />
+          </div>
+        </aside>
       </div>
     </Layout>
   );

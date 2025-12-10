@@ -15,6 +15,7 @@ import {
   User, ChevronLeft, MoreVertical, Eye, Edit, Trash2
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 
 type CaseStatus = "intake" | "active" | "pending" | "closed" | "archived";
 
@@ -105,6 +106,7 @@ export default function CasesPage() {
   });
 
   return (
+    <DashboardLayout adSlot="CASES_SIDEBAR_SLOT">
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card sticky top-0 z-10">
@@ -273,5 +275,6 @@ export default function CasesPage() {
         )}
       </main>
     </div>
+    </DashboardLayout>
   );
 }

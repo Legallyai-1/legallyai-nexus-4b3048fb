@@ -18,6 +18,7 @@ import {
   MapPin, DollarSign, ChevronLeft, User, Phone
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 
 type AppointmentStatus = "scheduled" | "confirmed" | "completed" | "cancelled" | "no_show";
 
@@ -112,6 +113,7 @@ export default function AppointmentsPage() {
   });
 
   return (
+    <DashboardLayout adSlot="APPOINTMENTS_SIDEBAR_SLOT">
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card sticky top-0 z-10">
@@ -341,5 +343,6 @@ export default function AppointmentsPage() {
         </div>
       </main>
     </div>
+    </DashboardLayout>
   );
 }
