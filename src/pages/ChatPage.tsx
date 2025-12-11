@@ -374,7 +374,7 @@ export default function ChatPage() {
             </p>
             
             <AdContainer position="bottom" className="mt-4">
-              <AdBanner slot="CHAT_PAGE_SLOT" format="horizontal" />
+              <AdBanner slot="7335134262" format="horizontal" />
             </AdContainer>
           </div>
         </div>
