@@ -141,8 +141,8 @@ export default function Index() {
             {[
               { name: "Lee Legal AI", path: "/chat", icon: "💬", color: "cyan", desc: "General Legal" },
               { name: "CustodiAI", path: "/custody", icon: "👨‍👩‍👧", color: "purple", desc: "Child Custody" },
-              { name: "Mary - Divorce", path: "/custody", icon: "💔", color: "pink", desc: "Marriage & Divorce" },
-              { name: "Defendr", path: "/tickets-defense", icon: "⚖️", color: "pink", desc: "Criminal Defense" },
+              { name: "MaryAI", path: "/custody", icon: "💔", color: "pink", desc: "Marriage & Divorce" },
+              { name: "DefendrAI", path: "/tickets-defense", icon: "⚖️", color: "pink", desc: "Criminal Defense" },
             ].map((item) => (
               <Link 
                 key={item.path + item.name}

@@ -37,7 +37,7 @@ const assistants = [
   },
   {
     id: "marriage",
-    name: "Mary - Marriage & Divorce",
+    name: "MaryAI - Marriage & Divorce",
     description: "Full lifecycle: Marriage licenses, vows, name changes, divorce filings, alimony calculators, mediation simulations. Vs. Rocket Lawyer 4.3/5.",
     icon: Heart,
     variant: "pink" as const,
@@ -51,7 +51,7 @@ const assistants = [
   },
   {
     id: "defense",
-    name: "Defendr - Criminal Defense",
+    name: "DefendrAI - Criminal Defense",
     description: "10/10 defense: Plea outcome simulations, client portals, violation trackers, e-filing, sentencing guidance. Vs. Clio 4.7/5.",
     icon: Gavel,
     variant: "pink" as const,
