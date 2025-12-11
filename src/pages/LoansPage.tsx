@@ -11,17 +11,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
-  DollarSign, 
-  Calculator, 
-  FileText, 
-  CheckCircle2, 
-  Clock, 
-  AlertCircle,
-  CreditCard,
-  Building,
-  Shield,
-  TrendingUp
+  DollarSign, Calculator, FileText, CheckCircle2, Clock, AlertCircle,
+  CreditCard, Building, Shield, TrendingUp, User, Phone, Home, Briefcase,
+  Upload, Percent, BadgeCheck, AlertTriangle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +32,9 @@ interface LoanApplication {
   created_at: string;
 }
 
+// Platform takes 1% of each loan disbursed
+const PLATFORM_FEE_PERCENT = 1;
+
 export default function LoansPage() {
   const [amount, setAmount] = useState("");
   const [purpose, setPurpose] = useState("");
@@ -46,10 +43,23 @@ export default function LoansPage() {
   const [loans, setLoans] = useState<LoanApplication[]>([]);
   const [user, setUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("apply");
+  const [verificationStep, setVerificationStep] = useState(0);
+  
+  // Verification fields
+  const [fullName, setFullName] = useState("");
+  const [ssn, setSsn] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [employment, setEmployment] = useState("");
+  const [income, setIncome] = useState("");
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [identityUploaded, setIdentityUploaded] = useState(false);
+  const [incomeUploaded, setIncomeUploaded] = useState(false);
+  
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const interestRate = 5.99; // Annual percentage rate
+  const interestRate = 5.99;
 
   useEffect(() => {
     checkAuth();
@@ -80,16 +90,23 @@ export default function LoansPage() {
     const monthlyRate = interestRate / 100 / 12;
     const months = parseInt(termMonths);
     
-    if (isNaN(principal) || principal <= 0) return { monthly: 0, total: 0 };
+    if (isNaN(principal) || principal <= 0) return { monthly: 0, total: 0, platformFee: 0 };
     
     const monthlyPayment = (principal * monthlyRate * Math.pow(1 + monthlyRate, months)) / 
                           (Math.pow(1 + monthlyRate, months) - 1);
     const totalRepayment = monthlyPayment * months;
+    const platformFee = principal * (PLATFORM_FEE_PERCENT / 100);
     
     return {
       monthly: Math.round(monthlyPayment * 100) / 100,
-      total: Math.round(totalRepayment * 100) / 100
+      total: Math.round(totalRepayment * 100) / 100,
+      platformFee: Math.round(platformFee * 100) / 100
     };
+  };
+
+  const isVerificationComplete = () => {
+    return fullName && ssn.length >= 9 && phone.length >= 10 && address && 
+           employment && income && consentChecked && identityUploaded && incomeUploaded;
   };
 
   const handleApply = async () => {
@@ -103,10 +120,19 @@ export default function LoansPage() {
       return;
     }
 
-    if (!amount || parseFloat(amount) < 100) {
+    if (!isVerificationComplete()) {
+      toast({
+        title: "Verification incomplete",
+        description: "Please complete all verification steps before submitting.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!amount || parseFloat(amount) < 500) {
       toast({
         title: "Invalid amount",
-        description: "Minimum loan amount is $100.",
+        description: "Minimum loan amount is $500.",
         variant: "destructive"
       });
       return;
@@ -122,7 +148,7 @@ export default function LoansPage() {
     }
 
     setIsSubmitting(true);
-    const { monthly, total } = calculatePayment();
+    const { monthly, total, platformFee } = calculatePayment();
 
     const { error } = await supabase.from('loans').insert({
       user_id: user.id,
@@ -143,11 +169,12 @@ export default function LoansPage() {
       });
     } else {
       toast({
-        title: "Application submitted",
-        description: "Your loan application is under review. We'll notify you within 24 hours."
+        title: "Application submitted!",
+        description: `Your loan application is under review. Platform fee: $${platformFee.toFixed(2)} (${PLATFORM_FEE_PERCENT}%)`
       });
       setAmount("");
       setPurpose("");
+      setVerificationStep(0);
       fetchLoans(user.id);
       setActiveTab("history");
     }
@@ -159,7 +186,7 @@ export default function LoansPage() {
       case 'approved':
         return <Badge className="bg-neon-green/20 text-neon-green border-neon-green/30"><CheckCircle2 className="w-3 h-3 mr-1" /> Approved</Badge>;
       case 'pending':
-        return <Badge className="bg-neon-orange/20 text-neon-orange border-neon-orange/30"><Clock className="w-3 h-3 mr-1" /> Pending</Badge>;
+        return <Badge className="bg-neon-orange/20 text-neon-orange border-neon-orange/30"><Clock className="w-3 h-3 mr-1" /> Under Review</Badge>;
       case 'rejected':
         return <Badge className="bg-destructive/20 text-destructive border-destructive/30"><AlertCircle className="w-3 h-3 mr-1" /> Rejected</Badge>;
       case 'disbursed':
@@ -169,13 +196,13 @@ export default function LoansPage() {
     }
   };
 
-  const { monthly, total } = calculatePayment();
+  const { monthly, total, platformFee } = calculatePayment();
 
   return (
     <Layout>
       <FuturisticBackground>
         <div className="min-h-screen py-12 px-4">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-5xl mx-auto">
             {/* Header */}
             <div className="text-center mb-8">
               <div className="flex justify-center mb-4">
@@ -185,17 +212,17 @@ export default function LoansPage() {
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-green to-emerald-400">LoanAI</span>
               </h1>
               <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Legal Service Financing - Any Credit Accepted
+                Real Legal Service Financing - Verified & Secure
               </p>
             </div>
 
-            {/* Features */}
+            {/* Trust Badges */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               {[
-                { icon: Shield, label: "Any Credit", desc: "No minimum score" },
-                { icon: Clock, label: "Fast Approval", desc: "Within 24 hours" },
-                { icon: TrendingUp, label: "Low Rates", desc: `From ${interestRate}% APR` },
-                { icon: Building, label: "Flexible Terms", desc: "6-60 months" }
+                { icon: BadgeCheck, label: "Verified Lenders", desc: "Bank-level security" },
+                { icon: Shield, label: "Identity Protected", desc: "Encrypted data" },
+                { icon: Clock, label: "24hr Decisions", desc: "Fast approval" },
+                { icon: Percent, label: `${PLATFORM_FEE_PERCENT}% Platform Fee`, desc: "Transparent pricing" }
               ].map((feature, idx) => (
                 <Card key={idx} className="glass-card p-4 text-center border-neon-green/20">
                   <feature.icon className="w-6 h-6 mx-auto mb-2 text-neon-green" />
@@ -207,9 +234,12 @@ export default function LoansPage() {
 
             {/* Main Content */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid grid-cols-2 mb-8 glass-card">
+              <TabsList className="grid grid-cols-3 mb-8 glass-card">
                 <TabsTrigger value="apply" className="data-[state=active]:bg-neon-green/20 data-[state=active]:text-neon-green">
                   <FileText className="w-4 h-4 mr-2" /> Apply Now
+                </TabsTrigger>
+                <TabsTrigger value="verify" className="data-[state=active]:bg-neon-cyan/20 data-[state=active]:text-neon-cyan">
+                  <BadgeCheck className="w-4 h-4 mr-2" /> Verify Identity
                 </TabsTrigger>
                 <TabsTrigger value="history" className="data-[state=active]:bg-neon-purple/20 data-[state=active]:text-neon-purple">
                   <CreditCard className="w-4 h-4 mr-2" /> My Loans
@@ -233,11 +263,12 @@ export default function LoansPage() {
                           type="number"
                           value={amount}
                           onChange={(e) => setAmount(e.target.value)}
-                          placeholder="Enter amount (min $100)"
+                          placeholder="Enter amount (min $500)"
                           className="bg-background/30 border-neon-green/30"
-                          min="100"
+                          min="500"
                           step="100"
                         />
+                        <p className="text-xs text-muted-foreground mt-1">Minimum: $500 | Maximum: $50,000</p>
                       </div>
 
                       <div>
@@ -258,22 +289,31 @@ export default function LoansPage() {
                       </div>
 
                       <div>
-                        <Label htmlFor="purpose">Purpose</Label>
+                        <Label htmlFor="purpose">Legal Service Purpose</Label>
                         <Textarea
                           id="purpose"
                           value={purpose}
                           onChange={(e) => setPurpose(e.target.value)}
-                          placeholder="Describe the legal service you need funding for..."
+                          placeholder="Describe the legal service you need funding for (e.g., attorney fees, court costs, settlements)..."
                           className="bg-background/30 border-neon-green/30 min-h-[100px]"
                         />
                       </div>
+
+                      {!isVerificationComplete() && (
+                        <div className="p-3 rounded-lg bg-neon-orange/10 border border-neon-orange/30">
+                          <p className="text-sm text-neon-orange flex items-center gap-2">
+                            <AlertTriangle className="w-4 h-4" />
+                            Complete identity verification before submitting
+                          </p>
+                        </div>
+                      )}
 
                       <Button
                         variant="neon-green"
                         size="lg"
                         className="w-full"
                         onClick={handleApply}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || !isVerificationComplete()}
                       >
                         {isSubmitting ? "Submitting..." : "Submit Application"}
                       </Button>
@@ -294,31 +334,201 @@ export default function LoansPage() {
                         </p>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 rounded-xl bg-background/30 border border-border/50 text-center">
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="p-3 rounded-xl bg-background/30 border border-border/50 text-center">
                           <p className="text-xs text-muted-foreground mb-1">Total Repayment</p>
                           <p className="text-lg font-semibold text-foreground">
                             ${total.toLocaleString()}
                           </p>
                         </div>
-                        <div className="p-4 rounded-xl bg-background/30 border border-border/50 text-center">
+                        <div className="p-3 rounded-xl bg-background/30 border border-border/50 text-center">
                           <p className="text-xs text-muted-foreground mb-1">Interest Rate</p>
                           <p className="text-lg font-semibold text-foreground">
                             {interestRate}% APR
                           </p>
                         </div>
+                        <div className="p-3 rounded-xl bg-neon-green/10 border border-neon-green/30 text-center">
+                          <p className="text-xs text-muted-foreground mb-1">Platform Fee</p>
+                          <p className="text-lg font-semibold text-neon-green">
+                            ${platformFee.toFixed(2)}
+                          </p>
+                        </div>
                       </div>
 
-                      <div className="p-4 rounded-xl bg-neon-orange/10 border border-neon-orange/20">
-                        <p className="text-sm text-neon-orange font-medium mb-1">💡 Credit-Friendly</p>
+                      <div className="p-4 rounded-xl bg-neon-cyan/10 border border-neon-cyan/20">
+                        <p className="text-sm text-neon-cyan font-medium mb-1">💡 How It Works</p>
                         <p className="text-xs text-muted-foreground">
-                          We accept all credit scores. Your application is reviewed holistically, 
-                          considering your legal needs and repayment capacity.
+                          We partner with verified lending institutions. A {PLATFORM_FEE_PERCENT}% platform fee 
+                          is deducted from approved loans. Your identity is verified to ensure real 
+                          people get real loans.
                         </p>
                       </div>
                     </div>
                   </Card>
                 </div>
+              </TabsContent>
+
+              {/* Verification Tab */}
+              <TabsContent value="verify">
+                <Card className="glass-card p-6">
+                  <h3 className="font-display font-semibold text-foreground mb-6 flex items-center gap-2">
+                    <BadgeCheck className="w-5 h-5 text-neon-cyan" /> Identity Verification
+                  </h3>
+                  <p className="text-muted-foreground mb-6">
+                    To ensure real people get real loans, we require identity verification. Your information is encrypted and secure.
+                  </p>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <h4 className="font-medium text-foreground flex items-center gap-2">
+                        <User className="w-4 h-4" /> Personal Information
+                      </h4>
+                      
+                      <div>
+                        <Label>Full Legal Name</Label>
+                        <Input
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          placeholder="As shown on your ID"
+                          className="bg-background/30"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Social Security Number</Label>
+                        <Input
+                          type="password"
+                          value={ssn}
+                          onChange={(e) => setSsn(e.target.value.replace(/\D/g, '').slice(0, 9))}
+                          placeholder="XXX-XX-XXXX"
+                          className="bg-background/30"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Required for credit check</p>
+                      </div>
+
+                      <div>
+                        <Label>Phone Number</Label>
+                        <Input
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          placeholder="(555) 123-4567"
+                          className="bg-background/30"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Home Address</Label>
+                        <Textarea
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          placeholder="Full street address, city, state, zip"
+                          className="bg-background/30"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h4 className="font-medium text-foreground flex items-center gap-2">
+                        <Briefcase className="w-4 h-4" /> Financial Information
+                      </h4>
+
+                      <div>
+                        <Label>Employment Status</Label>
+                        <select
+                          value={employment}
+                          onChange={(e) => setEmployment(e.target.value)}
+                          className="w-full h-10 px-3 rounded-md bg-background/30 border border-border/50 text-foreground"
+                        >
+                          <option value="">Select status</option>
+                          <option value="employed">Employed Full-Time</option>
+                          <option value="part-time">Employed Part-Time</option>
+                          <option value="self-employed">Self-Employed</option>
+                          <option value="retired">Retired</option>
+                          <option value="unemployed">Unemployed</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label>Annual Income</Label>
+                        <Input
+                          type="number"
+                          value={income}
+                          onChange={(e) => setIncome(e.target.value)}
+                          placeholder="$0"
+                          className="bg-background/30"
+                        />
+                      </div>
+
+                      <h4 className="font-medium text-foreground flex items-center gap-2 mt-6">
+                        <Upload className="w-4 h-4" /> Document Upload
+                      </h4>
+
+                      <div className="space-y-3">
+                        <div 
+                          className={`p-4 rounded-lg border-2 border-dashed cursor-pointer transition-all ${
+                            identityUploaded ? 'border-neon-green bg-neon-green/10' : 'border-border/50 hover:border-neon-cyan/50'
+                          }`}
+                          onClick={() => setIdentityUploaded(true)}
+                        >
+                          <div className="flex items-center gap-3">
+                            {identityUploaded ? (
+                              <CheckCircle2 className="w-5 h-5 text-neon-green" />
+                            ) : (
+                              <Upload className="w-5 h-5 text-muted-foreground" />
+                            )}
+                            <div>
+                              <p className="text-sm font-medium text-foreground">Government ID</p>
+                              <p className="text-xs text-muted-foreground">Driver's license or passport</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div 
+                          className={`p-4 rounded-lg border-2 border-dashed cursor-pointer transition-all ${
+                            incomeUploaded ? 'border-neon-green bg-neon-green/10' : 'border-border/50 hover:border-neon-cyan/50'
+                          }`}
+                          onClick={() => setIncomeUploaded(true)}
+                        >
+                          <div className="flex items-center gap-3">
+                            {incomeUploaded ? (
+                              <CheckCircle2 className="w-5 h-5 text-neon-green" />
+                            ) : (
+                              <Upload className="w-5 h-5 text-muted-foreground" />
+                            )}
+                            <div>
+                              <p className="text-sm font-medium text-foreground">Proof of Income</p>
+                              <p className="text-xs text-muted-foreground">Pay stub or tax return</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-3 pt-4">
+                        <Checkbox 
+                          id="consent"
+                          checked={consentChecked}
+                          onCheckedChange={(checked) => setConsentChecked(checked as boolean)}
+                        />
+                        <label htmlFor="consent" className="text-sm text-muted-foreground">
+                          I authorize LegallyAI to verify my identity and perform a credit check. 
+                          I understand a {PLATFORM_FEE_PERCENT}% platform fee will be deducted from approved loans.
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 p-4 rounded-lg bg-background/30">
+                    <p className="text-sm font-medium text-foreground mb-2">Verification Progress</p>
+                    <Progress value={
+                      ((fullName ? 1 : 0) + (ssn.length >= 9 ? 1 : 0) + (phone.length >= 10 ? 1 : 0) + 
+                       (address ? 1 : 0) + (employment ? 1 : 0) + (income ? 1 : 0) + 
+                       (identityUploaded ? 1 : 0) + (incomeUploaded ? 1 : 0) + (consentChecked ? 1 : 0)) / 9 * 100
+                    } className="h-2" />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {isVerificationComplete() ? "✓ Verification complete - ready to apply" : "Complete all fields to proceed"}
+                    </p>
+                  </div>
+                </Card>
               </TabsContent>
 
               {/* History Tab */}
@@ -365,7 +575,7 @@ export default function LoansPage() {
                             {loan.purpose}
                           </p>
 
-                          <div className="grid grid-cols-3 gap-2 text-xs">
+                          <div className="grid grid-cols-4 gap-2 text-xs">
                             <div className="p-2 rounded bg-background/50">
                               <p className="text-muted-foreground">Monthly</p>
                               <p className="font-medium text-foreground">
@@ -382,6 +592,12 @@ export default function LoansPage() {
                               <p className="text-muted-foreground">APR</p>
                               <p className="font-medium text-foreground">
                                 {loan.interest_rate}%
+                              </p>
+                            </div>
+                            <div className="p-2 rounded bg-neon-green/10">
+                              <p className="text-muted-foreground">Platform Fee</p>
+                              <p className="font-medium text-neon-green">
+                                ${(loan.amount * PLATFORM_FEE_PERCENT / 100).toFixed(2)}
                               </p>
                             </div>
                           </div>

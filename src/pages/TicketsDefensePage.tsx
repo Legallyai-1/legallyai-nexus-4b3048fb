@@ -4,22 +4,16 @@ import { Layout } from "@/components/layout/Layout";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Gavel, 
-  Car, 
-  AlertTriangle, 
-  FileText, 
-  Send, 
-  ArrowRight,
-  Shield,
-  Scale,
-  Clock,
-  DollarSign
+  Gavel, Car, AlertTriangle, FileText, Shield, Scale, Clock, DollarSign,
+  FolderOpen, MessageSquare, HelpCircle, BookOpen
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { HubAssistant } from "@/components/hub/HubAssistant";
+import { DocumentManager } from "@/components/hub/DocumentManager";
+import { CourtPrepTab } from "@/components/hub/CourtPrepTab";
+import { WhereToStart } from "@/components/hub/WhereToStart";
 
 const defenseCategories = [
   {
@@ -56,68 +50,69 @@ const defenseCategories = [
   }
 ];
 
+const whereToStartSteps = [
+  {
+    title: "Understand Your Charges",
+    description: "Learn exactly what you're being charged with and potential penalties",
+    action: "Review with AI"
+  },
+  {
+    title: "Gather Evidence",
+    description: "Collect photos, witness statements, and any documentation",
+    action: "Upload Documents"
+  },
+  {
+    title: "Know Your Rights",
+    description: "Understand your constitutional rights during the legal process",
+    action: "Learn Rights"
+  },
+  {
+    title: "Explore Defense Options",
+    description: "Review possible defenses specific to your case type",
+    action: "Get Defense Ideas"
+  },
+  {
+    title: "Prepare for Court",
+    description: "Know what to expect, what to wear, and how to present yourself",
+    action: "Court Prep Guide"
+  }
+];
+
+const courtPrepChecklist = [
+  { id: "charges", label: "Understand all charges against you", category: "Before Court" },
+  { id: "evidence", label: "Organize all evidence and documents", category: "Before Court" },
+  { id: "witnesses", label: "Prepare witness list if applicable", category: "Before Court" },
+  { id: "dress", label: "Plan professional court attire", category: "Before Court" },
+  { id: "arrive", label: "Arrive 30 minutes early", category: "Court Day" },
+  { id: "phone", label: "Turn off phone before entering", category: "Court Day" },
+  { id: "address", label: "Address judge as 'Your Honor'", category: "Court Day" },
+  { id: "stand", label: "Stand when speaking to the court", category: "Court Day" },
+  { id: "calm", label: "Stay calm and respectful at all times", category: "Court Day" },
+  { id: "notes", label: "Take notes of proceedings", category: "Court Day" }
+];
+
 export default function TicketsDefensePage() {
-  const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("start");
   const navigate = useNavigate();
 
-  const handleSendMessage = async () => {
-    if (!message.trim() || isLoading) return;
-
-    const userMessage = message.trim();
-    setMessage("");
-    setMessages(prev => [...prev, { role: "user", content: userMessage }]);
-    setIsLoading(true);
-
-    try {
-      const systemPrompt = `You are Defendr, an AI legal assistant specializing in traffic tickets and criminal defense guidance for U.S. law (2025). 
-      You help users understand their charges, potential defenses, court procedures, and rights.
-      
-      IMPORTANT GUIDELINES:
-      - Provide general information about legal processes and rights
-      - Explain potential defense strategies in understandable terms
-      - Guide users on court preparation and procedures
-      - Always recommend consulting with a licensed attorney for specific legal advice
-      - Be compassionate and non-judgmental
-      - Focus on empowering users with knowledge
-      
-      DISCLAIMER: Always remind users this is informational guidance, not legal advice. Recommend licensed counsel for serious matters.`;
-
-      const { data, error } = await supabase.functions.invoke('legal-chat', {
-        body: { 
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...messages,
-            { role: "user", content: userMessage }
-          ],
-          stream: false
-        }
-      });
-
-      if (error) throw error;
-
-      setMessages(prev => [...prev, { role: "assistant", content: data.response }]);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to get response",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCategorySelect = (categoryId: string) => {
-    setSelectedCategory(categoryId);
-    const category = defenseCategories.find(c => c.id === categoryId);
-    if (category) {
-      setMessage(`I need help with ${category.name.toLowerCase()}. `);
-    }
-  };
+  const systemPrompt = `You are Defendr, an AI legal assistant specializing in traffic tickets and criminal defense guidance for U.S. law (2025). 
+  You help users understand their charges, potential defenses, court procedures, and rights.
+  
+  IMPORTANT GUIDELINES:
+  - Provide general information about legal processes and rights
+  - Explain potential defense strategies in understandable terms
+  - Guide users on court preparation and procedures
+  - Analyze any uploaded documents (tickets, citations, police reports)
+  - Help users organize evidence and build their defense
+  - Always recommend consulting with a licensed attorney for specific legal advice
+  - Be compassionate and non-judgmental
+  
+  DOCUMENT ANALYSIS:
+  - When users upload tickets, explain the violation and potential penalties
+  - Identify errors on citations that could help the defense
+  - Suggest what additional evidence might be helpful
+  
+  DISCLAIMER: Always remind users this is informational guidance, not legal advice.`;
 
   return (
     <Layout>
@@ -127,145 +122,125 @@ export default function TicketsDefensePage() {
             {/* Header */}
             <div className="text-center mb-8">
               <div className="flex justify-center mb-4">
-                <AnimatedAIHead variant="pink" size="lg" isActive={isLoading} />
+                <AnimatedAIHead variant="pink" size="lg" />
               </div>
               <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-2">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-pink to-neon-orange">Defendr</span>
               </h1>
               <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                AI-powered guidance for traffic tickets and criminal defense. Understand your rights and prepare for court.
+                Complete defense hub for traffic tickets and criminal cases. AI-powered guidance every step of the way.
               </p>
             </div>
 
-            {/* Category Selection */}
-            {!selectedCategory && messages.length === 0 && (
-              <div className="grid md:grid-cols-2 gap-4 mb-8">
-                {defenseCategories.map((category) => (
-                  <Card
-                    key={category.id}
-                    onClick={() => handleCategorySelect(category.id)}
-                    className={`
-                      cursor-pointer p-6 bg-background/30 backdrop-blur-xl 
-                      border-neon-${category.color}/30 hover:border-neon-${category.color}/60
-                      hover:shadow-[0_0_30px_rgba(var(--neon-${category.color}),0.2)]
-                      transition-all duration-300
-                    `}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className={`p-3 rounded-xl bg-neon-${category.color}/20`}>
-                        <category.icon className={`w-6 h-6 text-neon-${category.color}`} />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-display font-semibold text-foreground mb-1">
-                          {category.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mb-3">
-                          {category.description}
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {category.examples.map((example, idx) => (
-                            <span
-                              key={idx}
-                              className={`text-xs px-2 py-1 rounded-full bg-neon-${category.color}/10 text-neon-${category.color}/80`}
-                            >
-                              {example}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
+            {/* Category Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              {defenseCategories.map((category) => (
+                <Card
+                  key={category.id}
+                  className="p-4 bg-background/30 backdrop-blur-xl border-border/50 hover:border-neon-pink/60 transition-all cursor-pointer text-center"
+                >
+                  <div className="p-3 rounded-xl bg-neon-pink/20 w-fit mx-auto mb-2">
+                    <category.icon className="w-6 h-6 text-neon-pink" />
+                  </div>
+                  <h3 className="text-sm font-medium text-foreground">{category.name}</h3>
+                  <p className="text-xs text-muted-foreground mt-1">{category.description}</p>
+                </Card>
+              ))}
+            </div>
 
-            {/* Quick Tips */}
+            {/* Quick Stats */}
             <div className="grid md:grid-cols-4 gap-4 mb-8">
               {[
-                { icon: Clock, label: "Time Limits", desc: "Know your deadlines" },
-                { icon: DollarSign, label: "Fines & Fees", desc: "Understand costs" },
-                { icon: Shield, label: "Your Rights", desc: "Protected by law" },
-                { icon: FileText, label: "Documents", desc: "What to bring" }
+                { icon: Clock, label: "Time Limits", desc: "Know your deadlines", color: "neon-cyan" },
+                { icon: DollarSign, label: "Fines & Fees", desc: "Understand costs", color: "neon-green" },
+                { icon: Shield, label: "Your Rights", desc: "Protected by law", color: "neon-purple" },
+                { icon: FileText, label: "Documents", desc: "What to bring", color: "neon-orange" }
               ].map((tip, idx) => (
                 <div key={idx} className="glass-card p-4 rounded-xl text-center">
-                  <tip.icon className="w-6 h-6 text-neon-pink mx-auto mb-2" />
+                  <tip.icon className={`w-6 h-6 text-${tip.color} mx-auto mb-2`} />
                   <p className="text-sm font-medium text-foreground">{tip.label}</p>
                   <p className="text-xs text-muted-foreground">{tip.desc}</p>
                 </div>
               ))}
             </div>
 
-            {/* Chat Area */}
-            <Card className="glass-card border-neon-pink/30 p-6">
-              {/* Messages */}
-              <div className="min-h-[300px] max-h-[500px] overflow-y-auto mb-4 space-y-4">
-                {messages.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Gavel className="w-12 h-12 text-neon-pink/30 mx-auto mb-4" />
-                    <p className="text-muted-foreground">
-                      Select a category above or describe your legal situation to get started.
-                    </p>
-                  </div>
-                ) : (
-                  messages.map((msg, idx) => (
-                    <div
-                      key={idx}
-                      className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                    >
-                      <div
-                        className={`max-w-[80%] p-4 rounded-2xl ${
-                          msg.role === "user"
-                            ? "bg-neon-pink/20 border border-neon-pink/30"
-                            : "bg-background/50 border border-border/50"
-                        }`}
-                      >
-                        {msg.role === "assistant" && (
-                          <div className="flex items-center gap-2 mb-2">
-                            <AnimatedAIHead variant="pink" size="sm" />
-                            <span className="text-sm font-medium text-neon-pink">Defendr</span>
-                          </div>
-                        )}
-                        <p className="text-foreground whitespace-pre-wrap">{msg.content}</p>
-                      </div>
-                    </div>
-                  ))
-                )}
-                {isLoading && (
-                  <div className="flex justify-start">
-                    <div className="bg-background/50 border border-border/50 p-4 rounded-2xl">
-                      <div className="flex items-center gap-2">
-                        <AnimatedAIHead variant="pink" size="sm" isActive />
-                        <span className="text-sm text-muted-foreground animate-pulse">Defendr is analyzing...</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+            {/* Main Hub Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <TabsList className="grid grid-cols-5 glass-card p-1">
+                <TabsTrigger value="start" className="data-[state=active]:bg-neon-pink/20 data-[state=active]:text-neon-pink gap-2">
+                  <HelpCircle className="w-4 h-4" /> Where to Start
+                </TabsTrigger>
+                <TabsTrigger value="assistant" className="data-[state=active]:bg-neon-cyan/20 data-[state=active]:text-neon-cyan gap-2">
+                  <MessageSquare className="w-4 h-4" /> AI Assistant
+                </TabsTrigger>
+                <TabsTrigger value="documents" className="data-[state=active]:bg-neon-green/20 data-[state=active]:text-neon-green gap-2">
+                  <FolderOpen className="w-4 h-4" /> Documents
+                </TabsTrigger>
+                <TabsTrigger value="court" className="data-[state=active]:bg-neon-purple/20 data-[state=active]:text-neon-purple gap-2">
+                  <Scale className="w-4 h-4" /> Court Prep
+                </TabsTrigger>
+                <TabsTrigger value="resources" className="data-[state=active]:bg-neon-orange/20 data-[state=active]:text-neon-orange gap-2">
+                  <BookOpen className="w-4 h-4" /> Resources
+                </TabsTrigger>
+              </TabsList>
 
-              {/* Input */}
-              <div className="flex gap-3">
-                <Textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Describe your situation or ask about your rights..."
-                  className="flex-1 min-h-[60px] bg-background/30 border-neon-pink/30 focus:border-neon-pink/60"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }
-                  }}
+              <TabsContent value="start">
+                <WhereToStart 
+                  steps={whereToStartSteps}
+                  hubName="Defense"
+                  hubColor="pink"
                 />
-                <Button
-                  variant="neon-purple"
-                  size="lg"
-                  onClick={handleSendMessage}
-                  disabled={!message.trim() || isLoading}
-                >
-                  <Send className="w-5 h-5" />
-                </Button>
-              </div>
-            </Card>
+              </TabsContent>
+
+              <TabsContent value="assistant">
+                <HubAssistant
+                  assistantName="Defendr"
+                  assistantVariant="pink"
+                  systemPrompt={systemPrompt}
+                  placeholderText="Describe your case, upload your ticket, or ask about your defense options..."
+                  welcomeMessage="I'm Defendr, your AI defense assistant. Upload your ticket or citation and I'll help you understand your options, build your defense, and prepare for court."
+                />
+              </TabsContent>
+
+              <TabsContent value="documents">
+                <DocumentManager hubType="defense" />
+              </TabsContent>
+
+              <TabsContent value="court">
+                <CourtPrepTab 
+                  checklist={courtPrepChecklist}
+                  caseType="Defense"
+                />
+              </TabsContent>
+
+              <TabsContent value="resources">
+                <Card className="glass-card p-6">
+                  <h3 className="text-xl font-display font-semibold text-foreground mb-4">Legal Resources</h3>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-xl bg-background/30 border border-border/50">
+                      <h4 className="font-medium text-foreground mb-2">Traffic Violation Penalties</h4>
+                      <p className="text-sm text-muted-foreground mb-3">Understand point systems, fines, and license suspensions by state.</p>
+                      <Button variant="outline" size="sm">View Guide</Button>
+                    </div>
+                    <div className="p-4 rounded-xl bg-background/30 border border-border/50">
+                      <h4 className="font-medium text-foreground mb-2">Know Your Rights</h4>
+                      <p className="text-sm text-muted-foreground mb-3">Constitutional rights during traffic stops and arrests.</p>
+                      <Button variant="outline" size="sm">Learn More</Button>
+                    </div>
+                    <div className="p-4 rounded-xl bg-background/30 border border-border/50">
+                      <h4 className="font-medium text-foreground mb-2">Find a Defense Attorney</h4>
+                      <p className="text-sm text-muted-foreground mb-3">Connect with licensed criminal defense lawyers near you.</p>
+                      <Button variant="outline" size="sm">Find Attorney</Button>
+                    </div>
+                    <div className="p-4 rounded-xl bg-background/30 border border-border/50">
+                      <h4 className="font-medium text-foreground mb-2">DUI/DWI Information</h4>
+                      <p className="text-sm text-muted-foreground mb-3">Specific guidance for driving under the influence cases.</p>
+                      <Button variant="outline" size="sm">Read More</Button>
+                    </div>
+                  </div>
+                </Card>
+              </TabsContent>
+            </Tabs>
 
             {/* Disclaimer */}
             <div className="mt-8 glass-card rounded-xl p-4 border-neon-orange/30">

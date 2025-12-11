@@ -3,14 +3,20 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Briefcase, Shield, AlertTriangle, FileText, Phone, 
   Scale, Search, ChevronRight, ExternalLink, 
-  Users, Clock, DollarSign, Heart, Building2
+  Users, Clock, DollarSign, Heart, Building2,
+  MessageSquare, FolderOpen, HelpCircle, BookOpen
 } from "lucide-react";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { useNavigate } from "react-router-dom";
+import { HubAssistant } from "@/components/hub/HubAssistant";
+import { DocumentManager } from "@/components/hub/DocumentManager";
+import { CourtPrepTab } from "@/components/hub/CourtPrepTab";
+import { WhereToStart } from "@/components/hub/WhereToStart";
 
 const topics = [
   {
@@ -23,7 +29,7 @@ const topics = [
   },
   {
     id: "harassment",
-    title: "Harassment & Hostile Work Environment",
+    title: "Harassment & Hostile Work",
     icon: AlertTriangle,
     description: "Understand sexual harassment laws, hostile work environments, and reporting procedures.",
     color: "neon-pink",
@@ -71,245 +77,249 @@ const stateResources = [
   { state: "Illinois", agency: "IL Department of Labor", phone: "(312) 793-2800" },
 ];
 
-const faqs = [
+const whereToStartSteps = [
   {
-    question: "Can my employer fire me for filing a complaint?",
-    answer: "No. Federal and state laws protect employees from retaliation for filing complaints about discrimination, harassment, wage violations, or safety concerns. If you experience retaliation, you may have grounds for an additional claim."
+    title: "Document Everything",
+    description: "Keep records of incidents, communications, and any evidence of wrongdoing",
+    action: "Start Documenting"
   },
   {
-    question: "How long do I have to file a workplace complaint?",
-    answer: "Time limits vary by claim type. EEOC discrimination charges must typically be filed within 180-300 days. Wage claims vary by state, often 2-3 years. OSHA complaints should be filed within 30 days. Act quickly to preserve your rights."
+    title: "Know Your Rights",
+    description: "Learn about federal and state labor laws that protect you",
+    action: "Learn Rights"
   },
   {
-    question: "Do I need a lawyer for a workplace dispute?",
-    answer: "Not always, but legal representation is recommended for complex cases. Many employment attorneys offer free consultations and work on contingency (no fee unless you win). Government agencies can also help without a lawyer."
+    title: "Report Internally First",
+    description: "Follow your company's HR procedures for reporting issues",
+    action: "Report Guide"
   },
+  {
+    title: "File Government Complaint",
+    description: "Contact EEOC, DOL, or OSHA depending on your issue",
+    action: "File Complaint"
+  },
+  {
+    title: "Consult an Attorney",
+    description: "Get legal advice for complex situations or if internal reporting fails",
+    action: "Find Attorney"
+  }
+];
+
+const courtPrepChecklist = [
+  { id: "evidence", label: "Gather all emails, texts, and written documentation", category: "Evidence" },
+  { id: "witnesses", label: "List potential witnesses and their contact info", category: "Evidence" },
+  { id: "timeline", label: "Create a detailed timeline of events", category: "Evidence" },
+  { id: "policies", label: "Collect company policies and employee handbook", category: "Evidence" },
+  { id: "complaint", label: "File EEOC/DOL complaint within deadlines", category: "Process" },
+  { id: "righttodue", label: "Wait for Right to Sue letter if applicable", category: "Process" },
+  { id: "attorney", label: "Consult with employment attorney", category: "Process" },
+  { id: "deposition", label: "Prepare for deposition if case proceeds", category: "Court" },
+  { id: "testimony", label: "Practice your testimony with attorney", category: "Court" },
+  { id: "professional", label: "Maintain professional demeanor throughout", category: "Court" }
 ];
 
 export default function WorkplaceLegalAidPage() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("start");
 
   const filteredTopics = topics.filter(topic =>
     topic.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     topic.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleChatWithAI = () => {
-    navigate("/chat?topic=workplace");
-  };
+  const systemPrompt = `You are WorkplaceAI, an AI assistant specializing in employment law and worker rights in the U.S. (2025).
+  
+  YOUR MISSION:
+  - Help workers understand their rights under federal and state labor laws
+  - Guide users through filing complaints with EEOC, DOL, OSHA
+  - Explain workplace protections against discrimination, harassment, and retaliation
+  - Help users document workplace issues properly
+  - Analyze employment documents (contracts, handbooks, termination letters)
+  
+  KEY AREAS:
+  1. Discrimination (Title VII, ADA, ADEA)
+  2. Sexual harassment and hostile work environment
+  3. Wage and hour violations (FLSA)
+  4. Family and Medical Leave (FMLA)
+  5. Workplace safety (OSHA)
+  6. Wrongful termination
+  7. Whistleblower protections
+  
+  DOCUMENT ANALYSIS:
+  - Review employment contracts for unfair clauses
+  - Analyze termination letters for legal issues
+  - Help users understand their rights under employee handbooks
+  
+  Always remind users of filing deadlines and recommend consulting with an employment attorney for specific legal advice.`;
 
   return (
     <Layout>
       <FuturisticBackground>
         {/* Hero */}
-        <section className="relative py-16 overflow-hidden">
+        <section className="relative py-12 overflow-hidden">
           <div className="container mx-auto px-4 relative">
             <div className="max-w-4xl mx-auto text-center">
               <div className="flex justify-center mb-6">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-neon-orange/20 blur-3xl rounded-full scale-150" />
-                  <AnimatedAIHead variant="orange" size="lg" />
-                </div>
+                <AnimatedAIHead variant="orange" size="lg" />
               </div>
 
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neon-orange/10 border border-neon-orange/30 mb-6">
                 <Briefcase className="h-4 w-4 text-neon-orange" />
-                <span className="text-sm font-medium text-neon-orange">Workplace Legal Aid</span>
+                <span className="text-sm font-medium text-neon-orange">Workplace Legal Aid Hub</span>
               </div>
               <h1 className="font-display text-4xl md:text-5xl font-bold mb-4 text-foreground">
                 Know Your <span className="text-neon-orange">Worker Rights</span>
               </h1>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-                Free legal information and resources to protect yourself at work. 
-                Understand your rights, file complaints, and get help.
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                Complete hub for workplace legal issues. AI-powered guidance, document management, and complaint filing assistance.
               </p>
-              <Button variant="neon" size="lg" onClick={handleChatWithAI} className="gap-2">
-                <Scale className="h-4 w-4" />
-                Chat with AI Legal Assistant
-              </Button>
             </div>
           </div>
         </section>
 
-        {/* Search */}
+        {/* Topic Cards */}
         <section className="py-8">
-          <div className="container mx-auto px-4 max-w-3xl">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                placeholder="Search workplace legal topics..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-12 h-14 text-lg"
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* Topics Grid */}
-        <section className="py-12">
           <div className="container mx-auto px-4">
-            <h2 className="font-display text-2xl font-bold text-foreground mb-8 text-center">
-              Common Workplace Issues
-            </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-              {filteredTopics.map((topic) => (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 max-w-6xl mx-auto mb-8">
+              {topics.map((topic) => (
                 <Card 
                   key={topic.id} 
-                  className={`glass-card-hover cursor-pointer border-${topic.color}/20 hover:border-${topic.color}/50 transition-all`}
+                  className={`glass-card cursor-pointer hover:border-${topic.color}/50 transition-all p-4 text-center`}
                   onClick={() => setSelectedTopic(selectedTopic === topic.id ? null : topic.id)}
                 >
-                  <CardHeader>
-                    <div className={`w-12 h-12 rounded-xl bg-${topic.color}/10 flex items-center justify-center mb-3`}>
-                      <topic.icon className={`h-6 w-6 text-${topic.color}`} />
-                    </div>
-                    <CardTitle className="text-foreground">{topic.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground mb-4">{topic.description}</p>
-                    {selectedTopic === topic.id && (
-                      <div className="space-y-2 border-t border-border/30 pt-4 mt-4">
-                        {topic.articles.map((article, i) => (
-                          <button
-                            key={i}
-                            className="flex items-center gap-2 text-sm text-foreground hover:text-neon-orange transition-colors w-full text-left"
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                            {article}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
+                  <div className={`w-10 h-10 rounded-xl bg-${topic.color}/10 flex items-center justify-center mx-auto mb-2`}>
+                    <topic.icon className={`h-5 w-5 text-${topic.color}`} />
+                  </div>
+                  <h3 className="text-sm font-medium text-foreground">{topic.title}</h3>
                 </Card>
               ))}
             </div>
           </div>
         </section>
 
-        {/* State Labor Boards */}
-        <section className="py-12 bg-muted/20">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="font-display text-2xl font-bold text-foreground mb-2 text-center">
-                State Labor Board Contacts
-              </h2>
-              <p className="text-muted-foreground text-center mb-8">
-                File complaints and get help from your state's labor department
-              </p>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {stateResources.map((resource) => (
-                  <Card key={resource.state} className="glass-card">
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold text-foreground mb-1">{resource.state}</h3>
-                      <p className="text-sm text-muted-foreground mb-2">{resource.agency}</p>
-                      <a 
-                        href={`tel:${resource.phone}`}
-                        className="flex items-center gap-2 text-sm text-neon-orange hover:underline"
-                      >
-                        <Phone className="h-4 w-4" />
-                        {resource.phone}
-                      </a>
-                    </CardContent>
+        {/* Main Hub */}
+        <section className="py-8">
+          <div className="container mx-auto px-4 max-w-6xl">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <TabsList className="grid grid-cols-5 glass-card p-1">
+                <TabsTrigger value="start" className="data-[state=active]:bg-neon-orange/20 data-[state=active]:text-neon-orange gap-2">
+                  <HelpCircle className="w-4 h-4" /> Where to Start
+                </TabsTrigger>
+                <TabsTrigger value="assistant" className="data-[state=active]:bg-neon-cyan/20 data-[state=active]:text-neon-cyan gap-2">
+                  <MessageSquare className="w-4 h-4" /> AI Assistant
+                </TabsTrigger>
+                <TabsTrigger value="documents" className="data-[state=active]:bg-neon-green/20 data-[state=active]:text-neon-green gap-2">
+                  <FolderOpen className="w-4 h-4" /> Documents
+                </TabsTrigger>
+                <TabsTrigger value="court" className="data-[state=active]:bg-neon-purple/20 data-[state=active]:text-neon-purple gap-2">
+                  <Scale className="w-4 h-4" /> Case Prep
+                </TabsTrigger>
+                <TabsTrigger value="resources" className="data-[state=active]:bg-neon-pink/20 data-[state=active]:text-neon-pink gap-2">
+                  <BookOpen className="w-4 h-4" /> Resources
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="start">
+                <WhereToStart 
+                  steps={whereToStartSteps}
+                  hubName="Workplace Legal Aid"
+                  hubColor="orange"
+                />
+              </TabsContent>
+
+              <TabsContent value="assistant">
+                <HubAssistant
+                  assistantName="WorkplaceAI"
+                  assistantVariant="orange"
+                  systemPrompt={systemPrompt}
+                  placeholderText="Describe your workplace issue, upload documents, or ask about your rights..."
+                  welcomeMessage="I'm WorkplaceAI, your employment law assistant. I can help with discrimination, harassment, wage issues, wrongful termination, and more. Upload your employment documents and I'll analyze them."
+                />
+              </TabsContent>
+
+              <TabsContent value="documents">
+                <DocumentManager hubType="workplace" />
+              </TabsContent>
+
+              <TabsContent value="court">
+                <CourtPrepTab 
+                  checklist={courtPrepChecklist}
+                  caseType="Employment"
+                />
+              </TabsContent>
+
+              <TabsContent value="resources">
+                <div className="space-y-6">
+                  {/* State Labor Boards */}
+                  <Card className="glass-card p-6">
+                    <h3 className="font-display text-xl font-semibold text-foreground mb-4">State Labor Board Contacts</h3>
+                    <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-4">
+                      {stateResources.map((resource) => (
+                        <div key={resource.state} className="p-4 rounded-xl bg-background/30 border border-border/50">
+                          <h4 className="font-semibold text-foreground mb-1">{resource.state}</h4>
+                          <p className="text-xs text-muted-foreground mb-2">{resource.agency}</p>
+                          <a 
+                            href={`tel:${resource.phone}`}
+                            className="flex items-center gap-2 text-sm text-neon-orange hover:underline"
+                          >
+                            <Phone className="h-4 w-4" />
+                            {resource.phone}
+                          </a>
+                        </div>
+                      ))}
+                    </div>
                   </Card>
-                ))}
-              </div>
-              <div className="text-center mt-6">
-                <Button variant="outline" className="gap-2">
-                  View All States <ExternalLink className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
 
-        {/* FAQs */}
-        <section className="py-12">
-          <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto">
-              <h2 className="font-display text-2xl font-bold text-foreground mb-8 text-center">
-                Frequently Asked Questions
-              </h2>
-              <div className="space-y-4">
-                {faqs.map((faq, i) => (
-                  <Card key={i} className="glass-card">
-                    <CardContent className="p-6">
-                      <h3 className="font-semibold text-foreground mb-2">{faq.question}</h3>
-                      <p className="text-sm text-muted-foreground">{faq.answer}</p>
-                    </CardContent>
+                  {/* Federal Resources */}
+                  <Card className="glass-card p-6">
+                    <h3 className="font-display text-xl font-semibold text-foreground mb-4">Federal Resources</h3>
+                    <div className="grid md:grid-cols-3 gap-6">
+                      <div className="p-6 rounded-xl bg-background/30 border border-border/50 text-center">
+                        <div className="w-12 h-12 rounded-xl bg-neon-green/10 flex items-center justify-center mx-auto mb-3">
+                          <Scale className="h-6 w-6 text-neon-green" />
+                        </div>
+                        <h4 className="font-semibold text-foreground mb-2">EEOC</h4>
+                        <p className="text-sm text-muted-foreground mb-4">Equal Employment Opportunity Commission</p>
+                        <Button variant="outline" size="sm" className="gap-2">
+                          eeoc.gov <ExternalLink className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <div className="p-6 rounded-xl bg-background/30 border border-border/50 text-center">
+                        <div className="w-12 h-12 rounded-xl bg-neon-cyan/10 flex items-center justify-center mx-auto mb-3">
+                          <Shield className="h-6 w-6 text-neon-cyan" />
+                        </div>
+                        <h4 className="font-semibold text-foreground mb-2">OSHA</h4>
+                        <p className="text-sm text-muted-foreground mb-4">Occupational Safety & Health Admin</p>
+                        <Button variant="outline" size="sm" className="gap-2">
+                          osha.gov <ExternalLink className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <div className="p-6 rounded-xl bg-background/30 border border-border/50 text-center">
+                        <div className="w-12 h-12 rounded-xl bg-neon-purple/10 flex items-center justify-center mx-auto mb-3">
+                          <DollarSign className="h-6 w-6 text-neon-purple" />
+                        </div>
+                        <h4 className="font-semibold text-foreground mb-2">DOL</h4>
+                        <p className="text-sm text-muted-foreground mb-4">Department of Labor - Wage & Hour</p>
+                        <Button variant="outline" size="sm" className="gap-2">
+                          dol.gov <ExternalLink className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
                   </Card>
-                ))}
-              </div>
-            </div>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
         </section>
 
-        {/* Federal Resources */}
-        <section className="py-12 bg-muted/20">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="font-display text-2xl font-bold text-foreground mb-8 text-center">
-                Federal Resources
-              </h2>
-              <div className="grid md:grid-cols-3 gap-6">
-                <Card className="glass-card-hover">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-12 h-12 rounded-xl bg-neon-green/10 flex items-center justify-center mx-auto mb-3">
-                      <Scale className="h-6 w-6 text-neon-green" />
-                    </div>
-                    <h3 className="font-semibold text-foreground mb-2">EEOC</h3>
-                    <p className="text-sm text-muted-foreground mb-4">Equal Employment Opportunity Commission</p>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      eeoc.gov <ExternalLink className="h-3 w-3" />
-                    </Button>
-                  </CardContent>
-                </Card>
-                <Card className="glass-card-hover">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-12 h-12 rounded-xl bg-neon-cyan/10 flex items-center justify-center mx-auto mb-3">
-                      <Shield className="h-6 w-6 text-neon-cyan" />
-                    </div>
-                    <h3 className="font-semibold text-foreground mb-2">OSHA</h3>
-                    <p className="text-sm text-muted-foreground mb-4">Occupational Safety & Health Admin</p>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      osha.gov <ExternalLink className="h-3 w-3" />
-                    </Button>
-                  </CardContent>
-                </Card>
-                <Card className="glass-card-hover">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-12 h-12 rounded-xl bg-neon-purple/10 flex items-center justify-center mx-auto mb-3">
-                      <DollarSign className="h-6 w-6 text-neon-purple" />
-                    </div>
-                    <h3 className="font-semibold text-foreground mb-2">DOL</h3>
-                    <p className="text-sm text-muted-foreground mb-4">Department of Labor - Wage & Hour</p>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      dol.gov <ExternalLink className="h-3 w-3" />
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* CTA */}
-        <section className="py-16">
-          <div className="container mx-auto px-4">
-            <div className="glass-card p-8 rounded-2xl border-neon-orange/20 bg-gradient-to-r from-neon-orange/5 to-neon-pink/5 max-w-4xl mx-auto text-center">
-              <h2 className="font-display text-2xl font-bold text-foreground mb-4">
-                Need Personalized Help?
-              </h2>
-              <p className="text-muted-foreground mb-6">
-                Chat with our AI legal assistant for guidance specific to your situation
-              </p>
-              <Button variant="neon" size="lg" onClick={handleChatWithAI} className="gap-2">
-                <Scale className="h-4 w-4" />
-                Start Free Consultation
-              </Button>
-            </div>
+        {/* Back */}
+        <section className="py-8">
+          <div className="container mx-auto px-4 text-center">
+            <Button variant="ghost" onClick={() => navigate("/ai-assistants")}>
+              ← Back to AI Assistants
+            </Button>
           </div>
         </section>
       </FuturisticBackground>
