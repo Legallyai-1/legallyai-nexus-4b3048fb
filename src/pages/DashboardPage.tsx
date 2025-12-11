@@ -5,13 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { 
-  Scale, Users, FileText, Calendar, MessageSquare, Clock, 
-  Building2, Briefcase, DollarSign, Settings, LogOut, 
-  ChevronRight, Bell, Search
+  Users, FileText, Calendar, MessageSquare, Clock, 
+  DollarSign, ChevronRight
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import type { User } from "@supabase/supabase-js";
-import DashboardLayout from "@/components/layout/DashboardLayout";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { LexiAssistant } from "@/components/dashboard/LexiAssistant";
 
 export default function DashboardPage() {
@@ -49,9 +47,11 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-legal-navy flex items-center justify-center">
-        <div className="animate-pulse text-legal-gold">Loading...</div>
-      </div>
+      <MainLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-pulse text-legal-gold">Loading...</div>
+        </div>
+      </MainLayout>
     );
   }
 
@@ -72,47 +72,22 @@ export default function DashboardPage() {
   ];
 
   return (
-    <DashboardLayout adSlot="DASHBOARD_SIDEBAR_SLOT">
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Scale className="h-8 w-8 text-legal-gold" />
-            <span className="text-xl font-display font-semibold">LegallyAI</span>
-          </div>
-          
-          <div className="flex-1 max-w-md mx-8">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search cases, clients, documents..." 
-                className="pl-10"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon">
-              <Bell className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => navigate("/settings")}>
-              <Settings className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={handleLogout}>
-              <LogOut className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
+    <MainLayout>
+      <div className="p-6">
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-3xl font-display font-bold mb-2">
             Welcome back, {user?.user_metadata?.full_name || "User"}
           </h1>
           <p className="text-muted-foreground">Here's what's happening with your law practice today.</p>
+        </div>
+
+        {/* Lexi Assistant */}
+        <div className="mb-8">
+          <LexiAssistant 
+            userType="lawyer" 
+            userName={user?.user_metadata?.full_name?.split(' ')[0] || "there"} 
+          />
         </div>
 
         {/* Stats Grid */}
@@ -145,14 +120,6 @@ export default function DashboardPage() {
               </Card>
             ))}
           </div>
-        </div>
-
-        {/* Lexi Assistant */}
-        <div className="mb-8">
-          <LexiAssistant 
-            userType="lawyer" 
-            userName={user?.user_metadata?.full_name?.split(' ')[0] || "there"} 
-          />
         </div>
 
         {/* Main Content Grid */}
@@ -215,8 +182,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
-      </main>
-    </div>
-    </DashboardLayout>
+      </div>
+    </MainLayout>
   );
 }
