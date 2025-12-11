@@ -8,9 +8,11 @@ import { Scale, ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { loginSchema } from "@/lib/validations/auth";
+import { useRoleBasedRedirect } from "@/hooks/useRoleBasedRedirect";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { redirectToHub } = useRoleBasedRedirect();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -20,11 +22,12 @@ export default function LoginPage() {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        navigate("/dashboard");
+        const path = await redirectToHub();
+        navigate(path);
       }
     };
     checkAuth();
-  }, [navigate]);
+  }, [navigate, redirectToHub]);
 
   const validateField = (field: "email" | "password", value: string) => {
     const result = loginSchema.shape[field].safeParse(value);
@@ -61,7 +64,8 @@ export default function LoginPage() {
       });
       if (error) throw error;
       toast.success("Welcome back!");
-      navigate("/dashboard");
+      const path = await redirectToHub();
+      navigate(path);
     } catch (error: any) {
       toast.error(error.message || "Login failed");
     } finally {

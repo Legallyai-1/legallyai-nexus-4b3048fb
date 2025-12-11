@@ -10,11 +10,13 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   User, ChevronLeft, Briefcase, DollarSign, Clock, 
   FileText, Phone, Mail, MapPin, Calendar, Shield,
-  Building2, Edit, Download
+  Building2, Edit, Download, Loader2
 } from "lucide-react";
+import { LexiAssistant } from "@/components/dashboard/LexiAssistant";
 
 interface EmployeeProfile {
   id: string;
@@ -45,8 +47,23 @@ interface PayrollEntry {
 
 export default function EmployeePortalPage() {
   const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<EmployeeProfile | null>(null);
   const [payroll, setPayroll] = useState<PayrollEntry[]>([]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+      setUser(session.user);
+      setLoading(false);
+    };
+    checkAuth();
+  }, [navigate]);
 
   useEffect(() => {
     // Demo employee profile
@@ -107,10 +124,18 @@ export default function EmployeePortalPage() {
     processing: "bg-blue-500/20 text-blue-400",
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-legal-gold" />
+      </div>
+    );
+  }
+
   if (!profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+        <div className="animate-pulse text-muted-foreground">Loading profile...</div>
       </div>
     );
   }
@@ -120,7 +145,7 @@ export default function EmployeePortalPage() {
       {/* Header */}
       <header className="border-b border-border bg-card sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/ai-assistants")}>
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <User className="h-6 w-6 text-legal-gold" />
@@ -129,6 +154,15 @@ export default function EmployeePortalPage() {
       </header>
 
       <main className="container mx-auto px-4 py-6">
+        {/* Lexi Assistant */}
+        <div className="mb-6">
+          <LexiAssistant 
+            userType="business" 
+            userName={user?.user_metadata?.full_name?.split(' ')[0] || profile.display_name} 
+          />
+        </div>
+
+        {/* Profile Header */}
         {/* Profile Header */}
         <Card className="mb-6">
           <CardContent className="p-6">

@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import type { User } from "@supabase/supabase-js";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { LexiAssistant } from "@/components/dashboard/LexiAssistant";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -144,6 +145,14 @@ export default function DashboardPage() {
               </Card>
             ))}
           </div>
+        </div>
+
+        {/* Lexi Assistant */}
+        <div className="mb-8">
+          <LexiAssistant 
+            userType="lawyer" 
+            userName={user?.user_metadata?.full_name?.split(' ')[0] || "there"} 
+          />
         </div>
 
         {/* Main Content Grid */}

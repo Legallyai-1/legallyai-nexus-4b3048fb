@@ -8,6 +8,7 @@ import { Calendar, FileText, MessageSquare, Video, CreditCard, Clock, User, Load
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { LexiAssistant } from "@/components/dashboard/LexiAssistant";
 
 interface Case {
   id: string;
@@ -138,6 +139,14 @@ const ClientPortalPage = () => {
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-foreground">Client Portal</h1>
             <p className="text-muted-foreground mt-2">Welcome back! Manage your cases, documents, and appointments.</p>
+          </div>
+
+          {/* Lexi Assistant */}
+          <div className="mb-8">
+            <LexiAssistant 
+              userType="individual" 
+              userName={user?.user_metadata?.full_name?.split(' ')[0] || "there"} 
+            />
           </div>
 
           <Tabs defaultValue="overview" className="space-y-6">
