@@ -35,3 +35,15 @@ verify_jwt = true
 
 [functions.business-hub]
 verify_jwt = true
+
+[functions.predictive-ai]
+verify_jwt = true
+
+[functions.integration-hub]
+verify_jwt = true
+
+[functions.analytics-engine]
+verify_jwt = true
+
+[functions.certification-engine]
+verify_jwt = true
