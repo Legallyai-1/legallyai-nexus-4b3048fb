@@ -9,7 +9,7 @@ import {
   Heart, Scale, Users, DollarSign, FileText, 
   MapPin, Clock, ArrowRight, Search, ExternalLink,
   GraduationCap, Building2, CheckCircle, Download, Calculator,
-  Receipt, MessageSquare, FolderOpen, HelpCircle, Percent
+  Receipt, MessageSquare, FolderOpen, HelpCircle, Percent, Brain
 } from "lucide-react";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
@@ -19,6 +19,7 @@ import { HubAssistant } from "@/components/hub/HubAssistant";
 import { DocumentManager } from "@/components/hub/DocumentManager";
 import { WhereToStart } from "@/components/hub/WhereToStart";
 import { HubNotifications } from "@/components/hub/HubNotifications";
+import { AIVolunteerMatcher } from "@/components/probono/AIVolunteerMatcher";
 
 const proBonoOpportunities = [
   {
@@ -262,21 +263,24 @@ export default function ProBonoPage() {
           <section className="py-8">
             <div className="container mx-auto px-4 max-w-6xl">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList className="grid grid-cols-5 glass-card p-1">
+                <TabsList className="grid grid-cols-6 glass-card p-1">
                   <TabsTrigger value="start" className="data-[state=active]:bg-neon-pink/20 data-[state=active]:text-neon-pink gap-2">
-                    <HelpCircle className="w-4 h-4" /> Where to Start
+                    <HelpCircle className="w-4 h-4" /> Start
                   </TabsTrigger>
-                  <TabsTrigger value="opportunities" className="data-[state=active]:bg-neon-purple/20 data-[state=active]:text-neon-purple gap-2">
-                    <Heart className="w-4 h-4" /> Opportunities
+                  <TabsTrigger value="ai-match" className="data-[state=active]:bg-neon-purple/20 data-[state=active]:text-neon-purple gap-2">
+                    <Brain className="w-4 h-4" /> AI Match
+                  </TabsTrigger>
+                  <TabsTrigger value="opportunities" className="data-[state=active]:bg-neon-cyan/20 data-[state=active]:text-neon-cyan gap-2">
+                    <Heart className="w-4 h-4" /> Browse
                   </TabsTrigger>
                   <TabsTrigger value="tax" className="data-[state=active]:bg-neon-green/20 data-[state=active]:text-neon-green gap-2">
-                    <Receipt className="w-4 h-4" /> Tax Benefits
+                    <Receipt className="w-4 h-4" /> Tax
                   </TabsTrigger>
-                  <TabsTrigger value="tracker" className="data-[state=active]:bg-neon-cyan/20 data-[state=active]:text-neon-cyan gap-2">
-                    <Calculator className="w-4 h-4" /> Hours & Expenses
+                  <TabsTrigger value="tracker" className="data-[state=active]:bg-neon-orange/20 data-[state=active]:text-neon-orange gap-2">
+                    <Calculator className="w-4 h-4" /> Track
                   </TabsTrigger>
-                  <TabsTrigger value="assistant" className="data-[state=active]:bg-neon-orange/20 data-[state=active]:text-neon-orange gap-2">
-                    <MessageSquare className="w-4 h-4" /> AI Assistant
+                  <TabsTrigger value="assistant" className="data-[state=active]:bg-neon-pink/20 data-[state=active]:text-neon-pink gap-2">
+                    <MessageSquare className="w-4 h-4" /> Chat
                   </TabsTrigger>
                 </TabsList>
 
@@ -285,6 +289,10 @@ export default function ProBonoPage() {
                     caseType="probono"
                     colorVariant="pink"
                   />
+                </TabsContent>
+
+                <TabsContent value="ai-match">
+                  <AIVolunteerMatcher />
                 </TabsContent>
 
                 <TabsContent value="opportunities">
