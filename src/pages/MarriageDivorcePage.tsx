@@ -88,10 +88,10 @@ Always be compassionate and thorough. Provide state-specific guidance when possi
 
             {/* Main Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 bg-background/50 border border-neon-pink/30 rounded-xl p-1 mb-6">
+              <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 bg-background/50 border border-neon-pink/30 rounded-xl p-1 mb-6">
                 <TabsTrigger value="start" className="data-[state=active]:bg-neon-pink/20 data-[state=active]:text-neon-pink">
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Where to Start
+                  Start
                 </TabsTrigger>
                 <TabsTrigger value="chat" className="data-[state=active]:bg-neon-pink/20 data-[state=active]:text-neon-pink">
                   <MessageSquare className="w-4 h-4 mr-2" />
@@ -100,6 +100,10 @@ Always be compassionate and thorough. Provide state-specific guidance when possi
                 <TabsTrigger value="marriage" className="data-[state=active]:bg-neon-pink/20 data-[state=active]:text-neon-pink">
                   <Heart className="w-4 h-4 mr-2" />
                   Marriage
+                </TabsTrigger>
+                <TabsTrigger value="prenup" className="data-[state=active]:bg-neon-pink/20 data-[state=active]:text-neon-pink">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Prenup
                 </TabsTrigger>
                 <TabsTrigger value="divorce" className="data-[state=active]:bg-neon-pink/20 data-[state=active]:text-neon-pink">
                   <Scale className="w-4 h-4 mr-2" />
@@ -118,7 +122,7 @@ Always be compassionate and thorough. Provide state-specific guidance when possi
                     { icon: Heart, title: "Getting Married?", desc: "Marriage licenses, requirements, name changes", color: "pink", action: () => setActiveTab("marriage") },
                     { icon: Scale, title: "Considering Divorce?", desc: "Filing procedures, property division, support", color: "purple", action: () => setActiveTab("divorce") },
                     { icon: Calculator, title: "Calculate Support", desc: "Alimony and asset division estimators", color: "green", action: () => setActiveTab("calculator") },
-                    { icon: FileText, title: "Prenuptial Agreement", desc: "Protect assets before marriage", color: "blue", action: () => toast.info("Coming soon!") },
+                    { icon: FileText, title: "Prenuptial Agreement", desc: "Protect assets before marriage", color: "blue", action: () => setActiveTab("prenup") },
                     { icon: Users, title: "Mediation Help", desc: "Prepare for divorce mediation", color: "orange", action: () => setActiveTab("chat") },
                     { icon: MessageSquare, title: "Ask MaryAI", desc: "Get personalized guidance", color: "cyan", action: () => setActiveTab("chat") },
                   ].map((item, i) => (
@@ -240,6 +244,119 @@ Always be compassionate and thorough. Provide state-specific guidance when possi
                       <Button variant="neon-outline" className="w-full">
                         Generate Name Change Forms
                       </Button>
+                    </div>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              {/* Prenup Tab */}
+              <TabsContent value="prenup">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <Card className="glass-card p-6 border-neon-blue/30">
+                    <h3 className="font-display font-semibold text-xl text-foreground mb-4 flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-neon-blue" />
+                      Create Prenuptial Agreement
+                    </h3>
+                    <div className="space-y-4">
+                      <div>
+                        <Label>Party 1 Full Name</Label>
+                        <Input placeholder="First party's legal name" />
+                      </div>
+                      <div>
+                        <Label>Party 2 Full Name</Label>
+                        <Input placeholder="Second party's legal name" />
+                      </div>
+                      <div>
+                        <Label>State</Label>
+                        <Select>
+                          <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
+                          <SelectContent>
+                            {["California", "Texas", "Florida", "New York", "Illinois", "Arizona", "Nevada", "Washington", "Colorado", "Georgia"].map(s => (
+                              <SelectItem key={s} value={s.toLowerCase()}>{s}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Wedding Date</Label>
+                        <Input type="date" />
+                      </div>
+                      <Button variant="neon" className="w-full" onClick={() => {
+                        toast.success("Generating prenuptial agreement draft...");
+                        setActiveTab("chat");
+                        setChatInput("Help me create a prenuptial agreement. What information do you need?");
+                      }}>
+                        Generate Draft <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </div>
+                  </Card>
+
+                  <Card className="glass-card p-6 border-neon-blue/30">
+                    <h3 className="font-display font-semibold text-xl text-foreground mb-4 flex items-center gap-2">
+                      <DollarSign className="w-5 h-5 text-neon-blue" />
+                      Asset Protection
+                    </h3>
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        Common items to protect in a prenuptial agreement:
+                      </p>
+                      <div className="space-y-2">
+                        {[
+                          { item: "Real Estate & Property", desc: "Homes, land, investment properties" },
+                          { item: "Business Interests", desc: "Ownership stakes, partnerships, LLCs" },
+                          { item: "Retirement Accounts", desc: "401(k), IRA, pension plans" },
+                          { item: "Investments", desc: "Stocks, bonds, crypto, mutual funds" },
+                          { item: "Inheritance Rights", desc: "Family assets, trusts, estates" },
+                          { item: "Debt Protection", desc: "Separate pre-marital debts" },
+                        ].map((asset, i) => (
+                          <div key={i} className="flex items-start gap-3 p-3 bg-background/50 rounded-lg">
+                            <div className="w-2 h-2 rounded-full bg-neon-blue mt-2" />
+                            <div>
+                              <p className="font-medium text-foreground text-sm">{asset.item}</p>
+                              <p className="text-xs text-muted-foreground">{asset.desc}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <Button variant="neon-outline" className="w-full" onClick={() => setActiveTab("chat")}>
+                        Ask MaryAI About Asset Protection
+                      </Button>
+                    </div>
+                  </Card>
+
+                  <Card className="glass-card p-6 border-neon-cyan/30 md:col-span-2">
+                    <h3 className="font-display font-semibold text-xl text-foreground mb-4 flex items-center gap-2">
+                      <Scale className="w-5 h-5 text-neon-cyan" />
+                      Prenup Requirements by State
+                    </h3>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <div className="bg-background/50 p-4 rounded-lg">
+                        <h4 className="font-semibold text-foreground mb-2">Valid Requirements</h4>
+                        <ul className="text-sm text-muted-foreground space-y-1">
+                          <li>• Written agreement</li>
+                          <li>• Voluntary signing</li>
+                          <li>• Full financial disclosure</li>
+                          <li>• Signed before wedding</li>
+                        </ul>
+                      </div>
+                      <div className="bg-background/50 p-4 rounded-lg">
+                        <h4 className="font-semibold text-foreground mb-2">Recommended</h4>
+                        <ul className="text-sm text-muted-foreground space-y-1">
+                          <li>• Independent attorneys</li>
+                          <li>• Notarization</li>
+                          <li>• Waiting period</li>
+                          <li>• Fair terms</li>
+                        </ul>
+                      </div>
+                      <div className="bg-background/50 p-4 rounded-lg">
+                        <h4 className="font-semibold text-foreground mb-2">Cannot Include</h4>
+                        <ul className="text-sm text-muted-foreground space-y-1">
+                          <li>• Child custody terms</li>
+                          <li>• Child support waivers</li>
+                          <li>• Illegal provisions</li>
+                          <li>• Personal behavior rules</li>
+                        </ul>
+                      </div>
                     </div>
                   </Card>
                 </div>
