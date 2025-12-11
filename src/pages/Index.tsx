@@ -304,7 +304,7 @@ export default function Index() {
 
         {/* Bottom Ad Banner */}
         <AdContainer position="bottom" className="w-full max-w-2xl mt-8">
-          <AdBanner slot="HOMEPAGE_BOTTOM_SLOT" format="horizontal" />
+          <AdBanner slot="3466389052" format="horizontal" />
         </AdContainer>
       </div>
     </FuturisticBackground>

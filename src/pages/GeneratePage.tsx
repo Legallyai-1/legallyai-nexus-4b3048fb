@@ -419,7 +419,7 @@ export default function GeneratePage() {
 
           {/* Ad Banner (Replace slot with your Generate Page ad unit ID) */}
           <AdContainer position="bottom" className="max-w-3xl mx-auto mt-8">
-            <AdBanner slot="GENERATE_PAGE_SLOT" format="horizontal" />
+            <AdBanner slot="7223453623" format="horizontal" />
           </AdContainer>
         </div>
       </section>
