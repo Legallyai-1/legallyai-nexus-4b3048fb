@@ -67,6 +67,7 @@ const navigationSections: NavSection[] = [
   {
     title: "Business",
     items: [
+      { title: "Business Hub", href: "/business-hub", icon: Building2, roles: ["owner", "admin", "manager", "lawyer"] },
       { title: "Time Clock", href: "/timeclock", icon: Clock, roles: ["owner", "admin", "manager", "lawyer", "paralegal", "employee"] },
       { title: "Payroll", href: "/payroll", icon: DollarSign, roles: ["owner", "admin"] },
       { title: "Monetization", href: "/monetization", icon: BarChart3, roles: ["owner", "admin"] },
