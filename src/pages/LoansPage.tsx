@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { HubNotifications } from "@/components/hub/HubNotifications";
+import { LoanRepaymentTracker } from "@/components/hub/LoanRepaymentTracker";
 
 interface LoanApplication {
   id: string;
@@ -260,10 +262,13 @@ export default function LoansPage() {
               <div className="flex justify-center mb-4">
                 <AnimatedAIHead variant="green" size="lg" />
               </div>
-              <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-2">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-green to-emerald-400">LoanAI</span>
-              </h1>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              <div className="flex items-center justify-center gap-4">
+                <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-green to-emerald-400">LoanAI</span>
+                </h1>
+                <HubNotifications hubFilter="loan" colorVariant="green" />
+              </div>
+              <p className="text-muted-foreground text-lg max-w-2xl mx-auto mt-2">
                 Real Legal Service Financing - Verified & Secure
               </p>
             </div>
@@ -286,15 +291,18 @@ export default function LoansPage() {
 
             {/* Main Content */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid grid-cols-3 mb-8 glass-card">
+              <TabsList className="grid grid-cols-4 mb-8 glass-card">
                 <TabsTrigger value="apply" className="data-[state=active]:bg-neon-green/20 data-[state=active]:text-neon-green">
-                  <FileText className="w-4 h-4 mr-2" /> Apply Now
+                  <FileText className="w-4 h-4 mr-2" /> Apply
                 </TabsTrigger>
                 <TabsTrigger value="verify" className="data-[state=active]:bg-neon-cyan/20 data-[state=active]:text-neon-cyan">
-                  <BadgeCheck className="w-4 h-4 mr-2" /> Verify Identity
+                  <BadgeCheck className="w-4 h-4 mr-2" /> Verify
                 </TabsTrigger>
-                <TabsTrigger value="history" className="data-[state=active]:bg-neon-purple/20 data-[state=active]:text-neon-purple">
-                  <CreditCard className="w-4 h-4 mr-2" /> My Loans
+                <TabsTrigger value="repayments" className="data-[state=active]:bg-neon-purple/20 data-[state=active]:text-neon-purple">
+                  <TrendingUp className="w-4 h-4 mr-2" /> Repayments
+                </TabsTrigger>
+                <TabsTrigger value="history" className="data-[state=active]:bg-neon-orange/20 data-[state=active]:text-neon-orange">
+                  <CreditCard className="w-4 h-4 mr-2" /> History
                 </TabsTrigger>
               </TabsList>
 
@@ -607,6 +615,11 @@ export default function LoansPage() {
                     </p>
                   </div>
                 </Card>
+              </TabsContent>
+
+              {/* Repayments Tab */}
+              <TabsContent value="repayments">
+                <LoanRepaymentTracker />
               </TabsContent>
 
               {/* History Tab */}

@@ -17,6 +17,7 @@ import { CourtPrepTab } from "@/components/hub/CourtPrepTab";
 import { WhereToStart } from "@/components/hub/WhereToStart";
 import { ChildSupportPayment } from "@/components/hub/ChildSupportPayment";
 import { DocuAI } from "@/components/hub/DocuAI";
+import { HubNotifications } from "@/components/hub/HubNotifications";
 import { 
   Users, ArrowRight, ArrowLeft, CheckCircle, FileText, Loader2, Sparkles,
   Scale, DollarSign, Shield, Briefcase, Download, Share2, QrCode

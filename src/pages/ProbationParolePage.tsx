@@ -15,6 +15,7 @@ import { DocumentManager } from "@/components/hub/DocumentManager";
 import { CourtPrepTab } from "@/components/hub/CourtPrepTab";
 import { WhereToStart } from "@/components/hub/WhereToStart";
 import { DocuAI } from "@/components/hub/DocuAI";
+import { HubNotifications } from "@/components/hub/HubNotifications";
 
 const supportCategories = [
   {
