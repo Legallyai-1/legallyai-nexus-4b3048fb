@@ -48,6 +48,9 @@ import LoanAdminPage from "@/pages/LoanAdminPage";
 import CourtRecordsPage from "@/pages/CourtRecordsPage";
 import BusinessHubPage from "@/pages/BusinessHubPage";
 import DUIHubPage from "@/pages/DUIHubPage";
+import WillHubPage from "@/pages/WillHubPage";
+import EnhancedCustodyPage from "@/pages/EnhancedCustodyPage";
+import EnhancedParolePage from "@/pages/EnhancedParolePage";
 import NotFound from "@/pages/NotFound";
 
 export function AnimatedRoutes() {
@@ -60,6 +63,7 @@ export function AnimatedRoutes() {
         <Route path="/generate" element={<PageTransition><GeneratePage /></PageTransition>} />
         <Route path="/chat" element={<PageTransition><ChatPage /></PageTransition>} />
         <Route path="/custody" element={<PageTransition><CustodyPage /></PageTransition>} />
+        <Route path="/enhanced-custody" element={<PageTransition><EnhancedCustodyPage /></PageTransition>} />
         <Route path="/lawyers" element={<PageTransition><LawyerPage /></PageTransition>} />
         <Route path="/pricing" element={<PageTransition><PricingPage /></PageTransition>} />
         <Route path="/signup" element={<PageTransition><SignupPage /></PageTransition>} />
@@ -87,11 +91,13 @@ export function AnimatedRoutes() {
         <Route path="/onboarding" element={<PageTransition><OnboardingPage /></PageTransition>} />
         <Route path="/payroll" element={<PageTransition><PayrollPage /></PageTransition>} />
         <Route path="/jobs" element={<PageTransition><JobBoardPage /></PageTransition>} />
+        <Route path="/job-board" element={<PageTransition><JobBoardPage /></PageTransition>} />
         <Route path="/workplace-legal-aid" element={<PageTransition><WorkplaceLegalAidPage /></PageTransition>} />
         <Route path="/pro-bono" element={<PageTransition><ProBonoPage /></PageTransition>} />
         <Route path="/templates" element={<PageTransition><DocumentTemplatesPage /></PageTransition>} />
         <Route path="/tickets-defense" element={<PageTransition><TicketsDefensePage /></PageTransition>} />
         <Route path="/probation-parole" element={<PageTransition><ProbationParolePage /></PageTransition>} />
+        <Route path="/enhanced-parole" element={<PageTransition><EnhancedParolePage /></PageTransition>} />
         <Route path="/legal-academy" element={<PageTransition><LegalAcademyPage /></PageTransition>} />
         <Route path="/quiz" element={<PageTransition><QuizPage /></PageTransition>} />
         <Route path="/telephony" element={<PageTransition><TelephonyPage /></PageTransition>} />
@@ -102,7 +108,7 @@ export function AnimatedRoutes() {
         <Route path="/court-records" element={<PageTransition><CourtRecordsPage /></PageTransition>} />
         <Route path="/business-hub" element={<PageTransition><BusinessHubPage /></PageTransition>} />
         <Route path="/dui-hub" element={<PageTransition><DUIHubPage /></PageTransition>} />
-        <Route path="/job-board" element={<PageTransition><JobBoardPage /></PageTransition>} />
+        <Route path="/will-hub" element={<PageTransition><WillHubPage /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
