@@ -17,6 +17,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { DocumentGenerator } from "@/components/hub/DocumentGenerator";
+
+const STATES = ["California", "Texas", "Florida", "New York", "Illinois", "Arizona", "Nevada", "Washington", "Colorado", "Georgia"];
 
 export default function MarriageDivorcePage() {
   const [activeTab, setActiveTab] = useState("start");
@@ -61,6 +64,52 @@ Always be compassionate and thorough. Provide state-specific guidance when possi
       setIsLoading(false);
     }
   };
+
+  const prenupFields = [
+    { id: "party1Name", label: "Party 1 Full Legal Name", type: "text" as const, placeholder: "Enter first party's name", required: true },
+    { id: "party2Name", label: "Party 2 Full Legal Name", type: "text" as const, placeholder: "Enter second party's name", required: true },
+    { id: "state", label: "State", type: "select" as const, options: STATES.map(s => ({ value: s.toLowerCase(), label: s })), required: true },
+    { id: "weddingDate", label: "Planned Wedding Date", type: "date" as const, required: true },
+    { id: "party1Assets", label: "Party 1 Assets to Protect", type: "textarea" as const, placeholder: "List assets (real estate, business interests, investments, etc.)" },
+    { id: "party2Assets", label: "Party 2 Assets to Protect", type: "textarea" as const, placeholder: "List assets (real estate, business interests, investments, etc.)" },
+    { id: "party1Debts", label: "Party 1 Pre-Marital Debts", type: "textarea" as const, placeholder: "List any debts (student loans, credit cards, etc.)" },
+    { id: "party2Debts", label: "Party 2 Pre-Marital Debts", type: "textarea" as const, placeholder: "List any debts" },
+  ];
+
+  const nameChangeFields = [
+    { id: "currentName", label: "Current Legal Name", type: "text" as const, placeholder: "Your full current legal name", required: true },
+    { id: "newName", label: "New Name After Marriage", type: "text" as const, placeholder: "Your desired new name", required: true },
+    { id: "state", label: "State", type: "select" as const, options: STATES.map(s => ({ value: s.toLowerCase(), label: s })), required: true },
+    { id: "marriageDate", label: "Marriage Date", type: "date" as const, required: true },
+    { id: "ssn", label: "Last 4 digits of SSN", type: "text" as const, placeholder: "XXXX" },
+    { id: "driversLicense", label: "Driver's License State", type: "select" as const, options: STATES.map(s => ({ value: s.toLowerCase(), label: s })) },
+  ];
+
+  const divorceFields = [
+    { id: "petitionerName", label: "Petitioner Name", type: "text" as const, placeholder: "Person filing for divorce", required: true },
+    { id: "respondentName", label: "Respondent Name", type: "text" as const, placeholder: "Other spouse", required: true },
+    { id: "state", label: "State", type: "select" as const, options: STATES.map(s => ({ value: s.toLowerCase(), label: s })), required: true },
+    { id: "marriageDate", label: "Date of Marriage", type: "date" as const, required: true },
+    { id: "separationDate", label: "Date of Separation", type: "date" as const },
+    { id: "grounds", label: "Grounds for Divorce", type: "select" as const, options: [
+      { value: "irreconcilable", label: "Irreconcilable Differences (No-Fault)" },
+      { value: "separation", label: "Legal Separation Period" },
+      { value: "other", label: "Other (specify in notes)" },
+    ], required: true },
+    { id: "children", label: "Number of Minor Children", type: "number" as const, placeholder: "0" },
+    { id: "propertyDescription", label: "Marital Property Overview", type: "textarea" as const, placeholder: "Describe major assets (home, vehicles, accounts, etc.)" },
+  ];
+
+  const settlementFields = [
+    { id: "party1Name", label: "Party 1 Name", type: "text" as const, required: true },
+    { id: "party2Name", label: "Party 2 Name", type: "text" as const, required: true },
+    { id: "state", label: "State", type: "select" as const, options: STATES.map(s => ({ value: s.toLowerCase(), label: s })), required: true },
+    { id: "propertyDivision", label: "Property Division Terms", type: "textarea" as const, placeholder: "Describe how property will be divided", required: true },
+    { id: "debtDivision", label: "Debt Division Terms", type: "textarea" as const, placeholder: "Describe how debts will be divided" },
+    { id: "spousalSupport", label: "Spousal Support Terms", type: "textarea" as const, placeholder: "Amount, duration, conditions" },
+    { id: "childCustody", label: "Child Custody Arrangement", type: "textarea" as const, placeholder: "Custody arrangement details (if applicable)" },
+    { id: "childSupport", label: "Child Support Terms", type: "textarea" as const, placeholder: "Amount and payment schedule (if applicable)" },
+  ];
 
   return (
     <Layout>
@@ -199,132 +248,46 @@ Always be compassionate and thorough. Provide state-specific guidance when possi
 
               {/* Marriage Tab */}
               <TabsContent value="marriage">
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-8">
+                  <DocumentGenerator
+                    title="Name Change Forms"
+                    description="Generate all necessary forms for legally changing your name after marriage"
+                    documentType="Name Change Package"
+                    fields={nameChangeFields}
+                    systemPrompt="You are MaryAI, an expert in marriage-related legal documents. Generate comprehensive name change forms and instructions specific to the user's state. Include DMV, Social Security, bank notification templates, and a checklist of all organizations to notify."
+                    colorVariant="pink"
+                    icon={<FileCheck className="h-5 w-5 text-neon-pink" />}
+                  />
+                  
                   <Card className="glass-card p-6 border-neon-pink/30">
                     <h3 className="font-display font-semibold text-xl text-foreground mb-4 flex items-center gap-2">
                       <Heart className="w-5 h-5 text-neon-pink" />
-                      Marriage License
+                      Marriage License Information
                     </h3>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>State</Label>
-                        <Select>
-                          <SelectTrigger><SelectValue placeholder="Select your state" /></SelectTrigger>
-                          <SelectContent>
-                            {["California", "Texas", "Florida", "New York", "Illinois"].map(s => (
-                              <SelectItem key={s} value={s.toLowerCase()}>{s}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>County</Label>
-                        <Input placeholder="Enter your county" />
-                      </div>
-                      <Button variant="neon" className="w-full">
-                        Get Requirements <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </div>
-                  </Card>
-
-                  <Card className="glass-card p-6 border-neon-pink/30">
-                    <h3 className="font-display font-semibold text-xl text-foreground mb-4 flex items-center gap-2">
-                      <FileCheck className="w-5 h-5 text-neon-pink" />
-                      Name Change
-                    </h3>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Current Legal Name</Label>
-                        <Input placeholder="Your current name" />
-                      </div>
-                      <div>
-                        <Label>New Name After Marriage</Label>
-                        <Input placeholder="Your new name" />
-                      </div>
-                      <Button variant="neon-outline" className="w-full">
-                        Generate Name Change Forms
-                      </Button>
-                    </div>
+                    <p className="text-muted-foreground mb-4">
+                      Ask MaryAI about specific marriage license requirements for your state and county.
+                    </p>
+                    <Button variant="neon" onClick={() => setActiveTab("chat")}>
+                      Ask MaryAI <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
                   </Card>
                 </div>
               </TabsContent>
 
               {/* Prenup Tab */}
               <TabsContent value="prenup">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <Card className="glass-card p-6 border-neon-blue/30">
-                    <h3 className="font-display font-semibold text-xl text-foreground mb-4 flex items-center gap-2">
-                      <FileText className="w-5 h-5 text-neon-blue" />
-                      Create Prenuptial Agreement
-                    </h3>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Party 1 Full Name</Label>
-                        <Input placeholder="First party's legal name" />
-                      </div>
-                      <div>
-                        <Label>Party 2 Full Name</Label>
-                        <Input placeholder="Second party's legal name" />
-                      </div>
-                      <div>
-                        <Label>State</Label>
-                        <Select>
-                          <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
-                          <SelectContent>
-                            {["California", "Texas", "Florida", "New York", "Illinois", "Arizona", "Nevada", "Washington", "Colorado", "Georgia"].map(s => (
-                              <SelectItem key={s} value={s.toLowerCase()}>{s}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>Wedding Date</Label>
-                        <Input type="date" />
-                      </div>
-                      <Button variant="neon" className="w-full" onClick={() => {
-                        toast.success("Generating prenuptial agreement draft...");
-                        setActiveTab("chat");
-                        setChatInput("Help me create a prenuptial agreement. What information do you need?");
-                      }}>
-                        Generate Draft <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </div>
-                  </Card>
-
-                  <Card className="glass-card p-6 border-neon-blue/30">
-                    <h3 className="font-display font-semibold text-xl text-foreground mb-4 flex items-center gap-2">
-                      <DollarSign className="w-5 h-5 text-neon-blue" />
-                      Asset Protection
-                    </h3>
-                    <div className="space-y-4">
-                      <p className="text-sm text-muted-foreground">
-                        Common items to protect in a prenuptial agreement:
-                      </p>
-                      <div className="space-y-2">
-                        {[
-                          { item: "Real Estate & Property", desc: "Homes, land, investment properties" },
-                          { item: "Business Interests", desc: "Ownership stakes, partnerships, LLCs" },
-                          { item: "Retirement Accounts", desc: "401(k), IRA, pension plans" },
-                          { item: "Investments", desc: "Stocks, bonds, crypto, mutual funds" },
-                          { item: "Inheritance Rights", desc: "Family assets, trusts, estates" },
-                          { item: "Debt Protection", desc: "Separate pre-marital debts" },
-                        ].map((asset, i) => (
-                          <div key={i} className="flex items-start gap-3 p-3 bg-background/50 rounded-lg">
-                            <div className="w-2 h-2 rounded-full bg-neon-blue mt-2" />
-                            <div>
-                              <p className="font-medium text-foreground text-sm">{asset.item}</p>
-                              <p className="text-xs text-muted-foreground">{asset.desc}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      <Button variant="neon-outline" className="w-full" onClick={() => setActiveTab("chat")}>
-                        Ask MaryAI About Asset Protection
-                      </Button>
-                    </div>
-                  </Card>
-
-                  <Card className="glass-card p-6 border-neon-cyan/30 md:col-span-2">
+                <div className="space-y-8">
+                  <DocumentGenerator
+                    title="Prenuptial Agreement"
+                    description="Create a comprehensive prenuptial agreement to protect both parties' assets"
+                    documentType="Prenuptial Agreement"
+                    fields={prenupFields}
+                    systemPrompt="You are MaryAI, an expert in prenuptial agreements. Generate a comprehensive, legally-sound prenuptial agreement based on the provided information. Include standard clauses for asset protection, debt allocation, property division upon divorce, spousal support waivers or terms, and any state-specific requirements. Make it professional and suitable for attorney review."
+                    colorVariant="blue"
+                    icon={<FileText className="h-5 w-5 text-neon-blue" />}
+                  />
+                  
+                  <Card className="glass-card p-6 border-neon-cyan/30">
                     <h3 className="font-display font-semibold text-xl text-foreground mb-4 flex items-center gap-2">
                       <Scale className="w-5 h-5 text-neon-cyan" />
                       Prenup Requirements by State
@@ -364,65 +327,26 @@ Always be compassionate and thorough. Provide state-specific guidance when possi
 
               {/* Divorce Tab */}
               <TabsContent value="divorce">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <Card className="glass-card p-6 border-neon-purple/30">
-                    <h3 className="font-display font-semibold text-xl text-foreground mb-4 flex items-center gap-2">
-                      <Scale className="w-5 h-5 text-neon-purple" />
-                      Divorce Filing
-                    </h3>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>State of Residence</Label>
-                        <Select>
-                          <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
-                          <SelectContent>
-                            {["California", "Texas", "Florida", "New York", "Illinois"].map(s => (
-                              <SelectItem key={s} value={s.toLowerCase()}>{s}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>Type of Divorce</Label>
-                        <Select>
-                          <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="contested">Contested</SelectItem>
-                            <SelectItem value="uncontested">Uncontested</SelectItem>
-                            <SelectItem value="collaborative">Collaborative</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <Button variant="neon-purple" className="w-full">
-                        Start Divorce Process
-                      </Button>
-                    </div>
-                  </Card>
-
-                  <Card className="glass-card p-6 border-neon-purple/30">
-                    <h3 className="font-display font-semibold text-xl text-foreground mb-4 flex items-center gap-2">
-                      <Home className="w-5 h-5 text-neon-purple" />
-                      Property Division
-                    </h3>
-                    <div className="space-y-4">
-                      <p className="text-sm text-muted-foreground">
-                        Get guidance on dividing marital assets including real estate, retirement accounts, and debts.
-                      </p>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="bg-background/50 p-3 rounded-lg text-center">
-                          <p className="text-muted-foreground">Community Property</p>
-                          <p className="font-semibold text-foreground">9 States</p>
-                        </div>
-                        <div className="bg-background/50 p-3 rounded-lg text-center">
-                          <p className="text-muted-foreground">Equitable Distribution</p>
-                          <p className="font-semibold text-foreground">41 States</p>
-                        </div>
-                      </div>
-                      <Button variant="neon-outline" className="w-full" onClick={() => setActiveTab("chat")}>
-                        Ask MaryAI About Your State
-                      </Button>
-                    </div>
-                  </Card>
+                <div className="space-y-8">
+                  <DocumentGenerator
+                    title="Divorce Petition"
+                    description="Generate divorce filing documents based on your state and circumstances"
+                    documentType="Divorce Petition"
+                    fields={divorceFields}
+                    systemPrompt="You are MaryAI, an expert in divorce law. Generate a comprehensive divorce petition based on the provided information. Include all required sections: parties' information, grounds for divorce, property and debt descriptions, child custody requests if applicable, and relief requested. Follow the format required by the user's state court."
+                    colorVariant="purple"
+                    icon={<Scale className="h-5 w-5 text-neon-purple" />}
+                  />
+                  
+                  <DocumentGenerator
+                    title="Marital Settlement Agreement"
+                    description="Create a settlement agreement for property division and support terms"
+                    documentType="Marital Settlement Agreement"
+                    fields={settlementFields}
+                    systemPrompt="You are MaryAI, an expert in divorce settlements. Generate a comprehensive marital settlement agreement covering all aspects of the divorce: property division, debt allocation, spousal support, and child-related matters if applicable. Make it legally sound and suitable for court filing."
+                    colorVariant="purple"
+                    icon={<Home className="h-5 w-5 text-neon-purple" />}
+                  />
                 </div>
               </TabsContent>
 

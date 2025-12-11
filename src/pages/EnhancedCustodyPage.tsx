@@ -12,12 +12,46 @@ import { Textarea } from "@/components/ui/textarea";
 import { 
   Users, Calendar, MessageSquare, DollarSign, 
   FileText, AlertTriangle, Scale, Calculator,
-  Upload, Clock, Shield, QrCode, Camera
+  Upload, Clock, Shield, QrCode, Camera, Sparkles
 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { DocumentGenerator } from "@/components/hub/DocumentGenerator";
+
+const STATES = ["California", "Texas", "Florida", "New York", "Illinois", "Arizona", "Nevada", "Washington", "Colorado", "Georgia"];
+
+const parentingPlanFields = [
+  { id: "parent1Name", label: "Parent 1 Full Name", type: "text" as const, required: true },
+  { id: "parent2Name", label: "Parent 2 Full Name", type: "text" as const, required: true },
+  { id: "state", label: "State", type: "select" as const, options: STATES.map(s => ({ value: s.toLowerCase(), label: s })), required: true },
+  { id: "children", label: "Children (Names and Ages)", type: "textarea" as const, placeholder: "John Smith, 8 years old\nJane Smith, 5 years old", required: true },
+  { id: "custodyType", label: "Custody Arrangement", type: "select" as const, options: [
+    { value: "joint", label: "Joint Legal & Physical Custody" },
+    { value: "primary", label: "Primary Custody with Visitation" },
+    { value: "sole", label: "Sole Custody" },
+    { value: "split", label: "Split Custody" },
+  ], required: true },
+  { id: "schedule", label: "Proposed Schedule", type: "textarea" as const, placeholder: "Describe weekly schedule, holidays, summer..." },
+  { id: "exchangeLocation", label: "Exchange Location", type: "text" as const, placeholder: "Address or location for exchanges" },
+  { id: "specialTerms", label: "Special Terms or Considerations", type: "textarea" as const, placeholder: "Travel restrictions, communication methods, etc." },
+];
+
+const custodyMotionFields = [
+  { id: "movingParty", label: "Moving Party Name", type: "text" as const, required: true },
+  { id: "opposingParty", label: "Opposing Party Name", type: "text" as const, required: true },
+  { id: "state", label: "State", type: "select" as const, options: STATES.map(s => ({ value: s.toLowerCase(), label: s })), required: true },
+  { id: "caseNumber", label: "Case Number", type: "text" as const, placeholder: "If existing case" },
+  { id: "motionType", label: "Type of Motion", type: "select" as const, options: [
+    { value: "modify", label: "Motion to Modify Custody" },
+    { value: "enforce", label: "Motion to Enforce Custody Order" },
+    { value: "contempt", label: "Motion for Contempt" },
+    { value: "emergency", label: "Emergency Motion" },
+  ], required: true },
+  { id: "grounds", label: "Grounds for Motion", type: "textarea" as const, placeholder: "Explain the reasons for this motion...", required: true },
+  { id: "reliefSought", label: "Relief Sought", type: "textarea" as const, placeholder: "What do you want the court to order?", required: true },
+];
 
 const EnhancedCustodyPage = () => {
   const [activeTab, setActiveTab] = useState("intake");
@@ -87,8 +121,9 @@ const EnhancedCustodyPage = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-8 w-full">
+            <TabsList className="grid grid-cols-9 w-full">
               <TabsTrigger value="intake">Intake</TabsTrigger>
+              <TabsTrigger value="generate">Generate</TabsTrigger>
               <TabsTrigger value="calendar">Calendar</TabsTrigger>
               <TabsTrigger value="messaging">Messaging</TabsTrigger>
               <TabsTrigger value="expenses">Expenses</TabsTrigger>
@@ -97,6 +132,29 @@ const EnhancedCustodyPage = () => {
               <TabsTrigger value="documents">Documents</TabsTrigger>
               <TabsTrigger value="qrcode">Show to Police</TabsTrigger>
             </TabsList>
+
+            {/* Generate Tab */}
+            <TabsContent value="generate" className="space-y-6">
+              <DocumentGenerator
+                title="Parenting Plan"
+                description="Generate a comprehensive parenting plan with custody schedule and terms"
+                documentType="Parenting Plan"
+                fields={parentingPlanFields}
+                systemPrompt="You are CustodiAI, an expert in child custody law. Generate a comprehensive parenting plan that includes: custody arrangement details, weekly and holiday schedules, exchange procedures, communication guidelines, decision-making provisions, and any special terms. Make it legally sound for the specified state."
+                colorVariant="purple"
+                icon={<Users className="h-5 w-5 text-purple-400" />}
+              />
+              
+              <DocumentGenerator
+                title="Custody Motion"
+                description="Generate a motion to modify, enforce, or address custody issues"
+                documentType="Custody Motion"
+                fields={custodyMotionFields}
+                systemPrompt="You are CustodiAI, an expert in custody law. Generate a formal court motion with proper formatting, legal citations where appropriate, statement of facts, legal arguments, and prayer for relief. Follow the format required by the specified state court."
+                colorVariant="purple"
+                icon={<Scale className="h-5 w-5 text-purple-400" />}
+              />
+            </TabsContent>
 
             <TabsContent value="intake" className="space-y-6">
               <Card className="bg-card/50">
