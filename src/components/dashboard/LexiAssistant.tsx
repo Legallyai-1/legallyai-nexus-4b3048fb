@@ -63,7 +63,7 @@ export function LexiAssistant({ userType = "individual", userName = "there" }: L
       {
         id: "3",
         title: "AI-Powered Documents",
-        description: "Generate legal documents instantly with BarristerAI assistance.",
+        description: "Generate legal documents instantly with PraxisAI assistance.",
         action: { label: "Generate Docs", href: "/generate" },
         icon: <Zap className="w-5 h-5 text-neon-orange" />
       }
@@ -95,7 +95,7 @@ export function LexiAssistant({ userType = "individual", userName = "there" }: L
       {
         id: "1",
         title: "Know Your Rights",
-        description: "RehabilitAI can help you understand your probation/parole rights.",
+        description: "Freedom AI can help you understand your probation/parole rights.",
         action: { label: "Get Help", href: "/probation-parole" },
         icon: <Sparkles className="w-5 h-5 text-neon-green" />
       },
@@ -118,8 +118,8 @@ export function LexiAssistant({ userType = "individual", userName = "there" }: L
       {
         id: "1",
         title: "Manage Your Firm",
-        description: "BarristerAI handles cases, clients, billing, and staff management.",
-        action: { label: "Open Dashboard", href: "/dashboard" },
+        description: "PraxisAI handles cases, clients, billing, and staff management.",
+        action: { label: "Open Dashboard", href: "/business-hub" },
         icon: <Sparkles className="w-5 h-5 text-neon-purple" />
       },
       {
@@ -184,9 +184,9 @@ export function LexiAssistant({ userType = "individual", userName = "there" }: L
         </div>
         <div>
           <h3 className="font-display font-semibold text-lg">
-            Hi {userName}! I'm <span className="text-neon-cyan">Lexi</span>
+            Hi {userName}! I'm <span className="text-neon-cyan">Lee</span>
           </h3>
-          <p className="text-sm text-muted-foreground">Your personal legal assistant</p>
+          <p className="text-sm text-muted-foreground">Your AI Legal Assistant • 10/10 Rating</p>
         </div>
       </div>
 

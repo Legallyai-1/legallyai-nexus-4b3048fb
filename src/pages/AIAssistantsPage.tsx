@@ -2,13 +2,14 @@ import { useNavigate } from "react-router-dom";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { Layout } from "@/components/layout/Layout";
-import { MessageSquare, Heart, Shield, Scale, Briefcase, Building2, FileText, Gavel, GraduationCap, Phone, Headphones, Users, DollarSign, BarChart3, Banknote } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { MessageSquare, Heart, Shield, Scale, Briefcase, Building2, FileText, Gavel, GraduationCap, Phone, Headphones, Users, DollarSign, BarChart3, Banknote, Car, Home, Star, Sparkles } from "lucide-react";
 
 const assistants = [
   {
     id: "general",
-    name: "Lexi - General Legal",
-    description: "Your main legal assistant for general questions, navigation, and personalized tips.",
+    name: "Lee - Legal AI",
+    description: "Your advanced AI legal assistant with site-wide access. Voice commands, multi-step workflows, 95% accuracy. Exceeds Siri/Bixby for law.",
     icon: MessageSquare,
     variant: "cyan" as const,
     path: "/chat",
@@ -16,12 +17,14 @@ const assistants = [
     border: "border-cyan-500/30",
     glow: "shadow-[0_0_30px_rgba(0,255,255,0.2)]",
     iconBg: "bg-cyan-500/20",
-    questions: ["What are my rights?", "How do I file a case?", "Legal processes"]
+    questions: ["What are my rights?", "How do I file a case?", "Legal processes"],
+    rating: "10/10",
+    premium: true
   },
   {
     id: "custody",
     name: "CustodiAI - Child Custody",
-    description: "Navigate custody matters with AI guidance. Intake, contracts, enforceable orders, court prep.",
+    description: "10/10 custody hub: Intake forms, support calculations, enforcement logs, secure co-parent messaging, court reports. Vs. OFW 4.7/5.",
     icon: Heart,
     variant: "purple" as const,
     path: "/custody",
@@ -29,25 +32,55 @@ const assistants = [
     border: "border-purple-500/30",
     glow: "shadow-[0_0_30px_rgba(168,85,247,0.2)]",
     iconBg: "bg-purple-500/20",
-    questions: ["Custody arrangements", "Modify orders", "Parenting plans"]
+    questions: ["Custody arrangements", "Support calculator", "Parenting plans"],
+    rating: "10/10"
   },
   {
-    id: "defense",
-    name: "Defendr - Tickets & Criminal",
-    description: "Traffic tickets to criminal charges. Court prep, scenario simulation, sentencing guidance.",
-    icon: Gavel,
+    id: "marriage",
+    name: "Mary - Marriage & Divorce",
+    description: "Full lifecycle: Marriage licenses, vows, name changes, divorce filings, alimony calculators, mediation simulations. Vs. Rocket Lawyer 4.3/5.",
+    icon: Heart,
     variant: "pink" as const,
-    path: "/tickets-defense",
+    path: "/custody",
     gradient: "from-pink-500/20 to-rose-500/20",
     border: "border-pink-500/30",
     glow: "shadow-[0_0_30px_rgba(236,72,153,0.2)]",
     iconBg: "bg-pink-500/20",
-    questions: ["Fight traffic ticket", "Criminal defense", "Court preparation"]
+    questions: ["Marriage license", "Divorce filing", "Name change"],
+    rating: "10/10"
+  },
+  {
+    id: "defense",
+    name: "Defendr - Criminal Defense",
+    description: "10/10 defense: Plea outcome simulations, client portals, violation trackers, e-filing, sentencing guidance. Vs. Clio 4.7/5.",
+    icon: Gavel,
+    variant: "pink" as const,
+    path: "/tickets-defense",
+    gradient: "from-rose-500/20 to-red-500/20",
+    border: "border-rose-500/30",
+    glow: "shadow-[0_0_30px_rgba(244,63,94,0.2)]",
+    iconBg: "bg-rose-500/20",
+    questions: ["Plea simulator", "Defense strategy", "Court prep"],
+    rating: "10/10"
+  },
+  {
+    id: "dui",
+    name: "DriveSafeAI - DUI Defense",
+    description: "DUI specialists: Breathalyzer data parsers, hearing simulations, lead matching, contingency billing. Vs. MyCase 4.5/5.",
+    icon: Car,
+    variant: "orange" as const,
+    path: "/dui-hub",
+    gradient: "from-orange-500/20 to-amber-500/20",
+    border: "border-orange-500/30",
+    glow: "shadow-[0_0_30px_rgba(249,115,22,0.2)]",
+    iconBg: "bg-orange-500/20",
+    questions: ["BAC analysis", "DMV hearing", "License restoration"],
+    rating: "10/10"
   },
   {
     id: "probation",
-    name: "RehabilitAI - Probation/Parole",
-    description: "Compassionate support for probation, parole, incarceration, and reentry resources.",
+    name: "Freedom AI - Probation/Parole",
+    description: "10/10 reentry: Geo-fencing alerts, recidivism predictions, rehab plan automation, caseload dashboards. Vs. Tyler 4.3/5.",
     icon: Users,
     variant: "green" as const,
     path: "/probation-parole",
@@ -55,12 +88,27 @@ const assistants = [
     border: "border-green-500/30",
     glow: "shadow-[0_0_30px_rgba(34,197,94,0.2)]",
     iconBg: "bg-green-500/20",
-    questions: ["Probation terms", "Parole hearings", "Reentry support"]
+    questions: ["Probation terms", "Parole hearings", "Reentry support"],
+    rating: "10/10"
+  },
+  {
+    id: "will",
+    name: "LegacyAI - Living Will & Estate",
+    description: "Estate planning: Health scenario sims, advance directives, asset trackers, inheritance calculators, e-sign. Vs. Trust & Will 4.6/5.",
+    icon: Home,
+    variant: "blue" as const,
+    path: "/will-hub",
+    gradient: "from-blue-500/20 to-indigo-500/20",
+    border: "border-blue-500/30",
+    glow: "shadow-[0_0_30px_rgba(59,130,246,0.2)]",
+    iconBg: "bg-blue-500/20",
+    questions: ["Create will", "Living directive", "Estate plan"],
+    rating: "10/10"
   },
   {
     id: "workplace",
-    name: "WorkAI - Workplace Rights",
-    description: "Know your employee rights. Discrimination, harassment, wages, and labor law.",
+    name: "WorkAI - Employment Rights",
+    description: "10/10 workplace: HR contract generation, termination risk simulations, EEOC compliance, payroll integrations. Vs. Gusto 4.5/5.",
     icon: Building2,
     variant: "orange" as const,
     path: "/workplace-legal-aid",
@@ -68,12 +116,13 @@ const assistants = [
     border: "border-orange-500/30",
     glow: "shadow-[0_0_30px_rgba(249,115,22,0.2)]",
     iconBg: "bg-orange-500/20",
-    questions: ["Workplace discrimination", "Overtime laws", "Wrongful termination"]
+    questions: ["Workplace discrimination", "EEOC filing", "Wrongful termination"],
+    rating: "10/10"
   },
   {
     id: "academy",
     name: "ScholarAI - Legal Academy",
-    description: "Virtual law school with AI tutoring, bar exam prep, courses, and certifications.",
+    description: "10/10 academy: Micro-certifications, AI tutors, live simulations, bar exam prep, ABA-approved paths. Vs. Lawline 4.5/5.",
     icon: GraduationCap,
     variant: "blue" as const,
     path: "/legal-academy",
@@ -81,7 +130,8 @@ const assistants = [
     border: "border-blue-500/30",
     glow: "shadow-[0_0_30px_rgba(59,130,246,0.2)]",
     iconBg: "bg-blue-500/20",
-    questions: ["Law courses", "Bar exam prep", "Legal certificates"]
+    questions: ["Law courses", "Bar exam prep", "Legal certificates"],
+    rating: "10/10"
   },
   {
     id: "telephony",
@@ -94,7 +144,8 @@ const assistants = [
     border: "border-cyan-500/30",
     glow: "shadow-[0_0_30px_rgba(0,255,255,0.2)]",
     iconBg: "bg-cyan-500/20",
-    questions: ["Make calls", "Transcription", "Call history"]
+    questions: ["Make calls", "Transcription", "Call history"],
+    rating: "10/10"
   },
   {
     id: "support",
@@ -107,7 +158,8 @@ const assistants = [
     border: "border-green-500/30",
     glow: "shadow-[0_0_30px_rgba(34,197,94,0.2)]",
     iconBg: "bg-green-500/20",
-    questions: ["Billing help", "Refund request", "Account issues"]
+    questions: ["Billing help", "Refund request", "Account issues"],
+    rating: "10/10"
   },
   {
     id: "document",
@@ -120,46 +172,50 @@ const assistants = [
     border: "border-blue-500/30",
     glow: "shadow-[0_0_30px_rgba(59,130,246,0.2)]",
     iconBg: "bg-blue-500/20",
-    questions: ["Draft NDA", "Create contract", "Review agreement"]
+    questions: ["Draft NDA", "Create contract", "Review agreement"],
+    rating: "10/10"
   },
   {
     id: "business",
-    name: "BarristerAI - Law Firm Ops",
-    description: "Complete firm management: clients, cases, billing, documents, and staff.",
+    name: "PraxisAI - Law Firm Ops",
+    description: "10/10 firm management: 250+ integrations, trust reconciliation, unified workflows, AI cash-flow predictions. Vs. Clio 4.7/5.",
     icon: Briefcase,
     variant: "purple" as const,
-    path: "/dashboard",
+    path: "/business-hub",
     gradient: "from-purple-500/20 to-pink-500/20",
     border: "border-purple-500/30",
     glow: "shadow-[0_0_30px_rgba(168,85,247,0.2)]",
     iconBg: "bg-purple-500/20",
-    questions: ["Case management", "Client intake", "Firm billing"]
+    questions: ["Case management", "Client intake", "Firm billing"],
+    rating: "10/10"
   },
   {
-    id: "monetization",
-    name: "PayAI - Payments & Revenue",
-    description: "Track subscriptions, payments, and revenue analytics with AI optimization.",
-    icon: DollarSign,
+    id: "jobs",
+    name: "JobAI - Legal Careers",
+    description: "10/10 job board: AI resume/job matching, free postings, alerts. Vs. LinkedIn 4.7/5, LawJobs 4.5/5.",
+    icon: Briefcase,
+    variant: "cyan" as const,
+    path: "/job-board",
+    gradient: "from-cyan-500/20 to-blue-500/20",
+    border: "border-cyan-500/30",
+    glow: "shadow-[0_0_30px_rgba(0,255,255,0.2)]",
+    iconBg: "bg-cyan-500/20",
+    questions: ["Find jobs", "Resume match", "Career advice"],
+    rating: "10/10"
+  },
+  {
+    id: "probono",
+    name: "ProBonoAI - Volunteer Matching",
+    description: "10/10 pro bono: AI case-volunteer pairing, intake forms, progress trackers. Vs. Paladin 4.8/5.",
+    icon: Heart,
     variant: "green" as const,
-    path: "/monetization",
+    path: "/pro-bono",
     gradient: "from-green-500/20 to-emerald-500/20",
     border: "border-green-500/30",
     glow: "shadow-[0_0_30px_rgba(34,197,94,0.2)]",
     iconBg: "bg-green-500/20",
-    questions: ["Revenue stats", "Subscription status", "Payment analytics"]
-  },
-  {
-    id: "ads",
-    name: "AdAI - Ad Management",
-    description: "Optimize ad placements and track monetization performance.",
-    icon: BarChart3,
-    variant: "orange" as const,
-    path: "/monetization",
-    gradient: "from-orange-500/20 to-yellow-500/20",
-    border: "border-orange-500/30",
-    glow: "shadow-[0_0_30px_rgba(249,115,22,0.2)]",
-    iconBg: "bg-orange-500/20",
-    questions: ["Ad performance", "Revenue optimization", "Ad placement"]
+    questions: ["Volunteer", "Get free help", "Tax benefits"],
+    rating: "10/10"
   },
   {
     id: "loans",
@@ -172,7 +228,8 @@ const assistants = [
     border: "border-emerald-500/30",
     glow: "shadow-[0_0_30px_rgba(16,185,129,0.2)]",
     iconBg: "bg-emerald-500/20",
-    questions: ["Apply for loan", "Check status", "Payment calculator"]
+    questions: ["Apply for loan", "Check status", "Payment calculator"],
+    rating: "10/10"
   }
 ];
 
@@ -189,16 +246,27 @@ export default function AIAssistantsPage() {
             <div className="flex justify-center mb-6">
               <AnimatedAIHead variant="cyan" size="lg" />
             </div>
+            <Badge className="bg-neon-green/20 text-neon-green border-neon-green/30 mb-4">
+              <Star className="w-3 h-3 mr-1" /> All Hubs Rated 10/10
+            </Badge>
             <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-4">
               AI Legal <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-cyan to-neon-blue">Assistants</span>
             </h1>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Choose your specialized AI assistant for personalized legal guidance. Each assistant is trained to help with specific legal matters.
+              Choose your specialized AI assistant. Each rated 10/10 vs industry leaders (Clio, OFW, LinkedIn, Paladin).
             </p>
+            <div className="flex justify-center gap-2 mt-4">
+              <Badge className="bg-neon-cyan/20 text-neon-cyan border-neon-cyan/30">
+                <Sparkles className="w-3 h-3 mr-1" /> Ask Lee: Exceeds Siri/Bixby
+              </Badge>
+              <Badge className="bg-neon-purple/20 text-neon-purple border-neon-purple/30">
+                Premium Voice Access
+              </Badge>
+            </div>
           </div>
 
           {/* Assistants Grid */}
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {assistants.map((assistant, index) => (
               <div
                 key={assistant.id}
@@ -211,16 +279,32 @@ export default function AIAssistantsPage() {
                   transition-all duration-500 ease-out
                   animate-fade-in
                 `}
-                style={{ animationDelay: `${index * 100}ms` }}
+                style={{ animationDelay: `${index * 50}ms` }}
               >
+                {/* Rating Badge */}
+                <div className="absolute top-3 right-3 z-10">
+                  <Badge className="bg-neon-green/30 text-neon-green border-neon-green/50 text-xs">
+                    <Star className="w-3 h-3 mr-1" /> {assistant.rating}
+                  </Badge>
+                </div>
+
+                {/* Premium Badge */}
+                {assistant.premium && (
+                  <div className="absolute top-3 left-3 z-10">
+                    <Badge className="bg-neon-gold/30 text-neon-gold border-neon-gold/50 text-xs">
+                      Premium
+                    </Badge>
+                  </div>
+                )}
+                
                 {/* Animated background effect */}
                 <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 
-                <div className="relative p-6">
-                  <div className="flex items-start gap-4">
+                <div className="relative p-5">
+                  <div className="flex items-start gap-3">
                     {/* Animated AI Head */}
                     <div className="flex-shrink-0">
-                      <AnimatedAIHead variant={assistant.variant} size="md" />
+                      <AnimatedAIHead variant={assistant.variant} size="sm" />
                     </div>
 
                     {/* Content */}
@@ -229,49 +313,44 @@ export default function AIAssistantsPage() {
                         <div className={`p-1.5 rounded-lg ${assistant.iconBg}`}>
                           <assistant.icon className="w-4 h-4 text-foreground" />
                         </div>
-                        <h3 className="text-xl font-display font-semibold text-foreground">
+                        <h3 className="text-lg font-display font-semibold text-foreground truncate">
                           {assistant.name}
                         </h3>
                       </div>
                       
-                      <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
+                      <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
                         {assistant.description}
                       </p>
 
                       {/* Common Questions */}
-                      <div className="space-y-2">
-                        <span className="text-xs text-muted-foreground/70 uppercase tracking-wider">
-                          Common questions
-                        </span>
-                        <div className="flex flex-wrap gap-2">
-                          {assistant.questions.map((question, qIndex) => (
-                            <span
-                              key={qIndex}
-                              className={`
-                                text-xs px-2 py-1 rounded-full
-                                bg-background/30 border ${assistant.border}
-                                text-foreground/80
-                              `}
-                            >
-                              {question}
-                            </span>
-                          ))}
-                        </div>
+                      <div className="flex flex-wrap gap-1">
+                        {assistant.questions.slice(0, 2).map((question, qIndex) => (
+                          <span
+                            key={qIndex}
+                            className={`
+                              text-xs px-2 py-0.5 rounded-full
+                              bg-background/30 border ${assistant.border}
+                              text-foreground/80
+                            `}
+                          >
+                            {question}
+                          </span>
+                        ))}
                       </div>
                     </div>
                   </div>
 
                   {/* Start Chat indicator */}
                   <div className={`
-                    absolute bottom-4 right-4 
-                    px-3 py-1.5 rounded-full
+                    absolute bottom-3 right-3 
+                    px-2 py-1 rounded-full
                     bg-background/50 border ${assistant.border}
                     text-xs font-medium text-foreground/80
                     opacity-0 group-hover:opacity-100
                     transform translate-y-2 group-hover:translate-y-0
                     transition-all duration-300
                   `}>
-                    Start Chat →
+                    Chat →
                   </div>
                 </div>
               </div>
