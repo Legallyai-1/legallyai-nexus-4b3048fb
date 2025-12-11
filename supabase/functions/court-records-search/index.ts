@@ -1,9 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 interface SearchParams {
   query?: string;
@@ -15,13 +21,51 @@ interface SearchParams {
   source?: 'courtlistener' | 'pacer' | 'all';
 }
 
+// Verify user authentication from JWT
+async function verifyAuth(req: Request): Promise<{ userId: string } | null> {
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+  
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  
+  if (error || !user) {
+    console.error('Auth verification failed:', error?.message);
+    return null;
+  }
+  
+  return { userId: user.id };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Verify authentication
+  const auth = await verifyAuth(req);
+  if (!auth) {
+    console.error('Unauthorized access attempt to court-records-search');
+    return new Response(
+      JSON.stringify({ success: false, error: "Unauthorized - authentication required" }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  console.log(`Authenticated user ${auth.userId} accessing court-records-search`);
+
   try {
     const { query, state, caseType, dateFrom, dateTo, court, source = 'courtlistener' } = await req.json() as SearchParams;
+
+    // Validate input parameters
+    if (query && query.length > 500) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Query too long (max 500 characters)" }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     console.log('Court records search request:', { query, state, caseType, source });
 

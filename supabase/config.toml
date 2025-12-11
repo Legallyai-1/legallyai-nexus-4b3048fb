@@ -25,10 +25,10 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.court-records-search]
-verify_jwt = false
+verify_jwt = true
 
 [functions.import-courtlistener]
-verify_jwt = false
+verify_jwt = true
 
 [functions.process-case-ai]
-verify_jwt = false
+verify_jwt = true
