@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { HubAssistant } from "@/components/hub/HubAssistant";
 import { DocumentManager } from "@/components/hub/DocumentManager";
 import { WhereToStart } from "@/components/hub/WhereToStart";
+import { HubNotifications } from "@/components/hub/HubNotifications";
 
 const proBonoOpportunities = [
   {
