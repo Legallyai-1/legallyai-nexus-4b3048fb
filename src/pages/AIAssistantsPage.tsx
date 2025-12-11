@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { Layout } from "@/components/layout/Layout";
-import { MessageSquare, Heart, Shield, Scale, Briefcase, Building2, FileText, Gavel, GraduationCap, Phone, Headphones, Users, DollarSign, BarChart3 } from "lucide-react";
+import { MessageSquare, Heart, Shield, Scale, Briefcase, Building2, FileText, Gavel, GraduationCap, Phone, Headphones, Users, DollarSign, BarChart3, Banknote } from "lucide-react";
 
 const assistants = [
   {
@@ -160,6 +160,19 @@ const assistants = [
     glow: "shadow-[0_0_30px_rgba(249,115,22,0.2)]",
     iconBg: "bg-orange-500/20",
     questions: ["Ad performance", "Revenue optimization", "Ad placement"]
+  },
+  {
+    id: "loans",
+    name: "LoanAI - Legal Financing",
+    description: "Legal service loans with any credit. Fast approval, flexible terms, transparent rates.",
+    icon: Banknote,
+    variant: "green" as const,
+    path: "/loans",
+    gradient: "from-emerald-500/20 to-green-500/20",
+    border: "border-emerald-500/30",
+    glow: "shadow-[0_0_30px_rgba(16,185,129,0.2)]",
+    iconBg: "bg-emerald-500/20",
+    questions: ["Apply for loan", "Check status", "Payment calculator"]
   }
 ];
 

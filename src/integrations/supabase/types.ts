@@ -420,6 +420,72 @@ export type Database = {
           },
         ]
       }
+      call_logs: {
+        Row: {
+          ai_summary: string | null
+          call_type: string
+          case_id: string | null
+          contact_name: string | null
+          created_at: string
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          organization_id: string | null
+          phone_number: string
+          recording_url: string | null
+          started_at: string
+          transcription: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_summary?: string | null
+          call_type?: string
+          case_id?: string | null
+          contact_name?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          organization_id?: string | null
+          phone_number: string
+          recording_url?: string | null
+          started_at?: string
+          transcription?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_summary?: string | null
+          call_type?: string
+          case_id?: string | null
+          contact_name?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          organization_id?: string | null
+          phone_number?: string
+          recording_url?: string | null
+          started_at?: string
+          transcription?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_logs_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       case_documents: {
         Row: {
           case_id: string
@@ -667,6 +733,65 @@ export type Database = {
           },
           {
             foreignKeyName: "invoices_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loans: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          created_at: string
+          disbursed_at: string | null
+          id: string
+          interest_rate: number | null
+          monthly_payment: number | null
+          organization_id: string | null
+          purpose: string
+          status: string
+          term_months: number | null
+          total_repayment: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          created_at?: string
+          disbursed_at?: string | null
+          id?: string
+          interest_rate?: number | null
+          monthly_payment?: number | null
+          organization_id?: string | null
+          purpose: string
+          status?: string
+          term_months?: number | null
+          total_repayment?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          created_at?: string
+          disbursed_at?: string | null
+          id?: string
+          interest_rate?: number | null
+          monthly_payment?: number | null
+          organization_id?: string | null
+          purpose?: string
+          status?: string
+          term_months?: number | null
+          total_repayment?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loans_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
