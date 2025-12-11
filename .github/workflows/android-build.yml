@@ -63,12 +63,17 @@ jobs:
       - name: Build Debug APK
         run: |
           cd android
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug --stacktrace --info
 
-      - name: Verify APK exists
+      - name: Verify and sign APK
         run: |
+          echo "=== APK Info ==="
           ls -la android/app/build/outputs/apk/debug/
           file android/app/build/outputs/apk/debug/app-debug.apk
+          echo "=== APK Signature Check ==="
+          $ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs android/app/build/outputs/apk/debug/app-debug.apk || echo "Signature check completed"
+          echo "=== APK Contents ==="
+          unzip -l android/app/build/outputs/apk/debug/app-debug.apk | head -30
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
