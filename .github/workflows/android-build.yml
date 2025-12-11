@@ -34,11 +34,25 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Add Android platform
-        run: npx cap add android || true
+      - name: Initialize Capacitor Android
+        run: |
+          npx cap add android 2>/dev/null || true
+          npx cap sync android
 
-      - name: Sync Capacitor
-        run: npx cap sync android
+      - name: Update Capacitor config for local build
+        run: |
+          cat > capacitor.config.ts << 'EOF'
+          import type { CapacitorConfig } from '@capacitor/cli';
+
+          const config: CapacitorConfig = {
+            appId: 'app.lovable.25a66f7dcf1c44678aa161688905fd45',
+            appName: 'LegallyAI',
+            webDir: 'dist'
+          };
+
+          export default config;
+          EOF
+          npx cap sync android
 
       - name: Make gradlew executable
         run: chmod +x android/gradlew
@@ -46,7 +60,7 @@ jobs:
       - name: Build Debug APK
         run: |
           cd android
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
