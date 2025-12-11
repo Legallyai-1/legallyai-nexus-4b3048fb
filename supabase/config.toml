@@ -26,3 +26,9 @@ verify_jwt = true
 
 [functions.court-records-search]
 verify_jwt = false
+
+[functions.import-courtlistener]
+verify_jwt = false
+
+[functions.process-case-ai]
+verify_jwt = false
