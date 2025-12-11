@@ -8,6 +8,7 @@ import { AnimatePresence } from "framer-motion";
 import { AnimatedRoutes } from "@/components/AnimatedRoutes";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { CommandPalette } from "@/components/ui/CommandPalette";
+import { FloatingLeeAssistant } from "@/components/ai/FloatingLeeAssistant";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => {
             <>
               <AnimatedRoutes />
               <CommandPalette />
+              <FloatingLeeAssistant />
             </>
           )}
         </BrowserRouter>
