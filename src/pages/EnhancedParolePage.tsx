@@ -13,7 +13,7 @@ import {
   AlertTriangle, CheckCircle, Target, TrendingUp,
   Bell, Clock, Award, Activity, FileText, Video
 } from "lucide-react";
-import MainLayout from "@/components/layout/MainLayout";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -70,7 +70,7 @@ const EnhancedParolePage = () => {
               <p className="text-muted-foreground">RehabilitAI - Complete supervision management with ML predictions</p>
             </div>
             <div className="ml-auto">
-              <AnimatedAIHead color="green" size="sm" />
+              <AnimatedAIHead variant="green" size="sm" />
             </div>
           </div>
 
@@ -142,7 +142,7 @@ const EnhancedParolePage = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-start gap-4">
-                    <AnimatedAIHead color="green" size="sm" />
+                    <AnimatedAIHead variant="green" size="sm" />
                     <div className="space-y-2">
                       <p className="text-sm">
                         <strong>Positive Trend:</strong> Your compliance has improved 15% over the past month. 
@@ -425,7 +425,7 @@ const EnhancedParolePage = () => {
                 <CardContent className="space-y-4">
                   <div className="p-4 bg-gradient-to-br from-red-500/10 to-orange-500/10 rounded-lg border border-red-500/20">
                     <div className="flex items-center gap-4">
-                      <AnimatedAIHead color="red" size="sm" />
+                      <AnimatedAIHead variant="orange" size="sm" />
                       <div>
                         <p className="font-medium">Linked DUI Case: #2024-DUI-001</p>
                         <p className="text-sm text-muted-foreground">

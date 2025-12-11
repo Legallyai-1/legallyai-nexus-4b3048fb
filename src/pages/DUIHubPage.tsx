@@ -14,7 +14,7 @@ import {
   Target, MapPin, Users, AlertTriangle, Scale, TrendingUp,
   Play, Pause, BarChart3, Gavel
 } from "lucide-react";
-import MainLayout from "@/components/layout/MainLayout";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -97,7 +97,7 @@ const DUIHubPage = () => {
               <p className="text-muted-foreground">Complete DUI case management with AI-powered predictions</p>
             </div>
             <div className="ml-auto">
-              <AnimatedAIHead color="red" size="sm" />
+              <AnimatedAIHead variant="orange" size="sm" />
             </div>
           </div>
 
@@ -185,7 +185,7 @@ const DUIHubPage = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-4">
-                    <AnimatedAIHead color="red" size="md" />
+                    <AnimatedAIHead variant="orange" size="md" />
                     <div>
                       <h3 className="font-semibold">DuiBot</h3>
                       <p className="text-sm text-muted-foreground">Your AI defense coach</p>

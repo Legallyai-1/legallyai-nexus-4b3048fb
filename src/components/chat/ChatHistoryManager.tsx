@@ -57,7 +57,15 @@ export const ChatHistoryManager = ({ userId, hubFilter }: ChatHistoryManagerProp
 
       const { data, error } = await query;
       if (error) throw error;
-      setSessions(data || []);
+      const typedSessions: ChatSession[] = (data || []).map(item => ({
+        ...item,
+        messages: Array.isArray(item.messages) ? item.messages : [],
+        metadata: item.metadata || {},
+        is_archived: item.is_archived || false,
+        created_at: item.created_at || '',
+        updated_at: item.updated_at || ''
+      }));
+      setSessions(typedSessions);
     } catch (error) {
       console.error('Error fetching chat history:', error);
     } finally {

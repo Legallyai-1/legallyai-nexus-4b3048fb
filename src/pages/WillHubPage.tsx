@@ -15,7 +15,7 @@ import {
   Shield, Globe, Calculator, Download, Upload,
   Plus, Trash2, Edit, Eye, GitBranch
 } from "lucide-react";
-import MainLayout from "@/components/layout/MainLayout";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -111,7 +111,7 @@ const WillHubPage = () => {
               <p className="text-muted-foreground">Complete estate planning with AI-powered document assembly</p>
             </div>
             <div className="ml-auto">
-              <AnimatedAIHead color="purple" size="sm" />
+              <AnimatedAIHead variant="purple" size="sm" />
             </div>
           </div>
 
@@ -447,7 +447,7 @@ const WillHubPage = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
-                    <AnimatedAIHead color="purple" size="sm" />
+                    <AnimatedAIHead variant="purple" size="sm" />
                     <div>
                       <p className="font-medium">WillAI Document Generator</p>
                       <p className="text-sm text-muted-foreground">
