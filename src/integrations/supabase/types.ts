@@ -328,6 +328,45 @@ export type Database = {
           },
         ]
       }
+      ai_chat_history: {
+        Row: {
+          created_at: string | null
+          hub_type: string
+          id: string
+          is_archived: boolean | null
+          messages: Json | null
+          metadata: Json | null
+          searchable_text: string | null
+          session_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          hub_type: string
+          id?: string
+          is_archived?: boolean | null
+          messages?: Json | null
+          metadata?: Json | null
+          searchable_text?: string | null
+          session_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          hub_type?: string
+          id?: string
+          is_archived?: boolean | null
+          messages?: Json | null
+          metadata?: Json | null
+          searchable_text?: string | null
+          session_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       analytics_dashboards: {
         Row: {
           config: Json
@@ -1308,6 +1347,190 @@ export type Database = {
           },
         ]
       }
+      custody_calendar_events: {
+        Row: {
+          created_at: string | null
+          custody_case_id: string | null
+          end_time: string | null
+          event_type: string | null
+          geo_coords: Json | null
+          id: string
+          location: string | null
+          parent_id: string | null
+          start_time: string | null
+          synced_outlook: boolean | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          custody_case_id?: string | null
+          end_time?: string | null
+          event_type?: string | null
+          geo_coords?: Json | null
+          id?: string
+          location?: string | null
+          parent_id?: string | null
+          start_time?: string | null
+          synced_outlook?: boolean | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          custody_case_id?: string | null
+          end_time?: string | null
+          event_type?: string | null
+          geo_coords?: Json | null
+          id?: string
+          location?: string | null
+          parent_id?: string | null
+          start_time?: string | null
+          synced_outlook?: boolean | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custody_calendar_events_custody_case_id_fkey"
+            columns: ["custody_case_id"]
+            isOneToOne: false
+            referencedRelation: "custody_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custody_cases: {
+        Row: {
+          case_number: string | null
+          children: Json | null
+          communications: Json | null
+          conflict_level: string | null
+          created_at: string | null
+          custody_type: string | null
+          expenses: Json | null
+          id: string
+          linked_dui_case: string | null
+          organization_id: string | null
+          parent1_name: string | null
+          parent2_name: string | null
+          parenting_plan: Json | null
+          risk_score: number | null
+          shared_calendar: Json | null
+          state: string | null
+          status: string | null
+          support_calculation: Json | null
+          updated_at: string | null
+          user_id: string
+          violations: Json | null
+        }
+        Insert: {
+          case_number?: string | null
+          children?: Json | null
+          communications?: Json | null
+          conflict_level?: string | null
+          created_at?: string | null
+          custody_type?: string | null
+          expenses?: Json | null
+          id?: string
+          linked_dui_case?: string | null
+          organization_id?: string | null
+          parent1_name?: string | null
+          parent2_name?: string | null
+          parenting_plan?: Json | null
+          risk_score?: number | null
+          shared_calendar?: Json | null
+          state?: string | null
+          status?: string | null
+          support_calculation?: Json | null
+          updated_at?: string | null
+          user_id: string
+          violations?: Json | null
+        }
+        Update: {
+          case_number?: string | null
+          children?: Json | null
+          communications?: Json | null
+          conflict_level?: string | null
+          created_at?: string | null
+          custody_type?: string | null
+          expenses?: Json | null
+          id?: string
+          linked_dui_case?: string | null
+          organization_id?: string | null
+          parent1_name?: string | null
+          parent2_name?: string | null
+          parenting_plan?: Json | null
+          risk_score?: number | null
+          shared_calendar?: Json | null
+          state?: string | null
+          status?: string | null
+          support_calculation?: Json | null
+          updated_at?: string | null
+          user_id?: string
+          violations?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custody_cases_linked_dui_case_fkey"
+            columns: ["linked_dui_case"]
+            isOneToOne: false
+            referencedRelation: "dui_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custody_cases_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custody_payments: {
+        Row: {
+          amount: number
+          arrears: number | null
+          created_at: string | null
+          custody_case_id: string | null
+          due_date: string | null
+          id: string
+          paid_date: string | null
+          payer_id: string | null
+          status: string | null
+          stripe_payment_id: string | null
+        }
+        Insert: {
+          amount: number
+          arrears?: number | null
+          created_at?: string | null
+          custody_case_id?: string | null
+          due_date?: string | null
+          id?: string
+          paid_date?: string | null
+          payer_id?: string | null
+          status?: string | null
+          stripe_payment_id?: string | null
+        }
+        Update: {
+          amount?: number
+          arrears?: number | null
+          created_at?: string | null
+          custody_case_id?: string | null
+          due_date?: string | null
+          id?: string
+          paid_date?: string | null
+          payer_id?: string | null
+          status?: string | null
+          stripe_payment_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custody_payments_custody_case_id_fkey"
+            columns: ["custody_case_id"]
+            isOneToOne: false
+            referencedRelation: "custody_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_templates: {
         Row: {
           category: string | null
@@ -1367,6 +1590,174 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dui_cases: {
+        Row: {
+          arrest_date: string | null
+          bac_level: number | null
+          breathalyzer_data: Json | null
+          case_number: string | null
+          county: string | null
+          court_name: string | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          organization_id: string | null
+          outcome: string | null
+          plea_type: string | null
+          predicted_outcome: Json | null
+          prediction_confidence: number | null
+          state: string | null
+          status: string | null
+          timeline: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          arrest_date?: string | null
+          bac_level?: number | null
+          breathalyzer_data?: Json | null
+          case_number?: string | null
+          county?: string | null
+          court_name?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string | null
+          outcome?: string | null
+          plea_type?: string | null
+          predicted_outcome?: Json | null
+          prediction_confidence?: number | null
+          state?: string | null
+          status?: string | null
+          timeline?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          arrest_date?: string | null
+          bac_level?: number | null
+          breathalyzer_data?: Json | null
+          case_number?: string | null
+          county?: string | null
+          court_name?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string | null
+          outcome?: string | null
+          plea_type?: string | null
+          predicted_outcome?: Json | null
+          prediction_confidence?: number | null
+          state?: string | null
+          status?: string | null
+          timeline?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dui_cases_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dui_hearing_sims: {
+        Row: {
+          case_id: string | null
+          created_at: string | null
+          feedback: string | null
+          id: string
+          outcome_prediction: Json | null
+          score: number | null
+          sim_type: string | null
+          transcript: Json | null
+          user_id: string
+        }
+        Insert: {
+          case_id?: string | null
+          created_at?: string | null
+          feedback?: string | null
+          id?: string
+          outcome_prediction?: Json | null
+          score?: number | null
+          sim_type?: string | null
+          transcript?: Json | null
+          user_id: string
+        }
+        Update: {
+          case_id?: string | null
+          created_at?: string | null
+          feedback?: string | null
+          id?: string
+          outcome_prediction?: Json | null
+          score?: number | null
+          sim_type?: string | null
+          transcript?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dui_hearing_sims_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "dui_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dui_leads: {
+        Row: {
+          case_details: string | null
+          client_name: string | null
+          county: string | null
+          created_at: string | null
+          email: string | null
+          geo_location: Json | null
+          id: string
+          matched_lawyer_id: string | null
+          phone: string | null
+          state: string | null
+          status: string | null
+        }
+        Insert: {
+          case_details?: string | null
+          client_name?: string | null
+          county?: string | null
+          created_at?: string | null
+          email?: string | null
+          geo_location?: Json | null
+          id?: string
+          matched_lawyer_id?: string | null
+          phone?: string | null
+          state?: string | null
+          status?: string | null
+        }
+        Update: {
+          case_details?: string | null
+          client_name?: string | null
+          county?: string | null
+          created_at?: string | null
+          email?: string | null
+          geo_location?: Json | null
+          id?: string
+          matched_lawyer_id?: string | null
+          phone?: string | null
+          state?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dui_leads_matched_lawyer_id_fkey"
+            columns: ["matched_lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1459,6 +1850,47 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inheritance_sims: {
+        Row: {
+          created_at: string | null
+          id: string
+          results: Json | null
+          scenario_name: string | null
+          scenario_params: Json | null
+          tax_impact: Json | null
+          user_id: string
+          will_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          results?: Json | null
+          scenario_name?: string | null
+          scenario_params?: Json | null
+          tax_impact?: Json | null
+          user_id: string
+          will_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          results?: Json | null
+          scenario_name?: string | null
+          scenario_params?: Json | null
+          tax_impact?: Json | null
+          user_id?: string
+          will_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inheritance_sims_will_id_fkey"
+            columns: ["will_id"]
+            isOneToOne: false
+            referencedRelation: "will_cases"
             referencedColumns: ["id"]
           },
         ]
@@ -2213,6 +2645,93 @@ export type Database = {
         }
         Relationships: []
       }
+      parole_cases: {
+        Row: {
+          case_number: string | null
+          check_ins: Json | null
+          compliance_score: number | null
+          conditions: Json | null
+          created_at: string | null
+          end_date: string | null
+          geo_restrictions: Json | null
+          id: string
+          linked_dui_case: string | null
+          offender_name: string
+          offense_type: string | null
+          officer_name: string | null
+          organization_id: string | null
+          recidivism_risk: number | null
+          rehab_plan: Json | null
+          start_date: string | null
+          status: string | null
+          supervision_level: string | null
+          updated_at: string | null
+          user_id: string
+          violations: Json | null
+        }
+        Insert: {
+          case_number?: string | null
+          check_ins?: Json | null
+          compliance_score?: number | null
+          conditions?: Json | null
+          created_at?: string | null
+          end_date?: string | null
+          geo_restrictions?: Json | null
+          id?: string
+          linked_dui_case?: string | null
+          offender_name: string
+          offense_type?: string | null
+          officer_name?: string | null
+          organization_id?: string | null
+          recidivism_risk?: number | null
+          rehab_plan?: Json | null
+          start_date?: string | null
+          status?: string | null
+          supervision_level?: string | null
+          updated_at?: string | null
+          user_id: string
+          violations?: Json | null
+        }
+        Update: {
+          case_number?: string | null
+          check_ins?: Json | null
+          compliance_score?: number | null
+          conditions?: Json | null
+          created_at?: string | null
+          end_date?: string | null
+          geo_restrictions?: Json | null
+          id?: string
+          linked_dui_case?: string | null
+          offender_name?: string
+          offense_type?: string | null
+          officer_name?: string | null
+          organization_id?: string | null
+          recidivism_risk?: number | null
+          rehab_plan?: Json | null
+          start_date?: string | null
+          status?: string | null
+          supervision_level?: string | null
+          updated_at?: string | null
+          user_id?: string
+          violations?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parole_cases_linked_dui_case_fkey"
+            columns: ["linked_dui_case"]
+            isOneToOne: false
+            referencedRelation: "dui_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parole_cases_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_predictions: {
         Row: {
           confidence_score: number | null
@@ -2341,6 +2860,89 @@ export type Database = {
           phone?: string | null
           timezone?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      rehab_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          gamification_points: number | null
+          id: string
+          notes: string | null
+          parole_case_id: string | null
+          progress_score: number | null
+          scheduled_at: string | null
+          session_type: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          gamification_points?: number | null
+          id?: string
+          notes?: string | null
+          parole_case_id?: string | null
+          progress_score?: number | null
+          scheduled_at?: string | null
+          session_type?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          gamification_points?: number | null
+          id?: string
+          notes?: string | null
+          parole_case_id?: string | null
+          progress_score?: number | null
+          scheduled_at?: string | null
+          session_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rehab_sessions_parole_case_id_fkey"
+            columns: ["parole_case_id"]
+            isOneToOne: false
+            referencedRelation: "parole_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revenue_share_transactions: {
+        Row: {
+          created_at: string | null
+          gross_amount: number
+          id: string
+          metadata: Json | null
+          net_amount: number
+          platform_fee: number
+          status: string | null
+          stripe_transfer_id: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          gross_amount: number
+          id?: string
+          metadata?: Json | null
+          net_amount: number
+          platform_fee: number
+          status?: string | null
+          stripe_transfer_id?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          gross_amount?: number
+          id?: string
+          metadata?: Json | null
+          net_amount?: number
+          platform_fee?: number
+          status?: string | null
+          stripe_transfer_id?: string | null
+          transaction_type?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -2780,6 +3382,112 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "webhook_endpoints_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      will_cases: {
+        Row: {
+          assets: Json | null
+          beneficiaries: Json | null
+          created_at: string | null
+          document_url: string | null
+          family_tree: Json | null
+          id: string
+          multi_state_compliance: Json | null
+          organization_id: string | null
+          status: string | null
+          tax_implications: Json | null
+          testator_name: string
+          testator_state: string | null
+          trust_type: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          assets?: Json | null
+          beneficiaries?: Json | null
+          created_at?: string | null
+          document_url?: string | null
+          family_tree?: Json | null
+          id?: string
+          multi_state_compliance?: Json | null
+          organization_id?: string | null
+          status?: string | null
+          tax_implications?: Json | null
+          testator_name: string
+          testator_state?: string | null
+          trust_type?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          assets?: Json | null
+          beneficiaries?: Json | null
+          created_at?: string | null
+          document_url?: string | null
+          family_tree?: Json | null
+          id?: string
+          multi_state_compliance?: Json | null
+          organization_id?: string | null
+          status?: string | null
+          tax_implications?: Json | null
+          testator_name?: string
+          testator_state?: string | null
+          trust_type?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "will_cases_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      will_clause_library: {
+        Row: {
+          category: string
+          clause_name: string
+          clause_text: string
+          created_at: string | null
+          id: string
+          is_public: boolean | null
+          organization_id: string | null
+          state_specific: string[] | null
+          usage_count: number | null
+        }
+        Insert: {
+          category: string
+          clause_name: string
+          clause_text: string
+          created_at?: string | null
+          id?: string
+          is_public?: boolean | null
+          organization_id?: string | null
+          state_specific?: string[] | null
+          usage_count?: number | null
+        }
+        Update: {
+          category?: string
+          clause_name?: string
+          clause_text?: string
+          created_at?: string | null
+          id?: string
+          is_public?: boolean | null
+          organization_id?: string | null
+          state_specific?: string[] | null
+          usage_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "will_clause_library_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
