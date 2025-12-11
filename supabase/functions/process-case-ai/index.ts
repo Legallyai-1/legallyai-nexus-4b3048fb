@@ -13,6 +13,24 @@ const corsHeaders = {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Verify user authentication from JWT
+async function verifyAuth(req: Request): Promise<{ userId: string } | null> {
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+  
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  
+  if (error || !user) {
+    console.error('Auth verification failed:', error?.message);
+    return null;
+  }
+  
+  return { userId: user.id };
+}
+
 async function callInternalAI(head: string, messages: any[]) {
   console.log(`Calling AI head: ${head}`);
   
@@ -46,6 +64,18 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Verify authentication
+  const auth = await verifyAuth(req);
+  if (!auth) {
+    console.error('Unauthorized access attempt to process-case-ai');
+    return new Response(JSON.stringify({ error: "Unauthorized - authentication required" }), { 
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
+  }
+
+  console.log(`Authenticated user ${auth.userId} accessing process-case-ai`);
+
   try {
     const body = await req.json().catch(() => ({}));
     const courtlistener_id = body.courtlistener_id;
@@ -53,6 +83,15 @@ serve(async (req) => {
     if (!courtlistener_id) {
       console.error("Missing courtlistener_id");
       return new Response(JSON.stringify({ error: "Missing courtlistener_id" }), { 
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    // Validate courtlistener_id format (should be a number)
+    const caseId = parseInt(courtlistener_id, 10);
+    if (isNaN(caseId) || caseId <= 0) {
+      return new Response(JSON.stringify({ error: "Invalid courtlistener_id format" }), { 
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });

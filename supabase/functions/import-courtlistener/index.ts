@@ -14,6 +14,24 @@ const corsHeaders = {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Verify user authentication from JWT
+async function verifyAuth(req: Request): Promise<{ userId: string } | null> {
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+  
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  
+  if (error || !user) {
+    console.error('Auth verification failed:', error?.message);
+    return null;
+  }
+  
+  return { userId: user.id };
+}
+
 // Generate realistic sample cases for testing and demo
 function generateSampleCases(query: string) {
   const caseBases = [
@@ -168,12 +186,32 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Verify authentication
+  const auth = await verifyAuth(req);
+  if (!auth) {
+    console.error('Unauthorized access attempt to import-courtlistener');
+    return new Response(JSON.stringify({ error: "Unauthorized - authentication required" }), { 
+      status: 401, 
+      headers: { ...corsHeaders, "Content-Type": "application/json" } 
+    });
+  }
+
+  console.log(`Authenticated user ${auth.userId} accessing import-courtlistener`);
+
   try {
     const body = await req.json().catch(() => ({}));
     const query = (body.query || body.q || "").toString().trim();
     
     if (!query) {
       return new Response(JSON.stringify({ error: "Missing query parameter" }), { 
+        status: 400, 
+        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      });
+    }
+
+    // Validate query length to prevent abuse
+    if (query.length > 500) {
+      return new Response(JSON.stringify({ error: "Query too long (max 500 characters)" }), { 
         status: 400, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
       });
