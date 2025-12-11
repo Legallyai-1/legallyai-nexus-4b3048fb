@@ -49,6 +49,7 @@ import CourtRecordsPage from "@/pages/CourtRecordsPage";
 import BusinessHubPage from "@/pages/BusinessHubPage";
 import DUIHubPage from "@/pages/DUIHubPage";
 import WillHubPage from "@/pages/WillHubPage";
+import MarriageDivorcePage from "@/pages/MarriageDivorcePage";
 import EnhancedCustodyPage from "@/pages/EnhancedCustodyPage";
 import EnhancedParolePage from "@/pages/EnhancedParolePage";
 import NotFound from "@/pages/NotFound";
@@ -109,6 +110,7 @@ export function AnimatedRoutes() {
         <Route path="/business-hub" element={<PageTransition><BusinessHubPage /></PageTransition>} />
         <Route path="/dui-hub" element={<PageTransition><DUIHubPage /></PageTransition>} />
         <Route path="/will-hub" element={<PageTransition><WillHubPage /></PageTransition>} />
+        <Route path="/marriage-divorce" element={<PageTransition><MarriageDivorcePage /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>

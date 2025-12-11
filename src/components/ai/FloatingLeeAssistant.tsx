@@ -27,7 +27,8 @@ interface Message {
 
 const HUB_ROUTES: Record<string, { path: string; icon: any; name: string }> = {
   custody: { path: "/custody", icon: Users, name: "CustodiAI" },
-  divorce: { path: "/custody", icon: Heart, name: "Mary" },
+  divorce: { path: "/marriage-divorce", icon: Heart, name: "MaryAI" },
+  marriage: { path: "/marriage-divorce", icon: Heart, name: "MaryAI" },
   dui: { path: "/dui-hub", icon: Car, name: "DriveSafeAI" },
   criminal: { path: "/tickets-defense", icon: Shield, name: "Defendr" },
   defense: { path: "/tickets-defense", icon: Shield, name: "Defendr" },

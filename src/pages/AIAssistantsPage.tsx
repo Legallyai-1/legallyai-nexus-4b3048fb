@@ -41,7 +41,7 @@ const assistants = [
     description: "Full lifecycle: Marriage licenses, vows, name changes, divorce filings, alimony calculators, mediation simulations. Vs. Rocket Lawyer 4.3/5.",
     icon: Heart,
     variant: "pink" as const,
-    path: "/custody",
+    path: "/marriage-divorce",
     gradient: "from-pink-500/20 to-rose-500/20",
     border: "border-pink-500/30",
     glow: "shadow-[0_0_30px_rgba(236,72,153,0.2)]",
