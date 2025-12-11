@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
@@ -15,12 +15,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { 
   DollarSign, Calculator, FileText, CheckCircle2, Clock, AlertCircle,
   CreditCard, Building, Shield, TrendingUp, User, Phone, Home, Briefcase,
-  Upload, Percent, BadgeCheck, AlertTriangle
+  Upload, Percent, BadgeCheck, AlertTriangle, Building2, Car, Landmark,
+  Send, Sparkles, Users
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { HubNotifications } from "@/components/hub/HubNotifications";
 import { LoanRepaymentTracker } from "@/components/hub/LoanRepaymentTracker";
+import { LawyerLoanRequest } from "@/components/hub/LawyerLoanRequest";
 
 interface LoanApplication {
   id: string;
@@ -34,18 +36,33 @@ interface LoanApplication {
   created_at: string;
 }
 
+const LOAN_TYPES = [
+  { id: "legal-services", name: "Legal Services", icon: Briefcase, desc: "Attorney fees, court costs", color: "neon-green" },
+  { id: "no-credit", name: "No Credit Check", icon: Shield, desc: "Income-based approval", color: "neon-cyan" },
+  { id: "personal", name: "Personal Loan", icon: User, desc: "Flexible financing", color: "neon-purple" },
+  { id: "business", name: "Business Loan", icon: Building2, desc: "Up to $500K", color: "neon-orange" },
+  { id: "property", name: "Real Estate", icon: Home, desc: "Property transactions", color: "emerald-400" },
+  { id: "auto", name: "Auto Refinance", icon: Car, desc: "Vehicle financing", color: "blue-400" },
+  { id: "settlement", name: "Settlement Funding", icon: Landmark, desc: "Lawsuit funding", color: "amber-400" },
+  { id: "emergency", name: "Emergency Fund", icon: CreditCard, desc: "Fast approval", color: "rose-400" }
+];
+
 // Platform takes 1% of each loan disbursed
 const PLATFORM_FEE_PERCENT = 1;
 
 export default function LoansPage() {
+  const [searchParams] = useSearchParams();
   const [amount, setAmount] = useState("");
   const [purpose, setPurpose] = useState("");
   const [termMonths, setTermMonths] = useState("12");
+  const [loanType, setLoanType] = useState("legal-services");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loans, setLoans] = useState<LoanApplication[]>([]);
   const [user, setUser] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string>("");
   const [activeTab, setActiveTab] = useState("apply");
   const [verificationStep, setVerificationStep] = useState(0);
+  const [referralData, setReferralData] = useState<any>(null);
   
   // Verification fields
   const [fullName, setFullName] = useState("");
@@ -67,13 +84,45 @@ export default function LoansPage() {
 
   useEffect(() => {
     checkAuth();
-  }, []);
+    // Check for referral link parameters
+    const rid = searchParams.get('rid');
+    const amt = searchParams.get('amt');
+    const type = searchParams.get('type');
+    const client = searchParams.get('client');
+    const desc = searchParams.get('desc');
+    const tab = searchParams.get('tab');
+
+    if (tab) {
+      setActiveTab(tab);
+    }
+
+    if (rid && amt) {
+      setReferralData({ rid, amt, type, client, desc });
+      setAmount(amt);
+      if (type) setLoanType(type);
+      if (desc) setPurpose(desc);
+      toast({
+        title: "Loan Request Received",
+        description: `Your attorney has prepared a $${parseFloat(amt).toLocaleString()} loan application for you.`
+      });
+    }
+  }, [searchParams]);
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     setUser(user);
     if (user) {
       fetchLoans(user.id);
+      // Check user role
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (roleData?.role) {
+        setUserRole(roleData.role);
+      }
     }
   };
 
@@ -291,23 +340,67 @@ export default function LoansPage() {
 
             {/* Main Content */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid grid-cols-4 mb-8 glass-card">
+              <TabsList className="grid grid-cols-5 mb-8 glass-card">
                 <TabsTrigger value="apply" className="data-[state=active]:bg-neon-green/20 data-[state=active]:text-neon-green">
                   <FileText className="w-4 h-4 mr-2" /> Apply
                 </TabsTrigger>
-                <TabsTrigger value="verify" className="data-[state=active]:bg-neon-cyan/20 data-[state=active]:text-neon-cyan">
+                <TabsTrigger value="types" className="data-[state=active]:bg-neon-purple/20 data-[state=active]:text-neon-purple">
+                  <Building2 className="w-4 h-4 mr-2" /> Loan Types
+                </TabsTrigger>
+                {(userRole === 'lawyer' || userRole === 'admin' || userRole === 'owner') && (
+                  <TabsTrigger value="lawyer" className="data-[state=active]:bg-neon-cyan/20 data-[state=active]:text-neon-cyan">
+                    <Send className="w-4 h-4 mr-2" /> Send to Client
+                  </TabsTrigger>
+                )}
+                <TabsTrigger value="verify" className="data-[state=active]:bg-neon-orange/20 data-[state=active]:text-neon-orange">
                   <BadgeCheck className="w-4 h-4 mr-2" /> Verify
                 </TabsTrigger>
-                <TabsTrigger value="repayments" className="data-[state=active]:bg-neon-purple/20 data-[state=active]:text-neon-purple">
+                <TabsTrigger value="repayments" className="data-[state=active]:bg-blue-400/20 data-[state=active]:text-blue-400">
                   <TrendingUp className="w-4 h-4 mr-2" /> Repayments
                 </TabsTrigger>
-                <TabsTrigger value="history" className="data-[state=active]:bg-neon-orange/20 data-[state=active]:text-neon-orange">
+                <TabsTrigger value="history" className="data-[state=active]:bg-amber-400/20 data-[state=active]:text-amber-400">
                   <CreditCard className="w-4 h-4 mr-2" /> History
                 </TabsTrigger>
               </TabsList>
 
               {/* Apply Tab */}
               <TabsContent value="apply">
+                {/* Referral Banner */}
+                {referralData && (
+                  <Card className="glass-card p-4 mb-6 border-neon-cyan/30 bg-neon-cyan/5">
+                    <div className="flex items-center gap-3">
+                      <Sparkles className="w-6 h-6 text-neon-cyan" />
+                      <div>
+                        <p className="font-medium text-foreground">
+                          Your attorney has prepared a ${parseFloat(referralData.amt).toLocaleString()} loan for you
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Complete the verification below to proceed with AI-assisted approval
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                )}
+
+                {/* Loan Type Quick Select */}
+                <div className="mb-6">
+                  <Label className="mb-3 block">Select Loan Type</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {LOAN_TYPES.map(type => (
+                      <Button
+                        key={type.id}
+                        variant={loanType === type.id ? "neon-green" : "outline"}
+                        size="sm"
+                        onClick={() => setLoanType(type.id)}
+                        className="flex items-center gap-2"
+                      >
+                        <type.icon className="w-4 h-4" />
+                        {type.name}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Application Form */}
                   <Card className="glass-card p-6 border-neon-green/30">
@@ -328,7 +421,11 @@ export default function LoansPage() {
                           min="500"
                           step="100"
                         />
-                        <p className="text-xs text-muted-foreground mt-1">Minimum: $500 | Maximum: $50,000</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {loanType === 'business' ? 'Up to $500,000' : 
+                           loanType === 'property' ? 'Up to $1,000,000' : 
+                           'Minimum: $500 | Maximum: $50,000'}
+                        </p>
                       </div>
 
                       <div>
@@ -428,7 +525,93 @@ export default function LoansPage() {
                 </div>
               </TabsContent>
 
-              {/* Verification Tab */}
+              {/* Loan Types Tab */}
+              <TabsContent value="types">
+                <div className="space-y-6">
+                  <Card className="glass-card p-6 border-neon-purple/30">
+                    <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
+                      <Building2 className="w-5 h-5 text-neon-purple" /> Comprehensive Loan Options
+                    </h3>
+                    <p className="text-muted-foreground mb-6">
+                      We offer every type of loan from no-credit-check options to large business and property loans.
+                      AI-assisted approval for faster processing.
+                    </p>
+                    
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {LOAN_TYPES.map(type => (
+                        <Card 
+                          key={type.id}
+                          className={`p-4 cursor-pointer transition-all hover:scale-[1.02] border-${type.color}/30 hover:bg-${type.color}/10`}
+                          onClick={() => {
+                            setLoanType(type.id);
+                            setActiveTab("apply");
+                          }}
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className={`p-3 rounded-xl bg-${type.color}/20`}>
+                              <type.icon className={`w-6 h-6 text-${type.color}`} />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-foreground">{type.name}</h4>
+                              <p className="text-sm text-muted-foreground">{type.desc}</p>
+                              <Badge variant="outline" className="mt-2 text-xs">Click to Apply</Badge>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </Card>
+
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <Card className="glass-card p-4 border-neon-green/30">
+                      <Shield className="w-8 h-8 text-neon-green mb-3" />
+                      <h4 className="font-semibold text-foreground">No Credit Check</h4>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Get approved based on income, not credit score. Perfect for legal emergencies.
+                      </p>
+                    </Card>
+                    <Card className="glass-card p-4 border-neon-cyan/30">
+                      <Sparkles className="w-8 h-8 text-neon-cyan mb-3" />
+                      <h4 className="font-semibold text-foreground">AI-Powered Approval</h4>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Our AI evaluates your application for faster decisions, often within 24 hours.
+                      </p>
+                    </Card>
+                    <Card className="glass-card p-4 border-neon-purple/30">
+                      <Users className="w-8 h-8 text-neon-purple mb-3" />
+                      <h4 className="font-semibold text-foreground">Lawyer Integration</h4>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Your lawyer can send you a pre-configured loan link for seamless financing.
+                      </p>
+                    </Card>
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* Lawyer Tab */}
+              {(userRole === 'lawyer' || userRole === 'admin' || userRole === 'owner') && (
+                <TabsContent value="lawyer">
+                  <Card className="glass-card p-6 border-neon-cyan/30">
+                    <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
+                      <Send className="w-5 h-5 text-neon-cyan" /> Send Loan Request to Client
+                    </h3>
+                    <p className="text-muted-foreground mb-6">
+                      Generate a personalized loan application link for your client. They'll receive a pre-filled 
+                      application with your estimated amount and AI assistance throughout the process.
+                    </p>
+                    <LawyerLoanRequest 
+                      onLoanSent={(data) => {
+                        toast({
+                          title: "Loan link ready!",
+                          description: `Link for $${data.amount.toLocaleString()} sent to ${data.clientName}`
+                        });
+                      }}
+                    />
+                  </Card>
+                </TabsContent>
+              )}
+
+
               <TabsContent value="verify">
                 <Card className="glass-card p-6">
                   <h3 className="font-display font-semibold text-foreground mb-6 flex items-center gap-2">
