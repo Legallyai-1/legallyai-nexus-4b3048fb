@@ -47,6 +47,7 @@ import LoansPage from "@/pages/LoansPage";
 import LoanAdminPage from "@/pages/LoanAdminPage";
 import CourtRecordsPage from "@/pages/CourtRecordsPage";
 import BusinessHubPage from "@/pages/BusinessHubPage";
+import DUIHubPage from "@/pages/DUIHubPage";
 import NotFound from "@/pages/NotFound";
 
 export function AnimatedRoutes() {
@@ -100,6 +101,8 @@ export function AnimatedRoutes() {
         <Route path="/loan-admin" element={<PageTransition><LoanAdminPage /></PageTransition>} />
         <Route path="/court-records" element={<PageTransition><CourtRecordsPage /></PageTransition>} />
         <Route path="/business-hub" element={<PageTransition><BusinessHubPage /></PageTransition>} />
+        <Route path="/dui-hub" element={<PageTransition><DUIHubPage /></PageTransition>} />
+        <Route path="/job-board" element={<PageTransition><JobBoardPage /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
