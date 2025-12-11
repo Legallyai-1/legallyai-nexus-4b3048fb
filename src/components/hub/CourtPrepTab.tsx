@@ -20,14 +20,14 @@ import {
 } from "lucide-react";
 
 interface CourtPrepTabProps {
-  caseType: "custody" | "criminal" | "restraining" | "probation" | "general";
-  colorVariant?: "purple" | "cyan" | "pink" | "green" | "orange";
+  caseType: "custody" | "criminal" | "restraining" | "probation" | "general" | "defense" | "workplace" | "employment" | "probono" | "lawfirm";
+  colorVariant?: "purple" | "cyan" | "pink" | "green" | "orange" | "blue";
 }
 
 export function CourtPrepTab({ caseType, colorVariant = "purple" }: CourtPrepTabProps) {
   const [completedSteps, setCompletedSteps] = useState<string[]>([]);
 
-  const prepSteps = {
+  const prepSteps: Record<string, { id: string; title: string; desc: string; icon: React.ElementType }[]> = {
     custody: [
       { id: "docs", title: "Gather Documents", desc: "Custody agreement, school records, financial statements", icon: FileText },
       { id: "dress", title: "Court Attire", desc: "Dress professionally - business casual minimum", icon: Shirt },
@@ -43,6 +43,14 @@ export function CourtPrepTab({ caseType, colorVariant = "purple" }: CourtPrepTab
       { id: "speak", title: "Courtroom Etiquette", desc: "Stand when judge enters, speak only when addressed", icon: MessageSquare },
       { id: "rights", title: "Know Your Rights", desc: "Right to remain silent, right to counsel", icon: Shield },
       { id: "plea", title: "Understand Your Plea Options", desc: "Guilty, Not Guilty, No Contest - know the differences", icon: Gavel }
+    ],
+    defense: [
+      { id: "docs", title: "Gather Documents", desc: "Ticket, citation, photos, witness statements, receipts", icon: FileText },
+      { id: "dress", title: "Court Attire", desc: "Business casual or formal clothing", icon: Shirt },
+      { id: "arrive", title: "Arrive Early", desc: "Plan to arrive 30 minutes before your hearing", icon: Clock },
+      { id: "speak", title: "Courtroom Etiquette", desc: "Stand when judge enters, address as 'Your Honor'", icon: MessageSquare },
+      { id: "defense", title: "Prepare Your Defense", desc: "Know your key points and supporting evidence", icon: Shield },
+      { id: "options", title: "Know Your Options", desc: "Contest, negotiate, traffic school eligibility", icon: Gavel }
     ],
     restraining: [
       { id: "docs", title: "Evidence Documentation", desc: "Photos, messages, police reports, witness statements", icon: FileText },
@@ -60,6 +68,38 @@ export function CourtPrepTab({ caseType, colorVariant = "purple" }: CourtPrepTab
       { id: "speak", title: "Speak Honestly", desc: "Be truthful about your progress and any challenges", icon: MessageSquare },
       { id: "plan", title: "Have a Plan", desc: "Show the court your continued rehabilitation plan", icon: Shield }
     ],
+    workplace: [
+      { id: "docs", title: "Gather Documentation", desc: "Employment records, communications, witness statements", icon: FileText },
+      { id: "timeline", title: "Create Timeline", desc: "Document all incidents in chronological order", icon: Calendar },
+      { id: "complaint", title: "File Proper Complaint", desc: "EEOC, state labor board, or internal HR", icon: FileText },
+      { id: "dress", title: "Hearing Attire", desc: "Professional business attire", icon: Shirt },
+      { id: "speak", title: "Prepare Statement", desc: "Focus on facts, dates, and specific incidents", icon: MessageSquare },
+      { id: "follow", title: "Follow Up", desc: "Track complaint status and respond to requests", icon: Clock }
+    ],
+    employment: [
+      { id: "docs", title: "Gather Documentation", desc: "Employment records, communications, witness statements", icon: FileText },
+      { id: "timeline", title: "Create Timeline", desc: "Document all incidents in chronological order", icon: Calendar },
+      { id: "complaint", title: "File Proper Complaint", desc: "EEOC, state labor board, or internal HR", icon: FileText },
+      { id: "dress", title: "Hearing Attire", desc: "Professional business attire", icon: Shirt },
+      { id: "speak", title: "Prepare Statement", desc: "Focus on facts, dates, and specific incidents", icon: MessageSquare },
+      { id: "follow", title: "Follow Up", desc: "Track complaint status and respond to requests", icon: Clock }
+    ],
+    probono: [
+      { id: "docs", title: "Case Documentation", desc: "Gather all relevant case files and evidence", icon: FileText },
+      { id: "client", title: "Client Preparation", desc: "Prepare your pro bono client for proceedings", icon: MessageSquare },
+      { id: "dress", title: "Court Attire", desc: "Professional legal attire", icon: Shirt },
+      { id: "arrive", title: "Arrive Early", desc: "Meet with client before proceedings begin", icon: Clock },
+      { id: "present", title: "Presentation", desc: "Present case clearly and professionally", icon: Scale },
+      { id: "follow", title: "Follow Up", desc: "Ensure client understands next steps", icon: CheckCircle2 }
+    ],
+    lawfirm: [
+      { id: "case", title: "Case Review", desc: "Review all case files and strategy", icon: FileText },
+      { id: "team", title: "Team Coordination", desc: "Brief all attorneys and staff on their roles", icon: MessageSquare },
+      { id: "client", title: "Client Prep", desc: "Prepare client for testimony and proceedings", icon: Shield },
+      { id: "docs", title: "Document Organization", desc: "Organize exhibits and evidence for presentation", icon: FileText },
+      { id: "logistics", title: "Logistics", desc: "Confirm courtroom, schedule, and transportation", icon: MapPin },
+      { id: "backup", title: "Backup Plans", desc: "Prepare for various procedural scenarios", icon: Shield }
+    ],
     general: [
       { id: "docs", title: "Gather All Documents", desc: "Bring all relevant paperwork and evidence", icon: FileText },
       { id: "dress", title: "Dress Appropriately", desc: "Business casual to formal attire", icon: Shirt },
@@ -70,7 +110,7 @@ export function CourtPrepTab({ caseType, colorVariant = "purple" }: CourtPrepTab
     ]
   };
 
-  const steps = prepSteps[caseType];
+  const steps = prepSteps[caseType] || prepSteps.general;
   const progress = (completedSteps.length / steps.length) * 100;
   const colorClass = `neon-${colorVariant}`;
 
@@ -82,7 +122,7 @@ export function CourtPrepTab({ caseType, colorVariant = "purple" }: CourtPrepTab
     );
   };
 
-  const whatToExpect = {
+  const whatToExpect: Record<string, string[]> = {
     custody: [
       "Both parents will have opportunity to present their case",
       "Judge may ask about parenting plans and child's needs",
@@ -96,6 +136,13 @@ export function CourtPrepTab({ caseType, colorVariant = "purple" }: CourtPrepTab
       "You or your attorney can present your defense",
       "Judge may ask questions directly",
       "Sentencing may happen same day or scheduled separately"
+    ],
+    defense: [
+      "Traffic court is usually informal compared to other courts",
+      "Officer who issued ticket may or may not be present",
+      "You can present your evidence and testimony",
+      "Judge will make ruling, often same day",
+      "You may be able to negotiate reduced charges or traffic school"
     ],
     restraining: [
       "Temporary order may be granted same day",
@@ -111,6 +158,34 @@ export function CourtPrepTab({ caseType, colorVariant = "purple" }: CourtPrepTab
       "Possible modification of conditions",
       "Early termination may be requested if eligible"
     ],
+    workplace: [
+      "Initial hearing to review complaint and evidence",
+      "Mediation may be offered before formal proceedings",
+      "Both sides present evidence and witnesses",
+      "Decision timeline varies by agency and case complexity",
+      "Appeals process available if needed"
+    ],
+    employment: [
+      "Initial hearing to review complaint and evidence",
+      "Mediation may be offered before formal proceedings",
+      "Both sides present evidence and witnesses",
+      "Decision timeline varies by agency and case complexity",
+      "Appeals process available if needed"
+    ],
+    probono: [
+      "Standard court procedures apply",
+      "Present case on behalf of your pro bono client",
+      "Ensure client understands all proceedings",
+      "Document all billable hours for records",
+      "Follow up with client after proceedings"
+    ],
+    lawfirm: [
+      "Coordinate with all team members before proceedings",
+      "Ensure all exhibits are properly marked and organized",
+      "Be prepared for motions and objections",
+      "Maintain professional demeanor throughout",
+      "Debrief with team after proceedings"
+    ],
     general: [
       "Cases are called in order - be patient",
       "Present your side clearly and concisely",
@@ -122,7 +197,6 @@ export function CourtPrepTab({ caseType, colorVariant = "purple" }: CourtPrepTab
 
   return (
     <div className="space-y-6">
-      {/* Progress Header */}
       <Card className={`glass-card border-${colorClass}/30 p-4`}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -136,7 +210,6 @@ export function CourtPrepTab({ caseType, colorVariant = "purple" }: CourtPrepTab
         <Progress value={progress} className="h-2" />
       </Card>
 
-      {/* Preparation Checklist */}
       <Card className={`glass-card border-${colorClass}/30 p-4`}>
         <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
           <CheckCircle2 className={`w-4 h-4 text-${colorClass}`} />
@@ -179,14 +252,13 @@ export function CourtPrepTab({ caseType, colorVariant = "purple" }: CourtPrepTab
         </div>
       </Card>
 
-      {/* What to Expect */}
       <Card className={`glass-card border-${colorClass}/30 p-4`}>
         <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-neon-orange" />
-          What to Expect in Court
+          What to Expect
         </h4>
         <div className="space-y-2">
-          {whatToExpect[caseType].map((item, idx) => (
+          {(whatToExpect[caseType] || whatToExpect.general).map((item, idx) => (
             <div key={idx} className="flex items-start gap-2 p-2">
               <ChevronRight className={`w-4 h-4 mt-0.5 text-${colorClass} shrink-0`} />
               <p className="text-sm text-foreground">{item}</p>
@@ -195,7 +267,6 @@ export function CourtPrepTab({ caseType, colorVariant = "purple" }: CourtPrepTab
         </div>
       </Card>
 
-      {/* Quick Tips */}
       <div className="grid grid-cols-2 gap-4">
         <Card className="glass-card border-neon-green/30 p-4">
           <h5 className="font-semibold text-neon-green mb-2 flex items-center gap-2">

@@ -186,16 +186,15 @@ export default function TicketsDefensePage() {
 
               <TabsContent value="start">
                 <WhereToStart 
-                  steps={whereToStartSteps}
-                  hubName="Defense"
-                  hubColor="pink"
+                  caseType="defense"
+                  colorVariant="pink"
                 />
               </TabsContent>
 
               <TabsContent value="assistant">
                 <HubAssistant
                   assistantName="Defendr"
-                  assistantVariant="pink"
+                  colorVariant="pink"
                   systemPrompt={systemPrompt}
                   placeholderText="Describe your case, upload your ticket, or ask about your defense options..."
                   welcomeMessage="I'm Defendr, your AI defense assistant. Upload your ticket or citation and I'll help you understand your options, build your defense, and prepare for court."
@@ -203,13 +202,13 @@ export default function TicketsDefensePage() {
               </TabsContent>
 
               <TabsContent value="documents">
-                <DocumentManager hubType="defense" />
+                <DocumentManager colorVariant="pink" />
               </TabsContent>
 
               <TabsContent value="court">
                 <CourtPrepTab 
-                  checklist={courtPrepChecklist}
-                  caseType="Defense"
+                  caseType="defense"
+                  colorVariant="pink"
                 />
               </TabsContent>
 

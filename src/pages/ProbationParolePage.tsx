@@ -207,16 +207,15 @@ export default function ProbationParolePage() {
 
               <TabsContent value="start">
                 <WhereToStart 
-                  steps={whereToStartSteps}
-                  hubName="Rehabilitation"
-                  hubColor="green"
+                  caseType="probation"
+                  colorVariant="green"
                 />
               </TabsContent>
 
               <TabsContent value="assistant">
                 <HubAssistant
                   assistantName="RehabilitAI"
-                  assistantVariant="green"
+                  colorVariant="green"
                   systemPrompt={systemPrompt}
                   placeholderText="Share what you need help with or upload your probation/parole documents..."
                   welcomeMessage="I'm RehabilitAI, here to support you through probation, parole, or reentry. Upload your documents and I'll help you understand your conditions, rights, and next steps. You're not alone in this journey."
@@ -224,13 +223,13 @@ export default function ProbationParolePage() {
               </TabsContent>
 
               <TabsContent value="documents">
-                <DocumentManager hubType="probation" />
+                <DocumentManager colorVariant="green" />
               </TabsContent>
 
               <TabsContent value="court">
                 <CourtPrepTab 
-                  checklist={courtPrepChecklist}
-                  caseType="Probation/Parole"
+                  caseType="probation"
+                  colorVariant="green"
                 />
               </TabsContent>
 
