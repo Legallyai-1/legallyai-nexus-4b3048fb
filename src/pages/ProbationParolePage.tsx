@@ -112,7 +112,8 @@ export default function ProbationParolePage() {
             { role: "system", content: systemPrompt },
             ...messages,
             { role: "user", content: userMessage }
-          ]
+          ],
+          stream: false
         }
       });
 

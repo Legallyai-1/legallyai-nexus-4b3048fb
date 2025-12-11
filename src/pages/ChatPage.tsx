@@ -109,7 +109,7 @@ export default function ChatPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ messages: apiMessages }),
+        body: JSON.stringify({ messages: apiMessages, stream: true }),
       });
 
       if (!resp.ok) {

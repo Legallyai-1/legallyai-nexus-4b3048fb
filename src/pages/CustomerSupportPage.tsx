@@ -92,7 +92,8 @@ export default function CustomerSupportPage() {
             { role: "system", content: systemPrompt },
             ...messages,
             { role: "user", content: userMessage }
-          ]
+          ],
+          stream: false
         }
       });
 

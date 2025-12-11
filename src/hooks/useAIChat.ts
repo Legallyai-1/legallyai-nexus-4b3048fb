@@ -30,7 +30,8 @@ export function useAIChat({ systemPrompt, onError }: UseAIChatOptions) {
             { role: "system", content: systemPrompt },
             ...messages,
             userMsg
-          ]
+          ],
+          stream: false
         }
       });
 

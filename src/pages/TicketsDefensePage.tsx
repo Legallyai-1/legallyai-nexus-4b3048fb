@@ -92,7 +92,8 @@ export default function TicketsDefensePage() {
             { role: "system", content: systemPrompt },
             ...messages,
             { role: "user", content: userMessage }
-          ]
+          ],
+          stream: false
         }
       });
 
