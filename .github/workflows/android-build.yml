@@ -57,13 +57,42 @@ jobs:
           EOF
           npx cap sync android
 
+      - name: Configure Android build settings
+        run: |
+          # Ensure proper minSdkVersion for Android 13 compatibility
+          sed -i 's/minSdkVersion.*/minSdkVersion 24/' android/app/build.gradle || true
+          sed -i 's/targetSdkVersion.*/targetSdkVersion 34/' android/app/build.gradle || true
+          
+          # Ensure debug signing is properly configured
+          cat >> android/app/build.gradle << 'EOF'
+          
+          android {
+              signingConfigs {
+                  debug {
+                      storeFile file("debug.keystore")
+                      storePassword "android"
+                      keyAlias "androiddebugkey"
+                      keyPassword "android"
+                  }
+              }
+              buildTypes {
+                  debug {
+                      signingConfig signingConfigs.debug
+                  }
+              }
+          }
+          EOF
+          
+          # Generate debug keystore if not exists
+          keytool -genkey -v -keystore android/app/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" 2>/dev/null || true
+
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
       - name: Build Debug APK
         run: |
           cd android
-          ./gradlew assembleDebug --stacktrace --info
+          ./gradlew clean assembleDebug --stacktrace
 
       - name: Verify and sign APK
         run: |
