@@ -791,54 +791,104 @@ export type Database = {
           },
         ]
       }
+      loan_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          loan_id: string | null
+          platform_fee: number
+          status: string
+          stripe_transfer_id: string | null
+          transaction_type: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          loan_id?: string | null
+          platform_fee?: number
+          status?: string
+          stripe_transfer_id?: string | null
+          transaction_type: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          loan_id?: string | null
+          platform_fee?: number
+          status?: string
+          stripe_transfer_id?: string | null
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_transactions_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loans: {
         Row: {
           amount: number
           approved_at: string | null
           created_at: string
           disbursed_at: string | null
+          document_urls: Json | null
           id: string
           interest_rate: number | null
           monthly_payment: number | null
           organization_id: string | null
+          platform_fee: number | null
           purpose: string
           status: string
           term_months: number | null
           total_repayment: number | null
           updated_at: string
           user_id: string
+          verification_data: Json | null
         }
         Insert: {
           amount: number
           approved_at?: string | null
           created_at?: string
           disbursed_at?: string | null
+          document_urls?: Json | null
           id?: string
           interest_rate?: number | null
           monthly_payment?: number | null
           organization_id?: string | null
+          platform_fee?: number | null
           purpose: string
           status?: string
           term_months?: number | null
           total_repayment?: number | null
           updated_at?: string
           user_id: string
+          verification_data?: Json | null
         }
         Update: {
           amount?: number
           approved_at?: string | null
           created_at?: string
           disbursed_at?: string | null
+          document_urls?: Json | null
           id?: string
           interest_rate?: number | null
           monthly_payment?: number | null
           organization_id?: string | null
+          platform_fee?: number | null
           purpose?: string
           status?: string
           term_months?: number | null
           total_repayment?: number | null
           updated_at?: string
           user_id?: string
+          verification_data?: Json | null
         }
         Relationships: [
           {
