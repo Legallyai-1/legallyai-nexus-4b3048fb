@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   FileText, Search, Download, Eye, Star, 
   Filter, ArrowRight, Briefcase, Home, Users,
-  Scale, Shield, Heart, Building2, Car, DollarSign
+  Scale, Shield, Heart, Building2, Car, DollarSign, X
 } from "lucide-react";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
@@ -33,6 +34,59 @@ const categories = [
   { id: "personal", name: "Personal", icon: Shield },
   { id: "financial", name: "Financial", icon: DollarSign },
 ];
+
+const templatePreviews: Record<string, string> = {
+  "1": `NON-DISCLOSURE AGREEMENT (NDA)
+
+This Non-Disclosure Agreement ("Agreement") is entered into as of [DATE] by and between:
+
+DISCLOSING PARTY: [PARTY A NAME]
+RECEIVING PARTY: [PARTY B NAME]
+
+1. DEFINITION OF CONFIDENTIAL INFORMATION
+"Confidential Information" means any non-public information disclosed by either party...
+
+2. OBLIGATIONS OF RECEIVING PARTY
+The Receiving Party agrees to:
+(a) Hold the Confidential Information in strict confidence...
+(b) Not disclose Confidential Information to any third parties...
+
+3. TERM
+This Agreement shall remain in effect for a period of [X] years...`,
+  "5": `RESIDENTIAL LEASE AGREEMENT
+
+This Lease Agreement is made on [DATE] between:
+
+LANDLORD: [NAME], hereinafter referred to as "Landlord"
+TENANT: [NAME], hereinafter referred to as "Tenant"
+
+PROPERTY ADDRESS: [ADDRESS]
+
+1. TERM OF LEASE
+The lease term begins on [START DATE] and ends on [END DATE]...
+
+2. RENT
+Monthly rent shall be $[AMOUNT], due on the [DAY] of each month...
+
+3. SECURITY DEPOSIT
+Tenant shall pay a security deposit of $[AMOUNT]...`,
+  "8": `CHILD CUSTODY AGREEMENT
+
+This Agreement is entered into by and between:
+PARENT 1: [NAME]
+PARENT 2: [NAME]
+
+For the benefit of the minor child(ren): [CHILD NAME(S)]
+
+1. LEGAL CUSTODY
+[Joint/Sole] legal custody shall be awarded to [PARENT(S)]...
+
+2. PHYSICAL CUSTODY
+Primary residence shall be with [PARENT]...
+
+3. VISITATION SCHEDULE
+The non-custodial parent shall have visitation as follows...`,
+};
 
 const templates: Template[] = [
   // Business
@@ -71,6 +125,7 @@ export default function DocumentTemplatesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [showPremiumOnly, setShowPremiumOnly] = useState(false);
+  const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
 
   const filteredTemplates = templates.filter(template => {
     const matchesSearch = template.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -85,7 +140,7 @@ export default function DocumentTemplatesPage() {
   };
 
   const handlePreview = (template: Template) => {
-    toast.info(`Preview for "${template.title}" - Coming soon!`);
+    setPreviewTemplate(template);
   };
 
   const handleDownload = (template: Template) => {
@@ -94,6 +149,15 @@ export default function DocumentTemplatesPage() {
       navigate("/pricing");
     } else {
       toast.success(`Downloading "${template.title}"...`);
+      // Create a simple text download
+      const content = templatePreviews[template.id] || `${template.title}\n\n${template.description}\n\n[Template content would appear here]`;
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${template.title.replace(/\s+/g, '_')}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
     }
   };
 
@@ -275,6 +339,49 @@ export default function DocumentTemplatesPage() {
             </div>
           </div>
         </section>
+
+        {/* Preview Dialog */}
+        <Dialog open={!!previewTemplate} onOpenChange={() => setPreviewTemplate(null)}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center justify-between">
+                <span>{previewTemplate?.title}</span>
+                {previewTemplate?.isPremium && (
+                  <Badge className="bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-400 border-amber-500/30">
+                    <Star className="h-3 w-3 mr-1 fill-current" /> Premium
+                  </Badge>
+                )}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="mt-4">
+              <p className="text-sm text-muted-foreground mb-4">{previewTemplate?.description}</p>
+              <div className="bg-muted/30 rounded-lg p-4 font-mono text-sm whitespace-pre-wrap border border-border/50">
+                {previewTemplate && (templatePreviews[previewTemplate.id] || `${previewTemplate.title}\n\n${previewTemplate.description}\n\n[Full template content available upon use or download]`)}
+              </div>
+              <div className="flex gap-3 mt-6">
+                <Button 
+                  variant="neon" 
+                  className="flex-1"
+                  onClick={() => {
+                    if (previewTemplate) handleUseTemplate(previewTemplate);
+                    setPreviewTemplate(null);
+                  }}
+                >
+                  Use This Template
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    if (previewTemplate) handleDownload(previewTemplate);
+                  }}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </FuturisticBackground>
     </Layout>
   );
