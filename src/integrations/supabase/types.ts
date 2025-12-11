@@ -616,6 +616,57 @@ export type Database = {
           },
         ]
       }
+      cases_imported: {
+        Row: {
+          citation: string | null
+          client_summary: string | null
+          courtlistener_id: number | null
+          created_at: string
+          custody_notes: string | null
+          date_filed: string | null
+          defense_plan: string | null
+          id: string
+          raw: Json | null
+          source: string
+          summary: string | null
+          title: string | null
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          citation?: string | null
+          client_summary?: string | null
+          courtlistener_id?: number | null
+          created_at?: string
+          custody_notes?: string | null
+          date_filed?: string | null
+          defense_plan?: string | null
+          id?: string
+          raw?: Json | null
+          source?: string
+          summary?: string | null
+          title?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          citation?: string | null
+          client_summary?: string | null
+          courtlistener_id?: number | null
+          created_at?: string
+          custody_notes?: string | null
+          date_filed?: string | null
+          defense_plan?: string | null
+          id?: string
+          raw?: Json | null
+          source?: string
+          summary?: string | null
+          title?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string | null
