@@ -139,10 +139,32 @@ export default function Index() {
           <h3 className="text-sm font-medium text-neon-cyan mb-4 text-center uppercase tracking-wider">AI Legal Assistants</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {[
-              { name: "Lexi Chat", path: "/chat", icon: "💬", color: "cyan", desc: "General Legal" },
+              { name: "Lee Legal AI", path: "/chat", icon: "💬", color: "cyan", desc: "General Legal" },
               { name: "CustodiAI", path: "/custody", icon: "👨‍👩‍👧", color: "purple", desc: "Child Custody" },
+              { name: "Mary - Divorce", path: "/custody", icon: "💔", color: "pink", desc: "Marriage & Divorce" },
               { name: "Defendr", path: "/tickets-defense", icon: "⚖️", color: "pink", desc: "Criminal Defense" },
-              { name: "RehabilitAI", path: "/probation-parole", icon: "🔓", color: "green", desc: "Probation/Parole" },
+            ].map((item) => (
+              <Link 
+                key={item.path + item.name}
+                to={item.path}
+                className={`glass-card-hover rounded-xl p-4 text-center group`}
+              >
+                <div className="text-2xl mb-2">{item.icon}</div>
+                <span className={`text-sm font-medium text-neon-${item.color} group-hover:text-glow-${item.color} block`}>
+                  {item.name}
+                </span>
+                <span className="text-xs text-muted-foreground">{item.desc}</span>
+              </Link>
+            ))}
+          </div>
+
+          {/* More AI Assistants Row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            {[
+              { name: "DriveSafeAI", path: "/dui-hub", icon: "🚗", color: "orange", desc: "DUI Defense" },
+              { name: "Freedom AI", path: "/probation-parole", icon: "🔓", color: "green", desc: "Probation/Parole" },
+              { name: "LegacyAI", path: "/will-hub", icon: "🏠", color: "blue", desc: "Wills & Estate" },
+              { name: "WorkAI", path: "/workplace-legal-aid", icon: "🛡️", color: "orange", desc: "Worker Rights" },
             ].map((item) => (
               <Link 
                 key={item.path}
@@ -164,7 +186,7 @@ export default function Index() {
             {[
               { name: "DocuAI", path: "/generate", icon: "📄", color: "blue", desc: "Generate Docs" },
               { name: "Templates", path: "/templates", icon: "📋", color: "cyan", desc: "Legal Templates" },
-              { name: "WorkAI", path: "/workplace-legal-aid", icon: "🛡️", color: "orange", desc: "Worker Rights" },
+              { name: "LoanAI", path: "/loans", icon: "💵", color: "green", desc: "Legal Financing" },
               { name: "CallAI", path: "/telephony", icon: "📞", color: "cyan", desc: "Telephony" },
             ].map((item) => (
               <Link 
@@ -185,10 +207,10 @@ export default function Index() {
           <h3 className="text-sm font-medium text-neon-green mb-4 text-center uppercase tracking-wider">For Law Firms</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {[
-              { name: "BarristerAI", path: "/dashboard", icon: "💼", color: "purple", desc: "Firm Management" },
-              { name: "Job Board", path: "/jobs", icon: "👔", color: "cyan", desc: "Legal Careers" },
+              { name: "PraxisAI", path: "/business-hub", icon: "💼", color: "purple", desc: "Firm Management" },
+              { name: "JobAI", path: "/job-board", icon: "👔", color: "cyan", desc: "Legal Careers" },
               { name: "ScholarAI", path: "/legal-academy", icon: "🎓", color: "blue", desc: "Legal Academy" },
-              { name: "Pro Bono", path: "/pro-bono", icon: "❤️", color: "pink", desc: "Free Legal Aid" },
+              { name: "ProBonoAI", path: "/pro-bono", icon: "❤️", color: "pink", desc: "Free Legal Aid" },
             ].map((item) => (
               <Link 
                 key={item.path}
