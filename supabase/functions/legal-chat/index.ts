@@ -67,7 +67,7 @@ serve(async (req) => {
     const user = userData.user;
     console.log("Authenticated user for chat:", user.id);
 
-    const { messages } = await req.json();
+    const { messages, stream = true } = await req.json();
     
     if (!messages || !Array.isArray(messages)) {
       return new Response(
@@ -138,7 +138,7 @@ Areas you can help with:
 
 End important responses with: "Remember: This is general legal information, not legal advice. For your specific situation, consult a licensed attorney."`;
 
-    console.log("Chat request from user:", user.id, "with", messages.length, "messages");
+    console.log("Chat request from user:", user.id, "with", messages.length, "messages, stream:", stream);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -152,7 +152,7 @@ End important responses with: "Remember: This is general legal information, not 
           { role: "system", content: systemPrompt },
           ...messages,
         ],
-        stream: true,
+        stream: stream,
       }),
     });
 
@@ -179,7 +179,18 @@ End important responses with: "Remember: This is general legal information, not 
       );
     }
 
-    // Return the stream directly
+    // Handle non-streaming response
+    if (!stream) {
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || "I couldn't generate a response. Please try again.";
+      console.log("Non-streaming response generated, length:", content.length);
+      return new Response(
+        JSON.stringify({ response: content }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Return the stream directly for streaming requests
     return new Response(response.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
