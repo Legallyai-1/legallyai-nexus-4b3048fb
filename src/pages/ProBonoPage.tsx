@@ -281,9 +281,8 @@ export default function ProBonoPage() {
 
                 <TabsContent value="start">
                   <WhereToStart 
-                    steps={whereToStartStepsLawyer}
-                    hubName="Pro Bono"
-                    hubColor="pink"
+                    caseType="probono"
+                    colorVariant="pink"
                   />
                 </TabsContent>
 
@@ -509,9 +508,8 @@ export default function ProBonoPage() {
 
                 <TabsContent value="start">
                   <WhereToStart 
-                    steps={whereToStartStepsClient}
-                    hubName="Free Legal Help"
-                    hubColor="pink"
+                    caseType="probono"
+                    colorVariant="pink"
                   />
                 </TabsContent>
 
@@ -575,7 +573,7 @@ export default function ProBonoPage() {
                 </TabsContent>
 
                 <TabsContent value="documents">
-                  <DocumentManager hubType="probono" />
+                  <DocumentManager colorVariant="pink" />
                 </TabsContent>
 
                 <TabsContent value="assistant">

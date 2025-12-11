@@ -15,19 +15,27 @@ interface Message {
 
 interface HubAssistantProps {
   assistantName: string;
-  variant: "cyan" | "purple" | "pink" | "green" | "orange" | "blue";
+  variant?: "cyan" | "purple" | "pink" | "green" | "orange" | "blue";
+  colorVariant?: "cyan" | "purple" | "pink" | "green" | "orange" | "blue";
+  assistantVariant?: "cyan" | "purple" | "pink" | "green" | "orange" | "blue";
   systemPrompt: string;
   placeholder?: string;
+  placeholderText?: string;
   welcomeMessage?: string;
 }
 
 export function HubAssistant({
   assistantName,
   variant,
+  colorVariant,
+  assistantVariant,
   systemPrompt,
-  placeholder = "Ask me anything about your case...",
+  placeholder,
+  placeholderText,
   welcomeMessage
 }: HubAssistantProps) {
+  const actualVariant = variant || colorVariant || assistantVariant || "purple";
+  const actualPlaceholder = placeholder || placeholderText || "Ask me anything about your case...";
   const [messages, setMessages] = useState<Message[]>(
     welcomeMessage ? [{ role: "assistant", content: welcomeMessage }] : []
   );
@@ -140,12 +148,12 @@ export function HubAssistant({
     blue: "neon-cyan"
   };
 
-  const colorClass = colorClasses[variant];
+  const colorClass = colorClasses[actualVariant];
 
   return (
     <Card className={`glass-card border-${colorClass}/30 p-4`}>
       <div className="flex items-center gap-3 mb-4 pb-3 border-b border-border/30">
-        <AnimatedAIHead variant={variant} size="sm" isActive={isLoading} />
+        <AnimatedAIHead variant={actualVariant} size="sm" isActive={isLoading} />
         <div>
           <h3 className={`font-display font-semibold text-${colorClass}`}>{assistantName}</h3>
           <p className="text-xs text-muted-foreground">Your AI Legal Assistant</p>
@@ -239,7 +247,7 @@ export function HubAssistant({
         <Textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={placeholder}
+          placeholder={actualPlaceholder}
           className={`flex-1 min-h-[60px] max-h-[120px] bg-background/30 border-${colorClass}/30 focus:border-${colorClass}/60 resize-none`}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {

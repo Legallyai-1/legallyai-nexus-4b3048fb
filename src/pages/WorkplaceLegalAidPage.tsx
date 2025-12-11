@@ -223,16 +223,15 @@ export default function WorkplaceLegalAidPage() {
 
               <TabsContent value="start">
                 <WhereToStart 
-                  steps={whereToStartSteps}
-                  hubName="Workplace Legal Aid"
-                  hubColor="orange"
+                  caseType="workplace"
+                  colorVariant="orange"
                 />
               </TabsContent>
 
               <TabsContent value="assistant">
                 <HubAssistant
                   assistantName="WorkplaceAI"
-                  assistantVariant="orange"
+                  colorVariant="orange"
                   systemPrompt={systemPrompt}
                   placeholderText="Describe your workplace issue, upload documents, or ask about your rights..."
                   welcomeMessage="I'm WorkplaceAI, your employment law assistant. I can help with discrimination, harassment, wage issues, wrongful termination, and more. Upload your employment documents and I'll analyze them."
@@ -240,13 +239,13 @@ export default function WorkplaceLegalAidPage() {
               </TabsContent>
 
               <TabsContent value="documents">
-                <DocumentManager hubType="workplace" />
+                <DocumentManager colorVariant="orange" />
               </TabsContent>
 
               <TabsContent value="court">
                 <CourtPrepTab 
-                  checklist={courtPrepChecklist}
-                  caseType="Employment"
+                  caseType="employment"
+                  colorVariant="orange"
                 />
               </TabsContent>
 
