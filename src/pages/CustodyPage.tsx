@@ -16,6 +16,7 @@ import { DocumentManager } from "@/components/hub/DocumentManager";
 import { CourtPrepTab } from "@/components/hub/CourtPrepTab";
 import { WhereToStart } from "@/components/hub/WhereToStart";
 import { ChildSupportPayment } from "@/components/hub/ChildSupportPayment";
+import { DocuAI } from "@/components/hub/DocuAI";
 import { 
   Users, ArrowRight, ArrowLeft, CheckCircle, FileText, Loader2, Sparkles,
   Scale, DollarSign, Shield, Briefcase, Download, Share2, QrCode
@@ -283,25 +284,34 @@ Create detailed custody plan with: 1) Legal framework for ${formData.state}, 2) 
               {/* Documents */}
               <TabsContent value="documents">
                 <div className="grid lg:grid-cols-2 gap-6">
-                  <DocumentManager colorVariant="purple" />
-                  {generatedPlan && (
-                    <Card className="glass-card border-neon-purple/30 p-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-display font-semibold flex items-center gap-2">
-                          <FileText className="w-5 h-5 text-neon-purple" />
-                          Generated Custody Plan
-                        </h3>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm"><Download className="w-4 h-4 mr-1" />PDF</Button>
-                          <Button variant="outline" size="sm"><Share2 className="w-4 h-4 mr-1" />Share</Button>
-                          <Button variant="outline" size="sm"><QrCode className="w-4 h-4 mr-1" />Show to Police</Button>
+                  <DocuAI 
+                    colorVariant="purple" 
+                    hubContext="custody"
+                    onDocumentGenerated={(doc) => {
+                      toast.success(`Document "${doc.name}" is ready!`);
+                    }}
+                  />
+                  <div className="space-y-4">
+                    <DocumentManager colorVariant="purple" />
+                    {generatedPlan && (
+                      <Card className="glass-card border-neon-purple/30 p-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="font-display font-semibold flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-neon-purple" />
+                            Generated Custody Plan
+                          </h3>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm"><Download className="w-4 h-4 mr-1" />PDF</Button>
+                            <Button variant="outline" size="sm"><Share2 className="w-4 h-4 mr-1" />Share</Button>
+                            <Button variant="outline" size="sm"><QrCode className="w-4 h-4 mr-1" />Show to Police</Button>
+                          </div>
                         </div>
-                      </div>
-                      <div className="max-h-[500px] overflow-y-auto p-4 rounded-lg bg-background/30 border border-border/50">
-                        <pre className="whitespace-pre-wrap text-sm text-foreground font-mono">{generatedPlan}</pre>
-                      </div>
-                    </Card>
-                  )}
+                        <div className="max-h-[300px] overflow-y-auto p-4 rounded-lg bg-background/30 border border-border/50">
+                          <pre className="whitespace-pre-wrap text-sm text-foreground font-mono">{generatedPlan}</pre>
+                        </div>
+                      </Card>
+                    )}
+                  </div>
                 </div>
               </TabsContent>
 

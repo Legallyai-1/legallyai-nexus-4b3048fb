@@ -14,6 +14,7 @@ import { HubAssistant } from "@/components/hub/HubAssistant";
 import { DocumentManager } from "@/components/hub/DocumentManager";
 import { CourtPrepTab } from "@/components/hub/CourtPrepTab";
 import { WhereToStart } from "@/components/hub/WhereToStart";
+import { DocuAI } from "@/components/hub/DocuAI";
 
 const defenseCategories = [
   {
@@ -202,7 +203,10 @@ export default function TicketsDefensePage() {
               </TabsContent>
 
               <TabsContent value="documents">
-                <DocumentManager colorVariant="pink" />
+                <div className="grid lg:grid-cols-2 gap-6">
+                  <DocuAI colorVariant="pink" hubContext="defense" />
+                  <DocumentManager colorVariant="pink" />
+                </div>
               </TabsContent>
 
               <TabsContent value="court">

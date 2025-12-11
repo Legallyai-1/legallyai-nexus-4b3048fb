@@ -17,6 +17,7 @@ import { HubAssistant } from "@/components/hub/HubAssistant";
 import { DocumentManager } from "@/components/hub/DocumentManager";
 import { CourtPrepTab } from "@/components/hub/CourtPrepTab";
 import { WhereToStart } from "@/components/hub/WhereToStart";
+import { DocuAI } from "@/components/hub/DocuAI";
 
 const topics = [
   {
@@ -239,7 +240,10 @@ export default function WorkplaceLegalAidPage() {
               </TabsContent>
 
               <TabsContent value="documents">
-                <DocumentManager colorVariant="orange" />
+                <div className="grid lg:grid-cols-2 gap-6">
+                  <DocuAI colorVariant="orange" hubContext="workplace" />
+                  <DocumentManager colorVariant="orange" />
+                </div>
               </TabsContent>
 
               <TabsContent value="court">
