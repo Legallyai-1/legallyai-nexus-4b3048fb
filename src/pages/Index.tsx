@@ -130,7 +130,7 @@ export default function Index() {
 
         {/* Ad Banner */}
         <AdContainer position="inline" className="w-full max-w-2xl mt-8">
-          <AdBanner slot="HOMEPAGE_TOP_SLOT" format="horizontal" />
+          <AdBanner slot="9777464779" format="horizontal" />
         </AdContainer>
 
         {/* Feature Links - Glassmorphism Cards */}
