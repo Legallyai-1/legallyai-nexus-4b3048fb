@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,17 +7,34 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Scale, Building2, User, KeyRound } from "lucide-react";
+import { Scale, Building2, User, KeyRound, Briefcase, Users, GraduationCap } from "lucide-react";
 import { loginSchema, signupSchema } from "@/lib/validations/auth";
+import { useRoleBasedRedirect } from "@/hooks/useRoleBasedRedirect";
+
+type UserType = "individual" | "lawyer" | "lawfirm" | "employee" | "student";
 
 export default function AuthPage() {
   const navigate = useNavigate();
+  const { redirectToHub } = useRoleBasedRedirect();
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [userType, setUserType] = useState<UserType>("individual");
   const [loginErrors, setLoginErrors] = useState<{ email?: string; password?: string }>({});
   const [signupErrors, setSignupErrors] = useState<{ name?: string; email?: string; password?: string }>({});
+
+  // Check if already logged in
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const path = await redirectToHub();
+        navigate(path);
+      }
+    };
+    checkSession();
+  }, [navigate, redirectToHub]);
 
   const validateLoginField = (field: "email" | "password", value: string) => {
     const result = loginSchema.shape[field].safeParse(value);
@@ -63,10 +80,13 @@ export default function AuthPage() {
 
     if (error) {
       toast.error(error.message);
-    } else {
-      toast.success("Logged in successfully!");
-      navigate("/dashboard");
+      setIsLoading(false);
+      return;
     }
+    
+    toast.success("Logged in successfully!");
+    const path = await redirectToHub();
+    navigate(path);
     setIsLoading(false);
   };
 
@@ -89,7 +109,17 @@ export default function AuthPage() {
 
     setIsLoading(true);
     
-    const redirectUrl = `${window.location.origin}/dashboard`;
+    // Determine redirect based on user type
+    const typeToPath: Record<UserType, string> = {
+      individual: "/ai-assistants",
+      lawyer: "/dashboard",
+      lawfirm: "/admin",
+      employee: "/employee",
+      student: "/legal-academy",
+    };
+    
+    const redirectPath = typeToPath[userType];
+    const redirectUrl = `${window.location.origin}${redirectPath}`;
     
     const { error } = await supabase.auth.signUp({
       email,
@@ -98,6 +128,7 @@ export default function AuthPage() {
         emailRedirectTo: redirectUrl,
         data: {
           full_name: fullName,
+          user_type: userType,
         }
       }
     });
@@ -105,10 +136,27 @@ export default function AuthPage() {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Account created! Please check your email to verify.");
+      toast.success("Account created! Redirecting...");
+      // Auto-login for immediate access
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (!signInError) {
+        navigate(redirectPath);
+      }
     }
     setIsLoading(false);
   };
+
+  const userTypes: { type: UserType; icon: any; label: string; description: string }[] = [
+    { type: "individual", icon: User, label: "Individual", description: "Get legal help" },
+    { type: "lawyer", icon: Briefcase, label: "Lawyer", description: "Manage practice" },
+    { type: "lawfirm", icon: Building2, label: "Law Firm", description: "Full firm management" },
+    { type: "employee", icon: Users, label: "Employee", description: "Staff portal" },
+    { type: "student", icon: GraduationCap, label: "Student", description: "Legal academy" },
+  ];
 
   return (
     <div className="min-h-screen bg-legal-navy flex items-center justify-center p-4">
@@ -266,6 +314,32 @@ export default function AuthPage() {
                     Min 8 chars with uppercase, lowercase, and number
                   </p>
                 </div>
+                
+                {/* User Type Selector */}
+                <div className="space-y-2">
+                  <Label>I am a...</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {userTypes.map((ut) => (
+                      <button
+                        key={ut.type}
+                        type="button"
+                        onClick={() => setUserType(ut.type)}
+                        className={`flex items-center gap-2 p-3 rounded-lg border transition-all text-left ${
+                          userType === ut.type 
+                            ? "border-legal-gold bg-legal-gold/10 text-legal-gold" 
+                            : "border-border hover:border-legal-gold/50"
+                        }`}
+                      >
+                        <ut.icon className="h-4 w-4" />
+                        <div>
+                          <span className="text-sm font-medium">{ut.label}</span>
+                          <p className="text-xs text-muted-foreground">{ut.description}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <Button type="submit" variant="gold" className="w-full" disabled={isLoading}>
                   {isLoading ? "Creating Account..." : "Create Account"}
                 </Button>
@@ -274,15 +348,25 @@ export default function AuthPage() {
           </Tabs>
 
           <div className="mt-6 pt-6 border-t border-border/50">
-            <p className="text-sm text-muted-foreground text-center mb-4">Account types:</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
-                <User className="h-4 w-4 text-legal-cyan" />
-                <span className="text-sm">Individual</span>
+            <p className="text-sm text-muted-foreground text-center mb-4">
+              Each account type has a dedicated portal:
+            </p>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
+                <User className="h-3 w-3 text-legal-cyan" />
+                <span>AI Assistants Hub</span>
               </div>
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
-                <Building2 className="h-4 w-4 text-legal-gold" />
-                <span className="text-sm">Law Firm</span>
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
+                <Briefcase className="h-3 w-3 text-legal-gold" />
+                <span>Lawyer Dashboard</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
+                <Building2 className="h-3 w-3 text-purple-400" />
+                <span>Admin Panel</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
+                <Users className="h-3 w-3 text-green-400" />
+                <span>Employee Portal</span>
               </div>
             </div>
           </div>
