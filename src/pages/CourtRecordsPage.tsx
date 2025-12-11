@@ -10,9 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { 
   Search, Scale, FileText, Calendar, MapPin, User, 
   Building2, Gavel, ExternalLink, Clock, Filter,
-  BookOpen, AlertCircle, CheckCircle2, Loader2
+  BookOpen, AlertCircle, CheckCircle2, Loader2, Database
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CourtRecord {
   id: string;
@@ -26,6 +27,8 @@ interface CourtRecord {
   parties: string[];
   judge?: string;
   summary?: string;
+  source?: string;
+  url?: string | null;
 }
 
 const CourtRecordsPage = () => {
@@ -33,6 +36,7 @@ const CourtRecordsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedState, setSelectedState] = useState("");
   const [selectedType, setSelectedType] = useState("");
+  const [selectedSource, setSelectedSource] = useState("all");
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<CourtRecord[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
@@ -60,61 +64,12 @@ const CourtRecordsPage = () => {
     appealed: "bg-purple-500/20 text-purple-400"
   };
 
-  // Mock court records data for demonstration
-  const mockRecords: CourtRecord[] = [
-    {
-      id: "1",
-      caseNumber: "2024-CV-12345",
-      title: "Smith v. ABC Corporation",
-      court: "Superior Court of California",
-      state: "California",
-      type: "Civil",
-      status: "active",
-      filingDate: "2024-01-15",
-      parties: ["John Smith (Plaintiff)", "ABC Corporation (Defendant)"],
-      judge: "Hon. Mary Johnson",
-      summary: "Personal injury lawsuit arising from workplace accident. Plaintiff seeks damages for medical expenses and lost wages."
-    },
-    {
-      id: "2",
-      caseNumber: "2023-CR-98765",
-      title: "State v. Williams",
-      court: "District Court of Texas",
-      state: "Texas",
-      type: "Criminal",
-      status: "closed",
-      filingDate: "2023-06-20",
-      parties: ["State of Texas (Prosecution)", "Michael Williams (Defendant)"],
-      judge: "Hon. Robert Davis",
-      summary: "Criminal case involving theft charges. Defendant found guilty, sentenced to probation."
-    },
-    {
-      id: "3",
-      caseNumber: "2024-FA-54321",
-      title: "Johnson v. Johnson",
-      court: "Family Court of New York",
-      state: "New York",
-      type: "Family",
-      status: "pending",
-      filingDate: "2024-02-28",
-      parties: ["Sarah Johnson (Petitioner)", "David Johnson (Respondent)"],
-      judge: "Hon. Lisa Chen",
-      summary: "Divorce proceedings with contested custody arrangement. Mediation scheduled."
-    },
-    {
-      id: "4",
-      caseNumber: "2023-BK-11111",
-      title: "In re: XYZ Industries LLC",
-      court: "U.S. Bankruptcy Court",
-      state: "Delaware",
-      type: "Bankruptcy",
-      status: "active",
-      filingDate: "2023-11-01",
-      parties: ["XYZ Industries LLC (Debtor)", "Various Creditors"],
-      judge: "Hon. Patricia Brown",
-      summary: "Chapter 11 bankruptcy reorganization. Company seeking to restructure $50M in debt."
-    },
-  ];
+  const sourceLabels: Record<string, string> = {
+    courtlistener: "CourtListener",
+    pacer: "PACER",
+    demo: "Demo Data",
+    all: "All Sources"
+  };
 
   const handleSearch = async () => {
     if (!searchQuery && !selectedState && !selectedType) {
@@ -129,29 +84,34 @@ const CourtRecordsPage = () => {
     setIsSearching(true);
     setHasSearched(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      const { data, error } = await supabase.functions.invoke('court-records-search', {
+        body: {
+          query: searchQuery,
+          state: selectedState,
+          caseType: selectedType,
+          source: selectedSource
+        }
+      });
 
-    // Filter mock records based on search criteria
-    const filtered = mockRecords.filter(record => {
-      const matchesQuery = !searchQuery || 
-        record.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        record.caseNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        record.parties.some(p => p.toLowerCase().includes(searchQuery.toLowerCase()));
+      if (error) throw error;
+
+      setSearchResults(data.results || []);
       
-      const matchesState = !selectedState || record.state === selectedState;
-      const matchesType = !selectedType || record.type === selectedType;
-      
-      return matchesQuery && matchesState && matchesType;
-    });
-
-    setSearchResults(filtered);
-    setIsSearching(false);
-
-    toast({
-      title: "Search Complete",
-      description: `Found ${filtered.length} court record(s)`,
-    });
+      toast({
+        title: "Search Complete",
+        description: `Found ${data.count || 0} court record(s) from ${data.sources?.join(', ') || 'available sources'}`,
+      });
+    } catch (error) {
+      console.error('Court records search error:', error);
+      toast({
+        title: "Search Error",
+        description: "Failed to search court records. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const federalCourts = [
@@ -196,7 +156,7 @@ const CourtRecordsPage = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                     <div className="md:col-span-2 space-y-2">
                       <Label>Search Query</Label>
                       <div className="relative">
@@ -240,6 +200,20 @@ const CourtRecordsPage = () => {
                         </SelectContent>
                       </Select>
                     </div>
+
+                    <div className="space-y-2">
+                      <Label>Data Source</Label>
+                      <Select value={selectedSource} onValueChange={setSelectedSource}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Sources" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Sources</SelectItem>
+                          <SelectItem value="courtlistener">CourtListener (Free)</SelectItem>
+                          <SelectItem value="pacer">PACER (Federal)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   
                   <div className="flex gap-3">
@@ -251,8 +225,8 @@ const CourtRecordsPage = () => {
                         </>
                       ) : (
                         <>
-                          <Search className="h-4 w-4 mr-2" />
-                          Search Records
+                          <Database className="h-4 w-4 mr-2" />
+                          Search Court Records
                         </>
                       )}
                     </Button>
@@ -262,6 +236,7 @@ const CourtRecordsPage = () => {
                         setSearchQuery("");
                         setSelectedState("");
                         setSelectedType("");
+                        setSelectedSource("all");
                         setSearchResults([]);
                         setHasSearched(false);
                       }}
@@ -298,11 +273,16 @@ const CourtRecordsPage = () => {
                           <CardContent className="p-6">
                             <div className="flex items-start justify-between gap-4">
                               <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-2">
+                                <div className="flex items-center gap-3 mb-2 flex-wrap">
                                   <h3 className="font-semibold text-lg text-foreground">{record.title}</h3>
                                   <Badge className={statusColors[record.status]}>
                                     {record.status}
                                   </Badge>
+                                  {record.source && (
+                                    <Badge variant="outline" className="text-xs">
+                                      {sourceLabels[record.source] || record.source}
+                                    </Badge>
+                                  )}
                                 </div>
                                 
                                 <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-3">
@@ -343,14 +323,19 @@ const CourtRecordsPage = () => {
                               </div>
                               
                               <div className="flex flex-col gap-2">
-                                <Button size="sm" className="bg-primary text-primary-foreground">
-                                  <FileText className="h-4 w-4 mr-1" />
-                                  View Details
-                                </Button>
-                                <Button size="sm" variant="outline">
-                                  <ExternalLink className="h-4 w-4 mr-1" />
-                                  Court Website
-                                </Button>
+                                {record.url ? (
+                                  <Button size="sm" className="bg-primary text-primary-foreground" asChild>
+                                    <a href={record.url} target="_blank" rel="noopener noreferrer">
+                                      <ExternalLink className="h-4 w-4 mr-1" />
+                                      View Record
+                                    </a>
+                                  </Button>
+                                ) : (
+                                  <Button size="sm" className="bg-primary text-primary-foreground">
+                                    <FileText className="h-4 w-4 mr-1" />
+                                    View Details
+                                  </Button>
+                                )}
                               </div>
                             </div>
                           </CardContent>
