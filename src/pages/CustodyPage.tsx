@@ -98,7 +98,8 @@ Format as a professional legal document. Include ${formData.state}-specific lega
               content: `You are CustodiAI, an expert AI assistant specialized in family law and child custody matters. Generate professional, legally-informed custody plans that are compassionate and focused on the best interests of children. Always include state-specific considerations and practical implementation details. End with a disclaimer that this is informational only and not legal advice.`
             },
             { role: "user", content: prompt }
-          ]
+          ],
+          stream: false
         }
       });
 
