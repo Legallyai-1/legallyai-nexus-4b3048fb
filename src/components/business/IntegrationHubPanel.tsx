@@ -13,8 +13,8 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-interface IntegrationHubProps {
-  organizationId: string;
+interface IntegrationHubPanelProps {
+  organizationId?: string;
 }
 
 const ICON_MAP: Record<string, any> = {
@@ -30,7 +30,7 @@ const ICON_MAP: Record<string, any> = {
   search: BookOpen
 };
 
-export function IntegrationHub({ organizationId }: IntegrationHubProps) {
+export function IntegrationHubPanel({ organizationId = 'default-org' }: IntegrationHubPanelProps) {
   const [loading, setLoading] = useState(true);
   const [integrations, setIntegrations] = useState<any>({ connected: [], available: [] });
   const [searchTerm, setSearchTerm] = useState('');

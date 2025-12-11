@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 
 interface CaseWorkflowManagerProps {
   caseId?: string;
-  organizationId: string;
+  organizationId?: string;
 }
 
 interface Task {
@@ -63,7 +63,7 @@ const TIMELINE_EVENTS = [
   { id: '4', type: 'deadline', title: 'Answer Due', date: '2024-03-01', description: 'Defendant response deadline' },
 ];
 
-export function CaseWorkflowManager({ caseId, organizationId }: CaseWorkflowManagerProps) {
+export function CaseWorkflowManager({ caseId, organizationId = 'default-org' }: CaseWorkflowManagerProps) {
   const [stages, setStages] = useState<Stage[]>(DEFAULT_STAGES);
   const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
   const [currentStage, setCurrentStage] = useState(2); // Discovery

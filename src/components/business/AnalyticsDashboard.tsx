@@ -17,10 +17,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface AnalyticsDashboardProps {
-  organizationId: string;
+  organizationId?: string;
 }
 
-export function AnalyticsDashboard({ organizationId }: AnalyticsDashboardProps) {
+export function AnalyticsDashboard({ organizationId = 'default-org' }: AnalyticsDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [insights, setInsights] = useState<any>(null);

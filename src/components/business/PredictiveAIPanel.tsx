@@ -30,10 +30,10 @@ interface PredictionResult {
 interface PredictiveAIPanelProps {
   caseId?: string;
   matterId?: string;
-  organizationId: string;
+  organizationId?: string;
 }
 
-export function PredictiveAIPanel({ caseId, matterId, organizationId }: PredictiveAIPanelProps) {
+export function PredictiveAIPanel({ caseId, matterId, organizationId = 'default-org' }: PredictiveAIPanelProps) {
   const [loading, setLoading] = useState<string | null>(null);
   const [predictions, setPredictions] = useState<Record<string, PredictionResult>>({});
   const [showExplain, setShowExplain] = useState<string | null>(null);

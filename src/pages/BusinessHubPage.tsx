@@ -12,7 +12,8 @@ import {
   Building2, Users, FileText, DollarSign, Shield, Zap, 
   BarChart3, Calendar, Clock, Briefcase, Scale, Settings,
   TrendingUp, AlertTriangle, CheckCircle, Lock, Globe,
-  Loader2, ChevronRight, ArrowUpRight, Sparkles
+  Loader2, ChevronRight, ArrowUpRight, Sparkles, Brain,
+  GitBranch, Award, Target, Activity
 } from "lucide-react";
 
 // Import hub components
@@ -24,6 +25,13 @@ import { IntegrationHub } from "@/components/business/IntegrationHub";
 import { ComplianceDashboard } from "@/components/business/ComplianceDashboard";
 import { PracticeAnalytics } from "@/components/business/PracticeAnalytics";
 import { BillingAutomation } from "@/components/business/BillingAutomation";
+
+// Import new advanced components
+import { PredictiveAIPanel } from "@/components/business/PredictiveAIPanel";
+import { AnalyticsDashboard } from "@/components/business/AnalyticsDashboard";
+import { IntegrationHubPanel } from "@/components/business/IntegrationHubPanel";
+import { CertificationCenter } from "@/components/business/CertificationCenter";
+import { CaseWorkflowManager } from "@/components/business/CaseWorkflowManager";
 
 export default function BusinessHubPage() {
   const navigate = useNavigate();
@@ -65,7 +73,7 @@ export default function BusinessHubPage() {
     { label: "Monthly Revenue", value: "$284,500", change: "+8.3%", icon: DollarSign, trend: "up" },
     { label: "Trust Balance", value: "$1.2M", change: "Reconciled", icon: Shield, trend: "neutral" },
     { label: "Billable Hours", value: "1,847", change: "+15%", icon: Clock, trend: "up" },
-    { label: "Active Clients", value: "89", change: "+5", icon: Users, trend: "up" },
+    { label: "AI Predictions", value: "94%", change: "Accuracy", icon: Brain, trend: "up" },
     { label: "Compliance Score", value: "98%", change: "SOC 2 Ready", icon: CheckCircle, trend: "up" },
   ];
 
@@ -85,10 +93,10 @@ export default function BusinessHubPage() {
             <h1 className="text-3xl font-display font-bold flex items-center gap-3">
               <Building2 className="h-8 w-8 text-primary" />
               Business Hub
-              <Badge className="bg-primary/20 text-primary">Enterprise</Badge>
+              <Badge className="bg-primary/20 text-primary">Enterprise AI</Badge>
             </h1>
             <p className="text-muted-foreground mt-1">
-              Complete law firm management platform with AI-powered automation
+              Complete law firm management platform with predictive AI & automation
             </p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
@@ -107,16 +115,43 @@ export default function BusinessHubPage() {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-4 lg:grid-cols-9 w-full bg-muted/30 p-1 h-auto">
-            <TabsTrigger value="overview" className="text-xs lg:text-sm">Overview</TabsTrigger>
-            <TabsTrigger value="practice" className="text-xs lg:text-sm">Practice</TabsTrigger>
-            <TabsTrigger value="intake" className="text-xs lg:text-sm">AI Intake</TabsTrigger>
-            <TabsTrigger value="billing" className="text-xs lg:text-sm">Billing</TabsTrigger>
-            <TabsTrigger value="trust" className="text-xs lg:text-sm">Trust</TabsTrigger>
-            <TabsTrigger value="documents" className="text-xs lg:text-sm">Documents</TabsTrigger>
-            <TabsTrigger value="analytics" className="text-xs lg:text-sm">Analytics</TabsTrigger>
-            <TabsTrigger value="integrations" className="text-xs lg:text-sm">Integrations</TabsTrigger>
-            <TabsTrigger value="compliance" className="text-xs lg:text-sm">Compliance</TabsTrigger>
+          <TabsList className="flex flex-wrap w-full bg-muted/30 p-1 h-auto gap-1">
+            <TabsTrigger value="overview" className="text-xs lg:text-sm flex items-center gap-1">
+              <Activity className="h-3 w-3" /> Overview
+            </TabsTrigger>
+            <TabsTrigger value="practice" className="text-xs lg:text-sm flex items-center gap-1">
+              <Briefcase className="h-3 w-3" /> Practice
+            </TabsTrigger>
+            <TabsTrigger value="workflows" className="text-xs lg:text-sm flex items-center gap-1">
+              <GitBranch className="h-3 w-3" /> Workflows
+            </TabsTrigger>
+            <TabsTrigger value="predictive" className="text-xs lg:text-sm flex items-center gap-1">
+              <Brain className="h-3 w-3" /> Predictive AI
+            </TabsTrigger>
+            <TabsTrigger value="intake" className="text-xs lg:text-sm flex items-center gap-1">
+              <Users className="h-3 w-3" /> AI Intake
+            </TabsTrigger>
+            <TabsTrigger value="billing" className="text-xs lg:text-sm flex items-center gap-1">
+              <DollarSign className="h-3 w-3" /> Billing
+            </TabsTrigger>
+            <TabsTrigger value="trust" className="text-xs lg:text-sm flex items-center gap-1">
+              <Shield className="h-3 w-3" /> Trust
+            </TabsTrigger>
+            <TabsTrigger value="documents" className="text-xs lg:text-sm flex items-center gap-1">
+              <FileText className="h-3 w-3" /> Documents
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="text-xs lg:text-sm flex items-center gap-1">
+              <BarChart3 className="h-3 w-3" /> Analytics
+            </TabsTrigger>
+            <TabsTrigger value="integrations" className="text-xs lg:text-sm flex items-center gap-1">
+              <Globe className="h-3 w-3" /> Integrations
+            </TabsTrigger>
+            <TabsTrigger value="certifications" className="text-xs lg:text-sm flex items-center gap-1">
+              <Award className="h-3 w-3" /> Certifications
+            </TabsTrigger>
+            <TabsTrigger value="compliance" className="text-xs lg:text-sm flex items-center gap-1">
+              <Lock className="h-3 w-3" /> Compliance
+            </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -138,7 +173,7 @@ export default function BusinessHubPage() {
               ))}
             </div>
 
-            {/* Quick Actions */}
+            {/* Quick Actions with Predictive AI */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <Card className="lg:col-span-2">
                 <CardHeader>
@@ -150,10 +185,12 @@ export default function BusinessHubPage() {
                 </CardHeader>
                 <CardContent className="grid grid-cols-2 gap-4">
                   {[
+                    { title: "Case Workflows", desc: "Automated task pipelines", icon: GitBranch, action: () => setActiveTab("workflows") },
+                    { title: "Predictive AI", desc: "Case outcome forecasts", icon: Brain, action: () => setActiveTab("predictive") },
                     { title: "Smart Intake", desc: "AI-powered client onboarding", icon: Users, action: () => setActiveTab("intake") },
                     { title: "Document Assembly", desc: "Generate docs from templates", icon: FileText, action: () => setActiveTab("documents") },
                     { title: "Auto-Billing", desc: "Intelligent invoice generation", icon: DollarSign, action: () => setActiveTab("billing") },
-                    { title: "Trust Reconciliation", desc: "3-way reconciliation", icon: Shield, action: () => setActiveTab("trust") },
+                    { title: "Certifications", desc: "Team skill tracking", icon: Award, action: () => setActiveTab("certifications") },
                   ].map((item, i) => (
                     <Button
                       key={i}
@@ -171,6 +208,42 @@ export default function BusinessHubPage() {
                 </CardContent>
               </Card>
 
+              {/* Predictive Insights Widget */}
+              <Card className="border-primary/30">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Brain className="h-5 w-5 text-primary" />
+                    AI Insights
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {[
+                    { insight: "3 cases likely to settle this month", type: "prediction", icon: Target },
+                    { insight: "Bill 20% more on Smith matter", type: "billing", icon: DollarSign },
+                    { insight: "High win probability: Jones case", type: "outcome", icon: TrendingUp },
+                    { insight: "2 unbilled time entries flagged", type: "alert", icon: AlertTriangle },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-start gap-3 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer">
+                      <item.icon className={`h-4 w-4 mt-0.5 ${
+                        item.type === 'alert' ? 'text-yellow-400' : 'text-primary'
+                      }`} />
+                      <p className="text-sm">{item.insight}</p>
+                    </div>
+                  ))}
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full mt-2"
+                    onClick={() => setActiveTab("predictive")}
+                  >
+                    View All Predictions <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* System Health & Integration Status */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -181,8 +254,8 @@ export default function BusinessHubPage() {
                 <CardContent className="space-y-4">
                   {[
                     { name: "API Status", status: "Operational", percent: 100 },
+                    { name: "Predictive Models", status: "Active", percent: 94 },
                     { name: "Data Sync", status: "Real-time", percent: 100 },
-                    { name: "Backup Status", status: "Current", percent: 100 },
                     { name: "Security Scan", status: "Passed", percent: 98 },
                   ].map((item, i) => (
                     <div key={i} className="space-y-1">
@@ -197,39 +270,48 @@ export default function BusinessHubPage() {
                   ))}
                 </CardContent>
               </Card>
-            </div>
 
-            {/* Integration Status */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <Globe className="h-5 w-5 text-primary" />
-                    250+ Integrations Available
-                  </span>
-                  <Button variant="outline" size="sm" onClick={() => setActiveTab("integrations")}>
-                    View All <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-3">
-                  {["Stripe", "QuickBooks", "Xero", "Microsoft 365", "Google Workspace", "DocuSign", "Zoom", "Slack", "Salesforce", "HubSpot", "Dropbox", "Box"].map((app, i) => (
-                    <Badge key={i} variant="secondary" className="px-3 py-1">
-                      {app}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <Globe className="h-5 w-5 text-primary" />
+                      50+ Integrations
+                    </span>
+                    <Button variant="outline" size="sm" onClick={() => setActiveTab("integrations")}>
+                      View All <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {["QuickBooks", "Xero", "DocuSign", "Zoom", "Slack", "Dropbox", "Clio", "LexisNexis", "Westlaw"].map((app, i) => (
+                      <Badge key={i} variant="secondary" className="px-3 py-1">
+                        {app}
+                      </Badge>
+                    ))}
+                    <Badge variant="outline" className="px-3 py-1">
+                      +41 more
                     </Badge>
-                  ))}
-                  <Badge variant="outline" className="px-3 py-1">
-                    +238 more
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Practice Management Tab */}
           <TabsContent value="practice">
             <PracticeManagement />
+          </TabsContent>
+
+          {/* Case Workflows Tab */}
+          <TabsContent value="workflows">
+            <CaseWorkflowManager />
+          </TabsContent>
+
+          {/* Predictive AI Tab */}
+          <TabsContent value="predictive">
+            <PredictiveAIPanel />
           </TabsContent>
 
           {/* AI Intake Tab */}
@@ -252,14 +334,25 @@ export default function BusinessHubPage() {
             <DocumentAssembly />
           </TabsContent>
 
-          {/* Analytics Tab */}
+          {/* Analytics Tab - Enhanced with new dashboard */}
           <TabsContent value="analytics">
-            <PracticeAnalytics />
+            <div className="space-y-6">
+              <AnalyticsDashboard />
+              <PracticeAnalytics />
+            </div>
           </TabsContent>
 
-          {/* Integrations Tab */}
+          {/* Integrations Tab - Enhanced with API layer */}
           <TabsContent value="integrations">
-            <IntegrationHub />
+            <div className="space-y-6">
+              <IntegrationHubPanel />
+              <IntegrationHub />
+            </div>
+          </TabsContent>
+
+          {/* Certifications Tab */}
+          <TabsContent value="certifications">
+            <CertificationCenter />
           </TabsContent>
 
           {/* Compliance Tab */}
