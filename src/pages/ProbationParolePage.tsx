@@ -14,6 +14,7 @@ import { HubAssistant } from "@/components/hub/HubAssistant";
 import { DocumentManager } from "@/components/hub/DocumentManager";
 import { CourtPrepTab } from "@/components/hub/CourtPrepTab";
 import { WhereToStart } from "@/components/hub/WhereToStart";
+import { DocuAI } from "@/components/hub/DocuAI";
 
 const supportCategories = [
   {
@@ -223,7 +224,10 @@ export default function ProbationParolePage() {
               </TabsContent>
 
               <TabsContent value="documents">
-                <DocumentManager colorVariant="green" />
+                <div className="grid lg:grid-cols-2 gap-6">
+                  <DocuAI colorVariant="green" hubContext="probation" />
+                  <DocumentManager colorVariant="green" />
+                </div>
               </TabsContent>
 
               <TabsContent value="court">
