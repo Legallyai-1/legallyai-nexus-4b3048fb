@@ -32,3 +32,6 @@ verify_jwt = true
 
 [functions.process-case-ai]
 verify_jwt = true
+
+[functions.business-hub]
+verify_jwt = true

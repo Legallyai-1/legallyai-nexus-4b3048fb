@@ -420,6 +420,95 @@ export type Database = {
           },
         ]
       }
+      billing_entries: {
+        Row: {
+          activity_code: string | null
+          amount: number
+          billable: boolean | null
+          billed: boolean | null
+          created_at: string
+          description: string
+          entry_date: string
+          entry_type: string
+          expense_code: string | null
+          id: string
+          invoice_id: string | null
+          matter_id: string
+          organization_id: string
+          quantity: number | null
+          rate: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_code?: string | null
+          amount: number
+          billable?: boolean | null
+          billed?: boolean | null
+          created_at?: string
+          description: string
+          entry_date?: string
+          entry_type: string
+          expense_code?: string | null
+          id?: string
+          invoice_id?: string | null
+          matter_id: string
+          organization_id: string
+          quantity?: number | null
+          rate?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_code?: string | null
+          amount?: number
+          billable?: boolean | null
+          billed?: boolean | null
+          created_at?: string
+          description?: string
+          entry_date?: string
+          entry_type?: string
+          expense_code?: string | null
+          id?: string
+          invoice_id?: string | null
+          matter_id?: string
+          organization_id?: string
+          quantity?: number | null
+          rate?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_entries_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_entries_matter_id_fkey"
+            columns: ["matter_id"]
+            isOneToOne: false
+            referencedRelation: "matters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_entries_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       call_logs: {
         Row: {
           ai_summary: string | null
@@ -724,6 +813,191 @@ export type Database = {
           },
         ]
       }
+      compliance_logs: {
+        Row: {
+          action: string
+          compliance_framework: string | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          new_values: Json | null
+          old_values: Json | null
+          organization_id: string
+          resource_id: string | null
+          resource_type: string
+          severity: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          compliance_framework?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          organization_id: string
+          resource_id?: string | null
+          resource_type: string
+          severity?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          compliance_framework?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          organization_id?: string
+          resource_id?: string | null
+          resource_type?: string
+          severity?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_templates: {
+        Row: {
+          category: string | null
+          content: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_public: boolean | null
+          name: string
+          organization_id: string | null
+          practice_area: string | null
+          updated_at: string
+          usage_count: number | null
+          variables: Json | null
+        }
+        Insert: {
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          organization_id?: string | null
+          practice_area?: string | null
+          updated_at?: string
+          usage_count?: number | null
+          variables?: Json | null
+        }
+        Update: {
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          organization_id?: string | null
+          practice_area?: string | null
+          updated_at?: string
+          usage_count?: number | null
+          variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integrations: {
+        Row: {
+          api_version: string | null
+          created_at: string
+          credentials: Json | null
+          error_message: string | null
+          id: string
+          integration_type: string
+          last_sync_at: string | null
+          organization_id: string
+          provider: string
+          settings: Json | null
+          status: string | null
+          sync_frequency: string | null
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          api_version?: string | null
+          created_at?: string
+          credentials?: Json | null
+          error_message?: string | null
+          id?: string
+          integration_type: string
+          last_sync_at?: string | null
+          organization_id: string
+          provider: string
+          settings?: Json | null
+          status?: string | null
+          sync_frequency?: string | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          api_version?: string | null
+          created_at?: string
+          credentials?: Json | null
+          error_message?: string | null
+          id?: string
+          integration_type?: string
+          last_sync_at?: string | null
+          organization_id?: string
+          provider?: string
+          settings?: Json | null
+          status?: string | null
+          sync_frequency?: string | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integrations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount: number
@@ -946,6 +1220,114 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      matters: {
+        Row: {
+          billing_type: string | null
+          budget: number | null
+          case_id: string | null
+          client_id: string | null
+          close_date: string | null
+          created_at: string
+          description: string | null
+          flat_fee_amount: number | null
+          hourly_rate: number | null
+          id: string
+          matter_number: string
+          name: string
+          open_date: string | null
+          organization_id: string
+          originating_attorney_id: string | null
+          practice_area: string | null
+          responsible_attorney_id: string | null
+          retainer_amount: number | null
+          status: string | null
+          statute_of_limitations: string | null
+          updated_at: string
+        }
+        Insert: {
+          billing_type?: string | null
+          budget?: number | null
+          case_id?: string | null
+          client_id?: string | null
+          close_date?: string | null
+          created_at?: string
+          description?: string | null
+          flat_fee_amount?: number | null
+          hourly_rate?: number | null
+          id?: string
+          matter_number: string
+          name: string
+          open_date?: string | null
+          organization_id: string
+          originating_attorney_id?: string | null
+          practice_area?: string | null
+          responsible_attorney_id?: string | null
+          retainer_amount?: number | null
+          status?: string | null
+          statute_of_limitations?: string | null
+          updated_at?: string
+        }
+        Update: {
+          billing_type?: string | null
+          budget?: number | null
+          case_id?: string | null
+          client_id?: string | null
+          close_date?: string | null
+          created_at?: string
+          description?: string | null
+          flat_fee_amount?: number | null
+          hourly_rate?: number | null
+          id?: string
+          matter_number?: string
+          name?: string
+          open_date?: string | null
+          organization_id?: string
+          originating_attorney_id?: string | null
+          practice_area?: string | null
+          responsible_attorney_id?: string | null
+          retainer_amount?: number | null
+          status?: string | null
+          statute_of_limitations?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matters_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matters_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matters_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matters_originating_attorney_id_fkey"
+            columns: ["originating_attorney_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matters_responsible_attorney_id_fkey"
+            columns: ["responsible_attorney_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1273,6 +1655,161 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trust_accounts: {
+        Row: {
+          account_name: string
+          account_number: string | null
+          account_type: string | null
+          bank_name: string | null
+          created_at: string
+          current_balance: number
+          id: string
+          last_reconciled_at: string | null
+          organization_id: string
+          reconciled_balance: number | null
+          routing_number: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_name: string
+          account_number?: string | null
+          account_type?: string | null
+          bank_name?: string | null
+          created_at?: string
+          current_balance?: number
+          id?: string
+          last_reconciled_at?: string | null
+          organization_id: string
+          reconciled_balance?: number | null
+          routing_number?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_name?: string
+          account_number?: string | null
+          account_type?: string | null
+          bank_name?: string | null
+          created_at?: string
+          current_balance?: number
+          id?: string
+          last_reconciled_at?: string | null
+          organization_id?: string
+          reconciled_balance?: number | null
+          routing_number?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trust_accounts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trust_transactions: {
+        Row: {
+          amount: number
+          check_number: string | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          matter_id: string | null
+          payee: string | null
+          payment_method: string | null
+          reconciled: boolean | null
+          reconciled_at: string | null
+          reconciled_by: string | null
+          reference_number: string | null
+          running_balance: number | null
+          transaction_date: string
+          transaction_type: string
+          trust_account_id: string
+        }
+        Insert: {
+          amount: number
+          check_number?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          matter_id?: string | null
+          payee?: string | null
+          payment_method?: string | null
+          reconciled?: boolean | null
+          reconciled_at?: string | null
+          reconciled_by?: string | null
+          reference_number?: string | null
+          running_balance?: number | null
+          transaction_date?: string
+          transaction_type: string
+          trust_account_id: string
+        }
+        Update: {
+          amount?: number
+          check_number?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          matter_id?: string | null
+          payee?: string | null
+          payment_method?: string | null
+          reconciled?: boolean | null
+          reconciled_at?: string | null
+          reconciled_by?: string | null
+          reference_number?: string | null
+          running_balance?: number | null
+          transaction_date?: string
+          transaction_type?: string
+          trust_account_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trust_transactions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_transactions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_transactions_matter_id_fkey"
+            columns: ["matter_id"]
+            isOneToOne: false
+            referencedRelation: "matters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_transactions_reconciled_by_fkey"
+            columns: ["reconciled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trust_transactions_trust_account_id_fkey"
+            columns: ["trust_account_id"]
+            isOneToOne: false
+            referencedRelation: "trust_accounts"
             referencedColumns: ["id"]
           },
         ]
