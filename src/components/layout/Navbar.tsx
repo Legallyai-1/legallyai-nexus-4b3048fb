@@ -49,8 +49,12 @@ export function Navbar() {
       {/* Main navbar container */}
       <div className="bg-background/60 backdrop-blur-xl border-b border-white/10">
         <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
+          {/* Logo - Clickable to navigate home with smooth scroll */}
+          <Link 
+            to="/" 
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="flex items-center gap-2 group cursor-pointer transition-opacity duration-200 hover:opacity-80"
+          >
             <div className="relative">
               {/* Glow ring */}
               <div className="absolute inset-0 bg-legal-gold/20 rounded-full blur-md group-hover:bg-legal-gold/40 transition-all duration-300" />
