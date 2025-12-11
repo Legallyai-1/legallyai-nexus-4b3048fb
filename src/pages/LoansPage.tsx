@@ -55,6 +55,8 @@ export default function LoansPage() {
   const [consentChecked, setConsentChecked] = useState(false);
   const [identityUploaded, setIdentityUploaded] = useState(false);
   const [incomeUploaded, setIncomeUploaded] = useState(false);
+  const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
+  const [documentUrls, setDocumentUrls] = useState<{identity?: string, income?: string}>({});
   
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -109,6 +111,53 @@ export default function LoansPage() {
            employment && income && consentChecked && identityUploaded && incomeUploaded;
   };
 
+  const handleFileUpload = async (file: File, docType: 'identity' | 'income') => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to upload documents.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setUploadingDoc(docType);
+    
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}/${docType}-${Date.now()}.${fileExt}`;
+    
+    const { data, error } = await supabase.storage
+      .from('loan-documents')
+      .upload(fileName, file);
+
+    if (error) {
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    } else {
+      const { data: urlData } = supabase.storage
+        .from('loan-documents')
+        .getPublicUrl(fileName);
+      
+      setDocumentUrls(prev => ({ ...prev, [docType]: urlData.publicUrl }));
+      
+      if (docType === 'identity') {
+        setIdentityUploaded(true);
+      } else {
+        setIncomeUploaded(true);
+      }
+      
+      toast({
+        title: "Document uploaded",
+        description: `${docType === 'identity' ? 'ID' : 'Income proof'} uploaded successfully`
+      });
+    }
+    
+    setUploadingDoc(null);
+  };
+
   const handleApply = async () => {
     if (!user) {
       toast({
@@ -158,6 +207,9 @@ export default function LoansPage() {
       term_months: parseInt(termMonths),
       monthly_payment: monthly,
       total_repayment: total,
+      platform_fee: platformFee,
+      verification_data: { fullName, phone, address, employment, income },
+      document_urls: Object.values(documentUrls).filter(Boolean),
       status: 'pending'
     });
 
@@ -464,43 +516,69 @@ export default function LoansPage() {
                       </h4>
 
                       <div className="space-y-3">
-                        <div 
-                          className={`p-4 rounded-lg border-2 border-dashed cursor-pointer transition-all ${
+                        <label 
+                          className={`p-4 rounded-lg border-2 border-dashed cursor-pointer transition-all block ${
                             identityUploaded ? 'border-neon-green bg-neon-green/10' : 'border-border/50 hover:border-neon-cyan/50'
                           }`}
-                          onClick={() => setIdentityUploaded(true)}
                         >
+                          <input
+                            type="file"
+                            accept="image/*,.pdf"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleFileUpload(file, 'identity');
+                            }}
+                            disabled={uploadingDoc === 'identity'}
+                          />
                           <div className="flex items-center gap-3">
-                            {identityUploaded ? (
+                            {uploadingDoc === 'identity' ? (
+                              <Clock className="w-5 h-5 text-neon-cyan animate-spin" />
+                            ) : identityUploaded ? (
                               <CheckCircle2 className="w-5 h-5 text-neon-green" />
                             ) : (
                               <Upload className="w-5 h-5 text-muted-foreground" />
                             )}
                             <div>
                               <p className="text-sm font-medium text-foreground">Government ID</p>
-                              <p className="text-xs text-muted-foreground">Driver's license or passport</p>
+                              <p className="text-xs text-muted-foreground">
+                                {uploadingDoc === 'identity' ? 'Uploading...' : 'Driver\'s license or passport'}
+                              </p>
                             </div>
                           </div>
-                        </div>
+                        </label>
 
-                        <div 
-                          className={`p-4 rounded-lg border-2 border-dashed cursor-pointer transition-all ${
+                        <label 
+                          className={`p-4 rounded-lg border-2 border-dashed cursor-pointer transition-all block ${
                             incomeUploaded ? 'border-neon-green bg-neon-green/10' : 'border-border/50 hover:border-neon-cyan/50'
                           }`}
-                          onClick={() => setIncomeUploaded(true)}
                         >
+                          <input
+                            type="file"
+                            accept="image/*,.pdf"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleFileUpload(file, 'income');
+                            }}
+                            disabled={uploadingDoc === 'income'}
+                          />
                           <div className="flex items-center gap-3">
-                            {incomeUploaded ? (
+                            {uploadingDoc === 'income' ? (
+                              <Clock className="w-5 h-5 text-neon-cyan animate-spin" />
+                            ) : incomeUploaded ? (
                               <CheckCircle2 className="w-5 h-5 text-neon-green" />
                             ) : (
                               <Upload className="w-5 h-5 text-muted-foreground" />
                             )}
                             <div>
                               <p className="text-sm font-medium text-foreground">Proof of Income</p>
-                              <p className="text-xs text-muted-foreground">Pay stub or tax return</p>
+                              <p className="text-xs text-muted-foreground">
+                                {uploadingDoc === 'income' ? 'Uploading...' : 'Pay stub or tax return'}
+                              </p>
                             </div>
                           </div>
-                        </div>
+                        </label>
                       </div>
 
                       <div className="flex items-start gap-3 pt-4">
