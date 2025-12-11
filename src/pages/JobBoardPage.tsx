@@ -403,6 +403,8 @@ export default function JobBoardPage() {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
               </TabsContent>
             </Tabs>
           </div>
