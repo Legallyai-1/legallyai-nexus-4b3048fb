@@ -14,7 +14,7 @@ import {
   FileText, AlertTriangle, Scale, Calculator,
   Upload, Clock, Shield, QrCode, Camera
 } from "lucide-react";
-import MainLayout from "@/components/layout/MainLayout";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -82,7 +82,7 @@ const EnhancedCustodyPage = () => {
               <p className="text-muted-foreground">CustodiAI - Complete custody management like OurFamilyWizard</p>
             </div>
             <div className="ml-auto">
-              <AnimatedAIHead color="purple" size="sm" />
+              <AnimatedAIHead variant="purple" size="sm" />
             </div>
           </div>
 
@@ -108,7 +108,7 @@ const EnhancedCustodyPage = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-start gap-4 p-4 bg-purple-500/10 rounded-lg border border-purple-500/30">
-                    <AnimatedAIHead color="purple" size="sm" />
+                    <AnimatedAIHead variant="purple" size="sm" />
                     <div>
                       <p className="font-medium">CustodiBot</p>
                       <p className="text-sm text-muted-foreground">

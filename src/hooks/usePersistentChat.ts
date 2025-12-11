@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { v4 as uuidv4 } from 'crypto';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -24,7 +23,6 @@ export const usePersistentChat = (options: UsePersistentChatOptions) => {
   // Generate session ID
   useEffect(() => {
     if (!initialSessionId) {
-      // Use a simple UUID generation
       const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       setSessionId(id);
     }
@@ -57,8 +55,9 @@ export const usePersistentChat = (options: UsePersistentChatOptions) => {
         .eq('session_id', sessionId)
         .single();
 
-      if (data && !error) {
-        setMessages(data.messages as Message[] || []);
+      if (data && !error && data.messages) {
+        const loadedMessages = Array.isArray(data.messages) ? data.messages as unknown as Message[] : [];
+        setMessages(loadedMessages);
       }
     } catch (error) {
       console.log('No existing session found, starting fresh');
@@ -74,22 +73,22 @@ export const usePersistentChat = (options: UsePersistentChatOptions) => {
         .join(' ')
         .substring(0, 5000);
 
+      const upsertData = {
+        user_id: userId,
+        hub_type: hubType,
+        session_id: sessionId,
+        messages: JSON.parse(JSON.stringify(messagesToSave)),
+        searchable_text: searchableText,
+        updated_at: new Date().toISOString(),
+        metadata: JSON.parse(JSON.stringify({
+          message_count: messagesToSave.length,
+          last_activity: new Date().toISOString()
+        }))
+      };
+      
       const { error } = await supabase
         .from('ai_chat_history')
-        .upsert({
-          user_id: userId,
-          hub_type: hubType,
-          session_id: sessionId,
-          messages: messagesToSave,
-          searchable_text: searchableText,
-          updated_at: new Date().toISOString(),
-          metadata: {
-            message_count: messagesToSave.length,
-            last_activity: new Date().toISOString()
-          }
-        }, {
-          onConflict: 'user_id,session_id'
-        });
+        .upsert(upsertData, { onConflict: 'user_id,session_id' });
 
       if (error) {
         console.error('Error saving chat session:', error);
