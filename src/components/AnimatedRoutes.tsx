@@ -44,6 +44,7 @@ import TelephonyPage from "@/pages/TelephonyPage";
 import CustomerSupportPage from "@/pages/CustomerSupportPage";
 import MonetizationPage from "@/pages/MonetizationPage";
 import LoansPage from "@/pages/LoansPage";
+import CourtRecordsPage from "@/pages/CourtRecordsPage";
 import NotFound from "@/pages/NotFound";
 
 export function AnimatedRoutes() {
@@ -94,6 +95,7 @@ export function AnimatedRoutes() {
         <Route path="/support" element={<PageTransition><CustomerSupportPage /></PageTransition>} />
         <Route path="/monetization" element={<PageTransition><MonetizationPage /></PageTransition>} />
         <Route path="/loans" element={<PageTransition><LoansPage /></PageTransition>} />
+        <Route path="/court-records" element={<PageTransition><CourtRecordsPage /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>

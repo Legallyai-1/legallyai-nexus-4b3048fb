@@ -11,12 +11,33 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Video, Calendar as CalendarIcon, Clock, DollarSign, User, MapPin, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import VideoCall from "@/components/video/VideoCall";
 
 const ConsultationsPage = () => {
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState("");
   const [consultationType, setConsultationType] = useState("");
+  const [isInCall, setIsInCall] = useState(false);
+  const [currentCallRoom, setCurrentCallRoom] = useState("");
+  const [currentCallParticipant, setCurrentCallParticipant] = useState("");
+
+  const startVideoCall = (lawyerName: string) => {
+    const roomId = `consultation-${Date.now()}`;
+    setCurrentCallRoom(roomId);
+    setCurrentCallParticipant(lawyerName);
+    setIsInCall(true);
+  };
+
+  const endVideoCall = () => {
+    setIsInCall(false);
+    setCurrentCallRoom("");
+    setCurrentCallParticipant("");
+    toast({
+      title: "Call Ended",
+      description: "Your consultation has ended",
+    });
+  };
 
   const availableTimes = [
     "9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
@@ -55,6 +76,16 @@ const ConsultationsPage = () => {
       description: "Your consultation has been scheduled. You will receive a confirmation email.",
     });
   };
+
+  if (isInCall) {
+    return (
+      <VideoCall 
+        roomId={currentCallRoom}
+        participantName={currentCallParticipant}
+        onEndCall={endVideoCall}
+      />
+    );
+  }
 
   return (
     <Layout>
@@ -257,9 +288,13 @@ const ConsultationsPage = () => {
                           </span>
                         </div>
                         <div className="flex gap-2 mt-3">
-                          <Button size="sm" className="flex-1 bg-primary text-primary-foreground">
+                          <Button 
+                            size="sm" 
+                            className="flex-1 bg-primary text-primary-foreground"
+                            onClick={() => startVideoCall(consultation.lawyer)}
+                          >
                             <Video className="h-4 w-4 mr-1" />
-                            Join
+                            Join Call
                           </Button>
                           <Button size="sm" variant="outline" className="flex-1">
                             Reschedule
