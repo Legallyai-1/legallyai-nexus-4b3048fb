@@ -1,4 +1,4 @@
-# Build timestamp: 2025-12-12T00:15:00Z - Force fresh build
+# Build timestamp: 2025-12-12T00:48:00Z - NEW ARTIFACT NAME
 name: Build Android App Bundle
 
 on:
@@ -112,7 +112,7 @@ jobs:
       - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-bundle
+          name: legallyai-aab-${{ github.run_number }}
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
           compression-level: 0
