@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.legallyai.app',
+  appId: 'ai.legally.app',
   appName: 'LegallyAI',
   webDir: 'dist',
   server: {
