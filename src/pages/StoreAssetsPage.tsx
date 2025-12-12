@@ -4,7 +4,8 @@ import { Download } from "lucide-react";
 
 const StoreAssetsPage = () => {
   const assets = [
-    { name: "Feature Graphic (1024x500)", file: "/store-assets/feature-graphic.png" },
+    { name: "App Icon (512x512)", file: "/store-assets/app-icon-512.png" },
+    { name: "Feature Graphic (1024x500)", file: "/store-assets/feature-graphic-1024x500.png" },
     { name: "Screenshot 1 - AI Chat", file: "/store-assets/screenshot-1-chat.png" },
     { name: "Screenshot 2 - Documents", file: "/store-assets/screenshot-2-documents.png" },
     { name: "Screenshot 3 - AI Assistants", file: "/store-assets/screenshot-3-assistants.png" },
