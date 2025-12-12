@@ -38,13 +38,12 @@ jobs:
       - name: Accept Android SDK licenses
         run: yes | sdkmanager --licenses || true
 
-      - name: Initialize Capacitor Android
+      - name: Clean and setup Capacitor config
         run: |
-          npx cap add android 2>/dev/null || true
-          npx cap sync android
-
-      - name: Update Capacitor config for local build
-        run: |
+          # Remove any existing android folder to ensure fresh build
+          rm -rf android
+          
+          # Create production capacitor config (no server URL)
           cat > capacitor.config.ts << 'EOF'
           import type { CapacitorConfig } from '@capacitor/cli';
 
@@ -56,7 +55,20 @@ jobs:
 
           export default config;
           EOF
+          
+          echo "=== Capacitor Config ==="
+          cat capacitor.config.ts
+
+      - name: Initialize Capacitor Android
+        run: |
+          npx cap add android
           npx cap sync android
+          
+          echo "=== Verifying Package Name in build.gradle ==="
+          grep -E "(namespace|applicationId)" android/app/build.gradle || true
+          
+          echo "=== Verifying AndroidManifest.xml ==="
+          head -5 android/app/src/main/AndroidManifest.xml
 
       - name: Setup release keystore
         run: |
