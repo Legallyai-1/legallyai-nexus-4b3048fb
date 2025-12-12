@@ -72,11 +72,8 @@ export default function ChatPage() {
   const handleSend = async () => {
     if (!input.trim() || isTyping) return;
 
-    if (!user) {
-      toast.error("Please sign in to use the chat");
-      navigate("/auth");
-      return;
-    }
+    // Allow chat for all users (free tier includes AI chat)
+    // Authentication only required for document generation
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -91,11 +88,16 @@ export default function ChatPage() {
     setIsTyping(true);
 
     try {
+      // Get session if available (for authenticated users) but don't require it
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        toast.error("Session expired. Please sign in again.");
-        navigate("/auth");
-        return;
+      
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      
+      // Add auth header if user is logged in
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
       }
 
       const apiMessages = messages
@@ -105,10 +107,7 @@ export default function ChatPage() {
 
       const resp = await fetch(CHAT_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        headers,
         body: JSON.stringify({ messages: apiMessages, stream: true }),
       });
 
@@ -225,11 +224,12 @@ export default function ChatPage() {
   return (
     <Layout showFooter={false}>
       <div className="flex flex-col h-[calc(100vh-4rem)] bg-background">
+        {/* Upgrade Banner for non-logged in users */}
         {!user && (
-          <div className="bg-neon-purple/10 border-b border-neon-purple/30 px-4 py-3">
-            <div className="container mx-auto flex items-center justify-center gap-2 text-neon-purple">
-              <AlertCircle className="h-4 w-4" />
-              <span className="text-sm">Please <button onClick={() => navigate("/auth")} className="underline font-medium hover:text-neon-cyan transition-colors">sign in</button> to use the AI assistant</span>
+          <div className="bg-gradient-to-r from-neon-cyan/10 to-neon-purple/10 border-b border-neon-cyan/30 px-4 py-3">
+            <div className="container mx-auto flex items-center justify-center gap-2 text-foreground">
+              <Sparkles className="h-4 w-4 text-neon-cyan" />
+              <span className="text-sm">Chat is free! <button onClick={() => navigate("/auth")} className="underline font-medium text-neon-cyan hover:text-neon-purple transition-colors">Sign up</button> to save history & unlock premium features</span>
             </div>
           </div>
         )}
