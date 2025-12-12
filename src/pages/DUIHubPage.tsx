@@ -18,6 +18,8 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import AdBanner from "@/components/ads/AdBanner";
+import AdContainer from "@/components/ads/AdContainer";
 
 const DUIHubPage = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -524,6 +526,11 @@ const DUIHubPage = () => {
               </Card>
             </TabsContent>
           </Tabs>
+
+          {/* Ad Banner for Free Users */}
+          <AdContainer position="inline" className="mt-8">
+            <AdBanner slot="6128473951" format="horizontal" />
+          </AdContainer>
         </motion.div>
       </div>
     </MainLayout>
