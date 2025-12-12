@@ -33,7 +33,7 @@ interface Step {
 }
 
 interface WhereToStartProps {
-  caseType: "custody" | "criminal" | "restraining" | "probation" | "loans" | "general" | "defense" | "workplace" | "employment" | "probono" | "lawfirm";
+  caseType: "custody" | "criminal" | "restraining" | "probation" | "general" | "defense" | "workplace" | "employment" | "probono" | "lawfirm";
   colorVariant?: "purple" | "cyan" | "pink" | "green" | "orange" | "blue";
   onNavigate?: (section: string) => void;
 }

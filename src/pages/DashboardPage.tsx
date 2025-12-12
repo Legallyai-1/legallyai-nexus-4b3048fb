@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { 
   Users, FileText, Calendar, MessageSquare, Clock, 
-  DollarSign, ChevronRight, Send, CreditCard
+  DollarSign, ChevronRight, Send
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -62,7 +62,6 @@ export default function DashboardPage() {
     { icon: MessageSquare, label: "Messages", href: "/messages", color: "text-purple-400" },
     { icon: Clock, label: "Time Clock", href: "/timeclock", color: "text-orange-400" },
     { icon: DollarSign, label: "Invoices", href: "/invoices", color: "text-emerald-400" },
-    { icon: CreditCard, label: "Client Financing", href: "/loans?tab=lawyer", color: "text-cyan-400" },
   ];
 
   const stats = [

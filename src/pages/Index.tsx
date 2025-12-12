@@ -186,7 +186,7 @@ export default function Index() {
             {[
               { name: "DocuAI", path: "/generate", icon: "📄", color: "blue", desc: "Generate Docs" },
               { name: "Templates", path: "/templates", icon: "📋", color: "cyan", desc: "Legal Templates" },
-              { name: "LoanAI", path: "/loans", icon: "💵", color: "green", desc: "Legal Financing" },
+              { name: "Court Records", path: "/court-records", icon: "🔍", color: "green", desc: "Case Lookup" },
               { name: "CallAI", path: "/telephony", icon: "📞", color: "cyan", desc: "Telephony" },
             ].map((item) => (
               <Link 
