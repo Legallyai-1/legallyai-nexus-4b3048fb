@@ -53,6 +53,7 @@ import MarriageDivorcePage from "@/pages/MarriageDivorcePage";
 import EnhancedCustodyPage from "@/pages/EnhancedCustodyPage";
 import EnhancedParolePage from "@/pages/EnhancedParolePage";
 import NotFound from "@/pages/NotFound";
+import StoreAssetsPage from "@/pages/StoreAssetsPage";
 
 export function AnimatedRoutes() {
   const location = useLocation();
@@ -111,6 +112,7 @@ export function AnimatedRoutes() {
         <Route path="/dui-hub" element={<PageTransition><DUIHubPage /></PageTransition>} />
         <Route path="/will-hub" element={<PageTransition><WillHubPage /></PageTransition>} />
         <Route path="/marriage-divorce" element={<PageTransition><MarriageDivorcePage /></PageTransition>} />
+        <Route path="/store-assets" element={<PageTransition><StoreAssetsPage /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
