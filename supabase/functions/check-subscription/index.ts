@@ -72,9 +72,11 @@ serve(async (req) => {
       // Map product to plan name
       if (productId === "prod_TZuJRwpooBd2we") {
         plan = "pro";
+      } else if (productId === "prod_TarZKatp1CgLPA") {
+        plan = "premium";
       }
       
-      logStep("Active subscription found", { subscriptionId: subscription.id, plan, endDate: subscriptionEnd });
+      logStep("Active subscription found", { subscriptionId: subscription.id, plan, productId, endDate: subscriptionEnd });
     } else {
       logStep("No active subscription found");
     }

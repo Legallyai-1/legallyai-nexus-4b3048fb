@@ -24,7 +24,8 @@ serve(async (req) => {
 
   // Valid price IDs allowlist
   const VALID_PRICES = [
-    'price_1SckV70QhWGUtGKvvg1tH7lu', // Pro subscription ($99/month)
+    'price_1Sdfqp0QhWGUtGKvcQuWONuB', // Premium subscription ($9.99/month for normal users)
+    'price_1SckV70QhWGUtGKvvg1tH7lu', // Pro subscription ($99/month for lawyers)
     'price_1SckVt0QhWGUtGKvl9YdmQqk'  // Document generation ($5 one-time)
   ];
 

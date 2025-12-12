@@ -13,8 +13,9 @@ import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 
 // Stripe price IDs
 const STRIPE_PRICES = {
-  pro: "price_1SckV70QhWGUtGKvvg1tH7lu",
-  document: "price_1SckVt0QhWGUtGKvl9YdmQqk",
+  premium: "price_1Sdfqp0QhWGUtGKvcQuWONuB", // $9.99/month for normal users
+  pro: "price_1SckV70QhWGUtGKvvg1tH7lu", // $99/month for lawyers
+  document: "price_1SckVt0QhWGUtGKvl9YdmQqk", // $5 per document
 };
 
 const plans = [
@@ -22,7 +23,7 @@ const plans = [
     name: "Free",
     price: "$0",
     period: "forever",
-    description: "Full access to all AI legal assistants",
+    description: "Try all AI assistants free",
     features: [
       "Unlimited AI chat access",
       "All 10+ AI assistants",
@@ -39,12 +40,33 @@ const plans = [
     color: "cyan",
   },
   {
+    name: "Premium",
+    price: "$9.99",
+    period: "per month",
+    description: "Full access for individuals",
+    features: [
+      "Everything in Free, plus:",
+      "Unlimited document generation",
+      "Download as PDF",
+      "All document types",
+      "State-specific templates",
+      "Priority email support",
+    ],
+    cta: "Subscribe Now",
+    href: null,
+    popular: true,
+    icon: Star,
+    priceId: STRIPE_PRICES.premium,
+    mode: "subscription",
+    color: "green",
+  },
+  {
     name: "Per Document",
     price: "$5",
-    period: "per document",
+    period: "one-time",
     description: "Pay only for what you need",
     features: [
-      "Professional legal documents",
+      "Single professional document",
       "Download as PDF",
       "All document types",
       "State-specific templates",
@@ -53,7 +75,7 @@ const plans = [
     cta: "Buy Document",
     href: null,
     popular: false,
-    icon: Star,
+    icon: Sparkles,
     priceId: STRIPE_PRICES.document,
     mode: "payment",
     color: "blue",
@@ -64,18 +86,17 @@ const plans = [
     period: "per month",
     description: "Full law firm management suite",
     features: [
-      "Everything in Free, plus:",
-      "Unlimited document downloads",
+      "Everything in Premium, plus:",
       "Client portal access",
       "Case management",
       "Time tracking & billing",
       "Invoicing system",
       "Virtual consultations",
-      "Priority support",
+      "Dedicated support",
     ],
     cta: "Subscribe Now",
     href: null,
-    popular: true,
+    popular: false,
     icon: Crown,
     priceId: STRIPE_PRICES.pro,
     mode: "subscription",
@@ -111,6 +132,12 @@ const colorClasses: Record<string, { bg: string; border: string; text: string; g
     border: "border-neon-cyan/30",
     text: "text-neon-cyan",
     glow: "shadow-glow-sm",
+  },
+  green: {
+    bg: "bg-neon-green/10",
+    border: "border-neon-green/50",
+    text: "text-neon-green",
+    glow: "shadow-glow-md",
   },
   blue: {
     bg: "bg-neon-blue/10",
