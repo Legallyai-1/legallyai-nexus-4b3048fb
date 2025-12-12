@@ -18,6 +18,8 @@ import { WhereToStart } from "@/components/hub/WhereToStart";
 import { ChildSupportPayment } from "@/components/hub/ChildSupportPayment";
 import { DocuAI } from "@/components/hub/DocuAI";
 import { HubNotifications } from "@/components/hub/HubNotifications";
+import AdBanner from "@/components/ads/AdBanner";
+import AdContainer from "@/components/ads/AdContainer";
 import { 
   Users, ArrowRight, ArrowLeft, CheckCircle, FileText, Loader2, Sparkles,
   Scale, DollarSign, Shield, Briefcase, Download, Share2, QrCode
@@ -331,7 +333,12 @@ Create detailed custody plan with: 1) Legal framework for ${formData.state}, 2) 
               </TabsContent>
             </Tabs>
 
-            <div className="text-center mt-8">
+            {/* Ad Banner for Free Users */}
+            <AdContainer position="inline" className="mt-8">
+              <AdBanner slot="4219856732" format="horizontal" />
+            </AdContainer>
+
+            <div className="text-center mt-6">
               <Button variant="ghost" onClick={() => navigate("/ai-assistants")}>← Back to AI Assistants</Button>
             </div>
           </div>

@@ -16,6 +16,8 @@ import { CourtPrepTab } from "@/components/hub/CourtPrepTab";
 import { WhereToStart } from "@/components/hub/WhereToStart";
 import { DocuAI } from "@/components/hub/DocuAI";
 import { HubNotifications } from "@/components/hub/HubNotifications";
+import AdBanner from "@/components/ads/AdBanner";
+import AdContainer from "@/components/ads/AdContainer";
 
 const defenseCategories = [
   {
@@ -254,8 +256,13 @@ export default function TicketsDefensePage() {
               </p>
             </div>
 
+            {/* Ad Banner for Free Users */}
+            <AdContainer position="inline" className="mt-6">
+              <AdBanner slot="3695827140" format="horizontal" />
+            </AdContainer>
+
             {/* Back Button */}
-            <div className="text-center mt-6">
+            <div className="text-center mt-4">
               <Button variant="ghost" onClick={() => navigate("/ai-assistants")}>
                 ← Back to AI Assistants
               </Button>

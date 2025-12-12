@@ -19,6 +19,8 @@ import { CourtPrepTab } from "@/components/hub/CourtPrepTab";
 import { WhereToStart } from "@/components/hub/WhereToStart";
 import { DocuAI } from "@/components/hub/DocuAI";
 import { HubNotifications } from "@/components/hub/HubNotifications";
+import AdBanner from "@/components/ads/AdBanner";
+import AdContainer from "@/components/ads/AdContainer";
 
 const topics = [
   {
@@ -318,8 +320,17 @@ export default function WorkplaceLegalAidPage() {
           </div>
         </section>
 
+        {/* Ad Banner */}
+        <section className="pb-4">
+          <div className="container mx-auto px-4 max-w-3xl">
+            <AdContainer position="inline">
+              <AdBanner slot="8392716450" format="horizontal" />
+            </AdContainer>
+          </div>
+        </section>
+
         {/* Back */}
-        <section className="py-8">
+        <section className="py-6">
           <div className="container mx-auto px-4 text-center">
             <Button variant="ghost" onClick={() => navigate("/ai-assistants")}>
               ← Back to AI Assistants
