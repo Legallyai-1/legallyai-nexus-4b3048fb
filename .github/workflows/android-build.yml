@@ -1,4 +1,4 @@
-# Build timestamp: 2025-12-12T00:48:00Z - NEW ARTIFACT NAME
+# Build timestamp: 2025-12-12T09:30:00Z - VERSION 2.0 NO LOANS
 name: Build Android App Bundle
 
 on:
@@ -43,7 +43,7 @@ jobs:
           # Remove any existing android folder to ensure fresh build
           rm -rf android
           
-          # Create production capacitor config (no server URL)
+          # Create production capacitor config (no server URL) with version 2
           cat > capacitor.config.ts << 'EOF'
           import type { CapacitorConfig } from '@capacitor/cli';
 
@@ -59,10 +59,22 @@ jobs:
           echo "=== Capacitor Config ==="
           cat capacitor.config.ts
 
+      - name: Set version code and name
+        run: |
+          # Update version in build.gradle after cap add
+          echo "Version will be set to 2.0 with versionCode 2"
+
       - name: Initialize Capacitor Android
         run: |
           npx cap add android
           npx cap sync android
+          
+          # Update version code and name to 2
+          sed -i 's/versionCode 1/versionCode 2/' android/app/build.gradle
+          sed -i 's/versionName "1.0"/versionName "2.0"/' android/app/build.gradle
+          
+          echo "=== Verifying Version in build.gradle ==="
+          grep -E "(versionCode|versionName)" android/app/build.gradle
           
           echo "=== Verifying Package Name in build.gradle ==="
           grep -E "(namespace|applicationId)" android/app/build.gradle || true

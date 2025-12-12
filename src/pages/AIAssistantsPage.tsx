@@ -3,7 +3,7 @@ import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { Layout } from "@/components/layout/Layout";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Heart, Shield, Scale, Briefcase, Building2, FileText, Gavel, GraduationCap, Phone, Headphones, Users, DollarSign, BarChart3, Banknote, Car, Home, Star, Sparkles } from "lucide-react";
+import { MessageSquare, Heart, Shield, Scale, Briefcase, Building2, FileText, Gavel, GraduationCap, Phone, Headphones, Users, DollarSign, BarChart3, Car, Home, Star, Sparkles } from "lucide-react";
 
 const assistants = [
   {
@@ -215,20 +215,6 @@ const assistants = [
     glow: "shadow-[0_0_30px_rgba(34,197,94,0.2)]",
     iconBg: "bg-green-500/20",
     questions: ["Volunteer", "Get free help", "Tax benefits"],
-    rating: "10/10"
-  },
-  {
-    id: "loans",
-    name: "LoanAI - Legal Financing",
-    description: "Legal service loans with any credit. Fast approval, flexible terms, transparent rates.",
-    icon: Banknote,
-    variant: "green" as const,
-    path: "/loans",
-    gradient: "from-emerald-500/20 to-green-500/20",
-    border: "border-emerald-500/30",
-    glow: "shadow-[0_0_30px_rgba(16,185,129,0.2)]",
-    iconBg: "bg-emerald-500/20",
-    questions: ["Apply for loan", "Check status", "Payment calculator"],
     rating: "10/10"
   }
 ];

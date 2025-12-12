@@ -31,7 +31,6 @@ interface HubNotificationsProps {
 }
 
 const hubIcons: Record<string, typeof Bell> = {
-  loan: DollarSign,
   custody: Scale,
   defense: Shield,
   workplace: Briefcase,
@@ -40,7 +39,6 @@ const hubIcons: Record<string, typeof Bell> = {
 };
 
 const hubColors: Record<string, string> = {
-  loan: 'text-neon-green',
   custody: 'text-neon-purple',
   defense: 'text-neon-pink',
   workplace: 'text-neon-orange',

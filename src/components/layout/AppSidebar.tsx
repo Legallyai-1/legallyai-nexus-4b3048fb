@@ -3,7 +3,7 @@ import {
   Home, MessageSquare, FileText, Users, Calendar, Clock, 
   DollarSign, Briefcase, Shield, GraduationCap, Phone, 
   Headphones, Settings, LogOut, Scale, BarChart3, Gavel,
-  Heart, Building2, Banknote, Search, Bell, ChevronLeft, ChevronRight
+  Heart, Building2, Search, Bell, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -71,7 +71,6 @@ const navigationSections: NavSection[] = [
       { title: "Time Clock", href: "/timeclock", icon: Clock, roles: ["owner", "admin", "manager", "lawyer", "paralegal", "employee"] },
       { title: "Payroll", href: "/payroll", icon: DollarSign, roles: ["owner", "admin"] },
       { title: "Monetization", href: "/monetization", icon: BarChart3, roles: ["owner", "admin"] },
-      { title: "Loans", href: "/loans", icon: Banknote },
       { title: "Job Board", href: "/jobs", icon: Briefcase },
     ]
   },

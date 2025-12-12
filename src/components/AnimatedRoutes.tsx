@@ -43,8 +43,6 @@ import QuizPage from "@/pages/QuizPage";
 import TelephonyPage from "@/pages/TelephonyPage";
 import CustomerSupportPage from "@/pages/CustomerSupportPage";
 import MonetizationPage from "@/pages/MonetizationPage";
-import LoansPage from "@/pages/LoansPage";
-import LoanAdminPage from "@/pages/LoanAdminPage";
 import CourtRecordsPage from "@/pages/CourtRecordsPage";
 import BusinessHubPage from "@/pages/BusinessHubPage";
 import DUIHubPage from "@/pages/DUIHubPage";
@@ -105,8 +103,6 @@ export function AnimatedRoutes() {
         <Route path="/telephony" element={<PageTransition><TelephonyPage /></PageTransition>} />
         <Route path="/support" element={<PageTransition><CustomerSupportPage /></PageTransition>} />
         <Route path="/monetization" element={<PageTransition><MonetizationPage /></PageTransition>} />
-        <Route path="/loans" element={<PageTransition><LoansPage /></PageTransition>} />
-        <Route path="/loan-admin" element={<PageTransition><LoanAdminPage /></PageTransition>} />
         <Route path="/court-records" element={<PageTransition><CourtRecordsPage /></PageTransition>} />
         <Route path="/business-hub" element={<PageTransition><BusinessHubPage /></PageTransition>} />
         <Route path="/dui-hub" element={<PageTransition><DUIHubPage /></PageTransition>} />
