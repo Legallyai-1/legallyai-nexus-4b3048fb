@@ -38,34 +38,26 @@ serve(async (req) => {
   }
 
   try {
-    // Initialize Supabase client for auth verification
+    // Initialize Supabase client for optional auth verification
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? ""
     );
 
-    // Verify authentication
+    // Optional authentication - free tier includes AI chat
+    // Allow both authenticated and unauthenticated users
+    let userId = "anonymous";
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Authentication required. Please sign in to use the chat." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const { data: userData, error: authError } = await supabaseClient.auth.getUser(token);
+      
+      if (!authError && userData.user) {
+        userId = userData.user.id;
+        console.log("Authenticated user for chat:", userId);
+      }
     }
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: authError } = await supabaseClient.auth.getUser(token);
-    
-    if (authError || !userData.user) {
-      console.error("Auth error:", authError);
-      return new Response(
-        JSON.stringify({ error: "Invalid or expired session. Please sign in again." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const user = userData.user;
-    console.log("Authenticated user for chat:", user.id);
+    console.log("Chat request from:", userId);
 
     const { messages, stream = true } = await req.json();
     
@@ -138,7 +130,7 @@ Areas you can help with:
 
 End important responses with: "Remember: This is general legal information, not legal advice. For your specific situation, consult a licensed attorney."`;
 
-    console.log("Chat request from user:", user.id, "with", messages.length, "messages, stream:", stream);
+    console.log("Chat request from:", userId, "with", messages.length, "messages, stream:", stream);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
