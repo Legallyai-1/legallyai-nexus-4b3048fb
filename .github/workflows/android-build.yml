@@ -57,9 +57,22 @@ jobs:
           EOF
           npx cap sync android
 
-      - name: Generate release keystore
+      - name: Setup release keystore
         run: |
-          keytool -genkey -v -keystore android/app/release.keystore -storepass legallyai123 -alias legallyai -keypass legallyai123 -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=LegallyAI,O=LegallyAI,C=US"
+          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "Using existing keystore from secrets"
+            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+          else
+            echo "Generating new keystore (save this for future builds!)"
+            keytool -genkey -v -keystore android/app/release.keystore -storepass legallyai123 -alias legallyai -keypass legallyai123 -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=LegallyAI,O=LegallyAI,C=US"
+            echo "=== KEYSTORE BASE64 (save as GitHub secret ANDROID_KEYSTORE_BASE64) ==="
+            base64 -w 0 android/app/release.keystore
+            echo ""
+            echo "=== END KEYSTORE ==="
+          fi
+          
+          echo "=== Upload Key Fingerprint ==="
+          keytool -list -v -keystore android/app/release.keystore -storepass legallyai123 -alias legallyai 2>/dev/null | grep -A1 "Certificate fingerprints"
 
       - name: Configure signing for release build
         run: |
