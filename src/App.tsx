@@ -9,6 +9,7 @@ import { AnimatedRoutes } from "@/components/AnimatedRoutes";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { CommandPalette } from "@/components/ui/CommandPalette";
 import { FloatingLeeAssistant } from "@/components/ai/FloatingLeeAssistant";
+import { BugReportButton } from "@/components/testing/BugReportButton";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => {
               <AnimatedRoutes />
               <CommandPalette />
               <FloatingLeeAssistant />
+              <BugReportButton />
             </>
           )}
         </BrowserRouter>

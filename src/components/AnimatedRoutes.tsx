@@ -52,6 +52,7 @@ import EnhancedCustodyPage from "@/pages/EnhancedCustodyPage";
 import EnhancedParolePage from "@/pages/EnhancedParolePage";
 import NotFound from "@/pages/NotFound";
 import StoreAssetsPage from "@/pages/StoreAssetsPage";
+import TestingPage from "@/pages/TestingPage";
 
 export function AnimatedRoutes() {
   const location = useLocation();
@@ -109,6 +110,7 @@ export function AnimatedRoutes() {
         <Route path="/will-hub" element={<PageTransition><WillHubPage /></PageTransition>} />
         <Route path="/marriage-divorce" element={<PageTransition><MarriageDivorcePage /></PageTransition>} />
         <Route path="/store-assets" element={<PageTransition><StoreAssetsPage /></PageTransition>} />
+        <Route path="/testing" element={<PageTransition><TestingPage /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
