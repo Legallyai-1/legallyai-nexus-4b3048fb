@@ -699,6 +699,84 @@ export type Database = {
           },
         ]
       }
+      bug_reports: {
+        Row: {
+          actual_behavior: string | null
+          assigned_to: string | null
+          browser_info: string | null
+          category: string | null
+          created_at: string | null
+          description: string
+          device_info: string | null
+          expected_behavior: string | null
+          hub_name: string | null
+          id: string
+          page_url: string | null
+          priority: number | null
+          reporter_email: string | null
+          reporter_name: string | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          screenshot_url: string | null
+          severity: string | null
+          status: string | null
+          steps_to_reproduce: string | null
+          title: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          actual_behavior?: string | null
+          assigned_to?: string | null
+          browser_info?: string | null
+          category?: string | null
+          created_at?: string | null
+          description: string
+          device_info?: string | null
+          expected_behavior?: string | null
+          hub_name?: string | null
+          id?: string
+          page_url?: string | null
+          priority?: number | null
+          reporter_email?: string | null
+          reporter_name?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          screenshot_url?: string | null
+          severity?: string | null
+          status?: string | null
+          steps_to_reproduce?: string | null
+          title: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          actual_behavior?: string | null
+          assigned_to?: string | null
+          browser_info?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string
+          device_info?: string | null
+          expected_behavior?: string | null
+          hub_name?: string | null
+          id?: string
+          page_url?: string | null
+          priority?: number | null
+          reporter_email?: string | null
+          reporter_name?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          screenshot_url?: string | null
+          severity?: string | null
+          status?: string | null
+          steps_to_reproduce?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       call_logs: {
         Row: {
           ai_summary: string | null
@@ -2943,6 +3021,141 @@ export type Database = {
           stripe_transfer_id?: string | null
           transaction_type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      test_results: {
+        Row: {
+          created_at: string | null
+          duration_ms: number | null
+          error_message: string | null
+          id: string
+          notes: string | null
+          scenario_id: string | null
+          screenshot_url: string | null
+          status: string | null
+          test_user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          notes?: string | null
+          scenario_id?: string | null
+          screenshot_url?: string | null
+          status?: string | null
+          test_user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          notes?: string | null
+          scenario_id?: string | null
+          screenshot_url?: string | null
+          status?: string | null
+          test_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_results_scenario_id_fkey"
+            columns: ["scenario_id"]
+            isOneToOne: false
+            referencedRelation: "test_scenarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_results_test_user_id_fkey"
+            columns: ["test_user_id"]
+            isOneToOne: false
+            referencedRelation: "test_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_scenarios: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          expected_result: string | null
+          hub_name: string
+          id: string
+          is_automated: boolean | null
+          priority: number | null
+          scenario_name: string
+          steps: Json
+          user_types: string[] | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          expected_result?: string | null
+          hub_name: string
+          id?: string
+          is_automated?: boolean | null
+          priority?: number | null
+          scenario_name: string
+          steps: Json
+          user_types?: string[] | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          expected_result?: string | null
+          hub_name?: string
+          id?: string
+          is_automated?: boolean | null
+          priority?: number | null
+          scenario_name?: string
+          steps?: Json
+          user_types?: string[] | null
+        }
+        Relationships: []
+      }
+      test_users: {
+        Row: {
+          created_at: string | null
+          hubs_to_test: string[] | null
+          id: string
+          issues_found: number | null
+          last_active_at: string | null
+          organization_size: string | null
+          subscription_tier: string | null
+          test_persona: string
+          test_scenarios: Json | null
+          tests_completed: Json | null
+          user_id: string | null
+          user_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          hubs_to_test?: string[] | null
+          id?: string
+          issues_found?: number | null
+          last_active_at?: string | null
+          organization_size?: string | null
+          subscription_tier?: string | null
+          test_persona: string
+          test_scenarios?: Json | null
+          tests_completed?: Json | null
+          user_id?: string | null
+          user_type: string
+        }
+        Update: {
+          created_at?: string | null
+          hubs_to_test?: string[] | null
+          id?: string
+          issues_found?: number | null
+          last_active_at?: string | null
+          organization_size?: string | null
+          subscription_tier?: string | null
+          test_persona?: string
+          test_scenarios?: Json | null
+          tests_completed?: Json | null
+          user_id?: string | null
+          user_type?: string
         }
         Relationships: []
       }
