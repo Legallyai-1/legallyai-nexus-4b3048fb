@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import AdBanner from "@/components/ads/AdBanner";
 import AdContainer from "@/components/ads/AdContainer";
+import AdMobBanner, { ADMOB_AD_UNITS } from "@/components/ads/AdMobBanner";
 
 interface Message {
   id: string;
@@ -376,6 +377,7 @@ export default function ChatPage() {
             <AdContainer position="bottom" className="mt-4">
               <AdBanner slot="7335134262" format="horizontal" />
             </AdContainer>
+            <AdMobBanner adUnitId={ADMOB_AD_UNITS.CHAT_BANNER} size="banner" className="mt-2" />
           </div>
         </div>
       </div>

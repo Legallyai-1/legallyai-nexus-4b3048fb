@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Heart, Shield, Scale, Briefcase, Building2, FileText, Gavel, GraduationCap, Phone, Headphones, Users, DollarSign, BarChart3, Car, Home, Star, Sparkles } from "lucide-react";
 import AdBanner from "@/components/ads/AdBanner";
 import AdContainer from "@/components/ads/AdContainer";
+import AdMobBanner, { ADMOB_AD_UNITS } from "@/components/ads/AdMobBanner";
 
 const assistants = [
   {
@@ -345,10 +346,12 @@ export default function AIAssistantsPage() {
             ))}
           </div>
 
-          {/* Ad Banner */}
+          {/* Ad Banner - Web */}
           <AdContainer position="inline" className="mt-8">
             <AdBanner slot="5824691357" format="horizontal" />
           </AdContainer>
+          {/* Ad Banner - Mobile */}
+          <AdMobBanner adUnitId={ADMOB_AD_UNITS.ASSISTANTS_BANNER} size="banner" className="mt-2" />
 
           {/* Bottom CTA */}
           <div className="mt-8 text-center">

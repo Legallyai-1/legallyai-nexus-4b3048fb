@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import AdBanner from "@/components/ads/AdBanner";
 import AdContainer from "@/components/ads/AdContainer";
+import AdMobBanner, { ADMOB_AD_UNITS } from "@/components/ads/AdMobBanner";
 
 const documentTypes = [
   "NDA (Non-Disclosure Agreement)",
@@ -417,10 +418,12 @@ export default function GeneratePage() {
             </div>
           </div>
 
-          {/* Ad Banner (Replace slot with your Generate Page ad unit ID) */}
+          {/* Ad Banner - Web */}
           <AdContainer position="bottom" className="max-w-3xl mx-auto mt-8">
             <AdBanner slot="7223453623" format="horizontal" />
           </AdContainer>
+          {/* Ad Banner - Mobile */}
+          <AdMobBanner adUnitId={ADMOB_AD_UNITS.GENERATE_BANNER} size="banner" className="max-w-3xl mx-auto mt-2" />
         </div>
       </section>
     </Layout>
