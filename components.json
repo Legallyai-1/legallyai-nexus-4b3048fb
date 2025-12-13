@@ -24,7 +24,37 @@
       "files": [
         {
           "name": "Home.tsx",
-          "content": "import React from 'react';\n\nconst hubs = [\n  { name: 'Lee Legal AI', icon: '👨‍⚖️' },\n  { name: 'CustodiAI', icon: '👨‍👩‍👧‍👦' },\n  { name: 'MaryAI', icon: '💒' },\n  { name: 'DefendAI', icon: '⚖️' },\n  { name: 'DriveSafeAI', icon: '🚗' },\n  { name: 'Freedom AI', icon: '🔒' },\n  { name: 'LegacyAI', icon: '🏠' },\n  { name: 'Worker Rights', icon: '👷' },\n];\n\nexport default function Home() {\n  return (\n    <div className=\"p-6 min-h-screen bg-gray-900 text-white\">\n      <h1 className=\"text-4xl font-bold text-center mb-8\">LegallyAI</h1>\n      <div className=\"text-center mb-10\">\n        <button className=\"bg-blue-600 text-white px-8 py-4 rounded-xl text-xl font-semibold\">\n          Where to Start\n        </button>\n      </div>\n      <div className=\"grid grid-cols-2 gap-6\">\n        {hubs.map((hub) => (\n          <div key={hub.name} className=\"bg-gray-800 rounded-2xl p-8 flex flex-col items-center\">\n            <div className=\"text-6xl mb-4\">{hub.icon}</div>\n            <div className=\"text-center text-lg font-medium\">{hub.name}</div>\n          </div>\n        ))}\n      </div>\n    </div>\n  );\n}"
+          "content": "import React from 'react';\n\nconst hubs = [\n  { id: 'lee', name: 'Lee Legal AI', icon: '👨‍⚖️' },\n  { id: 'custody', name: 'CustodiAI', icon: '👨‍👩‍👧‍👦' },\n  { id: 'marriage', name: 'MaryAI', icon: '💒' },\n  { id: 'defense', name: 'DefendAI', icon: '⚖️' },\n  { id: 'drive', name: 'DriveSafeAI', icon: '🚗' },\n  { id: 'freedom', name: 'Freedom AI', icon: '🔒' },\n  { id: 'legacy', name: 'LegacyAI', icon: '🏠' },\n  { id: 'worker', name: 'Worker Rights', icon: '👷' },\n];\n\nexport default function Home() {\n  return (\n    <div className=\"p-6 min-h-screen bg-gray-900 text-white\">\n      <h1 className=\"text-4xl font-bold text-center mb-8\">LegallyAI</h1>\n      <div className=\"text-center mb-10\">\n        <button onClick={() => window.location.href = '/start'} className=\"bg-blue-600 text-white px-8 py-4 rounded-xl text-xl font-semibold\">\n          Where to Start\n        </button>\n      </div>\n      <div className=\"grid grid-cols-2 gap-6\">\n        {hubs.map((hub) => (\n          <button onClick={() => window.location.href = `/hub/${hub.id}`} key={hub.id} className=\"bg-gray-800 rounded-2xl p-8 flex flex-col items-center\">\n            <div className=\"text-6xl mb-4\">{hub.icon}</div>\n            <div className=\"text-center text-lg font-medium\">{hub.name}</div>\n          </button>\n        ))}\n      </div>\n    </div>\n  );\n}"
+        }
+      ]
+    },
+    {
+      "name": "Hub",
+      "type": "components:component",
+      "files": [
+        {
+          "name": "Hub.tsx",
+          "content": "import React from 'react';\n\nconst hubNames = {\n  lee: 'Lee Legal AI',\n  custody: 'CustodiAI',\n  marriage: 'MaryAI',\n  defense: 'DefendAI',\n  drive: 'DriveSafeAI',\n  freedom: 'Freedom AI',\n  legacy: 'LegacyAI',\n  worker: 'Worker Rights',\n};\n\nexport default function Hub() {\n  const path = window.location.pathname;\n  const hubId = path.split('/hub/')[1];\n  const name = hubNames[hubId] || 'Legal Specialist';\n\n  return (\n    <div className=\"p-6 min-h-screen bg-gray-900 text-white\">\n      <h1 className=\"text-3xl font-bold text-center mb-10\">{name}</h1>\n      <div className=\"text-center\">\n        <button onClick={() => window.location.href = `/chat/${hubId}`} className=\"bg-purple-600 text-white px-10 py-6 rounded-2xl text-2xl font-bold\">\n          Open Chat with {name}\n        </button>\n      </div>\n    </div>\n  );\n}"
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "type": "components:component",
+      "files": [
+        {
+          "name": "Chat.tsx",
+          "content": "import React, { useState } from 'react';\n\nexport default function Chat() {\n  const [messages, setMessages] = useState([\n    { role: 'ai', text: 'Hi! I\\'m your legal specialist. How can I help you today?' }\n  ]);\n  const [input, setInput] = useState('');\n\n  const send = () => {\n    if (!input.trim()) return;\n    setMessages([...messages, { role: 'user', text: input }]);\n    setTimeout(() => {\n      setMessages(prev => [...prev, { role: 'ai', text: 'I received your message! Real AI response coming soon.' }]);\n    }, 1000);\n    setInput('');\n  };\n\n  return (\n    <div className=\"flex flex-col h-screen bg-gray-900 text-white\">\n      <div className=\"flex-1 overflow-y-auto p-6\">\n        {messages.map((m, i) => (\n          <div key={i} className={m.role === 'user' ? 'text-right mb-6' : 'text-left mb-6'}>\n            <span className={`inline-block p-4 rounded-2xl max-w-xs ${m.role === 'user' ? 'bg-blue-600' : 'bg-gray-700'}`}>\n              {m.text}\n            </span>\n          </div>\n        ))}\n      </div>\n      <div className=\"p-4 border-t border-gray-700\">\n        <input\n          value={input}\n          onChange={e => setInput(e.target.value)}\n          onKeyPress={e => e.key === 'Enter' && send()}\n          className=\"w-full p-4 bg-gray-800 rounded-xl\"\n          placeholder=\"Type your message...\"\n        />\n      </div>\n    </div>\n  );\n}"
+        }
+      ]
+    },
+    {
+      "name": "ProfileSetup",
+      "type": "components:component",
+      "files": [
+        {
+          "name": "ProfileSetup.tsx",
+          "content": "import React from 'react';\n\nexport default function ProfileSetup() {\n  return (\n    <div className=\"p-8 min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center\">\n      <h1 className=\"text-3xl font-bold mb-10\">Where to Start</h1>\n      <div className=\"bg-gray-800 p-8 rounded-2xl w-full max-w-md\">\n        <p className=\"mb-6 text-center text-lg\">Choose your role:</p>\n        <button onClick={() => window.location.href = '/'} className=\"w-full bg-blue-600 py-4 rounded-xl mb-4 text-xl\">Individual</button>\n        <button onClick={() => window.location.href = '/'} className=\"w-full bg-blue-600 py-4 rounded-xl mb-4 text-xl\">Business Owner</button>\n        <button onClick={() => window.location.href = '/'} className=\"w-full bg-blue-600 py-4 rounded-xl text-xl\">Lawyer</button>\n      </div>\n    </div>\n  );\n}"
         }
       ]
     },
