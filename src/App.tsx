@@ -8,7 +8,7 @@ const hubs = [
   { id: 'drive', name: 'DriveSafeAI', icon: '🚗', greeting: 'Hi! I am DriveSafeAI, your DUI defense expert. What\'s your situation?', color: 'teal' },
   { id: 'freedom', name: 'Freedom AI', icon: '🔒', greeting: 'Hi! I am Freedom AI, your probation and parole guide. What\'s next?', color: 'orange' },
   { id: 'legacy', name: 'LegacyAI', icon: '🏠', greeting: 'Hi! I am LegacyAI, your wills and estate planner. How can I help?', color: 'blue' },
-  { id: 'worker', name: 'Worker Rights', icon: '👷', greeting: 'Hi! I am your worker rights advocate. What issue are you facing?', color: 'yellow' },
+  { id: 'worker', name: 'Worker Rights', icon: '👷', greeting: 'Hi! I am your worker rights advocate. What issue are you facing?', color: 'yellow' }
 ];
 
 const OPENAI_API_KEY = 'your-openai-api-key-here'; // Replace with your real key from platform.openai.com/api-keys
