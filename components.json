@@ -16,5 +16,27 @@
     "ui": "@/components/ui",
     "lib": "@/lib",
     "hooks": "@/hooks"
-  }
+  },
+  "components": [
+    {
+      "name": "Home",
+      "type": "components:component",
+      "files": [
+        {
+          "name": "Home.tsx",
+          "content": "import React from 'react';\n\nconst hubs = [\n  { name: 'Lee Legal AI', icon: '👨‍⚖️' },\n  { name: 'CustodiAI', icon: '👨‍👩‍👧‍👦' },\n  { name: 'MaryAI', icon: '💒' },\n  { name: 'DefendAI', icon: '⚖️' },\n  { name: 'DriveSafeAI', icon: '🚗' },\n  { name: 'Freedom AI', icon: '🔒' },\n  { name: 'LegacyAI', icon: '🏠' },\n  { name: 'Worker Rights', icon: '👷' },\n];\n\nexport default function Home() {\n  return (\n    <div className=\"p-6 min-h-screen bg-gray-900 text-white\">\n      <h1 className=\"text-4xl font-bold text-center mb-8\">LegallyAI</h1>\n      <div className=\"text-center mb-10\">\n        <button className=\"bg-blue-600 text-white px-8 py-4 rounded-xl text-xl font-semibold\">\n          Where to Start\n        </button>\n      </div>\n      <div className=\"grid grid-cols-2 gap-6\">\n        {hubs.map((hub) => (\n          <div key={hub.name} className=\"bg-gray-800 rounded-2xl p-8 flex flex-col items-center\">\n            <div className=\"text-6xl mb-4\">{hub.icon}</div>\n            <div className=\"text-center text-lg font-medium\">{hub.name}</div>\n          </div>\n        ))}\n      </div>\n    </div>\n  );\n}"
+        }
+      ]
+    },
+    {
+      "name": "FloatingActions",
+      "type": "components:component",
+      "files": [
+        {
+          "name": "FloatingActions.tsx",
+          "content": "import React, { useState } from 'react';\n\nexport default function FloatingActions() {\n  const [showError, setShowError] = useState(false);\n\n  return (\n    <>\n      <button className=\"fixed bottom-32 right-6 bg-teal-500 w-16 h-16 rounded-full shadow-2xl flex items-center justify-center text-3xl z-10\">\n        📄\n      </button>\n      <button\n        onClick={() => setShowError(true)}\n        className=\"fixed bottom-12 right-6 bg-red-600 w-16 h-16 rounded-full shadow-2xl flex items-center justify-center text-3xl z-10\"\n      >\n        ⚠️\n      </button>\n      {showError && (\n        <div className=\"fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50\">\n          <div className=\"bg-gray-800 p-8 rounded-2xl max-w-md mx-4\">\n            <h2 className=\"text-2xl mb-6 text-center\">Report an Issue</h2>\n            <textarea className=\"w-full bg-gray-700 p-4 rounded-lg mb-6 text-white\" rows={6} placeholder=\"Describe what happened...\" />\n            <div className=\"flex gap-4\">\n              <button onClick={() => setShowError(false)} className=\"flex-1 bg-gray-600 py-3 rounded-lg\">Cancel</button>\n              <button onClick={() => setShowError(false)} className=\"flex-1 bg-red-600 py-3 rounded-lg\">Send Report</button>\n            </div>\n          </div>\n        </div>\n      )}\n    </>\n  );\n}"
+        }
+      ]
+    }
+  ]
 }
