@@ -14,7 +14,7 @@ export function Layout({ children, showFooter = true, showFab = true }: LayoutPr
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 pt-16 pb-20 lg:pb-0">
+      <main className="flex-1 pt-16 pb-24 lg:pb-0">
         {children}
       </main>
       {showFooter && <Footer />}
