@@ -7,6 +7,7 @@ import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import AdBanner from "@/components/ads/AdBanner";
 import AdContainer from "@/components/ads/AdContainer";
+import AdMobBanner, { ADMOB_AD_UNITS } from "@/components/ads/AdMobBanner";
 import { LexiAssistant } from "@/components/dashboard/LexiAssistant";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -128,10 +129,12 @@ export default function Index() {
           <LexiAssistant userName={userName} />
         </div>
 
-        {/* Ad Banner */}
+        {/* Ad Banner - Web (AdSense) */}
         <AdContainer position="inline" className="w-full max-w-2xl mt-8">
           <AdBanner slot="9777464779" format="horizontal" />
         </AdContainer>
+        {/* Ad Banner - Mobile (AdMob) */}
+        <AdMobBanner adUnitId={ADMOB_AD_UNITS.HOME_BANNER} size="banner" className="w-full max-w-2xl mt-2" />
 
         {/* Feature Links - Glassmorphism Cards */}
         <div className="w-full max-w-4xl mt-12 animate-fade-up" style={{ animationDelay: "0.5s" }}>
@@ -324,10 +327,12 @@ export default function Index() {
           ))}
         </div>
 
-        {/* Bottom Ad Banner */}
+        {/* Bottom Ad Banner - Web */}
         <AdContainer position="bottom" className="w-full max-w-2xl mt-8">
           <AdBanner slot="3466389052" format="horizontal" />
         </AdContainer>
+        {/* Bottom Ad Banner - Mobile */}
+        <AdMobBanner adUnitId={ADMOB_AD_UNITS.HOME_BANNER} size="largeBanner" className="w-full max-w-2xl mt-2" />
       </div>
     </FuturisticBackground>
   );
