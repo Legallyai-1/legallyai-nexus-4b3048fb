@@ -69,10 +69,10 @@ jobs:
           npx cap add android
           npx cap sync android
           
-          # Update version code and name to 3
-          sed -i 's/versionCode 1/versionCode 3/' android/app/build.gradle
-          sed -i 's/versionName "1.0"/versionName "3.0"/' android/app/build.gradle
           
+          sed -i 's/versionCode 1/versionCode 4/' android/app/build.gradle
+          sed -i 's/versionName "1.0"/versionName "4.0"/' android/app/build.gradle 
+         
           # Add AD_ID permission for Google AdSense (required for Android 13+)
           sed -i 's|<manifest|<manifest xmlns:tools="http://schemas.android.com/tools"|' android/app/src/main/AndroidManifest.xml
           sed -i '/<application/i\    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>' android/app/src/main/AndroidManifest.xml
