@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
-import { Bug, CheckCircle, XCircle, Clock, AlertTriangle, Users, BarChart3, RefreshCw } from 'lucide-react';
+import { Bug, CheckCircle, XCircle, Clock, AlertTriangle, Users, BarChart3, RefreshCw, Play, Loader2, Bot, Database, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface BugReport {
@@ -34,11 +34,30 @@ interface TestStats {
   bugs_by_severity: Record<string, number>;
 }
 
+interface AutomatedTestResult {
+  test: string;
+  status: "pass" | "fail" | "skip";
+  message: string;
+  duration_ms: number;
+}
+
+interface DatabaseStats {
+  profiles: number;
+  organizations: number;
+  clients: number;
+  cases: number;
+  appointments: number;
+  chats: number;
+}
+
 export const TestingDashboard = () => {
   const [bugReports, setBugReports] = useState<BugReport[]>([]);
   const [stats, setStats] = useState<TestStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [runningTests, setRunningTests] = useState(false);
+  const [testResults, setTestResults] = useState<AutomatedTestResult[]>([]);
+  const [dbStats, setDbStats] = useState<DatabaseStats | null>(null);
 
   const fetchBugReports = async () => {
     setLoading(true);
@@ -79,8 +98,66 @@ export const TestingDashboard = () => {
     }
   };
 
+  const fetchDatabaseStats = async () => {
+    try {
+      const [profiles, orgs, clients, cases, appointments, chats] = await Promise.all([
+        supabase.from('profiles').select('id', { count: 'exact', head: true }),
+        supabase.from('organizations').select('id', { count: 'exact', head: true }),
+        supabase.from('clients').select('id', { count: 'exact', head: true }),
+        supabase.from('cases').select('id', { count: 'exact', head: true }),
+        supabase.from('appointments').select('id', { count: 'exact', head: true }),
+        supabase.from('ai_chat_history').select('id', { count: 'exact', head: true }),
+      ]);
+
+      setDbStats({
+        profiles: profiles.count || 0,
+        organizations: orgs.count || 0,
+        clients: clients.count || 0,
+        cases: cases.count || 0,
+        appointments: appointments.count || 0,
+        chats: chats.count || 0,
+      });
+    } catch (error) {
+      console.error('Error fetching DB stats:', error);
+    }
+  };
+
+  const runAutomatedTests = async () => {
+    setRunningTests(true);
+    setTestResults([]);
+    toast.info('Starting automated test suite...');
+
+    try {
+      const { data, error } = await supabase.functions.invoke('run-automated-tests');
+
+      if (error) throw error;
+
+      if (data?.results) {
+        setTestResults(data.results);
+        const passed = data.results.filter((r: AutomatedTestResult) => r.status === 'pass').length;
+        const failed = data.results.filter((r: AutomatedTestResult) => r.status === 'fail').length;
+        
+        if (failed === 0) {
+          toast.success(`All ${passed} tests passed!`);
+        } else {
+          toast.warning(`${passed} passed, ${failed} failed`);
+        }
+      }
+
+      // Refresh data after tests
+      await fetchBugReports();
+      await fetchDatabaseStats();
+    } catch (error: any) {
+      console.error('Error running tests:', error);
+      toast.error('Failed to run automated tests: ' + error.message);
+    } finally {
+      setRunningTests(false);
+    }
+  };
+
   useEffect(() => {
     fetchBugReports();
+    fetchDatabaseStats();
   }, []);
 
   const updateBugStatus = async (id: string, status: string) => {
@@ -131,12 +208,111 @@ export const TestingDashboard = () => {
   return (
     <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Testing Dashboard</h1>
-        <Button onClick={fetchBugReports} variant="outline">
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Refresh
-        </Button>
+        <h1 className="text-3xl font-bold flex items-center gap-2">
+          <Bot className="h-8 w-8 text-primary" />
+          Internal Testing System
+        </h1>
+        <div className="flex gap-2">
+          <Button 
+            onClick={runAutomatedTests} 
+            variant="default"
+            disabled={runningTests}
+            className="bg-neon-green hover:bg-neon-green/90"
+          >
+            {runningTests ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Running Tests...
+              </>
+            ) : (
+              <>
+                <Play className="mr-2 h-4 w-4" />
+                Run Automated Tests
+              </>
+            )}
+          </Button>
+          <Button onClick={() => { fetchBugReports(); fetchDatabaseStats(); }} variant="outline">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh
+          </Button>
+        </div>
       </div>
+
+      {/* Database Stats */}
+      {dbStats && (
+        <Card className="border-neon-cyan/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Database className="h-5 w-5 text-neon-cyan" />
+              Live Database Stats
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <p className="text-2xl font-bold text-neon-cyan">{dbStats.profiles}</p>
+                <p className="text-xs text-muted-foreground">Profiles</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <p className="text-2xl font-bold text-neon-purple">{dbStats.organizations}</p>
+                <p className="text-xs text-muted-foreground">Organizations</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <p className="text-2xl font-bold text-neon-pink">{dbStats.clients}</p>
+                <p className="text-xs text-muted-foreground">Clients</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <p className="text-2xl font-bold text-neon-green">{dbStats.cases}</p>
+                <p className="text-xs text-muted-foreground">Cases</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <p className="text-2xl font-bold text-neon-gold">{dbStats.appointments}</p>
+                <p className="text-xs text-muted-foreground">Appointments</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <p className="text-2xl font-bold text-foreground">{dbStats.chats}</p>
+                <p className="text-xs text-muted-foreground">Chat Sessions</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Test Results */}
+      {testResults.length > 0 && (
+        <Card className="border-neon-green/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-neon-green" />
+              Automated Test Results
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {testResults.map((result, i) => (
+                <div key={i} className="flex items-center justify-between p-2 rounded bg-muted/30">
+                  <div className="flex items-center gap-2">
+                    {result.status === 'pass' ? (
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    ) : result.status === 'fail' ? (
+                      <XCircle className="h-4 w-4 text-red-500" />
+                    ) : (
+                      <Clock className="h-4 w-4 text-yellow-500" />
+                    )}
+                    <span className="font-medium">{result.test}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">{result.duration_ms}ms</span>
+                    <Badge variant={result.status === 'pass' ? 'default' : 'destructive'}>
+                      {result.status}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
