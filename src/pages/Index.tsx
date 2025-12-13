@@ -1,25 +1,12 @@
 import React from "react";
-import { createRoot } from "react-dom/client";
-import App from "./App";
-import "./index.css";
+import Home from "@/components/Home";
+import FloatingActions from "@/components/FloatingActions";
 
-function ErrorFallback({ error, resetErrorBoundary }) {
+export default function Index() {
   return (
-    <div className="p-8 text-red-500">
-      <h2>Something went wrong</h2>
-      <pre>{error.message}</pre>
-      <button onClick={resetErrorBoundary} className="bg-blue-600 px-4 py-2 mt-4 rounded">
-        Retry
-      </button>
+    <div className="min-h-screen bg-gray-900 text-white">
+      <Home />
+      <FloatingActions />
     </div>
   );
 }
-
-const root = createRoot(document.getElementById("root")!);
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-);
-
-// Note: If you want full ErrorBoundary later, add react-error-boundary package
