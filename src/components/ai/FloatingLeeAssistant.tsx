@@ -304,7 +304,7 @@ export function FloatingLeeAssistant() {
               )}
 
               {/* Messages */}
-              <ScrollArea className="h-[300px] p-4" ref={scrollRef}>
+              <ScrollArea className="h-[300px] p-4">
                 {messages.length === 0 ? (
                   <div className="text-center py-8">
                     <Brain className="h-12 w-12 text-neon-cyan/50 mx-auto mb-3" />
