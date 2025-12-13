@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Bug, X, Send, Camera } from 'lucide-react';
+import { useState, forwardRef } from 'react';
+import { Bug, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,12 @@ const HUBS = [
   'LegacyAI', 'Freedom AI', 'WorkplaceAI', 'PraxisAI', 'ScholarAI',
   'JobBoardAI', 'ProBonoAI', 'LoanAI', 'General/Other'
 ];
+
+// Forward ref button component to fix Dialog ref warning
+const BugButton = forwardRef<HTMLButtonElement, React.ComponentProps<typeof Button>>((props, ref) => (
+  <Button ref={ref} {...props} />
+));
+BugButton.displayName = 'BugButton';
 
 export const BugReportButton = () => {
   const [open, setOpen] = useState(false);
@@ -79,14 +85,14 @@ export const BugReportButton = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button
+        <BugButton
           variant="outline"
           size="icon"
           className="fixed bottom-20 right-4 z-50 h-12 w-12 rounded-full bg-destructive/90 hover:bg-destructive text-white border-none shadow-lg"
           title="Report a Bug"
         >
           <Bug className="h-5 w-5" />
-        </Button>
+        </BugButton>
       </DialogTrigger>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>

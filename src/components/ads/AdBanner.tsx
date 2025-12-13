@@ -20,14 +20,32 @@ export default function AdBanner({ slot, format = "auto", className = "" }: AdBa
     // Only load ad once
     if (isAdLoaded.current) return;
     
-    try {
-      if (typeof window !== "undefined" && window.adsbygoogle) {
-        window.adsbygoogle.push({});
-        isAdLoaded.current = true;
+    // Wait for container to have width before loading ad
+    const checkAndLoadAd = () => {
+      if (!adRef.current) return;
+      
+      const containerWidth = adRef.current.offsetWidth;
+      if (containerWidth <= 0) {
+        // Retry after a short delay if container has no width yet
+        setTimeout(checkAndLoadAd, 100);
+        return;
       }
-    } catch (err) {
-      console.error("AdSense error:", err);
-    }
+      
+      try {
+        if (typeof window !== "undefined" && window.adsbygoogle) {
+          window.adsbygoogle.push({});
+          isAdLoaded.current = true;
+        }
+      } catch (err) {
+        // Silently ignore ad errors in development
+        if (process.env.NODE_ENV === 'production') {
+          console.error("AdSense error:", err);
+        }
+      }
+    };
+    
+    // Small delay to ensure DOM is ready
+    setTimeout(checkAndLoadAd, 200);
   }, []);
 
   const adClient = "ca-pub-4991947741196600";
