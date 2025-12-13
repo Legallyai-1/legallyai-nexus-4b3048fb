@@ -1,51 +1,58 @@
-import { useState, useEffect } from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
-import { AnimatedRoutes } from "@/components/AnimatedRoutes";
-import { LoadingScreen } from "@/components/ui/LoadingScreen";
-import { CommandPalette } from "@/components/ui/CommandPalette";
-import { FloatingLeeAssistant } from "@/components/ai/FloatingLeeAssistant";
-import { BugReportButton } from "@/components/testing/BugReportButton";
+import React, { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { supabase } from "./services/supabase"; // Make sure this file exists
+import Home from "./components/Home";
+import Hub from "./components/Hub";
+import Chat from "./components/Chat";
+import ProfileSetup from "./components/ProfileSetup";
+import FloatingActions from "./components/FloatingActions";
 
-const queryClient = new QueryClient();
-
-const App = () => {
-  const [isLoading, setIsLoading] = useState(true);
+function AppContent() {
+  const [session, setSession] = useState(null);
+  const [profileComplete, setProfileComplete] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Simulate initial load time
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
 
-    return () => clearTimeout(timer);
+    supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
   }, []);
 
-  return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AnimatePresence mode="wait">
-            {isLoading && <LoadingScreen key="loading" />}
-          </AnimatePresence>
-          {!isLoading && (
-            <>
-              <AnimatedRoutes />
-              <CommandPalette />
-              <FloatingLeeAssistant />
-              <BugReportButton />
-            </>
-          )}
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  );
-};
+  useEffect(() => {
+    if (session) {
+      const checkProfile = async () => {
+        const { data } = await supabase.from("profiles").select("role").eq("id", session.user.id).single();
+        setProfileComplete(!!data);
+        if (!data) navigate("/start");
+      };
+      checkProfile();
+    }
+  }, [session, navigate]);
 
-export default App;
+  if (!session) return <div>Loading...</div>; // Or your login screen
+
+  return (
+    <div className="min-h-screen bg-gray-900 text-white">
+      <Routes>
+        <Route path="/" element={profileComplete ? <Home /> : <Navigate to="/start" />} />
+        <Route path="/start" element={<ProfileSetup />} />
+        <Route path="/hubs/:hubId" element={<Hub />} />
+        <Route path="/hubs/:hubId/chat" element={<Chat />} />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+      <FloatingActions />
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
+  );
+}
