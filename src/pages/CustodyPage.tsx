@@ -54,7 +54,60 @@ export default function CustodyPage() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const validateStep = (step: number): boolean => {
+    switch (step) {
+      case 1:
+        if (!formData.parentName.trim() || !formData.otherParentName.trim()) {
+          toast.error("Please enter both parent names");
+          return false;
+        }
+        if (!formData.state.trim() || !formData.county.trim()) {
+          toast.error("Please enter your state and county");
+          return false;
+        }
+        return true;
+      case 2:
+        if (!formData.childrenCount || parseInt(formData.childrenCount) < 1) {
+          toast.error("Please enter the number of children");
+          return false;
+        }
+        if (!formData.childrenNames.trim()) {
+          toast.error("Please enter the children's names");
+          return false;
+        }
+        return true;
+      case 3:
+        if (!formData.currentCustody) {
+          toast.error("Please select current custody arrangement");
+          return false;
+        }
+        if (!formData.desiredCustody) {
+          toast.error("Please select desired custody arrangement");
+          return false;
+        }
+        return true;
+      case 4:
+        return true; // Safety questions have defaults
+      case 5:
+        if (!formData.workSchedule.trim()) {
+          toast.error("Please enter your work schedule");
+          return false;
+        }
+        return true;
+      default:
+        return true;
+    }
+  };
+
+  const handleNextStep = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(s => s + 1);
+    }
+  };
+
   const handleGenerate = async () => {
+    if (!validateStep(5)) return;
+    
     setIsGenerating(true);
     try {
       const prompt = `Generate a comprehensive child custody plan:
@@ -261,7 +314,7 @@ Create detailed custody plan with: 1) Legal framework for ${formData.state}, 2) 
                   <div className="flex gap-3 mt-6 pt-4 border-t border-border/30">
                     {currentStep > 1 && <Button variant="outline" onClick={() => setCurrentStep(s => s - 1)} className="flex-1"><ArrowLeft className="w-4 h-4 mr-1" />Back</Button>}
                     {currentStep < 5 ? (
-                      <Button variant="neon-purple" onClick={() => setCurrentStep(s => s + 1)} className="flex-1">Continue<ArrowRight className="w-4 h-4 ml-1" /></Button>
+                      <Button variant="neon-purple" onClick={handleNextStep} className="flex-1">Continue<ArrowRight className="w-4 h-4 ml-1" /></Button>
                     ) : (
                       <Button variant="neon-purple" onClick={handleGenerate} disabled={isGenerating} className="flex-1">
                         {isGenerating ? <><Loader2 className="w-4 h-4 animate-spin mr-1" />Generating...</> : <>Generate Plan<Sparkles className="w-4 h-4 ml-1" /></>}
