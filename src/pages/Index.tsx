@@ -3,10 +3,10 @@ import React from 'react';
 const hubs = [
   { id: 'lee', name: 'Lee Legal AI', icon: '👨‍⚖️', greeting: 'Hi! I am Lee, your general legal assistant. How can I help?' },
   { id: 'custody', name: 'CustodiAI', icon: '👨‍👩‍👧‍👦', greeting: 'Hi! I am CustodiAI, your child custody specialist. What do you need?' },
-  { id: 'marriage', name: 'MaryAI', icon: '💒', greeting: 'Hi! I am MaryAI, your marriage & divorce expert. Let's get started.' },
+  { id: 'marriage', name: 'MaryAI', icon: '💒', greeting: 'Hi! I am MaryAI, your marriage & divorce expert. Let us get started.' },
   { id: 'defense', name: 'DefendAI', icon: '⚖️', greeting: 'Hi! I am DefendAI, your criminal defense specialist. How can I assist?' },
-  { id: 'drive', name: 'DriveSafeAI', icon: '🚗', greeting: 'Hi! I am DriveSafeAI, your DUI defense expert. What's your situation?' },
-  { id: 'freedom', name: 'Freedom AI', icon: '🔒', greeting: 'Hi! I am Freedom AI, your probation/parole guide. What's next?' },
+  { id: 'drive', name: 'DriveSafeAI', icon: '🚗', greeting: 'Hi! I am DriveSafeAI, your DUI defense expert. What is your situation?' },
+  { id: 'freedom', name: 'Freedom AI', icon: '🔒', greeting: 'Hi! I am Freedom AI, your probation/parole guide. What is next?' },
   { id: 'legacy', name: 'LegacyAI', icon: '🏠', greeting: 'Hi! I am LegacyAI, your wills & estate planner. How can I help?' },
   { id: 'worker', name: 'Worker Rights', icon: '👷', greeting: 'Hi! I am your worker rights advocate. What issue are you facing?' },
 ];
@@ -17,7 +17,6 @@ export default function App() {
   const currentHub = hubs.find(h => h.id === hubId);
 
   if (currentHub) {
-    // Hub screen with AI head and chat box under
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white p-6">
         <button onClick={() => window.location.href = '/'} className="mb-6 text-blue-400 text-lg">← Back to Home</button>
@@ -42,21 +41,19 @@ export default function App() {
   }
 
   if (url === '/start') {
-    // Where to Start
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white flex flex-col items-center justify-center p-8">
         <h1 className="text-4xl font-bold mb-12 gradient-text">Where to Start</h1>
         <div className="bg-gray-800 p-10 rounded-3xl w-full max-w-md shadow-2xl">
           <p className="text-center text-xl mb-8">Choose your role:</p>
           <button onClick={() => window.location.href = '/'} className="w-full bg-gradient-to-r from-blue-600 to-purple-600 py-5 rounded-2xl mb-4 text-2xl shadow-lg">Individual</button>
-          <button onClick={() => window.location.href = '/' } className="w-full bg-gradient-to-r from-blue-600 to-purple-600 py-5 rounded-2xl mb-4 text-2xl shadow-lg">Business Owner</button>
-          <button onClick={() => window.location.href = '/' } className="w-full bg-gradient-to-r from-blue-600 to-purple-600 py-5 rounded-2xl text-2xl shadow-lg">Lawyer</button>
+          <button onClick={() => window.location.href = '/'} className="w-full bg-gradient-to-r from-blue-600 to-purple-600 py-5 rounded-2xl mb-4 text-2xl shadow-lg">Business Owner</button>
+          <button onClick={() => window.location.href = '/'} className="w-full bg-gradient-to-r from-blue-600 to-purple-600 py-5 rounded-2xl text-2xl shadow-lg">Lawyer</button>
         </div>
       </div>
     );
   }
 
-  // Home screen
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white p-6">
       <h1 className="text-4xl font-bold text-center mb-8 gradient-text">LegallyAI</h1>
@@ -73,7 +70,6 @@ export default function App() {
           </button>
         ))}
       </div>
-      {/* Only the Ask Lee floating button */}
       <button className="fixed bottom-24 right-6 bg-gradient-to-r from-teal-500 to-cyan-500 w-20 h-20 rounded-full shadow-2xl flex items-center justify-center text-5xl z-10 animate-pulse">
         📄
       </button>
