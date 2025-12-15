@@ -11,7 +11,7 @@ const hubs = [
   { id: 'worker', name: 'Worker Rights', icon: '👷', greeting: 'Hi! I am your worker rights advocate. What issue are you facing?' },
 ];
 
-export default function App() {
+export default function Index() {
   const url = window.location.pathname;
   const hubId = url.slice(1);
   const currentHub = hubs.find(h => h.id === hubId);
