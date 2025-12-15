@@ -1,78 +1,300 @@
-import React from 'react';
+import { Link } from "react-router-dom";
+import { Layout } from "@/components/layout/Layout";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
+import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
+import AdBanner from "@/components/ads/AdBanner";
+import AdContainer from "@/components/ads/AdContainer";
+import AdMobBanner, { ADMOB_AD_UNITS } from "@/components/ads/AdMobBanner";
+import { 
+  Scale, Sparkles, FileText, MessageSquare, Heart, Shield, 
+  Briefcase, GraduationCap, Users, Gavel, Car, Building2,
+  Home, Zap, Star, ArrowRight, Check
+} from "lucide-react";
 
 const hubs = [
-  { id: 'lee', name: 'Lee Legal AI', icon: '👨‍⚖️', greeting: 'Hi! I am Lee, your general legal assistant. How can I help?' },
-  { id: 'custody', name: 'CustodiAI', icon: '👨‍👩‍👧‍👦', greeting: 'Hi! I am CustodiAI, your child custody specialist. What do you need?' },
-  { id: 'marriage', name: 'MaryAI', icon: '💒', greeting: 'Hi! I am MaryAI, your marriage & divorce expert. Let us get started.' },
-  { id: 'defense', name: 'DefendAI', icon: '⚖️', greeting: 'Hi! I am DefendAI, your criminal defense specialist. How can I assist?' },
-  { id: 'drive', name: 'DriveSafeAI', icon: '🚗', greeting: 'Hi! I am DriveSafeAI, your DUI defense expert. What is your situation?' },
-  { id: 'freedom', name: 'Freedom AI', icon: '🔒', greeting: 'Hi! I am Freedom AI, your probation/parole guide. What is next?' },
-  { id: 'legacy', name: 'LegacyAI', icon: '🏠', greeting: 'Hi! I am LegacyAI, your wills & estate planner. How can I help?' },
-  { id: 'worker', name: 'Worker Rights', icon: '👷', greeting: 'Hi! I am your worker rights advocate. What issue are you facing?' },
+  { id: "chat", name: "Lee Legal AI", icon: MessageSquare, color: "cyan", path: "/chat", description: "General legal assistant" },
+  { id: "custody", name: "CustodiAI", icon: Heart, color: "purple", path: "/custody", description: "Child custody specialist" },
+  { id: "marriage", name: "MaryAI", icon: Heart, color: "pink", path: "/marriage-divorce", description: "Marriage & divorce expert" },
+  { id: "defense", name: "DefendrAI", icon: Gavel, color: "rose", path: "/tickets-defense", description: "Criminal defense" },
+  { id: "dui", name: "DriveSafeAI", icon: Car, color: "orange", path: "/dui-hub", description: "DUI defense specialist" },
+  { id: "probation", name: "Freedom AI", icon: Users, color: "green", path: "/probation-parole", description: "Probation & parole guide" },
+  { id: "will", name: "LegacyAI", icon: Home, color: "blue", path: "/will-hub", description: "Wills & estate planning" },
+  { id: "workplace", name: "WorkAI", icon: Building2, color: "orange", path: "/workplace-legal-aid", description: "Employment rights" },
+];
+
+const features = [
+  { title: "AI Document Generation", description: "Create legal documents instantly with AI", icon: FileText },
+  { title: "Legal Chat Assistant", description: "Get answers to your legal questions 24/7", icon: MessageSquare },
+  { title: "Court Prep Tools", description: "Prepare for hearings with simulations", icon: Gavel },
+  { title: "Law Firm Management", description: "Complete practice management suite", icon: Briefcase },
+];
+
+const pricingTiers = [
+  { 
+    name: "Free", 
+    price: "$0", 
+    period: "forever",
+    features: ["Unlimited AI Chat", "1 Document/Day", "Email Support"],
+    cta: "Get Started",
+    path: "/signup",
+    popular: false
+  },
+  { 
+    name: "Premium", 
+    price: "$9.99", 
+    period: "/month",
+    features: ["Unlimited Documents", "All AI Hubs", "Priority Support", "Document Templates"],
+    cta: "Upgrade Now",
+    path: "/pricing",
+    popular: true
+  },
+  { 
+    name: "Pro (Lawyers)", 
+    price: "$99", 
+    period: "/month",
+    features: ["Everything in Premium", "Firm Management", "Client Portal", "Team Access"],
+    cta: "Start Trial",
+    path: "/pricing",
+    popular: false
+  },
 ];
 
 export default function Index() {
-  const url = window.location.pathname;
-  const hubId = url.slice(1);
-  const currentHub = hubs.find(h => h.id === hubId);
-
-  if (currentHub) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white p-6">
-        <button onClick={() => window.location.href = '/'} className="mb-6 text-blue-400 text-lg">← Back to Home</button>
-        <h1 className="text-4xl font-bold text-center mb-8 gradient-text">{currentHub.name}</h1>
-        <div className="text-center mb-8">
-          <div className="inline-block p-6 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 shadow-2xl text-8xl">
-            {currentHub.icon}
-          </div>
-        </div>
-        <div className="bg-gray-800 rounded-3xl p-6 shadow-2xl">
-          <div className="bg-gray-700 rounded-2xl p-6 h-96 overflow-y-auto mb-6">
-            <div className="text-left">
-              <span className="inline-block p-5 rounded-2xl bg-purple-600 shadow-lg">
-                {currentHub.greeting}
+  return (
+    <Layout>
+      <FuturisticBackground>
+        {/* Hero Section */}
+        <section className="relative min-h-[90vh] flex items-center justify-center px-4 py-20">
+          <div className="container mx-auto text-center max-w-5xl">
+            {/* Badge */}
+            <Badge className="bg-neon-cyan/20 text-neon-cyan border-neon-cyan/30 mb-6 animate-fade-in">
+              <Sparkles className="w-3 h-3 mr-1" /> AI-Powered Legal Intelligence
+            </Badge>
+            
+            {/* AI Head */}
+            <div className="flex justify-center mb-8 animate-fade-in" style={{ animationDelay: "100ms" }}>
+              <AnimatedAIHead variant="cyan" size="lg" />
+            </div>
+            
+            {/* Headline */}
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-display font-bold mb-6 animate-fade-in" style={{ animationDelay: "200ms" }}>
+              <span className="text-foreground">Your AI </span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-cyan via-neon-blue to-neon-purple">
+                Legal Assistant
               </span>
+            </h1>
+            
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8 animate-fade-in" style={{ animationDelay: "300ms" }}>
+              Generate legal documents, get instant answers, and access specialized AI assistants for every legal need. Free chat, premium features.
+            </p>
+            
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{ animationDelay: "400ms" }}>
+              <Link to="/chat">
+                <Button size="lg" variant="neon" className="text-lg px-8 py-6">
+                  <MessageSquare className="mr-2 h-5 w-5" />
+                  Start Free Chat
+                </Button>
+              </Link>
+              <Link to="/generate">
+                <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-neon-gold/50 text-neon-gold hover:bg-neon-gold/10">
+                  <FileText className="mr-2 h-5 w-5" />
+                  Generate Document
+                </Button>
+              </Link>
+            </div>
+            
+            {/* Trust Badges */}
+            <div className="flex flex-wrap justify-center gap-4 mt-8 animate-fade-in" style={{ animationDelay: "500ms" }}>
+              <Badge variant="outline" className="text-muted-foreground">
+                <Check className="w-3 h-3 mr-1 text-neon-green" /> 50,000+ Documents Generated
+              </Badge>
+              <Badge variant="outline" className="text-muted-foreground">
+                <Star className="w-3 h-3 mr-1 text-neon-gold" /> 4.9/5 User Rating
+              </Badge>
+              <Badge variant="outline" className="text-muted-foreground">
+                <Shield className="w-3 h-3 mr-1 text-neon-cyan" /> Secure & Private
+              </Badge>
             </div>
           </div>
-          <input className="w-full p-5 bg-gray-800 rounded-2xl placeholder-gray-400" placeholder="Ask me anything..." />
-        </div>
-      </div>
-    );
-  }
+        </section>
 
-  if (url === '/start') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white flex flex-col items-center justify-center p-8">
-        <h1 className="text-4xl font-bold mb-12 gradient-text">Where to Start</h1>
-        <div className="bg-gray-800 p-10 rounded-3xl w-full max-w-md shadow-2xl">
-          <p className="text-center text-xl mb-8">Choose your role:</p>
-          <button onClick={() => window.location.href = '/'} className="w-full bg-gradient-to-r from-blue-600 to-purple-600 py-5 rounded-2xl mb-4 text-2xl shadow-lg">Individual</button>
-          <button onClick={() => window.location.href = '/'} className="w-full bg-gradient-to-r from-blue-600 to-purple-600 py-5 rounded-2xl mb-4 text-2xl shadow-lg">Business Owner</button>
-          <button onClick={() => window.location.href = '/'} className="w-full bg-gradient-to-r from-blue-600 to-purple-600 py-5 rounded-2xl text-2xl shadow-lg">Lawyer</button>
-        </div>
-      </div>
-    );
-  }
+        {/* Ad Banner */}
+        <AdContainer position="inline" className="container mx-auto px-4 mb-8">
+          <AdBanner slot="1234567890" format="horizontal" />
+        </AdContainer>
+        <AdMobBanner adUnitId={ADMOB_AD_UNITS.HOME_BANNER} size="banner" className="mb-4" />
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white p-6">
-      <h1 className="text-4xl font-bold text-center mb-8 gradient-text">LegallyAI</h1>
-      <div className="text-center mb-10">
-        <button onClick={() => window.location.href = '/start'} className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-xl text-xl font-semibold shadow-lg">
-          Where to Start
-        </button>
-      </div>
-      <div className="grid grid-cols-2 gap-6">
-        {hubs.map((hub) => (
-          <button onClick={() => window.location.href = '/' + hub.id} key={hub.id} className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl p-8 flex flex-col items-center shadow-2xl border border-gray-700">
-            <div className="text-6xl mb-4">{hub.icon}</div>
-            <div className="text-center text-lg font-medium">{hub.name}</div>
-          </button>
-        ))}
-      </div>
-      <button className="fixed bottom-24 right-6 bg-gradient-to-r from-teal-500 to-cyan-500 w-20 h-20 rounded-full shadow-2xl flex items-center justify-center text-5xl z-10 animate-pulse">
-        📄
-      </button>
-    </div>
+        {/* AI Hubs Section */}
+        <section className="py-20 px-4">
+          <div className="container mx-auto max-w-6xl">
+            <div className="text-center mb-12">
+              <Badge className="bg-neon-purple/20 text-neon-purple border-neon-purple/30 mb-4">
+                <Zap className="w-3 h-3 mr-1" /> 15+ Specialized AI Assistants
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
+                AI Hubs for Every Legal Need
+              </h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Each hub is rated 10/10 against industry leaders. Choose your specialized assistant.
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {hubs.map((hub, i) => (
+                <Link
+                  key={hub.id}
+                  to={hub.path}
+                  className="group glass-card p-5 rounded-2xl border border-border/50 hover:border-neon-cyan/50 hover:shadow-glow-sm transition-all duration-300 animate-fade-in"
+                  style={{ animationDelay: `${i * 50}ms` }}
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`p-2 rounded-xl bg-neon-${hub.color}/20`}>
+                      <hub.icon className={`h-5 w-5 text-neon-${hub.color}`} />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground">{hub.name}</h3>
+                      <p className="text-xs text-muted-foreground">{hub.description}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Badge className="bg-neon-green/20 text-neon-green border-neon-green/30 text-xs">
+                      <Star className="w-2 h-2 mr-1" /> 10/10
+                    </Badge>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-neon-cyan group-hover:translate-x-1 transition-all" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+            
+            <div className="text-center mt-8">
+              <Link to="/ai-assistants">
+                <Button variant="outline" size="lg">
+                  View All AI Assistants <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section className="py-20 px-4 bg-background/50">
+          <div className="container mx-auto max-w-6xl">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
+                Everything You Need
+              </h2>
+              <p className="text-muted-foreground">
+                Comprehensive legal tools powered by advanced AI
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {features.map((feature, i) => (
+                <div 
+                  key={i}
+                  className="glass-card p-6 rounded-2xl text-center animate-fade-in"
+                  style={{ animationDelay: `${i * 100}ms` }}
+                >
+                  <div className="inline-flex p-3 rounded-xl bg-neon-cyan/20 mb-4">
+                    <feature.icon className="h-6 w-6 text-neon-cyan" />
+                  </div>
+                  <h3 className="font-semibold mb-2">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground">{feature.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Pricing Section */}
+        <section className="py-20 px-4">
+          <div className="container mx-auto max-w-5xl">
+            <div className="text-center mb-12">
+              <Badge className="bg-neon-gold/20 text-neon-gold border-neon-gold/30 mb-4">
+                Simple Pricing
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
+                Start Free, Upgrade When Ready
+              </h2>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-6">
+              {pricingTiers.map((tier, i) => (
+                <div 
+                  key={tier.name}
+                  className={`glass-card p-6 rounded-2xl relative animate-fade-in ${
+                    tier.popular ? "border-2 border-neon-cyan shadow-glow" : "border border-border/50"
+                  }`}
+                  style={{ animationDelay: `${i * 100}ms` }}
+                >
+                  {tier.popular && (
+                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-neon-cyan text-background">
+                      Most Popular
+                    </Badge>
+                  )}
+                  <h3 className="text-xl font-bold mb-2">{tier.name}</h3>
+                  <div className="mb-4">
+                    <span className="text-4xl font-bold">{tier.price}</span>
+                    <span className="text-muted-foreground">{tier.period}</span>
+                  </div>
+                  <ul className="space-y-2 mb-6">
+                    {tier.features.map((feature) => (
+                      <li key={feature} className="flex items-center gap-2 text-sm">
+                        <Check className="h-4 w-4 text-neon-green" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link to={tier.path}>
+                    <Button 
+                      className="w-full" 
+                      variant={tier.popular ? "neon" : "outline"}
+                    >
+                      {tier.cta}
+                    </Button>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-20 px-4">
+          <div className="container mx-auto max-w-3xl text-center">
+            <div className="glass-card p-12 rounded-3xl border border-neon-cyan/30">
+              <AnimatedAIHead variant="cyan" size="lg" className="mx-auto mb-6" />
+              <h2 className="text-3xl font-display font-bold mb-4">
+                Ready to Get Started?
+              </h2>
+              <p className="text-muted-foreground mb-8">
+                Join thousands using AI-powered legal assistance. Free chat, no credit card required.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link to="/chat">
+                  <Button size="lg" variant="neon">
+                    <MessageSquare className="mr-2" />
+                    Start Free Chat
+                  </Button>
+                </Link>
+                <Link to="/ai-assistants">
+                  <Button size="lg" variant="outline">
+                    Explore AI Hubs
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Bottom Ad */}
+        <AdContainer position="bottom" className="container mx-auto px-4 mb-8">
+          <AdBanner slot="0987654321" format="horizontal" />
+        </AdContainer>
+      </FuturisticBackground>
+    </Layout>
   );
 }
