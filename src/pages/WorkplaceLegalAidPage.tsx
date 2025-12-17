@@ -16,7 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { HubAssistant } from "@/components/hub/HubAssistant";
 import { DocumentManager } from "@/components/hub/DocumentManager";
 import { CourtPrepTab } from "@/components/hub/CourtPrepTab";
-import { WhereToStart } from "@/components/hub/WhereToStart";
+
 import { DocuAI } from "@/components/hub/DocuAI";
 import { HubNotifications } from "@/components/hub/HubNotifications";
 import AdBanner from "@/components/ads/AdBanner";
@@ -126,7 +126,7 @@ export default function WorkplaceLegalAidPage() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("start");
+  const [activeTab, setActiveTab] = useState("assistant");
 
   const filteredTopics = topics.filter(topic =>
     topic.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -207,11 +207,8 @@ export default function WorkplaceLegalAidPage() {
         <section className="py-8">
           <div className="container mx-auto px-4 max-w-6xl">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid grid-cols-5 glass-card p-1">
-                <TabsTrigger value="start" className="data-[state=active]:bg-neon-orange/20 data-[state=active]:text-neon-orange gap-2">
-                  <HelpCircle className="w-4 h-4" /> Where to Start
-                </TabsTrigger>
-                <TabsTrigger value="assistant" className="data-[state=active]:bg-neon-cyan/20 data-[state=active]:text-neon-cyan gap-2">
+              <TabsList className="grid grid-cols-4 glass-card p-1">
+                <TabsTrigger value="assistant" className="data-[state=active]:bg-neon-orange/20 data-[state=active]:text-neon-orange gap-2">
                   <MessageSquare className="w-4 h-4" /> AI Assistant
                 </TabsTrigger>
                 <TabsTrigger value="documents" className="data-[state=active]:bg-neon-green/20 data-[state=active]:text-neon-green gap-2">
@@ -224,13 +221,6 @@ export default function WorkplaceLegalAidPage() {
                   <BookOpen className="w-4 h-4" /> Resources
                 </TabsTrigger>
               </TabsList>
-
-              <TabsContent value="start">
-                <WhereToStart 
-                  caseType="workplace"
-                  colorVariant="orange"
-                />
-              </TabsContent>
 
               <TabsContent value="assistant">
                 <HubAssistant

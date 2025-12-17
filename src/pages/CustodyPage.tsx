@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { HubAssistant } from "@/components/hub/HubAssistant";
 import { DocumentManager } from "@/components/hub/DocumentManager";
 import { CourtPrepTab } from "@/components/hub/CourtPrepTab";
-import { WhereToStart } from "@/components/hub/WhereToStart";
+
 import { ChildSupportPayment } from "@/components/hub/ChildSupportPayment";
 import { DocuAI } from "@/components/hub/DocuAI";
 import { HubNotifications } from "@/components/hub/HubNotifications";
@@ -37,7 +37,7 @@ const custodyOptions = [
 
 export default function CustodyPage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("start");
+  const [activeTab, setActiveTab] = useState("assistant");
   const [currentStep, setCurrentStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPlan, setGeneratedPlan] = useState<string | null>(null);
@@ -173,32 +173,23 @@ Create detailed custody plan with: 1) Legal framework for ${formData.state}, 2) 
 
             {/* Main Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="w-full grid grid-cols-2 md:grid-cols-6 mb-6 glass-card">
-                <TabsTrigger value="start">Where to Start</TabsTrigger>
-                <TabsTrigger value="intake">Case Intake</TabsTrigger>
+              <TabsList className="w-full grid grid-cols-2 md:grid-cols-5 mb-6 glass-card">
                 <TabsTrigger value="assistant">AI Assistant</TabsTrigger>
+                <TabsTrigger value="intake">Case Intake</TabsTrigger>
                 <TabsTrigger value="documents">Documents</TabsTrigger>
                 <TabsTrigger value="support">Child Support</TabsTrigger>
                 <TabsTrigger value="court">Court Prep</TabsTrigger>
               </TabsList>
 
-              {/* Where to Start */}
-              <TabsContent value="start">
-                <div className="grid lg:grid-cols-2 gap-6">
-                  <WhereToStart caseType="custody" colorVariant="purple" onNavigate={(section) => {
-                    if (section === "gather") setActiveTab("intake");
-                    else if (section === "ai-help") setActiveTab("assistant");
-                    else if (section === "documents") setActiveTab("documents");
-                    else if (section === "court-prep") setActiveTab("court");
-                  }} />
-                  <HubAssistant
-                    assistantName="CustodiAI"
-                    variant="purple"
-                    systemPrompt="You are CustodiAI, an expert AI assistant for child custody matters. Help users understand custody types, parental rights, and guide them through the process. Always recommend consulting a licensed family law attorney."
-                    welcomeMessage="👋 Welcome to the Custody Hub! I'm CustodiAI. I can help you understand custody options, prepare documents, and guide you through court. What would you like help with?"
-                    placeholder="Ask about custody, visitation, or child support..."
-                  />
-                </div>
+              {/* AI Assistant */}
+              <TabsContent value="assistant">
+                <HubAssistant
+                  assistantName="CustodiAI"
+                  variant="purple"
+                  systemPrompt="You are CustodiAI, an expert AI assistant for child custody matters. Help users understand custody types, parental rights, and guide them through the process. Always recommend consulting a licensed family law attorney."
+                  welcomeMessage="👋 Welcome to the Custody Hub! I'm CustodiAI. I can help you understand custody options, prepare documents, and guide you through court. What would you like help with?"
+                  placeholder="Ask about custody, visitation, or child support..."
+                />
               </TabsContent>
 
               {/* Case Intake */}

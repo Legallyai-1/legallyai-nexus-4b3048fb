@@ -13,7 +13,7 @@ import {
 import { HubAssistant } from "@/components/hub/HubAssistant";
 import { DocumentManager } from "@/components/hub/DocumentManager";
 import { CourtPrepTab } from "@/components/hub/CourtPrepTab";
-import { WhereToStart } from "@/components/hub/WhereToStart";
+
 import { DocuAI } from "@/components/hub/DocuAI";
 import { HubNotifications } from "@/components/hub/HubNotifications";
 import AdBanner from "@/components/ads/AdBanner";
@@ -103,7 +103,7 @@ const courtPrepChecklist = [
 ];
 
 export default function ProbationParolePage() {
-  const [activeTab, setActiveTab] = useState("start");
+  const [activeTab, setActiveTab] = useState("assistant");
   const navigate = useNavigate();
 
   const systemPrompt = `You are RehabilitAI (also called ProbAI), a compassionate AI assistant helping individuals navigate probation, parole, and incarceration in the U.S. legal system (2025).
@@ -191,11 +191,8 @@ export default function ProbationParolePage() {
 
             {/* Main Hub Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid grid-cols-5 glass-card p-1">
-                <TabsTrigger value="start" className="data-[state=active]:bg-neon-green/20 data-[state=active]:text-neon-green gap-2">
-                  <HelpCircle className="w-4 h-4" /> Where to Start
-                </TabsTrigger>
-                <TabsTrigger value="assistant" className="data-[state=active]:bg-neon-cyan/20 data-[state=active]:text-neon-cyan gap-2">
+              <TabsList className="grid grid-cols-4 glass-card p-1">
+                <TabsTrigger value="assistant" className="data-[state=active]:bg-neon-green/20 data-[state=active]:text-neon-green gap-2">
                   <MessageSquare className="w-4 h-4" /> AI Assistant
                 </TabsTrigger>
                 <TabsTrigger value="documents" className="data-[state=active]:bg-neon-purple/20 data-[state=active]:text-neon-purple gap-2">
@@ -208,13 +205,6 @@ export default function ProbationParolePage() {
                   <BookOpen className="w-4 h-4" /> Resources
                 </TabsTrigger>
               </TabsList>
-
-              <TabsContent value="start">
-                <WhereToStart 
-                  caseType="probation"
-                  colorVariant="green"
-                />
-              </TabsContent>
 
               <TabsContent value="assistant">
                 <HubAssistant
