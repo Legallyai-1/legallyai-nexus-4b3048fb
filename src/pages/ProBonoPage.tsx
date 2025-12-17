@@ -17,7 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { HubAssistant } from "@/components/hub/HubAssistant";
 import { DocumentManager } from "@/components/hub/DocumentManager";
-import { WhereToStart } from "@/components/hub/WhereToStart";
+
 import { HubNotifications } from "@/components/hub/HubNotifications";
 import { AIVolunteerMatcher } from "@/components/probono/AIVolunteerMatcher";
 
@@ -156,7 +156,7 @@ export default function ProBonoPage() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [userType, setUserType] = useState<"lawyer" | "client">("lawyer");
-  const [activeTab, setActiveTab] = useState("start");
+  const [activeTab, setActiveTab] = useState("assistant");
   const [trackedHours, setTrackedHours] = useState(0);
   const [trackedMiles, setTrackedMiles] = useState(0);
   const [trackedExpenses, setTrackedExpenses] = useState(0);
@@ -263,9 +263,9 @@ export default function ProBonoPage() {
           <section className="py-8">
             <div className="container mx-auto px-4 max-w-6xl">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList className="grid grid-cols-6 glass-card p-1">
-                  <TabsTrigger value="start" className="data-[state=active]:bg-neon-pink/20 data-[state=active]:text-neon-pink gap-2">
-                    <HelpCircle className="w-4 h-4" /> Start
+                <TabsList className="grid grid-cols-5 glass-card p-1">
+                  <TabsTrigger value="assistant" className="data-[state=active]:bg-neon-pink/20 data-[state=active]:text-neon-pink gap-2">
+                    <MessageSquare className="w-4 h-4" /> Chat
                   </TabsTrigger>
                   <TabsTrigger value="ai-match" className="data-[state=active]:bg-neon-purple/20 data-[state=active]:text-neon-purple gap-2">
                     <Brain className="w-4 h-4" /> AI Match
@@ -279,17 +279,7 @@ export default function ProBonoPage() {
                   <TabsTrigger value="tracker" className="data-[state=active]:bg-neon-orange/20 data-[state=active]:text-neon-orange gap-2">
                     <Calculator className="w-4 h-4" /> Track
                   </TabsTrigger>
-                  <TabsTrigger value="assistant" className="data-[state=active]:bg-neon-pink/20 data-[state=active]:text-neon-pink gap-2">
-                    <MessageSquare className="w-4 h-4" /> Chat
-                  </TabsTrigger>
                 </TabsList>
-
-                <TabsContent value="start">
-                  <WhereToStart 
-                    caseType="probono"
-                    colorVariant="pink"
-                  />
-                </TabsContent>
 
                 <TabsContent value="ai-match">
                   <AIVolunteerMatcher />
@@ -500,9 +490,9 @@ export default function ProBonoPage() {
           <section className="py-8">
             <div className="container mx-auto px-4 max-w-6xl">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList className="grid grid-cols-4 glass-card p-1">
-                  <TabsTrigger value="start" className="data-[state=active]:bg-neon-pink/20 data-[state=active]:text-neon-pink gap-2">
-                    <HelpCircle className="w-4 h-4" /> Where to Start
+                <TabsList className="grid grid-cols-3 glass-card p-1">
+                  <TabsTrigger value="assistant" className="data-[state=active]:bg-neon-pink/20 data-[state=active]:text-neon-pink gap-2">
+                    <MessageSquare className="w-4 h-4" /> AI Assistant
                   </TabsTrigger>
                   <TabsTrigger value="find" className="data-[state=active]:bg-neon-purple/20 data-[state=active]:text-neon-purple gap-2">
                     <Search className="w-4 h-4" /> Find Help
@@ -510,17 +500,7 @@ export default function ProBonoPage() {
                   <TabsTrigger value="documents" className="data-[state=active]:bg-neon-green/20 data-[state=active]:text-neon-green gap-2">
                     <FolderOpen className="w-4 h-4" /> My Documents
                   </TabsTrigger>
-                  <TabsTrigger value="assistant" className="data-[state=active]:bg-neon-cyan/20 data-[state=active]:text-neon-cyan gap-2">
-                    <MessageSquare className="w-4 h-4" /> AI Assistant
-                  </TabsTrigger>
                 </TabsList>
-
-                <TabsContent value="start">
-                  <WhereToStart 
-                    caseType="probono"
-                    colorVariant="pink"
-                  />
-                </TabsContent>
 
                 <TabsContent value="find">
                   <div className="grid md:grid-cols-3 gap-6">
