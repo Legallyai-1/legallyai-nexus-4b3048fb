@@ -1,5 +1,5 @@
-# Build timestamp: 2025-12-12T10:10:00Z - VERSION 3.0 NO LOANS
-name: Build Android App Bundle
+# Build timestamp: 2025-12-18T01:10:00Z - VERSION 4.0 APK BUILD
+name: Build Android APK & AAB
 
 on:
   push:
@@ -43,7 +43,7 @@ jobs:
           # Remove any existing android folder to ensure fresh build
           rm -rf android
           
-          # Create production capacitor config (no server URL) with version 2
+          # Create production capacitor config (no server URL)
           cat > capacitor.config.ts << 'EOF'
           import type { CapacitorConfig } from '@capacitor/cli';
 
@@ -59,19 +59,14 @@ jobs:
           echo "=== Capacitor Config ==="
           cat capacitor.config.ts
 
-      - name: Set version code and name
-        run: |
-          # Update version in build.gradle after cap add
-          echo "Version will be set to 3.0 with versionCode 3"
-
       - name: Initialize Capacitor Android
         run: |
           npx cap add android
           npx cap sync android
           
-          
-          sed -i 's/versionCode 1/versionCode 4/' android/app/build.gradle
-          sed -i 's/versionName "1.0"/versionName "4.0"/' android/app/build.gradle 
+          # Update version code and name
+          sed -i 's/versionCode 1/versionCode 5/' android/app/build.gradle
+          sed -i 's/versionName "1.0"/versionName "5.0"/' android/app/build.gradle 
          
           # Add AD_ID permission for Google AdSense (required for Android 13+)
           sed -i 's|<manifest|<manifest xmlns:tools="http://schemas.android.com/tools"|' android/app/src/main/AndroidManifest.xml
@@ -82,9 +77,6 @@ jobs:
           
           echo "=== Verifying AD_ID Permission in AndroidManifest.xml ==="
           grep -i "AD_ID" android/app/src/main/AndroidManifest.xml || echo "AD_ID permission added"
-          
-          echo "=== Verifying Package Name in build.gradle ==="
-          grep -E "(namespace|applicationId)" android/app/build.gradle || true
 
       - name: Setup release keystore
         run: |
@@ -92,16 +84,9 @@ jobs:
             echo "Using existing keystore from secrets"
             echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
           else
-            echo "Generating new keystore (save this for future builds!)"
+            echo "Generating new keystore"
             keytool -genkey -v -keystore android/app/release.keystore -storepass legallyai123 -alias legallyai -keypass legallyai123 -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=LegallyAI,O=LegallyAI,C=US"
-            echo "=== KEYSTORE BASE64 (save as GitHub secret ANDROID_KEYSTORE_BASE64) ==="
-            base64 -w 0 android/app/release.keystore
-            echo ""
-            echo "=== END KEYSTORE ==="
           fi
-          
-          echo "=== Upload Key Fingerprint ==="
-          keytool -list -v -keystore android/app/release.keystore -storepass legallyai123 -alias legallyai 2>/dev/null | grep -A1 "Certificate fingerprints"
 
       - name: Configure signing for release build
         run: |
@@ -114,21 +99,33 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
+      - name: Build Release APK
+        run: |
+          cd android
+          ./gradlew clean assembleRelease --stacktrace
+
       - name: Build Release AAB (App Bundle)
         run: |
           cd android
-          ./gradlew clean bundleRelease --stacktrace
+          ./gradlew bundleRelease --stacktrace
 
-      - name: Verify AAB
+      - name: Verify builds
         run: |
+          echo "=== APK Info ==="
+          ls -la android/app/build/outputs/apk/release/ || echo "APK folder not found"
           echo "=== AAB Info ==="
-          ls -la android/app/build/outputs/bundle/release/
-          file android/app/build/outputs/bundle/release/app-release.aab
+          ls -la android/app/build/outputs/bundle/release/ || echo "AAB folder not found"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: legallyai-apk-v5-${{ github.run_number }}
+          path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
-          name: legallyai-aab-${{ github.run_number }}
+          name: legallyai-aab-v5-${{ github.run_number }}
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
-          compression-level: 0
