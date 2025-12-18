@@ -83,9 +83,19 @@ jobs:
           if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
             echo "Using existing keystore from secrets"
             echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+            echo "=== Verifying keystore fingerprint ==="
+            keytool -list -v -keystore android/app/release.keystore -storepass legallyai123 -alias legallyai 2>/dev/null | grep -A1 "SHA1" || echo "Could not read fingerprint"
           else
-            echo "Generating new keystore"
-            keytool -genkey -v -keystore android/app/release.keystore -storepass legallyai123 -alias legallyai -keypass legallyai123 -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=LegallyAI,O=LegallyAI,C=US"
+            echo "ERROR: ANDROID_KEYSTORE_BASE64 secret is required!"
+            echo "You must use the SAME keystore that was used for your original Google Play upload."
+            echo "Expected SHA1: 59:FB:57:C0:56:DD:4B:C7:6F:E8:03:EC:82:00:01:6A"
+            echo ""
+            echo "To fix this:"
+            echo "1. Find your original release.keystore file"
+            echo "2. Run: base64 -w 0 release.keystore > keystore.txt"
+            echo "3. Copy the contents of keystore.txt"
+            echo "4. Add it as a GitHub secret named ANDROID_KEYSTORE_BASE64"
+            exit 1
           fi
 
       - name: Configure signing for release build
