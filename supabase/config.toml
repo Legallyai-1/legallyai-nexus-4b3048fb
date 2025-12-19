@@ -56,3 +56,6 @@ verify_jwt = true
 
 [functions.run-automated-tests]
 verify_jwt = false
+
+[functions.job-search]
+verify_jwt = false
