@@ -5,21 +5,48 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Settings, User, Bell, Shield, Palette, ArrowLeft, Save, Moon, Sun } from "lucide-react";
+import { Settings, User, Bell, Shield, Palette, ArrowLeft, Save, Moon, Sun, Loader2, Phone, MapPin, Clock } from "lucide-react";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { Layout } from "@/components/layout/Layout";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
+interface Profile {
+  id: string;
+  full_name: string | null;
+  phone: string | null;
+  location: string | null;
+  timezone: string | null;
+}
+
+const timezones = [
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+  "America/Phoenix",
+  "America/Anchorage",
+  "Pacific/Honolulu",
+  "Europe/London",
+  "Europe/Paris",
+  "Asia/Tokyo",
+  "Australia/Sydney",
+];
+
 export default function SettingsPage() {
   const navigate = useNavigate();
   const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
-  // Settings state
+  // Form state
   const [displayName, setDisplayName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [location, setLocation] = useState("");
+  const [timezone, setTimezone] = useState("");
   const [email, setEmail] = useState("");
   const [notifications, setNotifications] = useState({
     email: true,
@@ -36,32 +63,95 @@ export default function SettingsPage() {
         return;
       }
       setUser(session.user);
-      setDisplayName(session.user.user_metadata?.full_name || "");
       setEmail(session.user.email || "");
+      await fetchProfile(session.user.id);
       setLoading(false);
     };
     checkAuth();
   }, [navigate]);
 
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching profile:', error);
+        return;
+      }
+
+      if (data) {
+        setProfile(data);
+        setDisplayName(data.full_name || "");
+        setPhone(data.phone || "");
+        setLocation(data.location || "");
+        setTimezone(data.timezone || "America/New_York");
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
   const handleSave = async () => {
+    if (!user) return;
+    
     setSaving(true);
     try {
-      const { error } = await supabase.auth.updateUser({
+      // Update auth metadata
+      const { error: authError } = await supabase.auth.updateUser({
         data: { full_name: displayName }
       });
-      if (error) throw error;
+      if (authError) throw authError;
+
+      // Update or insert profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          email: user.email || '',
+          full_name: displayName,
+          phone: phone || null,
+          location: location || null,
+          timezone: timezone || null,
+        });
+
+      if (profileError) throw profileError;
+
       toast.success("Settings saved successfully");
     } catch (error) {
+      console.error('Save error:', error);
       toast.error("Failed to save settings");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
+  };
+
+  const handleChangePassword = async () => {
+    if (!email) return;
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) throw error;
+      toast.success("Password reset email sent!");
+    } catch (error) {
+      console.error('Password reset error:', error);
+      toast.error("Failed to send password reset email");
+    }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-neon-cyan">Loading...</div>
-      </div>
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-neon-cyan" />
+        </div>
+      </Layout>
     );
   }
 
@@ -97,24 +187,66 @@ export default function SettingsPage() {
                   <CardDescription>Update your personal information</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="displayName">Display Name</Label>
-                    <Input
-                      id="displayName"
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      className="bg-background/50 border-neon-cyan/30"
-                    />
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="displayName">Full Name</Label>
+                      <Input
+                        id="displayName"
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        className="bg-background/50 border-neon-cyan/30"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        value={email}
+                        disabled
+                        className="bg-background/30 border-border/50"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="phone" className="flex items-center gap-2">
+                        <Phone className="h-4 w-4" /> Phone
+                      </Label>
+                      <Input
+                        id="phone"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="(555) 123-4567"
+                        className="bg-background/50 border-neon-cyan/30"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="location" className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4" /> Location
+                      </Label>
+                      <Input
+                        id="location"
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                        placeholder="City, State"
+                        className="bg-background/50 border-neon-cyan/30"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      value={email}
-                      disabled
-                      className="bg-background/30 border-border/50"
-                    />
-                    <p className="text-xs text-muted-foreground">Contact support to change your email</p>
+                    <Label htmlFor="timezone" className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" /> Timezone
+                    </Label>
+                    <Select value={timezone} onValueChange={setTimezone}>
+                      <SelectTrigger className="bg-background/50 border-neon-cyan/30">
+                        <SelectValue placeholder="Select timezone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {timezones.map((tz) => (
+                          <SelectItem key={tz} value={tz}>{tz.replace('_', ' ')}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </CardContent>
               </Card>
@@ -198,7 +330,7 @@ export default function SettingsPage() {
                   <CardDescription>Manage your account security</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button variant="outline" className="w-full justify-start" onClick={handleChangePassword}>
                     Change Password
                   </Button>
                   <Button variant="outline" className="w-full justify-start">
@@ -217,7 +349,7 @@ export default function SettingsPage() {
                 onClick={handleSave}
                 disabled={saving}
               >
-                <Save className="h-4 w-4 mr-2" />
+                {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                 {saving ? "Saving..." : "Save Changes"}
               </Button>
             </div>
