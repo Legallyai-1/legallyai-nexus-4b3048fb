@@ -3,7 +3,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const TABLE = Deno.env.get("SUPABASE_TABLE_CASES") ?? "cases_imported";
 
 const corsHeaders = {
@@ -13,7 +12,6 @@ const corsHeaders = {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Verify user authentication from JWT
 async function verifyAuth(req: Request): Promise<{ userId: string } | null> {
   const authHeader = req.headers.get('Authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -31,25 +29,30 @@ async function verifyAuth(req: Request): Promise<{ userId: string } | null> {
   return { userId: user.id };
 }
 
-async function callInternalAI(head: string, messages: any[]) {
-  console.log(`Calling AI head: ${head}`);
+async function callOpenAI(head: string, messages: any[]) {
+  console.log(`Calling OpenAI for: ${head}`);
   
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+  if (!OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY not configured");
+  }
+  
+  const resp = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { 
-      Authorization: `Bearer ${LOVABLE_API_KEY}`, 
+      Authorization: `Bearer ${OPENAI_API_KEY}`, 
       "Content-Type": "application/json" 
     },
     body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
+      model: "gpt-4o-mini",
       messages
     })
   });
   
   if (!resp.ok) {
     const text = await resp.text();
-    console.error(`AI call failed for ${head}: ${resp.status} - ${text}`);
-    throw new Error(`AI call failed: ${resp.status} ${text}`);
+    console.error(`OpenAI call failed for ${head}: ${resp.status} - ${text}`);
+    throw new Error(`OpenAI call failed: ${resp.status} ${text}`);
   }
   
   const json = await resp.json();
@@ -59,12 +62,10 @@ async function callInternalAI(head: string, messages: any[]) {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Verify authentication
   const auth = await verifyAuth(req);
   if (!auth) {
     console.error('Unauthorized access attempt to process-case-ai');
@@ -88,7 +89,6 @@ serve(async (req) => {
       });
     }
 
-    // Validate courtlistener_id format (should be a number)
     const caseId = parseInt(courtlistener_id, 10);
     if (isNaN(caseId) || caseId <= 0) {
       return new Response(JSON.stringify({ error: "Invalid courtlistener_id format" }), { 
@@ -116,7 +116,7 @@ serve(async (req) => {
     const caseText = JSON.stringify(data.raw || {}).slice(0, 10000);
     const caseTitle = data.title || "Unknown Case";
 
-    // DEFENDR: Defense strategy and checklist
+    // DEFENDR: Defense strategy
     console.log("Running Defendr analysis...");
     const defendrMsg = [
       { 
@@ -125,7 +125,7 @@ serve(async (req) => {
       },
       { role: "user", content: `Case: ${caseTitle}\n\nCase data: ${caseText}` }
     ];
-    const defensePlan = await callInternalAI("Defendr", defendrMsg);
+    const defensePlan = await callOpenAI("Defendr", defendrMsg);
 
     // LEXI: Client-friendly summary
     console.log("Running Lexi analysis...");
@@ -136,9 +136,9 @@ serve(async (req) => {
       },
       { role: "user", content: `Case: ${caseTitle}\n\nCase data: ${caseText}` }
     ];
-    const clientSummary = await callInternalAI("Lexi", lexiMsg);
+    const clientSummary = await callOpenAI("Lexi", lexiMsg);
 
-    // CUSTODIA: Custody analysis (if relevant)
+    // CUSTODIA: Custody analysis
     console.log("Running CustodiAI analysis...");
     const custodyMsg = [
       { 
@@ -147,9 +147,8 @@ serve(async (req) => {
       },
       { role: "user", content: `Case: ${caseTitle}\n\nCase data: ${caseText}` }
     ];
-    const custodyNotes = await callInternalAI("CustodiAI", custodyMsg);
+    const custodyNotes = await callOpenAI("CustodiAI", custodyMsg);
 
-    // Store all AI outputs
     console.log("Storing AI analysis results...");
     const { error: updateError } = await supabase
       .from(TABLE)
