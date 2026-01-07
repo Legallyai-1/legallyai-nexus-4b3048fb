@@ -31,6 +31,35 @@ interface TrustAccount {
   current_balance: number;
 }
 
+async function callOpenAI(prompt: string, temperature = 0.3): Promise<string> {
+  const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+  if (!OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY not configured');
+  }
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: prompt }],
+      temperature,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('OpenAI API error:', errorText);
+    throw new Error('OpenAI API call failed');
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || '{}';
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -49,7 +78,6 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Verify user
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
@@ -99,7 +127,6 @@ Deno.serve(async (req) => {
         );
     }
 
-    // Log compliance event
     await supabase.from('compliance_logs').insert({
       organization_id: organizationId,
       user_id: user.id,
@@ -127,8 +154,6 @@ Deno.serve(async (req) => {
 async function processAIIntake(supabase: any, userId: string, organizationId: string, intakeData: Record<string, any>) {
   console.log('Processing AI intake for organization:', organizationId);
   
-  const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
-  
   const prompt = `Analyze this legal intake form and extract key information for case management:
   
   Client Name: ${intakeData.clientName}
@@ -145,21 +170,7 @@ async function processAIIntake(supabase: any, userId: string, organizationId: st
   - estimated_timeline
   - potential_conflicts_to_check`;
 
-  const aiResponse = await fetch('https://api.lovable.dev/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${lovableApiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.3,
-    }),
-  });
-
-  const aiData = await aiResponse.json();
-  const analysis = aiData.choices?.[0]?.message?.content || '{}';
+  const analysis = await callOpenAI(prompt, 0.3);
   
   const { data: client, error: clientError } = await supabase
     .from('clients')
@@ -218,29 +229,13 @@ async function assembleDocument(supabase: any, templateId: string, variables: Re
     assembledContent = assembledContent.replace(regex, value);
   }
 
-  const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
-  
   const enhancePrompt = `Review and enhance this legal document for clarity and completeness. Keep the core content but improve language and ensure legal precision:
 
 ${assembledContent}
 
 Return the enhanced document maintaining all original intent and legal requirements.`;
 
-  const aiResponse = await fetch('https://api.lovable.dev/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${lovableApiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
-      messages: [{ role: 'user', content: enhancePrompt }],
-      temperature: 0.2,
-    }),
-  });
-
-  const aiData = await aiResponse.json();
-  const enhancedContent = aiData.choices?.[0]?.message?.content || assembledContent;
+  const enhancedContent = await callOpenAI(enhancePrompt, 0.2);
 
   await supabase
     .from('document_templates')

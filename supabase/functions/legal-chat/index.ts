@@ -21,14 +21,12 @@ const BLOCKED_PATTERNS = [
 ];
 
 function validateMessage(content: string): { valid: boolean; reason?: string } {
-  // Check for prompt injection attempts
   for (const pattern of BLOCKED_PATTERNS) {
     if (pattern.test(content)) {
       console.warn("Blocked prompt injection attempt in chat:", content.substring(0, 100));
       return { valid: false, reason: "Invalid request format. Please ask your legal question clearly." };
     }
   }
-  
   return { valid: true };
 }
 
@@ -38,14 +36,11 @@ serve(async (req) => {
   }
 
   try {
-    // Initialize Supabase client for optional auth verification
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? ""
     );
 
-    // Optional authentication - free tier includes AI chat
-    // Allow both authenticated and unauthenticated users
     let userId = "anonymous";
     const authHeader = req.headers.get("Authorization");
     if (authHeader) {
@@ -68,7 +63,6 @@ serve(async (req) => {
       );
     }
 
-    // Validate message count and content length to prevent abuse
     if (messages.length > 50) {
       return new Response(
         JSON.stringify({ error: "Too many messages in conversation. Please start a new chat." }),
@@ -84,7 +78,6 @@ serve(async (req) => {
       );
     }
 
-    // Validate each message for injection attempts
     for (const message of messages) {
       if (message.content) {
         const validation = validateMessage(message.content);
@@ -97,11 +90,12 @@ serve(async (req) => {
       }
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      console.error("LOVABLE_API_KEY is not configured");
+    // Use user's own OpenAI API key - no Lovable credits needed
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (!OPENAI_API_KEY) {
+      console.error("OPENAI_API_KEY is not configured");
       return new Response(
-        JSON.stringify({ error: "AI service not configured" }),
+        JSON.stringify({ error: "AI service not configured. Please add your OpenAI API key." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -132,14 +126,15 @@ End important responses with: "Remember: This is general legal information, not 
 
     console.log("Chat request from:", userId, "with", messages.length, "messages, stream:", stream);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    // Call OpenAI API directly
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gpt-4o-mini",
         messages: [
           { role: "system", content: systemPrompt },
           ...messages,
@@ -150,7 +145,7 @@ End important responses with: "Remember: This is general legal information, not 
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      console.error("OpenAI API error:", response.status, errorText);
       
       if (response.status === 429) {
         return new Response(
@@ -158,15 +153,15 @@ End important responses with: "Remember: This is general legal information, not 
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (response.status === 402) {
+      if (response.status === 401) {
         return new Response(
-          JSON.stringify({ error: "Service temporarily unavailable." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: "Invalid OpenAI API key. Please check your configuration." }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       
       return new Response(
-        JSON.stringify({ error: "Failed to get response" }),
+        JSON.stringify({ error: "Failed to get response from AI" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
