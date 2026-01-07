@@ -37,11 +37,45 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
+    // Verify JWT and get authenticated user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Authorization header required');
+    }
+    
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user: authUser }, error: authError } = await supabaseClient.auth.getUser(token);
+    
+    if (authError || !authUser) {
+      logStep("Auth error", { error: authError?.message });
+      throw new Error('Unauthorized - invalid token');
+    }
+
+    logStep("User authenticated", { userId: authUser.id });
+
     const payload: NotificationPayload = await req.json();
     const { userId, title, message, type, hub, referenceId, referenceType, sendEmail, email } = payload;
 
     if (!userId || !title || !message) {
       throw new Error("Missing required fields: userId, title, message");
+    }
+
+    // Authorization check: Users can only send notifications to themselves
+    // Unless they have admin/owner role in an organization
+    if (userId !== authUser.id) {
+      const { data: roleData, error: roleError } = await supabaseClient
+        .from('organization_members')
+        .select('role')
+        .eq('user_id', authUser.id)
+        .in('role', ['admin', 'owner'])
+        .limit(1);
+      
+      if (roleError || !roleData || roleData.length === 0) {
+        logStep("Authorization denied - not admin", { callerUserId: authUser.id, targetUserId: userId });
+        throw new Error('Not authorized to send notifications to other users');
+      }
+      
+      logStep("Admin authorization granted", { role: roleData[0]?.role });
     }
 
     logStep("Creating notification", { userId, type, hub });
