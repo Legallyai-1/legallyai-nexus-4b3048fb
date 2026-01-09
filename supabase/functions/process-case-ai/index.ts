@@ -29,36 +29,62 @@ async function verifyAuth(req: Request): Promise<{ userId: string } | null> {
   return { userId: user.id };
 }
 
-async function callOpenAI(head: string, messages: any[]) {
-  console.log(`Calling OpenAI for: ${head}`);
+async function callAI(head: string, messages: any[]) {
+  console.log(`Calling AI for: ${head}`);
   
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-  if (!OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY not configured");
+  
+  // Try Lovable AI first (free)
+  if (LOVABLE_API_KEY) {
+    try {
+      const resp = await fetch("https://api.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { 
+          Authorization: `Bearer ${LOVABLE_API_KEY}`, 
+          "Content-Type": "application/json" 
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages
+        })
+      });
+      
+      if (resp.ok) {
+        const json = await resp.json();
+        const content = json.choices?.[0]?.message?.content ?? null;
+        console.log(`${head} response received from Lovable (${content?.length || 0} chars)`);
+        return content;
+      }
+    } catch (e) {
+      console.error(`Lovable AI failed for ${head}:`, e);
+    }
   }
   
-  const resp = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: { 
-      Authorization: `Bearer ${OPENAI_API_KEY}`, 
-      "Content-Type": "application/json" 
-    },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",
-      messages
-    })
-  });
-  
-  if (!resp.ok) {
-    const text = await resp.text();
-    console.error(`OpenAI call failed for ${head}: ${resp.status} - ${text}`);
-    throw new Error(`OpenAI call failed: ${resp.status} ${text}`);
+  // Fallback to OpenAI
+  if (OPENAI_API_KEY) {
+    const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { 
+        Authorization: `Bearer ${OPENAI_API_KEY}`, 
+        "Content-Type": "application/json" 
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages
+      })
+    });
+    
+    if (resp.ok) {
+      const json = await resp.json();
+      const content = json.choices?.[0]?.message?.content ?? null;
+      console.log(`${head} response received from OpenAI (${content?.length || 0} chars)`);
+      return content;
+    }
   }
   
-  const json = await resp.json();
-  const content = json.choices?.[0]?.message?.content ?? null;
-  console.log(`${head} response received (${content?.length || 0} chars)`);
-  return content;
+  // Return a basic fallback message
+  return `Analysis for ${head} is temporarily unavailable. Please ensure AI services are configured correctly.`;
 }
 
 serve(async (req) => {
@@ -125,7 +151,7 @@ serve(async (req) => {
       },
       { role: "user", content: `Case: ${caseTitle}\n\nCase data: ${caseText}` }
     ];
-    const defensePlan = await callOpenAI("Defendr", defendrMsg);
+    const defensePlan = await callAI("Defendr", defendrMsg);
 
     // LEXI: Client-friendly summary
     console.log("Running Lexi analysis...");
@@ -136,7 +162,7 @@ serve(async (req) => {
       },
       { role: "user", content: `Case: ${caseTitle}\n\nCase data: ${caseText}` }
     ];
-    const clientSummary = await callOpenAI("Lexi", lexiMsg);
+    const clientSummary = await callAI("Lexi", lexiMsg);
 
     // CUSTODIA: Custody analysis
     console.log("Running CustodiAI analysis...");
@@ -147,7 +173,7 @@ serve(async (req) => {
       },
       { role: "user", content: `Case: ${caseTitle}\n\nCase data: ${caseText}` }
     ];
-    const custodyNotes = await callOpenAI("CustodiAI", custodyMsg);
+    const custodyNotes = await callAI("CustodiAI", custodyMsg);
 
     console.log("Storing AI analysis results...");
     const { error: updateError } = await supabase

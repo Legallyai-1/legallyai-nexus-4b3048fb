@@ -54,7 +54,7 @@ serve(async (req) => {
     }
     console.log("Chat request from:", userId);
 
-    const { messages, stream = true } = await req.json();
+    const { messages, stream = false } = await req.json();
     
     if (!messages || !Array.isArray(messages)) {
       return new Response(
@@ -90,16 +90,6 @@ serve(async (req) => {
       }
     }
 
-    // Use user's own OpenAI API key - no Lovable credits needed
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (!OPENAI_API_KEY) {
-      console.error("OPENAI_API_KEY is not configured");
-      return new Response(
-        JSON.stringify({ error: "AI service not configured. Please add your OpenAI API key." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const systemPrompt = `You are LegallyAI, a knowledgeable AI legal assistant. You provide helpful, accurate information about U.S. law (2025).
 
 IMPORTANT RULES:
@@ -124,63 +114,93 @@ Areas you can help with:
 
 End important responses with: "Remember: This is general legal information, not legal advice. For your specific situation, consult a licensed attorney."`;
 
-    console.log("Chat request from:", userId, "with", messages.length, "messages, stream:", stream);
+    console.log("Chat request from:", userId, "with", messages.length, "messages");
 
-    // Call OpenAI API directly
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...messages,
-        ],
-        stream: stream,
-      }),
-    });
+    // Try Lovable AI first (free, no API key needed)
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    
+    let response;
+    let usedLovable = false;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("OpenAI API error:", response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+    // Primary: Use Lovable AI (Google Gemini - free)
+    if (LOVABLE_API_KEY) {
+      try {
+        console.log("Using Lovable AI (primary)");
+        response = await fetch("https://api.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [
+              { role: "system", content: systemPrompt },
+              ...messages,
+            ],
+          }),
+        });
+        
+        if (response.ok) {
+          usedLovable = true;
+        } else {
+          console.log("Lovable AI failed with status:", response.status);
+        }
+      } catch (lovableError) {
+        console.error("Lovable AI error:", lovableError);
       }
-      if (response.status === 401) {
-        return new Response(
-          JSON.stringify({ error: "Invalid OpenAI API key. Please check your configuration." }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      
-      return new Response(
-        JSON.stringify({ error: "Failed to get response from AI" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
     }
 
-    // Handle non-streaming response
-    if (!stream) {
-      const data = await response.json();
-      const content = data.choices?.[0]?.message?.content || "I couldn't generate a response. Please try again.";
-      console.log("Non-streaming response generated, length:", content.length);
+    // Fallback: Use OpenAI if Lovable fails
+    if (!usedLovable && OPENAI_API_KEY) {
+      console.log("Using OpenAI (fallback)");
+      response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: systemPrompt },
+            ...messages,
+          ],
+        }),
+      });
+    }
+
+    if (!response || !response.ok) {
+      const errorText = response ? await response.text() : "No AI service available";
+      console.error("AI API error:", errorText);
+      
+      // Provide a helpful fallback response
+      const fallbackResponse = `I'm here to help with your legal questions! While I'm having trouble connecting to my full AI capabilities right now, here are some general resources:
+
+1. For **document generation**, visit our Generate page
+2. For **court preparation**, check our Court Prep tools
+3. For **specific legal hubs**, we have specialized assistants for custody, DUI, wills, and more
+
+Please try your question again in a moment, or explore our other features.
+
+Remember: For urgent legal matters, please consult a licensed attorney.`;
+
       return new Response(
-        JSON.stringify({ response: content }),
+        JSON.stringify({ response: fallbackResponse }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Return the stream directly for streaming requests
-    return new Response(response.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-    });
+    // Parse and return the response
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || "I couldn't generate a response. Please try again.";
+    console.log("Response generated, length:", content.length, "provider:", usedLovable ? "Lovable" : "OpenAI");
+    
+    return new Response(
+      JSON.stringify({ response: content }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
 
   } catch (error) {
     console.error("Error in legal-chat:", error);
