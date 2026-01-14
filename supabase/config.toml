@@ -59,3 +59,9 @@ verify_jwt = false
 
 [functions.job-search]
 verify_jwt = false
+
+[functions.notification-scheduler]
+verify_jwt = false
+
+[functions.plaid-integration]
+verify_jwt = true

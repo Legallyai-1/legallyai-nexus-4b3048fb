@@ -10,6 +10,7 @@ import {
   FileSignature, Share2
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Template {
   id: string;
@@ -60,8 +61,33 @@ export function DocumentAssembly() {
     return matchesSearch && matchesCategory;
   });
 
-  const handleAssemble = (template: Template) => {
-    toast.success(`Opening document assembly wizard for "${template.name}"`);
+  const handleAssemble = async (template: Template) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("Please sign in to generate documents");
+        return;
+      }
+
+      // Call document generation
+      const { data, error } = await supabase.functions.invoke("generate-document", {
+        body: {
+          prompt: `Generate a ${template.name} document with standard legal formatting. Include all necessary clauses and sections typically found in this type of document.`,
+          documentType: template.category,
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success(`Document "${template.name}" generated successfully!`);
+      
+      // In a real implementation, this would open a document editor or download
+      console.log("Generated document:", data);
+    } catch (error) {
+      console.error("Document assembly error:", error);
+      toast.error("Failed to generate document. Please try again.");
+    }
   };
 
   const statusColors = {

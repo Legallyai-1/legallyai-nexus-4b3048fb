@@ -13,6 +13,7 @@ import {
   CreditCard, TrendingUp, Calendar, Zap, ArrowRight
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TimeEntry {
   id: string;
@@ -85,13 +86,68 @@ export function BillingAutomation() {
     }
     
     setIsGenerating(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsGenerating(false);
     
-    toast.success(`Generated invoice for ${selectedEntries.length} entries totaling $${selectedTotal.toLocaleString()}`);
-    setTimeEntries(prev => prev.map(e => 
-      e.selected ? { ...e, selected: false, status: "billed" } : e
-    ));
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("Please sign in to generate invoices");
+        return;
+      }
+
+      // Get user's organization
+      const { data: orgMember } = await supabase
+        .from("organization_members")
+        .select("organization_id")
+        .eq("user_id", user.id)
+        .single();
+
+      // Get a client for this invoice (in real implementation, group by client)
+      const { data: clients } = await supabase
+        .from("clients")
+        .select("id")
+        .eq("organization_id", orgMember.organization_id)
+        .limit(1);
+
+      if (!clients || clients.length === 0) {
+        toast.error("No clients found. Please add a client first.");
+        return;
+      }
+
+      // Create invoice record
+      const invoiceNumber = `INV-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 30);
+
+      const { error } = await supabase.from("invoices").insert({
+        invoice_number: invoiceNumber,
+        organization_id: orgMember.organization_id,
+        client_id: clients[0].id,
+        amount: selectedTotal,
+        status: "draft",
+        due_date: dueDate.toISOString().split("T")[0],
+        notes: `Generated from ${selectedEntries.length} time entries`,
+        items: selectedEntries.map(e => ({
+          description: e.description,
+          hours: e.hours,
+          rate: e.rate,
+          amount: e.hours * e.rate
+        }))
+      });
+
+      if (error) throw error;
+
+      toast.success(`Generated invoice ${invoiceNumber} for $${selectedTotal.toLocaleString()}`);
+      
+      setTimeEntries(prev => prev.map(e => 
+        e.selected ? { ...e, selected: false, status: "billed" } : e
+      ));
+    } catch (error) {
+      console.error("Invoice generation error:", error);
+      toast.error("Failed to generate invoice");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const statusColors = {

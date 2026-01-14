@@ -113,33 +113,89 @@ export function AIIntakeForm() {
   const runConflictCheck = async () => {
     setIsCheckingConflicts(true);
     
-    // Simulate conflict check - in production, this would query your conflicts database
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Demo result - in production, check against actual client/matter database
-    const hasConflict = Math.random() > 0.8;
-    setConflictCheckResult({
-      clear: !hasConflict,
-      matches: hasConflict ? ["Smith v. Johnson (Case #2023-001) - Potential conflict with adverse party"] : []
-    });
-    
-    setIsCheckingConflicts(false);
-    
-    if (!hasConflict) {
-      toast.success("No conflicts detected!");
-    } else {
-      toast.warning("Potential conflict detected - review required");
+    try {
+      // Query existing clients for potential conflicts
+      const { data: existingClients, error } = await supabase
+        .from("clients")
+        .select("full_name, email")
+        .or(`full_name.ilike.%${formData.lastName || ""}%,email.eq.${formData.email || ""}`);
+
+      if (error) throw error;
+
+      const hasConflict = existingClients && existingClients.length > 0;
+      setConflictCheckResult({
+        clear: !hasConflict,
+        matches: hasConflict 
+          ? existingClients.map(c => `Existing client: ${c.full_name} (${c.email})`)
+          : []
+      });
+      
+      if (!hasConflict) {
+        toast.success("No conflicts detected!");
+      } else {
+        toast.warning("Potential conflict detected - review required");
+      }
+    } catch (error) {
+      console.error("Conflict check error:", error);
+      toast.error("Failed to run conflict check");
+    } finally {
+      setIsCheckingConflicts(false);
     }
   };
 
-  const handleSubmit = () => {
-    toast.success("Client intake submitted successfully!");
-    // Reset form
-    setStep(1);
-    setFormData({});
-    setPracticeArea("");
-    setAIQuestions([]);
-    setConflictCheckResult(null);
+  const handleSubmit = async () => {
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("Please sign in to submit intake form");
+        return;
+      }
+
+      // Get user's organization
+      const { data: orgMember } = await supabase
+        .from("organization_members")
+        .select("organization_id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!orgMember) {
+        toast.error("No organization found. Please contact support.");
+        return;
+      }
+
+      // Create client record
+      const { error } = await supabase.from("clients").insert({
+        full_name: `${formData.firstName || ""} ${formData.lastName || ""}`.trim(),
+        email: formData.email || null,
+        phone: formData.phone || null,
+        address: formData.address || null,
+        notes: JSON.stringify({ 
+          practiceArea,
+          preferredContact: formData.preferredContact,
+          aiResponses: Object.fromEntries(
+            aiQuestions.map(q => [q.question, formData[q.id]])
+          )
+        }),
+        organization_id: orgMember.organization_id,
+        intake_date: new Date().toISOString(),
+      });
+
+      if (error) throw error;
+
+      toast.success("Client intake submitted and saved successfully!");
+      
+      // Reset form
+      setStep(1);
+      setFormData({});
+      setPracticeArea("");
+      setAIQuestions([]);
+      setConflictCheckResult(null);
+    } catch (error) {
+      console.error("Submit error:", error);
+      toast.error("Failed to submit intake form");
+    }
   };
 
   const allQuestions = [...baseQuestions, ...aiQuestions];
