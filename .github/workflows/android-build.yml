@@ -1,4 +1,3 @@
-# Build timestamp: 2025-12-18T01:10:00Z - VERSION 4.0 APK BUILD
 name: Build Android APK & AAB
 
 on:
@@ -9,7 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -17,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
@@ -30,7 +29,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '17'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -40,11 +39,8 @@ jobs:
 
       - name: Clean and setup Capacitor config
         run: |
-          # Remove any existing android folder to ensure fresh build
           rm -rf android
-          
-          # Create production capacitor config (no server URL)
-          cat > capacitor.config.ts << 'EOF'
+          cat > capacitor.config.ts << 'EOC'
           import type { CapacitorConfig } from '@capacitor/cli';
 
           const config: CapacitorConfig = {
@@ -54,8 +50,8 @@ jobs:
           };
 
           export default config;
-          EOF
-          
+          EOC
+
           echo "=== Capacitor Config ==="
           cat capacitor.config.ts
 
@@ -63,47 +59,40 @@ jobs:
         run: |
           npx cap add android
           npx cap sync android
-          
-          # Update version code and name
+
+          # Versioning
           sed -i 's/versionCode 1/versionCode 5/' android/app/build.gradle
-          sed -i 's/versionName "1.0"/versionName "5.0"/' android/app/build.gradle 
-         
-          # Add AD_ID permission for Google AdSense (required for Android 13+)
+          sed -i 's/versionName "1.0"/versionName "5.0"/' android/app/build.gradle
+
+          # AD_ID permission
           sed -i 's|<manifest|<manifest xmlns:tools="http://schemas.android.com/tools"|' android/app/src/main/AndroidManifest.xml
           sed -i '/<application/i\    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>' android/app/src/main/AndroidManifest.xml
-          
-          echo "=== Verifying Version in build.gradle ==="
-          grep -E "(versionCode|versionName)" android/app/build.gradle
-          
-          echo "=== Verifying AD_ID Permission in AndroidManifest.xml ==="
-          grep -i "AD_ID" android/app/src/main/AndroidManifest.xml || echo "AD_ID permission added"
 
       - name: Setup release keystore
         run: |
           if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
-            echo "Using existing keystore from secrets"
             echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
-            echo "=== Verifying keystore fingerprint ==="
-            keytool -list -v -keystore android/app/release.keystore -storepass legallyai123 -alias legallyai 2>/dev/null | grep -A1 "SHA1" || echo "Could not read fingerprint"
+            echo "Keystore present."
           else
-            echo "ERROR: ANDROID_KEYSTORE_BASE64 secret is required!"
-            echo "You must use the SAME keystore that was used for your original Google Play upload."
-            echo "Expected SHA1: 59:FB:57:C0:56:DD:4B:C7:6F:E8:03:EC:82:00:01:6A"
-            echo ""
-            echo "To fix this:"
-            echo "1. Find your original release.keystore file"
-            echo "2. Run: base64 -w 0 release.keystore > keystore.txt"
-            echo "3. Copy the contents of keystore.txt"
-            echo "4. Add it as a GitHub secret named ANDROID_KEYSTORE_BASE64"
+            echo "ERROR: ANDROID_KEYSTORE_BASE64 secret is required (must be the ORIGINAL Play keystore)."
             exit 1
           fi
 
       - name: Configure signing for release build
         run: |
-          # Add signing config to build.gradle
-          sed -i '/android {/a\    signingConfigs {\n        release {\n            storeFile file("release.keystore")\n            storePassword "legallyai123"\n            keyAlias "legallyai"\n            keyPassword "legallyai123"\n        }\n    }' android/app/build.gradle
-          
-          # Update release buildType to use signing config
+          storePass="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}"
+          keyAlias="${{ secrets.ANDROID_KEY_ALIAS }}"
+          keyPass="${{ secrets.ANDROID_KEY_ALIAS_PASSWORD }}"
+
+          if [ -z "$storePass" ] || [ -z "$keyAlias" ] || [ -z "$keyPass" ]; then
+            echo "ERROR: Missing keystore passwords or alias secrets."
+            exit 1
+          fi
+
+          # Inject signing config
+          sed -i '/android {/a\    signingConfigs {\n        release {\n            storeFile file("release.keystore")\n            storePassword "'"$storePass"'"\n            keyAlias "'"$keyAlias"'"\n            keyPassword "'"$keyPass"'"\n        }\n    }' android/app/build.gradle
+
+          # Ensure release buildType uses signing config
           sed -i 's/buildTypes {/buildTypes {\n        release {\n            signingConfig signingConfigs.release\n            minifyEnabled false\n        }/' android/app/build.gradle
 
       - name: Make gradlew executable
