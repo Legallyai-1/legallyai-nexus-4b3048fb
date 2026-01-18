@@ -71,3 +71,88 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+## 🔄 CI/CD with Supabase
+
+This project uses GitHub Actions for automated deployment to Supabase.
+
+### Automatic Deployments
+
+Every push to `main` branch triggers:
+- ✅ Dependency installation and caching
+- ✅ Code linting
+- ✅ Production build
+- ✅ Supabase database migrations
+- ✅ Supabase Edge Functions deployment
+
+### Setup Instructions
+
+#### 1. Configure GitHub Secrets
+
+Add these secrets in **Settings → Secrets and variables → Actions**:
+
+| Secret Name | Description | How to Get |
+|------------|-------------|------------|
+| `VITE_SUPABASE_PROJECT_ID` | Project reference ID | Already set: `wejiqqtwnhevcjdllodr` |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Anon/public key | Supabase Dashboard → Settings → API |
+| `VITE_SUPABASE_URL` | Project URL | Already set: `https://wejiqqtwnhevcjdllodr.supabase.co` |
+| `SUPABASE_ACCESS_TOKEN` | CLI access token | https://app.supabase.com/account/tokens |
+
+**Quick setup with GitHub CLI:**
+```bash
+gh secret set VITE_SUPABASE_PROJECT_ID --body "wejiqqtwnhevcjdllodr"
+gh secret set VITE_SUPABASE_PUBLISHABLE_KEY --body "YOUR_KEY"
+gh secret set VITE_SUPABASE_URL --body "https://wejiqqtwnhevcjdllodr.supabase.co"
+gh secret set SUPABASE_ACCESS_TOKEN --body "YOUR_TOKEN"
+```
+
+#### 2. Supabase Access Token
+
+1. Visit https://app.supabase.com/account/tokens
+2. Generate a new token named "GitHub Actions"
+3. Copy and add as `SUPABASE_ACCESS_TOKEN` secret
+
+#### 3. Deploy
+
+```bash
+git push origin main
+```
+
+Check **Actions** tab to monitor deployment progress!
+
+### Supabase Functions
+
+Edge Functions are located in `supabase/functions/`:
+- `webhook-handler/` - Handles incoming webhooks and logs to database
+
+Deploy functions manually:
+```bash
+supabase functions deploy webhook-handler
+```
+
+### Database Migrations
+
+Migrations are in `supabase/migrations/`.
+
+Apply migrations locally:
+```bash
+supabase db reset
+```
+
+Apply to production (automatic via GitHub Actions):
+```bash
+supabase db push
+```
+
+### Local Development with Supabase
+
+```bash
+# Start Supabase locally
+supabase start
+
+# Stop Supabase
+supabase stop
+
+# View local dashboard
+# URL shown after 'supabase start'
+```
