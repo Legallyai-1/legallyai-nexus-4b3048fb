@@ -68,17 +68,20 @@ jobs:
           sed -i 's|<manifest|<manifest xmlns:tools="http://schemas.android.com/tools"|' android/app/src/main/AndroidManifest.xml
           sed -i '/<application/i\    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>' android/app/src/main/AndroidManifest.xml
 
-      - name: Setup release keystore
+      - name: Setup release keystore (if secrets exist)
+        id: keystore
         run: |
           if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
             echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
-            echo "Keystore present."
+            echo "has_keystore=true" >> $GITHUB_OUTPUT
+            echo "✅ Keystore present - will build signed release."
           else
-            echo "ERROR: ANDROID_KEYSTORE_BASE64 secret is required (must be the ORIGINAL Play keystore)."
-            exit 1
+            echo "has_keystore=false" >> $GITHUB_OUTPUT
+            echo "⚠️ No keystore secret - will build unsigned/debug artifacts."
           fi
 
       - name: Configure signing for release build
+        if: steps.keystore.outputs.has_keystore == 'true'
         run: |
           storePass="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}"
           keyAlias="${{ secrets.ANDROID_KEY_ALIAS }}"
@@ -98,33 +101,69 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
-      - name: Build Release APK
+      - name: Build Release APK (signed)
+        if: steps.keystore.outputs.has_keystore == 'true'
         run: |
           cd android
           ./gradlew clean assembleRelease --stacktrace
 
-      - name: Build Release AAB (App Bundle)
+      - name: Build Debug APK (unsigned)
+        if: steps.keystore.outputs.has_keystore != 'true'
+        run: |
+          cd android
+          ./gradlew clean assembleDebug --stacktrace
+
+      - name: Build Release AAB (signed)
+        if: steps.keystore.outputs.has_keystore == 'true'
         run: |
           cd android
           ./gradlew bundleRelease --stacktrace
 
+      - name: Build Debug AAB (unsigned)
+        if: steps.keystore.outputs.has_keystore != 'true'
+        run: |
+          cd android
+          ./gradlew bundleDebug --stacktrace
+
       - name: Verify builds
         run: |
           echo "=== APK Info ==="
-          ls -la android/app/build/outputs/apk/release/ || echo "APK folder not found"
+          ls -la android/app/build/outputs/apk/release/ 2>/dev/null || ls -la android/app/build/outputs/apk/debug/ 2>/dev/null || echo "APK folder not found"
           echo "=== AAB Info ==="
-          ls -la android/app/build/outputs/bundle/release/ || echo "AAB folder not found"
+          ls -la android/app/build/outputs/bundle/release/ 2>/dev/null || ls -la android/app/build/outputs/bundle/debug/ 2>/dev/null || echo "AAB folder not found"
 
-      - name: Upload APK
+      - name: Upload APK (signed release)
+        if: steps.keystore.outputs.has_keystore == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: legallyai-apk-v6-${{ github.run_number }}
+          name: legallyai-apk-v6-signed-${{ github.run_number }}
           path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 30
+          if-no-files-found: warn
 
-      - name: Upload AAB
+      - name: Upload APK (unsigned debug)
+        if: steps.keystore.outputs.has_keystore != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: legallyai-aab-v6-${{ github.run_number }}
+          name: legallyai-apk-v6-debug-${{ github.run_number }}
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Upload AAB (signed release)
+        if: steps.keystore.outputs.has_keystore == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: legallyai-aab-v6-signed-${{ github.run_number }}
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
+          if-no-files-found: warn
+
+      - name: Upload AAB (unsigned debug)
+        if: steps.keystore.outputs.has_keystore != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: legallyai-aab-v6-debug-${{ github.run_number }}
+          path: android/app/build/outputs/bundle/debug/app-debug.aab
+          retention-days: 30
+          if-no-files-found: warn
