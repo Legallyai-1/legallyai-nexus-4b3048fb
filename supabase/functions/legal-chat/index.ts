@@ -139,6 +139,7 @@ End important responses with: "Remember: This is general legal information, not 
               { role: "system", content: systemPrompt },
               ...messages,
             ],
+            stream: stream,
           }),
         });
         
@@ -167,6 +168,7 @@ End important responses with: "Remember: This is general legal information, not 
             { role: "system", content: systemPrompt },
             ...messages,
           ],
+          stream: stream,
         }),
       });
     }
@@ -186,13 +188,40 @@ Please try your question again in a moment, or explore our other features.
 
 Remember: For urgent legal matters, please consult a licensed attorney.`;
 
-      return new Response(
-        JSON.stringify({ response: fallbackResponse }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (stream) {
+        const encoder = new TextEncoder();
+        return new Response(
+          new ReadableStream({
+            start(controller) {
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: fallbackResponse } }] })}\n\n`));
+              controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+              controller.close();
+            }
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } }
+        );
+      } else {
+        return new Response(
+          JSON.stringify({ response: fallbackResponse }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
-    // Parse and return the response
+    // Handle streaming responses
+    if (stream) {
+      console.log("Streaming response from:", usedLovable ? "Lovable" : "OpenAI");
+      return new Response(response.body, {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          "Connection": "keep-alive",
+        },
+      });
+    }
+
+    // Parse and return the non-streaming response
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "I couldn't generate a response. Please try again.";
     console.log("Response generated, length:", content.length, "provider:", usedLovable ? "Lovable" : "OpenAI");
