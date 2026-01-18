@@ -30,6 +30,56 @@ function validateMessage(content: string): { valid: boolean; reason?: string } {
   return { valid: true };
 }
 
+// Local AI Knowledge Base - No External APIs
+function getLocalAIResponse(message: string): string {
+  const lowerMessage = message.toLowerCase();
+  
+  // Contract Law
+  if (lowerMessage.includes('contract') || lowerMessage.includes('agreement')) {
+    return `A **contract** is a legally binding agreement between two or more parties. For a contract to be valid, it must have:\n1. **Offer** - A clear proposal\n2. **Acceptance** - Agreement to the terms\n3. **Consideration** - Something of value exchanged\n4. **Mutual Intent** - Both parties intend to be bound\n5. **Capacity** - Parties are legally able to contract\n6. **Legality** - The contract purpose must be legal\n\nRemember: This is general legal information, not legal advice. For your specific situation, consult a licensed attorney.`;
+  }
+  
+  if (lowerMessage.includes('nda') || lowerMessage.includes('non-disclosure')) {
+    return `A **Non-Disclosure Agreement (NDA)** protects confidential information. Key points:\n- **Unilateral NDA**: One party shares confidential info\n- **Mutual NDA**: Both parties share confidential info\n- **Typical Duration**: 1-5 years (negotiable)\n- **Must Include**: Definition of confidential info, obligations, exceptions, term, and remedies\n\nYou can generate an NDA on our Generate page!\n\nRemember: This is general legal information, not legal advice. For your specific situation, consult a licensed attorney.`;
+  }
+  
+  // Business Law
+  if (lowerMessage.includes('llc') || lowerMessage.includes('limited liability')) {
+    return `An **LLC (Limited Liability Company)** combines corporate liability protection with pass-through taxation. Benefits:\n- **Limited Liability**: Personal assets protected from business debts\n- **Tax Flexibility**: Can be taxed as sole proprietor, partnership, S-corp, or C-corp\n- **Fewer Formalities**: Less paperwork than corporations\n- **Management Flexibility**: Can be member-managed or manager-managed\n\nSteps to form:\n1. Choose a business name\n2. File Articles of Organization\n3. Create an Operating Agreement\n4. Get an EIN from the IRS\n5. Register for state taxes\n\nCheck our Business Hub for LLC formation assistance!\n\nRemember: This is general legal information, not legal advice.`;
+  }
+  
+  // Family Law
+  if (lowerMessage.includes('custody') || lowerMessage.includes('child custody')) {
+    return `**Child custody** determines who makes decisions for a child and where they live. Types:\n- **Legal Custody**: Right to make major decisions\n- **Physical Custody**: Where child primarily lives\n- **Joint Custody**: Shared between both parents\n- **Sole Custody**: One parent has primary rights\n\nCourts consider the **"best interests of the child"** standard.\n\nVisit our Custody Hub for detailed guidance!\n\nRemember: This is general legal information, not legal advice.`;
+  }
+  
+  if (lowerMessage.includes('divorce')) {
+    return `**Divorce** legally ends a marriage. Key aspects:\n\n**Types:**\n- **No-Fault**: Based on irreconcilable differences\n- **Fault**: Based on grounds like adultery, abuse\n\n**Issues to Resolve:**\n1. Property division\n2. Debt allocation\n3. Spousal support\n4. Child custody and support\n\nCheck our Marriage & Divorce page for state-specific guidance!\n\nRemember: This is general legal information, not legal advice.`;
+  }
+  
+  // Criminal Law
+  if (lowerMessage.includes('dui') || lowerMessage.includes('dwi')) {
+    return `**DUI/DWI** (Driving Under the Influence) is a serious criminal offense.\n\n**Legal Limits:**\n- 0.08% BAC for drivers 21+\n- 0.04% BAC for commercial drivers\n- 0.00-0.02% for drivers under 21\n\n**Penalties may include:**\n- License suspension\n- Fines ($1,000-$10,000+)\n- Jail time\n- Mandatory alcohol education\n\nVisit our DUI Hub for comprehensive guidance!\n\nRemember: This is general legal information, not legal advice.`;
+  }
+  
+  // Estate Planning
+  if (lowerMessage.includes('will') || lowerMessage.includes('testament')) {
+    return `A **Will** (Last Will and Testament) specifies how your assets should be distributed after death.\n\n**Essential Elements:**\n- Testator must be 18+ and of sound mind\n- Must be in writing\n- Signed by testator\n- Witnessed (typically 2 witnesses)\n\n**What a Will Can Do:**\n- Name beneficiaries for property\n- Designate guardian for minor children\n- Name executor to manage estate\n\nCreate your will on our Will Hub page!\n\nRemember: This is general legal information, not legal advice.`;
+  }
+  
+  // Help and Navigation
+  if (lowerMessage.includes('help') || lowerMessage.includes('how to use')) {
+    return `**Welcome to LegallyAI!** I'm here to help with your legal questions. Here's what I can do:\n\n**💬 Legal Chat (You're here!)**\n- Answer legal questions\n- Explain legal concepts\n- Provide general legal information\n\n**📄 Generate Documents**\n- NDA, contracts, wills, operating agreements\n- Visit the Generate page\n\n**⚖️ Specialized Hubs**\n- Custody Hub, DUI Hub, Will Hub, Business Hub, and more!\n\nAsk me any legal question, and I'll provide helpful information!`;
+  }
+  
+  if (lowerMessage.includes('document') || lowerMessage.includes('generate')) {
+    return `**Document Generation** - I can help you create legal documents!\n\nTo generate a document:\n1. Visit the **Generate** page (navigation menu)\n2. Choose your document type or describe what you need\n3. Fill in the required details\n4. Get your professionally formatted document\n\n**Available Documents:**\n- Contracts (NDA, employment, service agreements)\n- Business documents (LLC operating agreement)\n- Real estate (lease agreements)\n- Estate planning (will, power of attorney)\n- And many more!\n\nWhat type of document do you need?`;
+  }
+  
+  // Generic fallback
+  return `I understand you're asking about legal matters. While I don't have a specific pre-programmed response for that exact question, I'm here to help with:\n\n📋 **Contract Law** - NDAs, agreements, terms\n🏢 **Business Law** - LLC formation, partnerships\n👨‍👩‍👧 **Family Law** - Custody, divorce\n💼 **Employment Law** - Wrongful termination, discrimination\n🚗 **Criminal Law** - DUI, traffic violations\n🏠 **Real Estate** - Leases, property\n📜 **Estate Planning** - Wills, trusts, power of attorney\n\n**Try asking your question differently**, or visit our specialized hubs for more detailed assistance!\n\nFor document generation, visit our **Generate** page.\nFor specific legal advice, please consult a licensed attorney.\n\nWhat specific legal topic can I help you with?`;
+}
+
 // Helper function to create SSE fallback stream
 function createSSEFallbackStream(message: string): ReadableStream {
   const encoder = new TextEncoder();
@@ -102,147 +152,25 @@ serve(async (req) => {
       }
     }
 
-    const systemPrompt = `You are LegallyAI, a knowledgeable AI legal assistant. You provide helpful, accurate information about U.S. law (2025).
-
-IMPORTANT RULES:
-1. Provide clear, helpful answers to legal questions
-2. Reference specific laws, statutes, or legal principles when relevant
-3. Explain legal concepts in plain English
-4. Suggest when someone should consult an attorney
-5. Be professional but approachable
-6. If asked to generate a document, explain you can help with that on the Generate page
-7. Always remind users this is informational, not legal advice
-8. NEVER provide advice on how to commit crimes or illegal activities
-9. If a question seems to be asking for help with illegal activities, politely decline
-
-Areas you can help with:
-- Contract law and agreements
-- Employment law
-- Family law (custody, divorce)
-- Real estate law
-- Business formation (LLC, Corp)
-- Intellectual property basics
-- General legal questions
-
-End important responses with: "Remember: This is general legal information, not legal advice. For your specific situation, consult a licensed attorney."`;
-
     console.log("Chat request from:", userId, "with", messages.length, "messages");
 
-    // Try Lovable AI first (free, no API key needed)
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    // Get the last user message
+    const userMessage = messages[messages.length - 1]?.content || "";
     
-    let response;
-    let usedLovable = false;
-
-    // Primary: Use Lovable AI (Google Gemini - free)
-    if (LOVABLE_API_KEY) {
-      try {
-        console.log("Using Lovable AI (primary)");
-        response = await fetch("https://api.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
-            messages: [
-              { role: "system", content: systemPrompt },
-              ...messages,
-            ],
-            stream: stream,
-          }),
-        });
-        
-        if (response.ok) {
-          usedLovable = true;
-        } else {
-          console.log("Lovable AI failed with status:", response.status);
-        }
-      } catch (lovableError) {
-        console.error("Lovable AI error:", lovableError);
-      }
-    }
-
-    // Fallback: Use OpenAI if Lovable fails
-    if (!usedLovable && OPENAI_API_KEY) {
-      console.log("Using OpenAI (fallback)");
-      response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...messages,
-          ],
-          stream: stream,
-        }),
-      });
-    }
-
-    if (!response || !response.ok) {
-      const errorText = response ? await response.text() : "No AI service available";
-      console.error("AI API error:", errorText);
-      
-      // Provide a helpful fallback response
-      const fallbackResponse = `I'm here to help with your legal questions! While I'm having trouble connecting to my full AI capabilities right now, here are some general resources:
-
-1. For **document generation**, visit our Generate page
-2. For **court preparation**, check our Court Prep tools
-3. For **specific legal hubs**, we have specialized assistants for custody, DUI, wills, and more
-
-Please try your question again in a moment, or explore our other features.
-
-Remember: For urgent legal matters, please consult a licensed attorney.`;
-
-      if (stream) {
-        return new Response(
-          createSSEFallbackStream(fallbackResponse),
-          { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } }
-        );
-      } else {
-        return new Response(
-          JSON.stringify({ response: fallbackResponse }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    }
-
-    // Handle streaming responses
+    // Use local AI knowledge base - NO external API calls
+    const localResponse = getLocalAIResponse(userMessage);
+    
+    console.log("Generated local response, length:", localResponse.length);
+    
     if (stream) {
-      console.log("Streaming response from:", usedLovable ? "Lovable" : "OpenAI");
-      
-      // Validate that we have a readable response body
-      if (!response.body) {
-        console.error("No response body for streaming");
-        return new Response(
-          createSSEFallbackStream("Streaming unavailable. Please try again."),
-          { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } }
-        );
-      }
-
-      return new Response(response.body, {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
-          "Connection": "keep-alive",
-        },
-      });
+      return new Response(
+        createSSEFallbackStream(localResponse),
+        { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } }
+      );
     }
-
-    // Parse and return the non-streaming response
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || "I couldn't generate a response. Please try again.";
-    console.log("Response generated, length:", content.length, "provider:", usedLovable ? "Lovable" : "OpenAI");
     
     return new Response(
-      JSON.stringify({ response: content }),
+      JSON.stringify({ response: localResponse }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
