@@ -95,7 +95,8 @@ async function callSupabaseFunction(payload) {
     console.log('Fetching Railway deployments...');
     const data = await fetchRailwayDeployments();
 
-    const deployments = ((data?.project?.environment?.deployments?.edges) || []).map(e => e.node);
+    const edges = data?.project?.environment?.deployments?.edges || [];
+    const deployments = edges.map(e => e.node);
     console.log(`Found ${deployments.length} deployments`);
 
     const payload = { 
