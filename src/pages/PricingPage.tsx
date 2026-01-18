@@ -164,7 +164,7 @@ export default function PricingPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleCheckout = async (priceId: string, mode: string, planName: string) => {
+  const handleCheckout = async (planName: string) => {
     setLoading(planName);
     
     try {
@@ -180,20 +180,40 @@ export default function PricingPage() {
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { priceId, mode },
+      // Get the plan price
+      const plan = plans.find(p => p.name === planName);
+      const amount = plan?.price.replace(/\$/g, '').replace(/,/g, '') || '0';
+      
+      // Convert plan name to tier
+      const tier = planName.toLowerCase().replace(' - lawyers', '').replace('per document', 'premium');
+
+      // Use new database-only payment system (NO Stripe)
+      const { data, error } = await supabase.functions.invoke("process-payment", {
+        body: { 
+          tier, 
+          amount: parseFloat(amount),
+          payment_method: 'demo'
+        },
       });
 
       if (error) throw error;
 
-      if (data?.url) {
-        window.open(data.url, "_blank");
+      if (data?.success) {
+        toast({
+          title: "Success! 🎉",
+          description: data.message || `Successfully upgraded to ${planName}!`,
+        });
+        
+        // Redirect to dashboard after a short delay
+        setTimeout(() => {
+          navigate("/");
+        }, 2000);
       }
     } catch (error: any) {
       console.error("Checkout error:", error);
       toast({
         title: "Checkout Error",
-        description: error.message || "Failed to start checkout",
+        description: error.message || "Failed to process payment",
         variant: "destructive",
       });
     } finally {
@@ -291,7 +311,7 @@ export default function PricingPage() {
                           "w-full",
                           plan.popular && "bg-gradient-to-r from-section-premium to-neon-orange text-background"
                         )}
-                        onClick={() => handleCheckout(plan.priceId!, plan.mode!, plan.name)}
+                        onClick={() => handleCheckout(plan.name)}
                         disabled={loading === plan.name}
                       >
                         {loading === plan.name ? (

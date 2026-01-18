@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
@@ -9,7 +8,7 @@ const corsHeaders = {
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[STRIPE-ANALYTICS] ${step}${detailsStr}`);
+  console.log(`[DB-ANALYTICS] ${step}${detailsStr}`);
 };
 
 serve(async (req) => {
@@ -24,10 +23,7 @@ serve(async (req) => {
   );
 
   try {
-    logStep("Function started");
-
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+    logStep("Function started - Database-only analytics (NO Stripe)");
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
@@ -40,70 +36,89 @@ serve(async (req) => {
     if (!user) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id });
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    // Get date range for analytics (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    // Get date range for analytics
-    const now = new Date();
-    const thirtyDaysAgo = Math.floor((now.getTime() - 30 * 24 * 60 * 60 * 1000) / 1000);
+    // Fetch active subscriptions from database
+    const { data: subscriptions, error: subsError } = await supabaseClient
+      .from('user_subscriptions')
+      .select('*')
+      .eq('status', 'active');
 
-    // Fetch active subscriptions
-    const subscriptions = await stripe.subscriptions.list({
-      status: "active",
-      limit: 100,
-    });
-    logStep("Fetched subscriptions", { count: subscriptions.data.length });
+    if (subsError) throw subsError;
+    logStep("Fetched subscriptions", { count: subscriptions?.length || 0 });
 
-    // Fetch recent payments
-    const payments = await stripe.paymentIntents.list({
-      created: { gte: thirtyDaysAgo },
-      limit: 100,
-    });
-    logStep("Fetched payments", { count: payments.data.length });
+    // Fetch recent payments from database
+    const { data: payments, error: paymentsError } = await supabaseClient
+      .from('user_payments')
+      .select('*')
+      .gte('created_at', thirtyDaysAgo.toISOString())
+      .eq('status', 'completed');
 
-    // Fetch recent charges for revenue calculation
-    const charges = await stripe.charges.list({
-      created: { gte: thirtyDaysAgo },
-      limit: 100,
-    });
-    logStep("Fetched charges", { count: charges.data.length });
+    if (paymentsError) throw paymentsError;
+    logStep("Fetched payments", { count: payments?.length || 0 });
 
-    // Calculate metrics
-    const totalRevenue = charges.data
-      .filter((c: { paid: boolean; refunded: boolean }) => c.paid && !c.refunded)
-      .reduce((sum: number, c: { amount: number }) => sum + c.amount, 0) / 100;
+    // Fetch ad impressions for revenue calculation
+    const { data: adImpressions, error: adError } = await supabaseClient
+      .from('ad_impressions')
+      .select('*')
+      .gte('impression_time', thirtyDaysAgo.toISOString());
 
-    const subscriptionRevenue = subscriptions.data.length * 99; // $99/month per sub
-    const documentRevenue = totalRevenue - subscriptionRevenue;
+    if (adError) throw adError;
+    logStep("Fetched ad impressions", { count: adImpressions?.length || 0 });
+
+    // Calculate metrics from database
+    const totalRevenue = (payments || [])
+      .reduce((sum, p) => sum + parseFloat(p.amount || '0'), 0);
+
+    const subscriptionRevenue = (payments || [])
+      .filter(p => p.transaction_type === 'subscription')
+      .reduce((sum, p) => sum + parseFloat(p.amount || '0'), 0);
+
+    const documentRevenue = (payments || [])
+      .filter(p => p.transaction_type === 'document')
+      .reduce((sum, p) => sum + parseFloat(p.amount || '0'), 0);
+
+    const adRevenue = (adImpressions || [])
+      .reduce((sum, ad) => sum + (ad.revenue_cents || 0), 0) / 100;
 
     // Calculate revenue by stream
     const revenueStreams = [
-      { name: "Lawyer Pro Subscriptions", amount: subscriptionRevenue, percentage: subscriptionRevenue / totalRevenue * 100 || 0 },
-      { name: "Document Purchases", amount: documentRevenue > 0 ? documentRevenue : 0, percentage: documentRevenue > 0 ? documentRevenue / totalRevenue * 100 : 0 },
+      { 
+        name: "Subscriptions", 
+        amount: subscriptionRevenue, 
+        percentage: totalRevenue > 0 ? subscriptionRevenue / totalRevenue * 100 : 0 
+      },
+      { 
+        name: "Document Purchases", 
+        amount: documentRevenue, 
+        percentage: totalRevenue > 0 ? documentRevenue / totalRevenue * 100 : 0 
+      },
+      { 
+        name: "Ad Revenue", 
+        amount: adRevenue, 
+        percentage: totalRevenue > 0 ? adRevenue / totalRevenue * 100 : 0 
+      },
     ];
 
-    // Recent transactions
-    const recentTransactions = charges.data.slice(0, 10).map((charge: {
-      id: string;
-      amount: number;
-      billing_details?: { name?: string };
-      customer?: string;
-      created: number;
-      paid: boolean;
-    }) => ({
-      id: charge.id,
-      type: charge.amount === 9900 ? "subscription" : "document",
-      user: charge.billing_details?.name || charge.customer || "Unknown",
-      amount: charge.amount / 100,
-      time: new Date(charge.created * 1000).toLocaleDateString(),
-      status: charge.paid ? "succeeded" : "failed"
+    // Recent transactions from database
+    const recentTransactions = (payments || []).slice(0, 10).map(payment => ({
+      id: payment.id,
+      type: payment.transaction_type || "unknown",
+      user: payment.user_id,
+      amount: parseFloat(payment.amount || '0'),
+      time: new Date(payment.created_at).toLocaleDateString(),
+      status: payment.status || "unknown"
     }));
 
     const analytics = {
-      totalRevenue,
-      subscriptions: subscriptions.data.length,
-      documentsThisMonth: payments.data.filter((p: { amount: number }) => p.amount === 500).length,
+      totalRevenue: totalRevenue + adRevenue,
+      subscriptions: (subscriptions || []).length,
+      documentsThisMonth: (payments || []).filter(p => p.transaction_type === 'document').length,
       revenueStreams,
       recentTransactions,
+      adImpressions: (adImpressions || []).length,
       period: "30_days"
     };
 
