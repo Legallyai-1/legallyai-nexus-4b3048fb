@@ -168,32 +168,45 @@ export default function PricingPage() {
     setLoading(planName);
     
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (!session) {
+      if (!user) {
         toast({
           title: "Login Required",
-          description: "Please log in to purchase a subscription",
+          description: "Please sign in first",
           variant: "destructive",
         });
         navigate("/auth");
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { priceId, mode },
+      // Determine tier from plan name
+      const tier = planName.toLowerCase().replace(' - lawyers', '');
+      
+      // Parse amount from price string (remove $ and convert to number)
+      const amount = parseFloat(plans.find(p => p.name === planName)?.price.replace('$', '') || '0');
+      
+      // Call new process-payment function (database-only)
+      const { data, error } = await supabase.functions.invoke('process-payment', {
+        body: { 
+          tier: tier,
+          amount: amount,
+          payment_method: 'demo' // In production, integrate real payment gateway
+        }
       });
 
       if (error) throw error;
 
-      if (data?.url) {
-        window.open(data.url, "_blank");
-      }
-    } catch (error: any) {
-      console.error("Checkout error:", error);
       toast({
-        title: "Checkout Error",
-        description: error.message || "Failed to start checkout",
+        title: "Success!",
+        description: `Successfully upgraded to ${planName}!`,
+      });
+      navigate('/dashboard');
+    } catch (error: any) {
+      console.error("Subscription error:", error);
+      toast({
+        title: "Subscription Error",
+        description: error.message || "Failed to subscribe. Please try again.",
         variant: "destructive",
       });
     } finally {

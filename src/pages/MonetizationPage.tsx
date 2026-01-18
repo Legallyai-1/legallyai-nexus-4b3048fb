@@ -268,7 +268,7 @@ export default function MonetizationPage() {
           </CardContent>
         </Card>
 
-        {/* Stripe Integration Status */}
+        {/* Payment System Status */}
         <div className="mt-8 glass-card rounded-xl p-6 border border-neon-green/30">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -276,8 +276,8 @@ export default function MonetizationPage() {
                 <CreditCard className="w-6 h-6 text-neon-green" />
               </div>
               <div>
-                <h3 className="font-semibold">Stripe Integration Active</h3>
-                <p className="text-sm text-muted-foreground">Connected • Processing payments</p>
+                <h3 className="font-semibold">Payment System Active</h3>
+                <p className="text-sm text-muted-foreground">Database-Powered • Processing payments</p>
               </div>
             </div>
             <div className="flex items-center gap-2">

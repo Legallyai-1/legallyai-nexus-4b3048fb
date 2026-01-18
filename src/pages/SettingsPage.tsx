@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Settings, User, Bell, Shield, Palette, ArrowLeft, Save, Moon, Sun, Loader2, Phone, MapPin, Clock } from "lucide-react";
+import { Settings, User, Bell, Shield, Palette, ArrowLeft, Save, Moon, Sun, Loader2, Phone, MapPin, Clock, DollarSign } from "lucide-react";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { Layout } from "@/components/layout/Layout";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
@@ -54,6 +55,10 @@ export default function SettingsPage() {
     marketing: false,
   });
   const [darkMode, setDarkMode] = useState(true);
+  
+  // Earnings state
+  const [earnings, setEarnings] = useState({ balance: 0, lifetime: 0 });
+  const [payoutRequests, setPayoutRequests] = useState<any[]>([]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -142,6 +147,78 @@ export default function SettingsPage() {
     } catch (error) {
       console.error('Password reset error:', error);
       toast.error("Failed to send password reset email");
+    }
+  };
+
+  // Fetch earnings data
+  useEffect(() => {
+    const fetchEarnings = async () => {
+      if (!user) return;
+      
+      // Fetch credits/earnings (this table may not exist, so we'll handle gracefully)
+      const { data: credits } = await supabase
+        .from('user_credits')
+        .select('balance, lifetime_earned')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (credits) {
+        setEarnings({
+          balance: credits.balance / 100,
+          lifetime: credits.lifetime_earned / 100
+        });
+      }
+
+      // Fetch payout requests
+      const { data: payouts } = await supabase
+        .from('payout_requests')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      
+      if (payouts) setPayoutRequests(payouts);
+    };
+
+    fetchEarnings();
+  }, [user]);
+
+  const requestPayout = async () => {
+    if (earnings.balance < 100) {
+      toast.error('Minimum payout is $100');
+      return;
+    }
+
+    try {
+      const { error } = await supabase.functions.invoke('request-payout', {
+        body: {
+          amount: earnings.balance,
+          bank_account_info: { last4: '1234' } // Get from user input in production
+        }
+      });
+
+      if (!error) {
+        toast.success('Payout requested! Processing within 3-5 business days.');
+        // Refresh earnings
+        if (user) {
+          const { data: credits } = await supabase
+            .from('user_credits')
+            .select('balance, lifetime_earned')
+            .eq('user_id', user.id)
+            .single();
+          
+          if (credits) {
+            setEarnings({
+              balance: credits.balance / 100,
+              lifetime: credits.lifetime_earned / 100
+            });
+          }
+        }
+      } else {
+        toast.error('Failed to request payout');
+      }
+    } catch (error) {
+      console.error('Payout error:', error);
+      toast.error('Failed to request payout');
     }
   };
 
@@ -339,6 +416,54 @@ export default function SettingsPage() {
                   <Button variant="outline" className="w-full justify-start text-destructive">
                     Delete Account
                   </Button>
+                </CardContent>
+              </Card>
+
+              {/* Earnings & Payouts */}
+              <Card className="glass-card border-border/30">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <DollarSign className="w-5 h-5 text-neon-green" />
+                    Earnings & Payouts
+                  </CardTitle>
+                  <CardDescription>View your earnings and request payouts</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-background/30 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Available Balance</p>
+                      <p className="text-2xl font-bold text-neon-green">${earnings.balance.toFixed(2)}</p>
+                    </div>
+                    <div className="p-4 bg-background/30 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Lifetime Earnings</p>
+                      <p className="text-2xl font-bold text-neon-cyan">${earnings.lifetime.toFixed(2)}</p>
+                    </div>
+                  </div>
+
+                  <Button 
+                    onClick={requestPayout} 
+                    disabled={earnings.balance < 100}
+                    className="w-full"
+                    variant="outline"
+                  >
+                    Request Payout (Min $100)
+                  </Button>
+
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Recent Payouts</h4>
+                    {payoutRequests.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No payout requests yet</p>
+                    ) : (
+                      payoutRequests.slice(0, 5).map((payout: any) => (
+                        <div key={payout.id} className="flex justify-between p-2 bg-background/30 rounded">
+                          <span className="text-sm">${(payout.amount / 100).toFixed(2)}</span>
+                          <Badge variant={payout.status === 'completed' ? 'default' : 'outline'}>
+                            {payout.status}
+                          </Badge>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 
