@@ -7,7 +7,7 @@ interface SidebarAdProps {
 
 declare global {
   interface Window {
-    adsbygoogle: any[];
+    adsbygoogle: Record<string, unknown>[];
   }
 }
 

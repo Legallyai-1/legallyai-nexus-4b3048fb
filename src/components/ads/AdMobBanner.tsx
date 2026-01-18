@@ -36,7 +36,7 @@ export default function AdMobBanner({
   useEffect(() => {
     // Check if running in Capacitor/mobile environment
     const checkMobile = () => {
-      const isCapacitor = !!(window as any).Capacitor;
+      const isCapacitor = 'Capacitor' in window;
       const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       setIsMobile(isCapacitor || isMobileDevice);
     };
