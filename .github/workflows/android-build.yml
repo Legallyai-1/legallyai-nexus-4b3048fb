@@ -59,8 +59,8 @@ jobs:
       - name: Update version and permissions
         run: |
           # Versioning
-          sed -i 's/versionCode 1/versionCode 6/' android/app/build.gradle || true
-          sed -i 's/versionName "1.0"/versionName "6.0"/' android/app/build.gradle || true
+          sed -i 's/versionCode 1/versionCode 7/' android/app/build.gradle || true
+          sed -i 's/versionName "1.0"/versionName "7.0"/' android/app/build.gradle || true
           # AD_ID permission
           sed -i 's|<manifest|<manifest xmlns:tools="http://schemas.android.com/tools"|' android/app/src/main/AndroidManifest.xml || true
           sed -i '/<application/i\    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>' android/app/src/main/AndroidManifest.xml || true
@@ -141,7 +141,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: legallyai-debug-apk-v6-${{ github.run_number }}
+          name: legallyai-debug-apk-v7-${{ github.run_number }}
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
           if-no-files-found: error
@@ -150,7 +150,7 @@ jobs:
         if: steps.setup_keystore.outputs.keystore_present == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: legallyai-release-apk-v6-${{ github.run_number }}
+          name: legallyai-release-apk-v7-${{ github.run_number }}
           path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 30
           if-no-files-found: error
@@ -159,7 +159,7 @@ jobs:
         if: steps.setup_keystore.outputs.keystore_present == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: legallyai-release-aab-v6-${{ github.run_number }}
+          name: legallyai-release-aab-v7-${{ github.run_number }}
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
           if-no-files-found: error
