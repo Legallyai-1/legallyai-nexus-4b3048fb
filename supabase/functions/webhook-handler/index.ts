@@ -15,7 +15,7 @@ serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
     const payload = await req.json()
@@ -26,7 +26,6 @@ serve(async (req) => {
       .from('webhook_logs')
       .insert({
         payload: payload,
-        received_at: new Date().toISOString(),
         source: 'github-actions'
       })
 

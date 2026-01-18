@@ -2,9 +2,9 @@
 CREATE TABLE IF NOT EXISTS public.webhook_logs (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     payload JSONB NOT NULL,
-    received_at TIMESTAMPTZ DEFAULT NOW(),
+    received_at TIMESTAMPTZ DEFAULT NOW(),  -- When webhook was received
     source TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW()    -- When record was created in DB
 );
 
 -- Add index for faster queries
