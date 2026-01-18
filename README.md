@@ -11,7 +11,7 @@
 # Install dependencies
 npm install
 
-# Run development server (http://localhost:8080)
+# Run development server
 npm run dev
 
 # Lint code

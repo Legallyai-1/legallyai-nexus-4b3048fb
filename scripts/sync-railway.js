@@ -10,7 +10,8 @@
  * - SUPABASE_FUNCTION_URL
  */
 
-const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
+import fetch from 'node-fetch';
+
 const RAILWAY_API = 'https://backboard.railway.app/graphql/v1';
 
 const {
