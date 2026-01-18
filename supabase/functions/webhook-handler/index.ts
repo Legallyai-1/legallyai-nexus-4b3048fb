@@ -13,6 +13,8 @@ serve(async (req) => {
   }
 
   try {
+    // SUPABASE_SERVICE_ROLE_KEY is automatically injected by Supabase Edge Functions runtime
+    // This key bypasses Row Level Security and should only be used server-side
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',

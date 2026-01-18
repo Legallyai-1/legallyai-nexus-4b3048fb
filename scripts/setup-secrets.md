@@ -12,7 +12,7 @@ Add these secrets to your GitHub repository:
 ### 2. VITE_SUPABASE_PUBLISHABLE_KEY
 - **Value**: Your Supabase anon/publishable key
 - **Get it from**: Supabase Dashboard → Project Settings → API → anon public
-- **Current value**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` (from your .env)
+- **Note**: This is a public key safe to use in client-side code
 
 ### 3. VITE_SUPABASE_URL
 - **Value**: `https://wejiqqtwnhevcjdllodr.supabase.co`
@@ -43,6 +43,12 @@ gh secret set SUPABASE_ACCESS_TOKEN --body "YOUR_ACCESS_TOKEN_HERE"
 3. Give it a name like "GitHub Actions"
 4. Copy the token (you won't see it again!)
 5. Add it as `SUPABASE_ACCESS_TOKEN` secret
+
+## Important Notes
+
+**Service Role Key**: Edge Functions automatically have access to `SUPABASE_SERVICE_ROLE_KEY` at runtime. This is injected by Supabase and does not need to be configured in GitHub Secrets.
+
+**Security**: Never commit actual secret values to the repository. Only the `.env.example` file with placeholder values should be committed.
 
 ## Verify Setup
 
