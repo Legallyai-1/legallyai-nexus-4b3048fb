@@ -182,7 +182,7 @@ export default function PricingPage() {
 
       // Get the plan price
       const plan = plans.find(p => p.name === planName);
-      const amount = plan?.price.replace('$', '').replace(',', '') || '0';
+      const amount = plan?.price.replace(/\$/g, '').replace(/,/g, '') || '0';
       
       // Convert plan name to tier
       const tier = planName.toLowerCase().replace(' - lawyers', '').replace('per document', 'premium');
