@@ -38,7 +38,12 @@ jobs:
       - name: Deploy to Railway
         run: |
           if [ -n "$RAILWAY_TOKEN" ]; then
-            railway up --detach
+            # List services to find the correct one
+            echo "Available services:"
+            railway service list 2>/dev/null || true
+            
+            # Deploy to the web service (adjust name if different)
+            railway up --detach --service="${RAILWAY_SERVICE:-web}" || railway up --detach
             echo "✅ Deployed to Railway successfully"
           else
             echo "⚠️ RAILWAY_TOKEN not configured - skipping deployment"
@@ -46,3 +51,5 @@ jobs:
             echo "1. Get your Railway token from https://railway.app/account/tokens"
             echo "2. Add it as a GitHub secret named RAILWAY_TOKEN"
           fi
+        env:
+          RAILWAY_SERVICE: ${{ secrets.RAILWAY_SERVICE }}
