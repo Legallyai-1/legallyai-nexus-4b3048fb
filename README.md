@@ -1,158 +1,249 @@
-# Welcome to your Lovable project
+# 🚀 LegallyAI - The Ultimate Legal AI Platform
 
-## Project info
+**Production-ready legal tech platform powered by GitHub + Supabase ONLY.**
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Legallyai-1/legallyai-nexus-4b3048fb)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/Legallyai-1/legallyai-nexus-4b3048fb)
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## ✨ Features
 
-**Use Lovable**
+- **15+ AI Legal Assistants** - Custody, DUI, Divorce, Wills, Employment, etc.
+- **Full Business Hub** - Practice management, billing, trust accounting
+- **Database Subscriptions** - No Stripe SDK required
+- **Real Ad Revenue** - AdSense (web) + AdMob (mobile)
+- **Bank Payouts** - Withdraw earnings directly
+- **Android App** - Built with Capacitor
+- **Zero External APIs** - Works 100% with GitHub + Supabase
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🚀 Quick Start (5 minutes)
 
-**Use your preferred IDE**
+### 1. Deploy Backend (Supabase)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+1. Create account at [supabase.com](https://supabase.com)
+2. Create new project
+3. Run migrations (see `SUPABASE_SETUP.md`)
+4. Deploy edge functions (see `SUPABASE_SETUP.md`)
+5. Copy Project URL and Anon Key
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### 2. Deploy Frontend (Vercel/Netlify)
 
-Follow these steps:
+**Vercel:**
+1. Click "Deploy with Vercel" button above
+2. Connect GitHub repo
+3. Add environment variables:
+   ```
+   VITE_SUPABASE_URL=https://your-project.supabase.co
+   VITE_SUPABASE_ANON_KEY=your_anon_key
+   VITE_SUPABASE_PROJECT_ID=your_project_id
+   ```
+4. Deploy!
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+**Netlify:**
+1. Click "Deploy to Netlify" button above
+2. Connect GitHub repo
+3. Add same environment variables
+4. Deploy!
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### 3. Configure Monetization (15 minutes)
 
-# Step 3: Install the necessary dependencies.
-npm i
+**AdSense (Web):**
+1. Sign up at [adsense.google.com](https://adsense.google.com)
+2. Get Publisher ID (format: `pub-XXXXXXXXXXXXXXXX`)
+3. Update `public/ads.txt` with your Publisher ID
+4. Create ad units and get slot IDs
+5. Update `src/components/ads/AdBanner.tsx` with real slot IDs
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+**AdMob (Mobile):**
+1. Sign up at [admob.google.com](https://admob.google.com)
+2. Create app "LegallyAI"
+3. Create banner ad units for each page
+4. Update `src/components/ads/AdMobBanner.tsx` with unit IDs
+5. Update `android/app/src/main/AndroidManifest.xml` with app ID
 
-**Edit a file directly in GitHub**
+**Bank Account:**
+1. Log in to your deployed app
+2. Go to Account → Earnings
+3. Connect bank account
+4. Request payout when balance > $100
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+## 💰 Revenue Streams
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+| Stream | Potential Revenue |
+|--------|------------------|
+| **AdSense (Web)** | $0.05-$0.50 per impression |
+| **AdMob (Mobile)** | $0.05-$1.00 per impression |
+| **Premium Subscriptions** | $9.99/month |
+| **Pro Subscriptions** | $99/month (lawyers) |
+| **Document Sales** | $5/document |
+| **Enterprise Plans** | Custom pricing |
 
-## What technologies are used for this project?
+---
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
-
-## 🔄 CI/CD with Supabase
-
-This project uses GitHub Actions for automated deployment to Supabase.
-
-### Automatic Deployments
-
-Every push to `main` branch triggers:
-- ✅ Dependency installation and caching
-- ✅ Code linting
-- ✅ Production build
-- ✅ Supabase database migrations
-- ✅ Supabase Edge Functions deployment
-
-### Setup Instructions
-
-#### 1. Configure GitHub Secrets
-
-Add these secrets in **Settings → Secrets and variables → Actions**:
-
-| Secret Name | Description | How to Get |
-|------------|-------------|------------|
-| `VITE_SUPABASE_PROJECT_ID` | Project reference ID | Already set: `wejiqqtwnhevcjdllodr` |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Anon/public key | Supabase Dashboard → Settings → API |
-| `VITE_SUPABASE_URL` | Project URL | Already set: `https://wejiqqtwnhevcjdllodr.supabase.co` |
-| `SUPABASE_ACCESS_TOKEN` | CLI access token | https://app.supabase.com/account/tokens |
-
-**Quick setup with GitHub CLI:**
-```bash
-gh secret set VITE_SUPABASE_PROJECT_ID --body "wejiqqtwnhevcjdllodr"
-gh secret set VITE_SUPABASE_PUBLISHABLE_KEY --body "YOUR_KEY"
-gh secret set VITE_SUPABASE_URL --body "https://wejiqqtwnhevcjdllodr.supabase.co"
-gh secret set SUPABASE_ACCESS_TOKEN --body "YOUR_TOKEN"
-```
-
-#### 2. Supabase Access Token
-
-1. Visit https://app.supabase.com/account/tokens
-2. Generate a new token named "GitHub Actions"
-3. Copy and add as `SUPABASE_ACCESS_TOKEN` secret
-
-#### 3. Deploy
+## 📱 Build Android APK
 
 ```bash
-git push origin main
+# Install dependencies
+npm install
+
+# Build web assets
+npm run build
+
+# Sync with Capacitor
+npx cap sync android
+
+# Build APK
+cd android
+./gradlew assembleDebug
+
+# APK location:
+# android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Check **Actions** tab to monitor deployment progress!
-
-### Supabase Functions
-
-Edge Functions are located in `supabase/functions/`:
-- `webhook-handler/` - Handles incoming webhooks and logs to database
-
-Deploy functions manually:
+**Signed Release (requires keystore):**
 ```bash
-supabase functions deploy webhook-handler
+./gradlew assembleRelease
 ```
 
-### Database Migrations
+---
 
-Migrations are in `supabase/migrations/`.
+## 🛠️ Tech Stack
 
-Apply migrations locally:
-```bash
-supabase db reset
+- **Frontend:** React + TypeScript + Vite
+- **UI:** shadcn-ui + Tailwind CSS
+- **Backend:** Supabase (100% of backend)
+  - PostgreSQL database
+  - Row Level Security (RLS)
+  - Edge Functions (Deno)
+  - Authentication
+  - Storage
+- **Mobile:** Capacitor
+- **Ads:** Google AdSense + AdMob
+- **Payments:** Database + Manual Processing
+- **Deployment:** Vercel / Netlify
+- **CI/CD:** GitHub Actions
+
+---
+
+## 📁 Project Structure
+
+```
+legallyai-nexus-4b3048fb/
+├── src/                      # React frontend
+│   ├── components/           # UI components
+│   ├── pages/                # Page components
+│   ├── integrations/         # Supabase client
+│   └── lib/                  # Utilities
+├── supabase/
+│   ├── functions/            # Edge functions (backend API)
+│   └── migrations/           # Database schema
+├── android/                  # Android app
+├── public/                   # Static assets
+│   └── ads.txt               # AdSense verification
+├── docs/                     # Documentation
+│   ├── SUPABASE_SETUP.md     # Backend setup guide
+│   ├── DEPLOYMENT.md         # Deployment guide
+│   ├── MONETIZATION.md       # Revenue setup
+│   └── BANK_INTEGRATION.md   # Payout setup
+└── package.json
 ```
 
-Apply to production (automatic via GitHub Actions):
-```bash
-supabase db push
+---
+
+## 🔒 Security
+
+- ✅ Row Level Security (RLS) on all tables
+- ✅ Authentication required for sensitive operations
+- ✅ Environment variables for secrets
+- ✅ HTTPS only
+- ✅ Regular security audits (CodeQL)
+- ✅ No API keys in frontend code
+
+---
+
+## 🌍 Environment Variables
+
+**Required (Frontend):**
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your_anon_key_here
+VITE_SUPABASE_PROJECT_ID=your_project_id
 ```
 
-### Local Development with Supabase
-
-```bash
-# Start Supabase locally
-supabase start
-
-# Stop Supabase
-supabase stop
-
-# View local dashboard
-# URL shown after 'supabase start'
+**Auto-Injected (Supabase Edge Functions):**
+```env
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=auto_injected
+SUPABASE_ANON_KEY=auto_injected
 ```
+
+**Removed (Not Needed Anymore):**
+- ❌ LOVABLE_API_KEY
+- ❌ OPENAI_API_KEY
+- ❌ STRIPE_SECRET_KEY
+- ❌ RAILWAY_API_TOKEN
+
+---
+
+## 📚 Documentation
+
+- [Supabase Setup Guide](./docs/SUPABASE_SETUP.md) - Backend deployment
+- [Deployment Guide](./docs/DEPLOYMENT.md) - Frontend deployment
+- [Monetization Guide](./docs/MONETIZATION.md) - AdSense + AdMob setup
+- [Bank Integration Guide](./docs/BANK_INTEGRATION.md) - Payout setup
+- [API Documentation](./docs/API.md) - Edge function reference
+- [Architecture Overview](./docs/ARCHITECTURE.md) - System design
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing`)
+5. Open Pull Request
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](./LICENSE) file
+
+---
+
+## 🆘 Support
+
+- **Issues:** [GitHub Issues](https://github.com/Legallyai-1/legallyai-nexus-4b3048fb/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/Legallyai-1/legallyai-nexus-4b3048fb/discussions)
+- **Email:** support@legallyai.ai
+- **Docs:** [Documentation](./docs)
+
+---
+
+## 🎯 Deployment Checklist
+
+- [ ] Create Supabase project
+- [ ] Run database migrations
+- [ ] Deploy edge functions
+- [ ] Deploy to Vercel/Netlify
+- [ ] Configure AdSense
+- [ ] Configure AdMob
+- [ ] Connect bank account
+- [ ] Test payment flow
+- [ ] Test ad impressions
+- [ ] Build Android APK
+- [ ] Test app end-to-end
+- [ ] ✅ GO LIVE!
+
+---
+
+**Built with 💙 by the LegallyAI team**
+
+*Powered by GitHub + Supabase. No external dependencies.*
+
