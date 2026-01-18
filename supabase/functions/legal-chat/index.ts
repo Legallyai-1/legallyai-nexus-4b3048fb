@@ -30,6 +30,18 @@ function validateMessage(content: string): { valid: boolean; reason?: string } {
   return { valid: true };
 }
 
+// Helper function to create SSE fallback stream
+function createSSEFallbackStream(message: string): ReadableStream {
+  const encoder = new TextEncoder();
+  return new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: message } }] })}\n\n`));
+      controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+      controller.close();
+    }
+  });
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -189,15 +201,8 @@ Please try your question again in a moment, or explore our other features.
 Remember: For urgent legal matters, please consult a licensed attorney.`;
 
       if (stream) {
-        const encoder = new TextEncoder();
         return new Response(
-          new ReadableStream({
-            start(controller) {
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: fallbackResponse } }] })}\n\n`));
-              controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-              controller.close();
-            }
-          }),
+          createSSEFallbackStream(fallbackResponse),
           { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } }
         );
       } else {
@@ -212,19 +217,11 @@ Remember: For urgent legal matters, please consult a licensed attorney.`;
     if (stream) {
       console.log("Streaming response from:", usedLovable ? "Lovable" : "OpenAI");
       
-      // Validate that we have a response body before streaming
+      // Validate that we have a readable response body
       if (!response.body) {
         console.error("No response body for streaming");
-        const encoder = new TextEncoder();
         return new Response(
-          new ReadableStream({
-            start(controller) {
-              const errorMsg = "Streaming unavailable. Please try again.";
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: errorMsg } }] })}\n\n`));
-              controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-              controller.close();
-            }
-          }),
+          createSSEFallbackStream("Streaming unavailable. Please try again."),
           { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } }
         );
       }
