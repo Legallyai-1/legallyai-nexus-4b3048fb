@@ -28,41 +28,33 @@ serve(async (req) => {
       throw new Error("No audio data provided");
     }
 
-    // Convert base64 to binary
-    const binaryAudio = Uint8Array.from(atob(audio), (c) => c.charCodeAt(0));
-    const audioBlob = new Blob([binaryAudio], { type: "audio/webm" });
-
-    // Use Lovable AI Gateway for transcription
-    const formData = new FormData();
-    formData.append("file", audioBlob, "audio.webm");
-    formData.append("model", "whisper-1");
-
-    const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${Deno.env.get("OPENAI_API_KEY")}`,
-      },
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Transcription API error:", errorText);
-      throw new Error(`Transcription failed: ${response.status}`);
-    }
-
-    const result = await response.json();
-
+    // NOTE: Voice-to-text transcription is now handled client-side using the Web Speech API
+    // This removes dependency on external transcription services
+    console.log("Voice transcription request received - directing to client-side implementation");
+    
     return new Response(
-      JSON.stringify({ text: result.text }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ 
+        text: "", 
+        message: "Voice transcription is handled client-side using the Web Speech API. Please ensure microphone permissions are granted in your browser.",
+        useClientSide: true
+      }),
+      { 
+        status: 200, 
+        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      }
     );
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error("Voice-to-text error:", error);
+
+  } catch (error) {
+    console.error("Error in voice-to-text:", error);
     return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : "Unknown error",
+        useClientSide: true 
+      }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      }
     );
   }
 });

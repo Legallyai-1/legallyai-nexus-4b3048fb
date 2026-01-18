@@ -11,11 +11,11 @@ import { useToast } from "@/hooks/use-toast";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 
-// Stripe price IDs
-const STRIPE_PRICES = {
-  premium: "price_1Sdfqp0QhWGUtGKvcQuWONuB", // $9.99/month for normal users
-  pro: "price_1SckV70QhWGUtGKvvg1tH7lu", // $99/month for lawyers
-  document: "price_1SckVt0QhWGUtGKvl9YdmQqk", // $5 per document
+// Tier prices mapping
+const TIER_PRICES: Record<string, number> = {
+  premium: 9.99,
+  pro: 99,
+  document: 5,
 };
 
 const plans = [
@@ -56,7 +56,7 @@ const plans = [
     href: null,
     popular: true,
     icon: Star,
-    priceId: STRIPE_PRICES.premium,
+    tier: "premium",
     mode: "subscription",
     color: "green",
   },
@@ -76,7 +76,7 @@ const plans = [
     href: null,
     popular: false,
     icon: Sparkles,
-    priceId: STRIPE_PRICES.document,
+    tier: "document",
     mode: "payment",
     color: "blue",
   },
@@ -98,7 +98,7 @@ const plans = [
     href: null,
     popular: false,
     icon: Crown,
-    priceId: STRIPE_PRICES.pro,
+    tier: "pro",
     mode: "subscription",
     color: "orange",
   },
@@ -120,7 +120,7 @@ const plans = [
     href: "mailto:sales@legallyai.ai",
     popular: false,
     icon: Building2,
-    priceId: null,
+    tier: null,
     mode: null,
     color: "purple",
   },
@@ -164,7 +164,7 @@ export default function PricingPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleCheckout = async (priceId: string, mode: string, planName: string) => {
+  const handleCheckout = async (tier: string, mode: string, planName: string) => {
     setLoading(planName);
     
     try {
@@ -180,8 +180,10 @@ export default function PricingPage() {
         return;
       }
 
+      const amount = TIER_PRICES[tier] || 0;
+
       const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { priceId, mode },
+        body: { tier, amount },
       });
 
       if (error) throw error;
@@ -284,14 +286,14 @@ export default function PricingPage() {
                       ))}
                     </ul>
 
-                    {plan.priceId ? (
+                    {plan.tier ? (
                       <Button
                         variant={plan.popular ? "neon" : "glass"}
                         className={cn(
                           "w-full",
                           plan.popular && "bg-gradient-to-r from-section-premium to-neon-orange text-background"
                         )}
-                        onClick={() => handleCheckout(plan.priceId!, plan.mode!, plan.name)}
+                        onClick={() => handleCheckout(plan.tier!, plan.mode!, plan.name)}
                         disabled={loading === plan.name}
                       >
                         {loading === plan.name ? (

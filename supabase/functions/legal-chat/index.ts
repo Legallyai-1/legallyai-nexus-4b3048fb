@@ -20,6 +20,39 @@ const BLOCKED_PATTERNS = [
   /\<\s*system\s*\>/i,
 ];
 
+// Local legal knowledge base
+const LEGAL_KNOWLEDGE: Record<string, string> = {
+  "tenant rights": "In most U.S. states, tenants have the right to: (1) A habitable living space meeting health and safety codes, (2) Privacy - landlords must give 24-48 hours notice before entry, (3) Return of security deposit within 14-30 days after moving out, (4) Protection from discrimination under Fair Housing Act, (5) Right to repair and deduct if landlord doesn't fix serious issues. State laws vary significantly.",
+  
+  "llc formation": "To form an LLC (Limited Liability Company): (1) Choose a unique business name ending in 'LLC', (2) File Articles of Organization with your state's Secretary of State ($50-500 fee), (3) Create an Operating Agreement (even if not required), (4) Get an EIN from the IRS (free), (5) Register for state taxes, (6) Open a business bank account. LLCs provide personal liability protection and pass-through taxation.",
+  
+  "contract": "A valid contract requires: (1) Offer - clear proposal, (2) Acceptance - agreement to exact terms, (3) Consideration - something of value exchanged, (4) Legal capacity - parties must be of sound mind and legal age, (5) Legal purpose - contract can't be for illegal activity. Contracts can be oral or written, but certain types (real estate, year+ employment) must be in writing under the Statute of Frauds.",
+  
+  "divorce": "Divorce requirements vary by state but typically include: (1) Residency requirement (6 months to 1 year), (2) Grounds - most states allow 'no-fault' divorce citing irreconcilable differences, (3) Property division - either community property (50/50 split) or equitable distribution, (4) Custody arrangements for children, (5) Possible spousal support/alimony. Uncontested divorces with agreements are faster and cheaper than contested ones.",
+  
+  "custody": "Child custody decisions are based on 'best interests of the child' considering: (1) Child's relationship with each parent, (2) Each parent's ability to provide care, (3) Child's adjustment to home/school/community, (4) Mental/physical health of all parties, (5) Child's wishes (if old enough), (6) Any history of domestic violence. Joint custody is increasingly common. Courts can order legal custody (decision-making) and/or physical custody (where child lives).",
+  
+  "will": "A valid will requires: (1) Testator must be 18+ and of sound mind, (2) Must be in writing, (3) Signed by testator, (4) Witnessed by 2-3 disinterested witnesses (depending on state). Wills should name: executor, beneficiaries, guardians for minor children, and detail asset distribution. Without a will, state intestacy laws determine distribution. Wills should be updated after major life events (marriage, divorce, births).",
+  
+  "employment law": "Federal employment laws include: (1) Fair Labor Standards Act - minimum wage ($7.25 federal), overtime pay for 40+ hours, (2) Title VII - prohibits discrimination based on race, color, religion, sex, national origin, (3) ADA - requires reasonable accommodations for disabilities, (4) FMLA - 12 weeks unpaid leave for medical/family reasons, (5) OSHA - workplace safety standards. Many states have additional protections. Most employment is 'at-will' but can't be terminated for illegal reasons.",
+  
+  "small claims": "Small claims court handles disputes under $2,500-$25,000 (varies by state). Process: (1) File complaint with court clerk, (2) Serve defendant, (3) Attend hearing (usually within 30-90 days), (4) Present evidence/witnesses, (5) Judge makes decision same day or within weeks. No lawyers needed (some states prohibit them). Good for: unpaid debts, property damage, broken contracts, security deposit disputes.",
+  
+  "dui": "DUI/DWI consequences: (1) Criminal penalties - fines ($500-$10,000+), jail time (up to 1 year for first offense), (2) License suspension (3-12 months), (3) Increased insurance rates, (4) Ignition interlock device requirement, (5) DUI school/treatment programs, (6) Permanent criminal record. BAC of 0.08%+ is illegal for adults (21+), 0.04%+ for commercial drivers, any amount for under 21. You have right to refuse tests but face automatic license suspension.",
+  
+  "personal injury": "Personal injury claims require proving: (1) Duty of care owed, (2) Breach of that duty, (3) Causation - breach caused injury, (4) Damages - actual harm suffered. Common claims: car accidents, slip and fall, medical malpractice, dog bites. Statute of limitations is typically 2-3 years from injury date. Damages can include: medical bills, lost wages, pain and suffering, emotional distress. Most cases settle before trial. Work with insurance companies or file lawsuit if needed.",
+  
+  "bankruptcy": "Chapter 7 (liquidation): Sells assets to pay debts, discharged in 3-6 months, means test required. Chapter 13 (reorganization): 3-5 year repayment plan, keep assets, for regular income earners. Both require credit counseling. Protections: automatic stay stops collection, foreclosure, repossession. Can't discharge: student loans (usually), recent taxes, child support, alimony, fraud debts. Stays on credit report 7-10 years but can rebuild credit.",
+  
+  "trademark": "Trademark protects brand names, logos, slogans. Rights established through: (1) Use in commerce (common law rights), or (2) Federal registration with USPTO (stronger protection). Registration process: (1) Search existing marks, (2) File application ($250-$350), (3) Examination (6-9 months), (4) Publication/opposition period, (5) Registration. Benefits: exclusive use, ® symbol, legal presumption of ownership, nationwide protection. Must renew every 10 years.",
+  
+  "non-disclosure agreement": "NDAs (Confidentiality Agreements) protect sensitive information. Key elements: (1) Definition of confidential information, (2) Obligations of receiving party, (3) Exclusions (public info, independently developed), (4) Duration (1-5 years common), (5) Consequences of breach. Unilateral (one-way) or mutual (two-way). Use before sharing: business plans, trade secrets, proprietary technology, customer lists. Enforceable if reasonable in scope and duration.",
+  
+  "eviction": "Landlord eviction process: (1) Valid reason - non-payment, lease violation, end of lease, (2) Proper notice (3-30 days depending on reason/state), (3) File unlawful detainer lawsuit if tenant doesn't leave, (4) Court hearing, (5) Sheriff enforces if landlord wins. Landlord can't: change locks, remove belongings, shut off utilities. Tenant defenses: improper notice, retaliation, discrimination, landlord breach, uninhabitable conditions. Process typically takes 2-8 weeks.",
+  
+  "power of attorney": "POA authorizes someone to act on your behalf. Types: (1) General - broad powers over finances/property, (2) Limited - specific purpose/timeframe, (3) Durable - continues if you become incapacitated, (4) Healthcare/Medical - medical decisions only, (5) Springing - becomes effective upon specific event. Requirements: (1) Principal must have mental capacity, (2) Written document, (3) Notarization (usually required), (4) Agent must be 18+. Can be revoked anytime if principal has capacity."
+};
+
 function validateMessage(content: string): { valid: boolean; reason?: string } {
   for (const pattern of BLOCKED_PATTERNS) {
     if (pattern.test(content)) {
@@ -28,6 +61,35 @@ function validateMessage(content: string): { valid: boolean; reason?: string } {
     }
   }
   return { valid: true };
+}
+
+function getLocalAIResponse(message: string): string {
+  const lower = message.toLowerCase();
+  
+  // Keyword matching
+  for (const [key, answer] of Object.entries(LEGAL_KNOWLEDGE)) {
+    if (lower.includes(key)) {
+      return answer + "\n\n**Remember: This is general legal information, not legal advice. For your specific situation, consult a licensed attorney.**";
+    }
+  }
+  
+  // Default response
+  return `I'm LegallyAI, your legal information assistant. I can help you understand legal concepts in these areas:
+
+• **Tenant Rights** - landlord/tenant law, evictions, security deposits
+• **Business Formation** - LLC, corporations, partnerships
+• **Contracts** - requirements, enforcement, breaches
+• **Family Law** - divorce, custody, wills, power of attorney
+• **Employment Law** - workplace rights, discrimination, wages
+• **Small Claims** - dispute resolution under $10,000
+• **Criminal Law** - DUI, basic rights, defense options
+• **Personal Injury** - accidents, liability, claims
+• **Bankruptcy** - Chapter 7 vs 13, debt relief
+• **Intellectual Property** - trademarks, copyrights basics
+
+Please ask a specific question about any of these topics!
+
+**Remember: This is general legal information, not legal advice. For your specific situation, consult a licensed attorney.**`;
 }
 
 // Helper function to create SSE fallback stream
@@ -102,147 +164,37 @@ serve(async (req) => {
       }
     }
 
-    const systemPrompt = `You are LegallyAI, a knowledgeable AI legal assistant. You provide helpful, accurate information about U.S. law (2025).
-
-IMPORTANT RULES:
-1. Provide clear, helpful answers to legal questions
-2. Reference specific laws, statutes, or legal principles when relevant
-3. Explain legal concepts in plain English
-4. Suggest when someone should consult an attorney
-5. Be professional but approachable
-6. If asked to generate a document, explain you can help with that on the Generate page
-7. Always remind users this is informational, not legal advice
-8. NEVER provide advice on how to commit crimes or illegal activities
-9. If a question seems to be asking for help with illegal activities, politely decline
-
-Areas you can help with:
-- Contract law and agreements
-- Employment law
-- Family law (custody, divorce)
-- Real estate law
-- Business formation (LLC, Corp)
-- Intellectual property basics
-- General legal questions
-
-End important responses with: "Remember: This is general legal information, not legal advice. For your specific situation, consult a licensed attorney."`;
-
     console.log("Chat request from:", userId, "with", messages.length, "messages");
 
-    // Try Lovable AI first (free, no API key needed)
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    
-    let response;
-    let usedLovable = false;
+    // Get the last user message
+    const lastUserMessage = messages.filter((m: any) => m.role === "user").pop();
+    const userQuery = lastUserMessage?.content || "";
 
-    // Primary: Use Lovable AI (Google Gemini - free)
-    if (LOVABLE_API_KEY) {
-      try {
-        console.log("Using Lovable AI (primary)");
-        response = await fetch("https://api.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
-            messages: [
-              { role: "system", content: systemPrompt },
-              ...messages,
-            ],
-            stream: stream,
-          }),
-        });
-        
-        if (response.ok) {
-          usedLovable = true;
-        } else {
-          console.log("Lovable AI failed with status:", response.status);
-        }
-      } catch (lovableError) {
-        console.error("Lovable AI error:", lovableError);
-      }
-    }
-
-    // Fallback: Use OpenAI if Lovable fails
-    if (!usedLovable && OPENAI_API_KEY) {
-      console.log("Using OpenAI (fallback)");
-      response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...messages,
-          ],
-          stream: stream,
-        }),
-      });
-    }
-
-    if (!response || !response.ok) {
-      const errorText = response ? await response.text() : "No AI service available";
-      console.error("AI API error:", errorText);
-      
-      // Provide a helpful fallback response
-      const fallbackResponse = `I'm here to help with your legal questions! While I'm having trouble connecting to my full AI capabilities right now, here are some general resources:
-
-1. For **document generation**, visit our Generate page
-2. For **court preparation**, check our Court Prep tools
-3. For **specific legal hubs**, we have specialized assistants for custody, DUI, wills, and more
-
-Please try your question again in a moment, or explore our other features.
-
-Remember: For urgent legal matters, please consult a licensed attorney.`;
-
-      if (stream) {
-        return new Response(
-          createSSEFallbackStream(fallbackResponse),
-          { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } }
-        );
-      } else {
-        return new Response(
-          JSON.stringify({ response: fallbackResponse }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    }
+    // Generate response from local knowledge base
+    const responseContent = getLocalAIResponse(userQuery);
 
     // Handle streaming responses
     if (stream) {
-      console.log("Streaming response from:", usedLovable ? "Lovable" : "OpenAI");
+      console.log("Streaming response from local knowledge base");
       
-      // Validate that we have a readable response body
-      if (!response.body) {
-        console.error("No response body for streaming");
-        return new Response(
-          createSSEFallbackStream("Streaming unavailable. Please try again."),
-          { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } }
-        );
-      }
-
-      return new Response(response.body, {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
-          "Connection": "keep-alive",
-        },
-      });
+      return new Response(
+        createSSEFallbackStream(responseContent),
+        {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+          },
+        }
+      );
     }
 
-    // Parse and return the non-streaming response
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || "I couldn't generate a response. Please try again.";
-    console.log("Response generated, length:", content.length, "provider:", usedLovable ? "Lovable" : "OpenAI");
+    // Non-streaming response
+    console.log("Response generated from local knowledge, length:", responseContent.length);
     
     return new Response(
-      JSON.stringify({ response: content }),
+      JSON.stringify({ response: responseContent }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 

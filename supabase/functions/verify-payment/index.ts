@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
@@ -20,15 +19,10 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) {
-      throw new Error("STRIPE_SECRET_KEY is not set");
-    }
-
     // Create Supabase client for auth
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
     // Verify user authentication
@@ -44,7 +38,7 @@ serve(async (req) => {
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     
-    if (userError || !userData.user?.email) {
+    if (userError || !userData.user) {
       logStep("Authentication failed", { error: userError?.message });
       return new Response(JSON.stringify({ error: "Invalid authentication" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -52,58 +46,43 @@ serve(async (req) => {
       });
     }
 
-    const userEmail = userData.user.email;
-    logStep("User authenticated", { email: userEmail });
+    const userId = userData.user.id;
+    logStep("User authenticated", { userId });
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    // Query user_payments table for successful payments
+    const { data: payments, error: paymentsError } = await supabaseClient
+      .from("user_payments")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("status", "completed");
 
-    // Find customer by email
-    const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
-    
-    if (customers.data.length === 0) {
-      logStep("No Stripe customer found");
-      return new Response(JSON.stringify({ 
-        hasPaid: false,
-        message: "No payment history found"
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
+    if (paymentsError) {
+      logStep("Error querying payments", { error: paymentsError.message });
     }
 
-    const customerId = customers.data[0].id;
-    logStep("Found customer", { customerId });
+    const hasSuccessfulPayment = payments && payments.length > 0;
+    const paymentCount = payments?.length || 0;
 
-    // Check for successful payments (one-time purchases)
-    const paymentIntents = await stripe.paymentIntents.list({
-      customer: customerId,
-      limit: 100,
-    });
+    // Check for active subscription
+    const { data: subscription } = await supabaseClient
+      .from("user_subscriptions")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .single();
 
-    const successfulPayments = paymentIntents.data.filter(
-      (pi: { status: string }) => pi.status === "succeeded"
-    );
-
-    // Also check for active subscriptions
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      status: "active",
-      limit: 1,
-    });
-
-    const hasActiveSubscription = subscriptions.data.length > 0;
-    const hasSuccessfulPayment = successfulPayments.length > 0;
+    const hasActiveSubscription = subscription !== null;
 
     logStep("Payment status checked", { 
       hasSuccessfulPayment, 
       hasActiveSubscription,
-      paymentCount: successfulPayments.length 
+      paymentCount 
     });
 
     return new Response(JSON.stringify({ 
       hasPaid: hasSuccessfulPayment || hasActiveSubscription,
       hasActiveSubscription,
-      paymentCount: successfulPayments.length
+      paymentCount
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
