@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
@@ -17,28 +16,21 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-  );
-
-  // Valid price IDs allowlist
-  const VALID_PRICES = [
-    'price_1Sdfqp0QhWGUtGKvcQuWONuB', // Premium subscription ($9.99/month for normal users)
-    'price_1SckV70QhWGUtGKvvg1tH7lu', // Pro subscription ($99/month for lawyers)
-    'price_1SckVt0QhWGUtGKvl9YdmQqk'  // Document generation ($5 one-time)
-  ];
-
-  const VALID_MODES = ['subscription', 'payment'];
-
   try {
-    logStep("Function started");
+    logStep("Function started - Database-only mode (NO Stripe)");
 
     const { priceId, mode } = await req.json();
     logStep("Request params", { priceId, mode });
 
-    // Validate priceId against allowlist
-    if (!priceId || !VALID_PRICES.includes(priceId)) {
+    // Map old Stripe price IDs to tiers and amounts
+    const PRICE_MAP: Record<string, { tier: string; amount: number }> = {
+      'price_1Sdfqp0QhWGUtGKvcQuWONuB': { tier: 'premium', amount: 9.99 },
+      'price_1SckV70QhWGUtGKvvg1tH7lu': { tier: 'pro', amount: 99 },
+      'price_1SckVt0QhWGUtGKvl9YdmQqk': { tier: 'premium', amount: 5 }
+    };
+
+    const pricing = PRICE_MAP[priceId];
+    if (!pricing) {
       logStep("Invalid price ID", { priceId });
       return new Response(
         JSON.stringify({ error: 'Invalid price ID' }),
@@ -46,8 +38,29 @@ serve(async (req) => {
       );
     }
 
-    // Validate mode
-    if (mode && !VALID_MODES.includes(mode)) {
+    // Return success - frontend will handle the payment processing
+    logStep("Checkout simulated", { tier: pricing.tier, amount: pricing.amount });
+    
+    return new Response(
+      JSON.stringify({ 
+        success: true,
+        message: `Ready to upgrade to ${pricing.tier}`,
+        tier: pricing.tier,
+        amount: pricing.amount,
+        // No URL needed - frontend will call process-payment directly
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+    );
+
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+    );
+  }
+});
       logStep("Invalid mode", { mode });
       return new Response(
         JSON.stringify({ error: 'Invalid payment mode' }),
