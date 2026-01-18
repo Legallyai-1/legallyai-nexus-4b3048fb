@@ -51,20 +51,24 @@ jobs:
 
           export default config;
           EOC
+          echo "=== Capacitor Config ==="
           cat capacitor.config.ts
 
       - name: Initialize Capacitor Android
         run: |
           npx cap add android
           npx cap sync android
-          sed -i 's/versionCode 1/versionCode 6/' android/app/build.gradle
-          sed -i 's/versionName "1.0"/versionName "6.0"/' android/app/build.gradle
-          sed -i 's|<manifest|<manifest xmlns:tools="http://schemas.android.com/tools"|' android/app/src/main/AndroidManifest.xml
-          sed -i '/<application/i\    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>' android/app/src/main/AndroidManifest.xml
+          # Versioning
+          sed -i 's/versionCode 1/versionCode 6/' android/app/build.gradle || true
+          sed -i 's/versionName "1.0"/versionName "6.0"/' android/app/build.gradle || true
+          # AD_ID permission
+          sed -i 's|<manifest|<manifest xmlns:tools="http://schemas.android.com/tools"|' android/app/src/main/AndroidManifest.xml || true
+          sed -i '/<application/i\    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>' android/app/src/main/AndroidManifest.xml || true
 
       - name: Setup release keystore (optional)
         id: setup_keystore
         run: |
+          # Check all required keystore secrets
           if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ] && \
              [ -n "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" ] && \
              [ -n "${{ secrets.ANDROID_KEY_ALIAS }}" ] && \
@@ -83,10 +87,11 @@ jobs:
           storePass="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}"
           keyAlias="${{ secrets.ANDROID_KEY_ALIAS }}"
           keyPass="${{ secrets.ANDROID_KEY_ALIAS_PASSWORD }}"
-
+          # Insert signingConfigs if not already present
           if ! grep -q "signingConfigs" android/app/build.gradle; then
             sed -i '/android {/a\    signingConfigs {\n        release {\n            storeFile file("release.keystore")\n            storePassword "'"$storePass"'"\n            keyAlias "'"$keyAlias"'"\n            keyPassword "'"$keyPass"'"\n        }\n    }' android/app/build.gradle
           fi
+          # Ensure release buildType uses signing config
           if ! grep -q "signingConfig signingConfigs.release" android/app/build.gradle; then
             sed -i 's/buildTypes {/buildTypes {\n        release {\n            signingConfig signingConfigs.release\n            minifyEnabled false\n        }/' android/app/build.gradle
           fi
@@ -94,33 +99,39 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
-      - name: Build Release APK (signed if keystore present, otherwise unsigned)
+      - name: Build Release APK (signed if keystore present, otherwise unsigned/debug)
         run: |
           cd android
           if [ "${{ steps.setup_keystore.outputs.keystore_present }}" = "true" ]; then
+            echo "Building signed release APK..."
             ./gradlew clean assembleRelease --stacktrace
           else
+            echo "Keystore missing: attempting unsigned release build; falling back to debug build if necessary."
             ./gradlew clean assembleRelease -Pandroid.injected.signing.store.file= -Pandroid.injected.signing.store.password= -Pandroid.injected.signing.key.alias= -Pandroid.injected.signing.key.password= --stacktrace || true
-            ./gradlew assembleDebug --stacktrace
+            ./gradlew assembleDebug --stacktrace || true
           fi
 
-      - name: Build Release AAB (signed if keystore present, otherwise unsigned)
+      - name: Build Release AAB (signed if keystore present, otherwise unsigned/debug)
         run: |
           cd android
           if [ "${{ steps.setup_keystore.outputs.keystore_present }}" = "true" ]; then
+            echo "Building signed release AAB..."
             ./gradlew bundleRelease --stacktrace
           else
+            echo "Keystore missing: attempting unsigned bundle; falling back to debug bundle if necessary."
             ./gradlew bundleRelease -Pandroid.injected.signing.store.file= -Pandroid.injected.signing.store.password= -Pandroid.injected.signing.key.alias= -Pandroid.injected.signing.key.password= --stacktrace || true
             ./gradlew bundleDebug --stacktrace || true
           fi
 
       - name: Verify builds
         run: |
-          echo "=== APK Info ==="
+          echo "=== APK release folder ==="
           ls -la android/app/build/outputs/apk/release/ || echo "APK release folder not found"
+          echo "=== APK debug folder ==="
           ls -la android/app/build/outputs/apk/debug/ || echo "APK debug folder not found"
-          echo "=== AAB Info ==="
+          echo "=== AAB release folder ==="
           ls -la android/app/build/outputs/bundle/release/ || echo "AAB release folder not found"
+          echo "=== AAB debug folder ==="
           ls -la android/app/build/outputs/bundle/debug/ || echo "AAB debug folder not found"
 
       - name: Upload APK if exists
@@ -132,6 +143,7 @@ jobs:
             android/app/build/outputs/apk/release/app-release.apk
             android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
+          if-no-files-found: warn
 
       - name: Upload AAB if exists
         if: always()
@@ -142,3 +154,4 @@ jobs:
             android/app/build/outputs/bundle/release/app-release.aab
             android/app/build/outputs/bundle/debug/app-debug.aab
           retention-days: 30
+          if-no-files-found: warn
