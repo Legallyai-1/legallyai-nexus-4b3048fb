@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AnimatedRoutes } from '@/components/AnimatedRoutes';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -15,7 +16,7 @@ function App() {
   }, []);
 
   return (
-    <>
+    <ErrorBoundary>
       <AnimatePresence mode="wait">
         {isLoading ? (
           <LoadingScreen key="loading" />
@@ -30,7 +31,7 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </ErrorBoundary>
   );
 }
 

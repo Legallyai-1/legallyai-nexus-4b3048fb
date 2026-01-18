@@ -125,7 +125,7 @@ export default function ChatPage() {
       const decoder = new TextDecoder();
       let textBuffer = "";
       let assistantContent = "";
-      let assistantMessageId = (Date.now() + 1).toString();
+      const assistantMessageId = (Date.now() + 1).toString();
 
       setMessages(prev => [...prev, {
         id: assistantMessageId,

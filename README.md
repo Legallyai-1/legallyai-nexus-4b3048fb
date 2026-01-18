@@ -1,8 +1,36 @@
-# Welcome to your Lovable project
+# Welcome to LegallyAI Nexus
+
+A comprehensive legal services platform built with React, TypeScript, and Supabase.
 
 ## Project info
 
 **URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+
+## Quick Start
+
+### Development
+```sh
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+### Production Deployment
+For production deployment instructions, see [PRODUCTION.md](./PRODUCTION.md).
+
+## Project Overview
+
+LegallyAI Nexus is a full-featured legal services platform including:
+- Case management
+- Client portal
+- Document generation and signing
+- AI-powered legal assistance
+- Court records search
+- Appointment scheduling
+- Billing and invoicing
+- And much more...
 
 ## How can I edit this code?
 

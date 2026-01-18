@@ -38,7 +38,7 @@ serve(async (req) => {
     let variables: Record<string, unknown>;
 
     switch (action) {
-      case "getProject":
+      case "getProject": {
         query = `
           query GetProject($projectId: String!) {
             project(id: $projectId) {
@@ -68,8 +68,9 @@ serve(async (req) => {
         `;
         variables = { projectId };
         break;
+      }
 
-      case "getDeployments":
+      case "getDeployments": {
         query = `
           query GetDeployments($projectId: String!, $first: Int) {
             deployments(first: $first, input: { projectId: $projectId }) {
@@ -92,8 +93,7 @@ serve(async (req) => {
         `;
         variables = { projectId, first: 10 };
         break;
-
-      case "triggerDeploy":
+      }
         // Get the first service and environment if not specified
         const projectQuery = `
           query GetProjectForDeploy($projectId: String!) {
@@ -167,8 +167,9 @@ serve(async (req) => {
         `;
         variables = { environmentId: envId, serviceId };
         break;
+      }
 
-      case "getStatus":
+      case "getStatus": {
         query = `
           query GetProjectStatus($projectId: String!) {
             project(id: $projectId) {
@@ -189,8 +190,7 @@ serve(async (req) => {
         `;
         variables = { projectId };
         break;
-
-      default:
+      }
         return new Response(
           JSON.stringify({ error: "Invalid action. Use: getProject, getDeployments, triggerDeploy, getStatus" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
