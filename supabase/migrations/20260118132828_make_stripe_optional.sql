@@ -87,7 +87,7 @@ CREATE POLICY "Admins can manage all payment records"
     has_role(auth.uid(), 'owner'::app_role)
   );
 
--- Function to check user subscription status (combines Stripe and manual payments)
+-- Function to check user subscription status (returns most recent active payment)
 CREATE OR REPLACE FUNCTION public.check_user_subscription(check_user_id UUID)
 RETURNS TABLE (
   tier TEXT,
@@ -110,7 +110,7 @@ BEGIN
   FROM public.profiles p
   WHERE p.id = check_user_id;
 
-  -- Get latest active payment record
+  -- Get most recent active payment record
   SELECT 
     pr.tier,
     pr.expires_at,
@@ -122,7 +122,7 @@ BEGIN
   ORDER BY pr.created_at DESC
   LIMIT 1;
 
-  -- Return the highest tier and most recent expiration
+  -- Return the most recent tier and expiration
   IF record_tier IS NOT NULL THEN
     -- Payment record exists
     RETURN QUERY SELECT 

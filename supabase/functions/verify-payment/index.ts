@@ -152,7 +152,7 @@ serve(async (req) => {
       hasPaid: hasStripePayment || hasActiveSubscription || hasSupabaseSubscription,
       hasActiveSubscription,
       tier: subscription?.tier || 'free',
-      payment_method: hasStripePayment || hasActiveSubscription ? 'stripe' : subscription?.payment_method,
+      payment_method: hasActiveSubscription ? 'stripe' : (hasStripePayment || hasSupabaseSubscription) ? (subscription?.payment_method || 'stripe') : 'none',
       isActive: hasActiveSubscription || hasSupabaseSubscription
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

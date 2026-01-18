@@ -63,7 +63,7 @@ serve(async (req) => {
       const totalRevenue = paymentData.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
       
       const subscriptionCount = paymentData.filter(p => 
-        p.tier === 'pro' && 
+        (p.tier === 'pro' || p.tier === 'premium') && 
         (!p.expires_at || new Date(p.expires_at) > new Date())
       ).length;
       

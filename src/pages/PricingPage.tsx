@@ -13,7 +13,10 @@ import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Check if payments are enabled via environment variable
-const PAYMENTS_ENABLED = import.meta.env.VITE_ENABLE_PAYMENTS === 'true';
+// Accepts 'true', '1', 'yes' as truthy values
+const PAYMENTS_ENABLED = ['true', '1', 'yes'].includes(
+  import.meta.env.VITE_ENABLE_PAYMENTS?.toLowerCase()
+);
 
 // Stripe price IDs (only used if payments are enabled)
 const STRIPE_PRICES = {
