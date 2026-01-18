@@ -164,7 +164,7 @@ export default function PricingPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleCheckout = async (priceId: string | null, mode: string | null, planName: string) => {
+  const handleCheckout = async (planName: string) => {
     setLoading(planName);
     
     try {
@@ -311,7 +311,7 @@ export default function PricingPage() {
                           "w-full",
                           plan.popular && "bg-gradient-to-r from-section-premium to-neon-orange text-background"
                         )}
-                        onClick={() => handleCheckout(plan.priceId!, plan.mode!, plan.name)}
+                        onClick={() => handleCheckout(plan.name)}
                         disabled={loading === plan.name}
                       >
                         {loading === plan.name ? (

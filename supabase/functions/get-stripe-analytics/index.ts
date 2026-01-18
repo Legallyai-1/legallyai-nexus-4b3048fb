@@ -57,7 +57,6 @@ serve(async (req) => {
       .eq('status', 'completed');
 
     if (paymentsError) throw paymentsError;
-    if (paymentsError) throw paymentsError;
     logStep("Fetched payments", { count: payments?.length || 0 });
 
     // Fetch ad impressions for revenue calculation
