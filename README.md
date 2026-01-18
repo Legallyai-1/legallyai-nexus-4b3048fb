@@ -1,158 +1,110 @@
-# Welcome to your Lovable project
+# LegallyAI - Production Legal Tech Platform
 
-## Project info
+## 🚀 Quick Deploy
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+### Option 1: Deploy to Vercel (Recommended)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Legallyai-1/legallyai-nexus-4b3048fb)
 
-## How can I edit this code?
+### Option 2: Deploy to Netlify
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/Legallyai-1/legallyai-nexus-4b3048fb)
 
-There are several ways of editing your application.
+## 🛠️ Local Development
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+git clone https://github.com/Legallyai-1/legallyai-nexus-4b3048fb.git
+cd legallyai-nexus-4b3048fb
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Open http://localhost:8080
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 📦 Tech Stack
 
-**Use GitHub Codespaces**
+- **Frontend:** React + TypeScript + Vite
+- **UI:** shadcn-ui + Tailwind CSS
+- **Backend:** Supabase (Auth, Database, Functions)
+- **Deployment:** Vercel / Netlify
+- **Mobile:** Capacitor (iOS/Android)
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🔧 Environment Setup
 
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
-
-## 🔄 CI/CD with Supabase
-
-This project uses GitHub Actions for automated deployment to Supabase.
-
-### Automatic Deployments
-
-Every push to `main` branch triggers:
-- ✅ Dependency installation and caching
-- ✅ Code linting
-- ✅ Production build
-- ✅ Supabase database migrations
-- ✅ Supabase Edge Functions deployment
-
-### Setup Instructions
-
-#### 1. Configure GitHub Secrets
-
-Add these secrets in **Settings → Secrets and variables → Actions**:
-
-| Secret Name | Description | How to Get |
-|------------|-------------|------------|
-| `VITE_SUPABASE_PROJECT_ID` | Project reference ID | Already set: `wejiqqtwnhevcjdllodr` |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Anon/public key | Supabase Dashboard → Settings → API |
-| `VITE_SUPABASE_URL` | Project URL | Already set: `https://wejiqqtwnhevcjdllodr.supabase.co` |
-| `SUPABASE_ACCESS_TOKEN` | CLI access token | https://app.supabase.com/account/tokens |
-
-**Quick setup with GitHub CLI:**
-```bash
-gh secret set VITE_SUPABASE_PROJECT_ID --body "wejiqqtwnhevcjdllodr"
-gh secret set VITE_SUPABASE_PUBLISHABLE_KEY --body "YOUR_KEY"
-gh secret set VITE_SUPABASE_URL --body "https://wejiqqtwnhevcjdllodr.supabase.co"
-gh secret set SUPABASE_ACCESS_TOKEN --body "YOUR_TOKEN"
+Create `.env` file:
+```env
+VITE_SUPABASE_URL=https://wejiqqtwnhevcjdllodr.supabase.co
+VITE_SUPABASE_ANON_KEY=your_anon_key_here
+VITE_SUPABASE_PROJECT_ID=wejiqqtwnhevcjdllodr
 ```
 
-#### 2. Supabase Access Token
+## 🚀 Deploy to Production
 
-1. Visit https://app.supabase.com/account/tokens
-2. Generate a new token named "GitHub Actions"
-3. Copy and add as `SUPABASE_ACCESS_TOKEN` secret
+### Vercel (Auto-deploys on git push)
+1. Fork this repo
+2. Connect to Vercel
+3. Add environment variables
+4. Deploy!
 
-#### 3. Deploy
+### Netlify
+1. Fork this repo
+2. Connect to Netlify
+3. Build command: `npm run build`
+4. Publish directory: `dist`
+5. Add environment variables
 
+## 📱 Mobile Apps
+
+### Android
 ```bash
-git push origin main
+npm run build
+npx cap sync android
+cd android && ./gradlew assembleRelease
 ```
 
-Check **Actions** tab to monitor deployment progress!
-
-### Supabase Functions
-
-Edge Functions are located in `supabase/functions/`:
-- `webhook-handler/` - Handles incoming webhooks and logs to database
-
-Deploy functions manually:
+### iOS
 ```bash
-supabase functions deploy webhook-handler
+npm run build
+npx cap sync ios
+open ios/App/App.xcworkspace
 ```
 
-### Database Migrations
+## 💰 Monetization
 
-Migrations are in `supabase/migrations/`.
+- **Subscriptions:** Database-powered tiers (Free, Premium, Pro, Enterprise)
+- **Ads:** Google AdSense (web) + AdMob (mobile)
+- **Documents:** Pay-per-document option
+- **Credits:** User wallet system
 
-Apply migrations locally:
-```bash
-supabase db reset
-```
+## 🔒 Security
 
-Apply to production (automatic via GitHub Actions):
-```bash
-supabase db push
-```
+- Row Level Security (RLS) enabled
+- Environment variables for secrets
+- HTTPS only
+- Regular security audits
 
-### Local Development with Supabase
+## 📖 Documentation
 
-```bash
-# Start Supabase locally
-supabase start
+- [API Documentation](./docs/API.md)
+- [Deployment Guide](./docs/DEPLOYMENT.md)
+- [Architecture](./docs/ARCHITECTURE.md)
 
-# Stop Supabase
-supabase stop
+## 🤝 Contributing
 
-# View local dashboard
-# URL shown after 'supabase start'
-```
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing`)
+5. Open Pull Request
+
+## 📄 License
+
+MIT License - see LICENSE file
+
+## 🆘 Support
+
+- **Issues:** https://github.com/Legallyai-1/legallyai-nexus-4b3048fb/issues
+- **Email:** support@legallyai.ai
+- **Documentation:** https://docs.legallyai.ai
+
+---
+
+**Built with 💙 by the LegallyAI team**
