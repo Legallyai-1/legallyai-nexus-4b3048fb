@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
@@ -19,38 +18,21 @@ serve(async (req) => {
 
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
-
-  // Valid price IDs allowlist
-  const VALID_PRICES = [
-    'price_1Sdfqp0QhWGUtGKvcQuWONuB', // Premium subscription ($9.99/month for normal users)
-    'price_1SckV70QhWGUtGKvvg1tH7lu', // Pro subscription ($99/month for lawyers)
-    'price_1SckVt0QhWGUtGKvl9YdmQqk'  // Document generation ($5 one-time)
-  ];
-
-  const VALID_MODES = ['subscription', 'payment'];
 
   try {
     logStep("Function started");
 
-    const { priceId, mode } = await req.json();
-    logStep("Request params", { priceId, mode });
+    const { tier, amount } = await req.json();
+    logStep("Request params", { tier, amount });
 
-    // Validate priceId against allowlist
-    if (!priceId || !VALID_PRICES.includes(priceId)) {
-      logStep("Invalid price ID", { priceId });
+    // Validate tier
+    const validTiers = ['premium', 'pro', 'document'];
+    if (!tier || !validTiers.includes(tier)) {
+      logStep("Invalid tier", { tier });
       return new Response(
-        JSON.stringify({ error: 'Invalid price ID' }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
-    }
-
-    // Validate mode
-    if (mode && !VALID_MODES.includes(mode)) {
-      logStep("Invalid mode", { mode });
-      return new Response(
-        JSON.stringify({ error: 'Invalid payment mode' }),
+        JSON.stringify({ error: 'Invalid tier' }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
@@ -59,40 +41,16 @@ serve(async (req) => {
     const token = authHeader.replace("Bearer ", "");
     const { data } = await supabaseClient.auth.getUser(token);
     const user = data.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { email: user.email });
+    if (!user) throw new Error("User not authenticated");
+    logStep("User authenticated", { userId: user.id });
 
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-      apiVersion: "2025-08-27.basil",
-    });
-
-    // Check if customer exists
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    let customerId;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-      logStep("Found existing customer", { customerId });
-    }
-
+    // For demo purposes, redirect to a success page that will call process-payment
     const origin = req.headers.get("origin") || "https://legallyai.ai";
-    
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      customer_email: customerId ? undefined : user.email,
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      mode: mode || "subscription",
-      success_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/pricing`,
-    });
+    const checkoutUrl = `${origin}/checkout?tier=${tier}&amount=${amount || 0}`;
 
-    logStep("Checkout session created", { sessionId: session.id, url: session.url });
+    logStep("Checkout URL created", { url: checkoutUrl });
 
-    return new Response(JSON.stringify({ url: session.url }), {
+    return new Response(JSON.stringify({ url: checkoutUrl }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
