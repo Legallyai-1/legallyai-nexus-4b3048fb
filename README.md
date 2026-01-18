@@ -4,6 +4,58 @@
 
 **URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
 
+## 🚀 Build & Deployment
+
+### Local Development
+```bash
+# Install dependencies
+npm install
+
+# Run development server (http://localhost:8080)
+npm run dev
+
+# Lint code
+npm run lint
+```
+
+### Production Build
+```bash
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+
+# Build for development environment
+npm run build:dev
+```
+
+### Railway Sync Automation
+
+This repository includes a GitHub Action and a Node script to fetch Railway deployment info and forward it to a Supabase Edge Function.
+
+#### How to use
+1. Add required secrets to your GitHub repository (see below)
+2. Push to `feature/railway-sync` branch or manually trigger the workflow
+3. The action will run and call the sync script
+
+#### Required Repository Secrets
+
+Add these secrets in GitHub: **Settings → Secrets and variables → Actions → New repository secret**
+
+- `RAILWAY_API_TOKEN` — Railway API token with read access
+- `RAILWAY_PROJECT_ID` — Your Railway project ID
+- `RAILWAY_ENVIRONMENT_ID` — Your Railway environment ID  
+- `SUPABASE_FUNCTION_URL` — Full URL of your Supabase Edge Function
+
+**Using GitHub CLI:**
+```bash
+gh secret set RAILWAY_API_TOKEN --body "sk_live_XXXXXXXX"
+gh secret set RAILWAY_PROJECT_ID --body "proj_XXXXXXXX"
+gh secret set RAILWAY_ENVIRONMENT_ID --body "env_XXXXXXXX"
+gh secret set SUPABASE_FUNCTION_URL --body "https://<project>.functions.supabase.co/railway-sync"
+```
+
 ## How can I edit this code?
 
 There are several ways of editing your application.
