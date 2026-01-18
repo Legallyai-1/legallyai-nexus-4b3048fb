@@ -30,6 +30,18 @@ function validateMessage(content: string): { valid: boolean; reason?: string } {
   return { valid: true };
 }
 
+// Helper function to create SSE fallback stream
+function createSSEFallbackStream(message: string): ReadableStream {
+  const encoder = new TextEncoder();
+  return new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: message } }] })}\n\n`));
+      controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+      controller.close();
+    }
+  });
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -139,6 +151,7 @@ End important responses with: "Remember: This is general legal information, not 
               { role: "system", content: systemPrompt },
               ...messages,
             ],
+            stream: stream,
           }),
         });
         
@@ -167,6 +180,7 @@ End important responses with: "Remember: This is general legal information, not 
             { role: "system", content: systemPrompt },
             ...messages,
           ],
+          stream: stream,
         }),
       });
     }
@@ -186,13 +200,43 @@ Please try your question again in a moment, or explore our other features.
 
 Remember: For urgent legal matters, please consult a licensed attorney.`;
 
-      return new Response(
-        JSON.stringify({ response: fallbackResponse }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (stream) {
+        return new Response(
+          createSSEFallbackStream(fallbackResponse),
+          { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } }
+        );
+      } else {
+        return new Response(
+          JSON.stringify({ response: fallbackResponse }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
-    // Parse and return the response
+    // Handle streaming responses
+    if (stream) {
+      console.log("Streaming response from:", usedLovable ? "Lovable" : "OpenAI");
+      
+      // Validate that we have a readable response body
+      if (!response.body) {
+        console.error("No response body for streaming");
+        return new Response(
+          createSSEFallbackStream("Streaming unavailable. Please try again."),
+          { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } }
+        );
+      }
+
+      return new Response(response.body, {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          "Connection": "keep-alive",
+        },
+      });
+    }
+
+    // Parse and return the non-streaming response
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "I couldn't generate a response. Please try again.";
     console.log("Response generated, length:", content.length, "provider:", usedLovable ? "Lovable" : "OpenAI");
