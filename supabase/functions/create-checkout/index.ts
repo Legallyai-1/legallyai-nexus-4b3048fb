@@ -34,6 +34,22 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
+    // Check if Stripe is configured
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) {
+      logStep("Stripe not configured");
+      return new Response(
+        JSON.stringify({ 
+          error: 'Payments are currently disabled. Please contact the administrator for subscription access.',
+          paymentsDisabled: true
+        }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+          status: 400 
+        }
+      );
+    }
+
     const { priceId, mode } = await req.json();
     logStep("Request params", { priceId, mode });
 
@@ -62,7 +78,7 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { email: user.email });
 
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+    const stripe = new Stripe(stripeKey, {
       apiVersion: "2025-08-27.basil",
     });
 

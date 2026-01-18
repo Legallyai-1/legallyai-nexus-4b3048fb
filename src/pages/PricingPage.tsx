@@ -3,15 +3,19 @@ import { Link, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { 
-  Check, Star, Zap, Crown, Building2, ArrowRight, Loader2, Sparkles 
+  Check, Star, Zap, Crown, Building2, ArrowRight, Loader2, Sparkles, AlertCircle 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-// Stripe price IDs
+// Check if payments are enabled via environment variable
+const PAYMENTS_ENABLED = import.meta.env.VITE_ENABLE_PAYMENTS === 'true';
+
+// Stripe price IDs (only used if payments are enabled)
 const STRIPE_PRICES = {
   premium: "price_1Sdfqp0QhWGUtGKvcQuWONuB", // $9.99/month for normal users
   pro: "price_1SckV70QhWGUtGKvvg1tH7lu", // $99/month for lawyers
@@ -168,6 +172,17 @@ export default function PricingPage() {
     setLoading(planName);
     
     try {
+      // Check if payments are enabled
+      if (!PAYMENTS_ENABLED) {
+        toast({
+          title: "Payments Disabled",
+          description: "Automated payments are currently disabled. Please contact the administrator to upgrade your subscription manually.",
+          variant: "default",
+        });
+        setLoading(null);
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -184,7 +199,19 @@ export default function PricingPage() {
         body: { priceId, mode },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check if payments are disabled on the backend
+        if (error.message?.includes('disabled') || error.message?.includes('not available')) {
+          toast({
+            title: "Payments Disabled",
+            description: "Automated payments are currently disabled. Please contact the administrator.",
+            variant: "default",
+          });
+        } else {
+          throw error;
+        }
+        return;
+      }
 
       if (data?.url) {
         window.open(data.url, "_blank");
@@ -226,6 +253,19 @@ export default function PricingPage() {
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Start free, upgrade when you need more. Pay per document or subscribe for unlimited access.
             </p>
+
+            {/* Payments Disabled Notice */}
+            {!PAYMENTS_ENABLED && (
+              <div className="max-w-2xl mx-auto mt-6">
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Automated payments are currently disabled. Pricing information is shown for reference.
+                    Contact the administrator for manual subscription activation.
+                  </AlertDescription>
+                </Alert>
+              </div>
+            )}
           </div>
         </section>
 
@@ -297,7 +337,7 @@ export default function PricingPage() {
                         {loading === plan.name ? (
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         ) : null}
-                        {plan.cta}
+                        {!PAYMENTS_ENABLED ? "Contact Admin" : plan.cta}
                         {loading !== plan.name && <ArrowRight className="h-4 w-4 ml-2" />}
                       </Button>
                     ) : (
