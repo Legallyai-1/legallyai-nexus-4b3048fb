@@ -61,8 +61,8 @@ jobs:
           npx cap sync android
 
           # Versioning
-          sed -i 's/versionCode 1/versionCode 5/' android/app/build.gradle
-          sed -i 's/versionName "1.0"/versionName "5.0"/' android/app/build.gradle
+          sed -i 's/versionCode 1/versionCode 6/' android/app/build.gradle
+          sed -i 's/versionName "1.0"/versionName "6.0"/' android/app/build.gradle
 
           # AD_ID permission
           sed -i 's|<manifest|<manifest xmlns:tools="http://schemas.android.com/tools"|' android/app/src/main/AndroidManifest.xml
@@ -118,13 +118,13 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: legallyai-apk-v5-${{ github.run_number }}
+          name: legallyai-apk-v6-${{ github.run_number }}
           path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 30
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
-          name: legallyai-aab-v5-${{ github.run_number }}
+          name: legallyai-aab-v6-${{ github.run_number }}
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
