@@ -211,6 +211,24 @@ Remember: For urgent legal matters, please consult a licensed attorney.`;
     // Handle streaming responses
     if (stream) {
       console.log("Streaming response from:", usedLovable ? "Lovable" : "OpenAI");
+      
+      // Validate that we have a response body before streaming
+      if (!response.body) {
+        console.error("No response body for streaming");
+        const encoder = new TextEncoder();
+        return new Response(
+          new ReadableStream({
+            start(controller) {
+              const errorMsg = "Streaming unavailable. Please try again.";
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: errorMsg } }] })}\n\n`));
+              controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+              controller.close();
+            }
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } }
+        );
+      }
+
       return new Response(response.body, {
         headers: {
           ...corsHeaders,
