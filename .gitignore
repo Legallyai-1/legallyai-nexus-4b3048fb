@@ -27,3 +27,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Transcripts (may contain sensitive legal content)
+transcripts/
+*.srt
+*.vtt
