@@ -6,11 +6,31 @@ on:
       - main
   pull_request:
     types: [opened, synchronize, reopened]
+  workflow_dispatch:  # Manual trigger for secret sync
 
 jobs:
+  # Sync secrets to Vercel
+  sync-secrets:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Sync production secrets to Vercel
+        uses: itstor/sync-secrets-to-vercel@v1
+        with:
+          prefix: 'VITE_'
+          environments: 'production,preview'
+          project: ${{ secrets.VERCEL_PROJECT_ID }}
+          team_id: ${{ secrets.VERCEL_ORG_ID }}
+          token: ${{ secrets.VERCEL_TOKEN }}
+          secrets: '${{ toJSON(secrets) }}'
+          cancel_on_fail: false
+
+  # Deploy to Vercel
   deploy:
     runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    needs: [sync-secrets]
+    if: always() && (needs.sync-secrets.result == 'success' || needs.sync-secrets.result == 'skipped')
     
     steps:
       - name: Checkout
@@ -47,21 +67,39 @@ jobs:
             ${{ github.event_name == 'pull_request' && format('pr-{0}.legallyai-nexus.vercel.app', github.event.pull_request.number) || '' }}
             ${{ github.ref == 'refs/heads/main' && 'legallyai-nexus.vercel.app' || '' }}
 
+      - name: Wait for Vercel deployment
+        if: github.event_name == 'pull_request'
+        run: sleep 10
+
+      - name: Get Vercel Preview URL
+        if: github.event_name == 'pull_request'
+        uses: zentered/vercel-preview-url@v1.0.10
+        id: vercel_preview_url
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        with:
+          vercel_team_id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel_project_id: ${{ secrets.VERCEL_PROJECT_ID }}
+
       - name: Comment deployment URL
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
-            const deploymentUrl = '${{ steps.vercel-deploy.outputs.preview-url }}';
+            const previewUrl = '${{ steps.vercel_preview_url.outputs.preview_url }}' || '${{ steps.vercel-deploy.outputs.preview-url }}';
+            const deploymentState = '${{ steps.vercel_preview_url.outputs.deployment_state }}';
+            const deploymentName = '${{ steps.vercel-deploy.outputs.preview-name }}';
+            
             const comment = `## 🚀 Vercel Deployment
             
             Your PR has been successfully deployed to Vercel!
             
             | Name | Link |
             |------|------|
-            | 🔨 Latest commit | ${{ github.event.pull_request.head.sha }} |
-            | 🔍 Preview URL | [Visit Preview](${deploymentUrl}) |
-            | 📝 Deployment Name | ${{ steps.vercel-deploy.outputs.preview-name }} |
+            | 🔨 Latest commit | \`${{ github.event.pull_request.head.sha }}\` |
+            | 🔍 Preview URL | [Visit Preview](https://${previewUrl}) |
+            | 📝 Deployment Name | ${deploymentName} |
+            | ✅ Status | ${deploymentState || 'READY'} |
             
             ---
             *Powered by [Vercel](https://vercel.com) via GitHub Actions*`;

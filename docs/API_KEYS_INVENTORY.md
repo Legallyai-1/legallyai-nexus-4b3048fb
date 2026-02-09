@@ -65,11 +65,13 @@ These keys are referenced in code but marked as removed/optional:
 
 #### 1. OpenAI API
 - **OPENAI_API_KEY**
-  - Status: ❌ REMOVED (replaced by Vercel AI Gateway)
-  - Previously referenced in:
-    - `supabase/functions/legal-chat/index.ts`
-    - `supabase/functions/api-proxy/index.ts`
-  - Purpose: AI chat/completion (now using Claude via Vercel AI Gateway)
+  - Status: ⚠️ OPTIONAL (for embeddings generation)
+  - Used in:
+    - `.github/workflows/generate-embeddings.yml`
+    - `supabase/functions/search-docs/index.ts` (if implemented)
+  - Purpose: Generate documentation embeddings for vector search
+  - Documentation: `docs/VECTOR_SEARCH_EMBEDDINGS.md`
+  - Note: Chat features use Vercel AI Gateway instead
 
 #### 2. Stripe Payment Processing
 - **STRIPE_SECRET_KEY**
