@@ -21,14 +21,12 @@ serve(async (req) => {
     logStep("Function started");
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) {
-      throw new Error("STRIPE_SECRET_KEY is not set");
-    }
-
-    // Create Supabase client for auth
+    
+    // Create Supabase client for auth and database access
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
     );
 
     // Verify user authentication
@@ -44,7 +42,7 @@ serve(async (req) => {
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     
-    if (userError || !userData.user?.email) {
+    if (userError || !userData.user) {
       logStep("Authentication failed", { error: userError?.message });
       return new Response(JSON.stringify({ error: "Invalid authentication" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -52,58 +50,110 @@ serve(async (req) => {
       });
     }
 
+    const userId = userData.user.id;
     const userEmail = userData.user.email;
-    logStep("User authenticated", { email: userEmail });
+    logStep("User authenticated", { userId, email: userEmail });
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-
-    // Find customer by email
-    const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
-    
-    if (customers.data.length === 0) {
-      logStep("No Stripe customer found");
+    // If Stripe is not configured, check Supabase payment records only
+    if (!stripeKey) {
+      logStep("Stripe not configured, checking Supabase payment records");
+      
+      const { data: subscription, error: subError } = await supabaseClient
+        .rpc('check_user_subscription', { check_user_id: userId })
+        .single();
+      
+      if (subError) {
+        logStep("Error checking subscription", { error: subError.message });
+        // Default to free tier if error
+        return new Response(JSON.stringify({ 
+          hasPaid: false,
+          tier: 'free',
+          payment_method: 'none',
+          message: "Error checking subscription status"
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+      
+      logStep("Subscription checked (Supabase only)", subscription);
+      
       return new Response(JSON.stringify({ 
-        hasPaid: false,
-        message: "No payment history found"
+        hasPaid: subscription?.tier !== 'free' && subscription?.is_active,
+        tier: subscription?.tier || 'free',
+        payment_method: subscription?.payment_method || 'none',
+        isActive: subscription?.is_active || false,
+        expiresAt: subscription?.expires_at
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
 
-    const customerId = customers.data[0].id;
-    logStep("Found customer", { customerId });
+    // Stripe is configured - check both Stripe and Supabase records
+    logStep("Stripe configured, checking both Stripe and Supabase");
+    
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Check for successful payments (one-time purchases)
-    const paymentIntents = await stripe.paymentIntents.list({
-      customer: customerId,
-      limit: 100,
-    });
+    // Find customer by email
+    const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
+    
+    let hasStripePayment = false;
+    let hasActiveSubscription = false;
+    
+    if (customers.data.length > 0) {
+      const customerId = customers.data[0].id;
+      logStep("Found customer", { customerId });
 
-    const successfulPayments = paymentIntents.data.filter(
-      (pi: { status: string }) => pi.status === "succeeded"
-    );
+      // Check for successful payments (one-time purchases)
+      const paymentIntents = await stripe.paymentIntents.list({
+        customer: customerId,
+        limit: 100,
+      });
 
-    // Also check for active subscriptions
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      status: "active",
-      limit: 1,
-    });
+      const successfulPayments = paymentIntents.data.filter(
+        (pi: { status: string }) => pi.status === "succeeded"
+      );
 
-    const hasActiveSubscription = subscriptions.data.length > 0;
-    const hasSuccessfulPayment = successfulPayments.length > 0;
+      // Also check for active subscriptions
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "active",
+        limit: 1,
+      });
 
-    logStep("Payment status checked", { 
-      hasSuccessfulPayment, 
+      hasActiveSubscription = subscriptions.data.length > 0;
+      hasStripePayment = successfulPayments.length > 0;
+
+      logStep("Stripe payment status", { 
+        hasSuccessfulPayment: hasStripePayment, 
+        hasActiveSubscription,
+        paymentCount: successfulPayments.length 
+      });
+    } else {
+      logStep("No Stripe customer found");
+    }
+
+    // Also check Supabase payment records
+    const { data: subscription } = await supabaseClient
+      .rpc('check_user_subscription', { check_user_id: userId })
+      .single();
+    
+    const hasSupabaseSubscription = subscription?.tier !== 'free' && subscription?.is_active;
+    
+    logStep("Combined payment status", { 
+      hasStripePayment, 
       hasActiveSubscription,
-      paymentCount: successfulPayments.length 
+      hasSupabaseSubscription,
+      tier: subscription?.tier
     });
 
     return new Response(JSON.stringify({ 
-      hasPaid: hasSuccessfulPayment || hasActiveSubscription,
+      hasPaid: hasStripePayment || hasActiveSubscription || hasSupabaseSubscription,
       hasActiveSubscription,
-      paymentCount: successfulPayments.length
+      tier: subscription?.tier || 'free',
+      payment_method: hasActiveSubscription ? 'stripe' : (hasStripePayment || hasSupabaseSubscription) ? (subscription?.payment_method || 'stripe') : 'none',
+      isActive: hasActiveSubscription || hasSupabaseSubscription
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

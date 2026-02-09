@@ -26,9 +26,6 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
 
@@ -40,6 +37,90 @@ serve(async (req) => {
     if (!user) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id });
 
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    
+    // If Stripe is not configured, return Supabase-only analytics
+    if (!stripeKey) {
+      logStep("Stripe not configured, returning Supabase analytics");
+      
+      // Get payment records from last 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const { data: payments, error: paymentsError } = await supabaseClient
+        .from('payment_records')
+        .select('*')
+        .gte('created_at', thirtyDaysAgo.toISOString())
+        .order('created_at', { ascending: false });
+      
+      if (paymentsError) {
+        logStep("Error fetching payments", { error: paymentsError.message });
+      }
+      
+      const paymentData = payments || [];
+      
+      // Calculate metrics from Supabase payment records
+      const totalRevenue = paymentData.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+      
+      const subscriptionCount = paymentData.filter(p => 
+        (p.tier === 'pro' || p.tier === 'premium') && 
+        (!p.expires_at || new Date(p.expires_at) > new Date())
+      ).length;
+      
+      const documentCount = paymentData.filter(p => 
+        p.payment_method === 'manual' && p.tier === 'free'
+      ).length;
+      
+      const subscriptionRevenue = paymentData
+        .filter(p => p.tier === 'pro' || p.tier === 'premium')
+        .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+      
+      const documentRevenue = totalRevenue - subscriptionRevenue;
+      
+      const revenueStreams = [
+        { 
+          name: "Subscriptions", 
+          amount: subscriptionRevenue, 
+          percentage: totalRevenue > 0 ? (subscriptionRevenue / totalRevenue * 100) : 0 
+        },
+        { 
+          name: "Manual Payments", 
+          amount: documentRevenue > 0 ? documentRevenue : 0, 
+          percentage: totalRevenue > 0 && documentRevenue > 0 ? (documentRevenue / totalRevenue * 100) : 0 
+        },
+      ];
+      
+      const recentTransactions = paymentData.slice(0, 10).map(payment => ({
+        id: payment.id,
+        type: payment.tier === 'pro' || payment.tier === 'premium' ? 'subscription' : 'manual',
+        user: payment.user_id,
+        amount: Number(payment.amount),
+        time: new Date(payment.created_at).toLocaleDateString(),
+        status: 'verified',
+        method: payment.payment_method
+      }));
+      
+      const analytics = {
+        totalRevenue,
+        subscriptions: subscriptionCount,
+        documentsThisMonth: documentCount,
+        revenueStreams,
+        recentTransactions,
+        period: "30_days",
+        dataSource: "supabase"
+      };
+      
+      logStep("Supabase analytics compiled", analytics);
+      
+      return new Response(JSON.stringify(analytics), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    // Stripe is configured - use Stripe analytics
+    logStep("Stripe configured, fetching Stripe analytics");
+    
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     // Get date range for analytics
@@ -104,10 +185,11 @@ serve(async (req) => {
       documentsThisMonth: payments.data.filter((p: { amount: number }) => p.amount === 500).length,
       revenueStreams,
       recentTransactions,
-      period: "30_days"
+      period: "30_days",
+      dataSource: "stripe"
     };
 
-    logStep("Analytics compiled", analytics);
+    logStep("Stripe analytics compiled", analytics);
 
     return new Response(JSON.stringify(analytics), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
