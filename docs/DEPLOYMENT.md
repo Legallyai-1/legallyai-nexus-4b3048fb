@@ -19,6 +19,8 @@ This guide covers deploying LegallyAI to production.
 3. Click "New Project"
 4. Import your GitHub repository
 
+**⚠️ Having trouble connecting?** See [VERCEL_TROUBLESHOOTING.md](./VERCEL_TROUBLESHOOTING.md) for detailed solutions to common access issues.
+
 ### 2. Configure Environment Variables
 
 Add these in project settings:
@@ -126,6 +128,12 @@ Add Google Analytics (see [MONETIZATION.md](./MONETIZATION.md))
 
 ## Troubleshooting
 
+### Common Issues
+
+**Repository Access Issues:**
+- See detailed guide: [VERCEL_TROUBLESHOOTING.md](./VERCEL_TROUBLESHOOTING.md)
+- Most common: Vercel needs GitHub app permissions
+
 **Build Failures:**
 - Check environment variables
 - Verify Node.js version
@@ -135,6 +143,14 @@ Add Google Analytics (see [MONETIZATION.md](./MONETIZATION.md))
 - Check browser console
 - Verify API keys
 - Test Supabase connection
+
+---
+
+## 📚 Related Documentation
+
+- [Vercel Troubleshooting Guide](./VERCEL_TROUBLESHOOTING.md) - Detailed repository access solutions
+- [Configure Monetization](./MONETIZATION.md) - Set up revenue streams
+- [Supabase Setup](./SUPABASE_SETUP.md) - Backend configuration
 
 ---
 

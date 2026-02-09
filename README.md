@@ -42,6 +42,8 @@
    ```
 4. Deploy!
 
+**⚠️ Vercel Access Issues?** See [docs/VERCEL_TROUBLESHOOTING.md](./docs/VERCEL_TROUBLESHOOTING.md) for solutions.
+
 **Netlify:**
 1. Click "Deploy to Netlify" button above
 2. Connect GitHub repo
@@ -194,6 +196,7 @@ SUPABASE_ANON_KEY=auto_injected
 
 - [Supabase Setup Guide](./docs/SUPABASE_SETUP.md) - Backend deployment
 - [Deployment Guide](./docs/DEPLOYMENT.md) - Frontend deployment
+- [**Vercel Troubleshooting**](./docs/VERCEL_TROUBLESHOOTING.md) - Fix repository access issues ⚠️
 - [Monetization Guide](./docs/MONETIZATION.md) - AdSense + AdMob setup
 - [Bank Integration Guide](./docs/BANK_INTEGRATION.md) - Payout setup
 - [API Documentation](./docs/API.md) - Edge function reference
