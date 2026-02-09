@@ -38,6 +38,45 @@ This document provides a comprehensive inventory of all API keys and environment
   - Model: `anthropic/claude-sonnet-4.5`
   - Documentation: `docs/AI_SDK_INTEGRATION.md`
 
+#### 3. Paypost/Global Payments (Payment Processing)
+**Status:** 🔧 TO BE CONFIGURED - Ready for setup
+
+- **PAYPOST_MERCHANT_ID**
+  - Purpose: Merchant identification for Paypost account
+  - Location: Supabase secrets (edge functions only)
+  - Used in: `supabase/functions/paypost-checkout/index.ts`
+  - Documentation: `docs/PAYPOST_INTEGRATION.md`
+
+- **PAYPOST_API_KEY**
+  - Purpose: API authentication key
+  - Location: Supabase secrets (edge functions only)
+  - Used in: `supabase/functions/paypost-checkout/index.ts`
+  - Security: Never expose in frontend
+
+- **PAYPOST_API_SECRET**
+  - Purpose: API secret for authentication
+  - Location: Supabase secrets (edge functions only)
+  - Used in: `supabase/functions/paypost-checkout/index.ts`
+  - Security: Never expose in frontend
+
+- **PAYPOST_WEBHOOK_SECRET**
+  - Purpose: Verify webhook signatures from Paypost
+  - Location: Supabase secrets (edge functions only)
+  - Used in: `supabase/functions/paypost-webhook/index.ts`
+  - Security: Critical for webhook security
+
+- **PAYPOST_ENVIRONMENT**
+  - Value: `sandbox` or `production`
+  - Purpose: Switch between test and live environments
+  - Location: Supabase secrets (edge functions only)
+  - Default: `sandbox`
+
+**Benefits:**
+- Real payment processing (vs demo mode)
+- PCI-compliant hosted payment pages
+- Automated subscription management
+- Transaction fees: 2.9% + $0.30
+
 ---
 
 ### 🔒 **Auto-Injected by Supabase** (Edge Functions Only)
