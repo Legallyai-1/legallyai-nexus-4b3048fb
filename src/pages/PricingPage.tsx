@@ -186,30 +186,33 @@ export default function PricingPage() {
       // Parse amount from price string (remove $ and convert to number)
       const amount = parseFloat(plans.find(p => p.name === planName)?.price.replace('$', '') || '0');
       
-      // Call new process-payment function (database-only)
-      const { data, error } = await supabase.functions.invoke('process-payment', {
+      // Call Paypost checkout function for real payment processing
+      const { data, error } = await supabase.functions.invoke('paypost-checkout', {
         body: { 
-          tier: tier,
           amount: amount,
-          payment_method: 'demo' // In production, integrate real payment gateway
+          currency: 'USD',
+          mode: mode,
+          tier: tier,
+          success_url: `${window.location.origin}/payment-success`,
+          cancel_url: `${window.location.origin}/pricing`,
         }
       });
 
       if (error) throw error;
 
-      toast({
-        title: "Success!",
-        description: `Successfully upgraded to ${planName}!`,
-      });
-      navigate('/dashboard');
+      // Redirect to Paypost hosted payment page
+      if (data?.checkout_url) {
+        window.location.href = data.checkout_url;
+      } else {
+        throw new Error("No checkout URL received");
+      }
     } catch (error: any) {
-      console.error("Subscription error:", error);
+      console.error("Checkout error:", error);
       toast({
-        title: "Subscription Error",
-        description: error.message || "Failed to subscribe. Please try again.",
+        title: "Checkout Error",
+        description: error.message || "Failed to initiate checkout. Please try again.",
         variant: "destructive",
       });
-    } finally {
       setLoading(null);
     }
   };
