@@ -27,6 +27,17 @@ This document provides a comprehensive inventory of all API keys and environment
   - Location: `.env`, `.env.example`, `supabase/config.toml`
   - Used in: CI/CD, deployment configs
 
+#### 2. Vercel AI Gateway (AI Features)
+**Status:** ✅ ACTIVE - Key configured
+
+- **VERCEL_AI_GATEWAY_KEY**
+  - Value: `vck_YOUR_KEY_HERE` (stored securely in `.env`)
+  - Purpose: Access to Anthropic Claude via Vercel AI Gateway
+  - Location: `.env`, `.env.example`
+  - Used in: `supabase/functions/legal-chat/index.ts`
+  - Model: `anthropic/claude-sonnet-4.5`
+  - Documentation: `docs/AI_SDK_INTEGRATION.md`
+
 ---
 
 ### 🔒 **Auto-Injected by Supabase** (Edge Functions Only)
@@ -54,11 +65,11 @@ These keys are referenced in code but marked as removed/optional:
 
 #### 1. OpenAI API
 - **OPENAI_API_KEY**
-  - Status: ❌ REMOVED (marked as "Using local AI")
-  - Referenced in:
+  - Status: ❌ REMOVED (replaced by Vercel AI Gateway)
+  - Previously referenced in:
     - `supabase/functions/legal-chat/index.ts`
     - `supabase/functions/api-proxy/index.ts`
-  - Purpose: AI chat/completion (fallback to local AI)
+  - Purpose: AI chat/completion (now using Claude via Vercel AI Gateway)
 
 #### 2. Stripe Payment Processing
 - **STRIPE_SECRET_KEY**
@@ -165,10 +176,11 @@ Per `android/app/src/main/AndroidManifest.xml`:
 
 ## 📊 **Summary by Category**
 
-### ✅ Currently Active (3)
+### ✅ Currently Active (4)
 1. VITE_SUPABASE_URL ✓
 2. VITE_SUPABASE_PUBLISHABLE_KEY ✓
 3. VITE_SUPABASE_PROJECT_ID ✓
+4. VERCEL_AI_GATEWAY_KEY ✓ **NEW**
 
 ### 🔒 Auto-Provided (3)
 1. SUPABASE_URL (edge functions)
@@ -177,7 +189,7 @@ Per `android/app/src/main/AndroidManifest.xml`:
 
 ### ❌ Removed/Deprecated (3)
 1. LOVABLE_API_KEY
-2. OPENAI_API_KEY
+2. OPENAI_API_KEY (replaced by Vercel AI Gateway)
 3. STRIPE_SECRET_KEY
 
 ### ⚠️ Optional/External (11)
