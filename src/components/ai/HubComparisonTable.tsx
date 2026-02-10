@@ -139,8 +139,8 @@ const hubComparisons: HubComparison[] = [
     previousScore: 0,
     currentScore: 10,
     competitors: [
-      { name: "Legal Chatbots", rating: "4.2/5", source: "Capterra" },
-      { name: "Voice Assistants", rating: "4.0/5", source: "G2" },
+      { name: "Ross Intelligence", rating: "4.0/5", source: "G2" },
+      { name: "LawGeex AI", rating: "4.2/5", source: "Capterra" },
     ],
     features: ["Site-wide Voice", "Hub Routing", "Multi-step Legal", "Context Memory"],
     improvements: ["95% legal accuracy", "Predictive outcomes", "Offline mode", "Multilingual legal terms"],
