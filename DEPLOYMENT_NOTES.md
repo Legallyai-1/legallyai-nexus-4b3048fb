@@ -14,7 +14,7 @@ This document outlines the production-ready configuration of LegallyAI after rem
 ### 2. Vercel Configuration
 - ✅ Created `vercel.json` with proper build settings
 - ✅ Configured SPA routing to handle client-side navigation
-- ✅ Added security headers (X-Frame-Options, CSP, etc.)
+- ✅ Added security headers (e.g., X-Frame-Options) via `vercel.json`
 - ✅ Documented required environment variables
 
 ### 3. Supabase Integration
