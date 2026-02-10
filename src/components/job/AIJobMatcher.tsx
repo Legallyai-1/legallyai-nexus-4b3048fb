@@ -171,7 +171,7 @@ Respond in JSON format:
             </p>
           </div>
           <Badge className="ml-auto bg-neon-green/20 text-neon-green border-neon-green/30">
-            <Star className="w-3 h-3 mr-1" /> 10/10 Rated
+            <Star className="w-3 h-3 mr-1" /> AI Powered
           </Badge>
         </CardHeader>
         <CardContent className="space-y-4">

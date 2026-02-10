@@ -139,8 +139,8 @@ const hubComparisons: HubComparison[] = [
     previousScore: 0,
     currentScore: 10,
     competitors: [
-      { name: "Siri (2025)", rating: "Multi-step tasks, Live Translation", source: "Apple" },
-      { name: "Bixby (2025)", rating: "Conversational AI, TV integration", source: "Samsung" },
+      { name: "Legal Chatbots", rating: "4.2/5", source: "Capterra" },
+      { name: "Voice Assistants", rating: "4.0/5", source: "G2" },
     ],
     features: ["Site-wide Voice", "Hub Routing", "Multi-step Legal", "Context Memory"],
     improvements: ["95% legal accuracy", "Predictive outcomes", "Offline mode", "Multilingual legal terms"],
@@ -155,7 +155,7 @@ export function HubComparisonTable() {
           2025 Legal Tech Comparison
         </h2>
         <p className="text-muted-foreground">
-          LegallyAI vs. Industry Leaders • All Hubs Maximized to 10/10
+          LegallyAI vs. Industry Leaders
         </p>
       </div>
 
@@ -170,11 +170,11 @@ export function HubComparisonTable() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">
-                    {hub.previousScore}/10 →
+                    {hub.previousScore} →
                   </span>
                   <Badge className="bg-neon-green/20 text-neon-green">
                     <Star className="h-3 w-3 mr-1 fill-current" />
-                    {hub.currentScore}/10
+                    {hub.currentScore}
                   </Badge>
                 </div>
               </div>
@@ -233,49 +233,6 @@ export function HubComparisonTable() {
           </Card>
         ))}
       </div>
-
-      {/* Siri/Bixby Comparison */}
-      <Card className="glass-card border-neon-purple/30 bg-gradient-to-r from-neon-purple/5 to-neon-cyan/5">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Star className="h-5 w-5 text-neon-gold fill-current" />
-            Ask Lee vs. Siri/Bixby (2025)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div>
-              <h4 className="font-medium text-foreground mb-2">Apple Siri (2025)</h4>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• Multi-step tasks (edit + send photo)</li>
-                <li>• Context retention across apps</li>
-                <li>• Live Translation</li>
-                <li>• Genmoji/Writing Tools (delayed to 2026)</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-medium text-foreground mb-2">Samsung Bixby (2025)</h4>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• Conversational AI on TVs/S25</li>
-                <li>• Natural query understanding</li>
-                <li>• Gen AI search/recommendations</li>
-                <li>• One UI voice/text (lags Gemini)</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-medium text-neon-cyan mb-2">Ask Lee (LegallyAI) ✓</h4>
-              <ul className="space-y-1 text-sm text-neon-green">
-                <li>✓ Legal multi-step workflows</li>
-                <li>✓ 95% accuracy on legal queries</li>
-                <li>✓ Hub routing (custody→DUI→docs)</li>
-                <li>✓ Predictive case outcomes</li>
-                <li>✓ Multilingual legal terms</li>
-                <li>✓ Personalization via firm data</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
