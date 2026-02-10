@@ -128,7 +128,7 @@ export function ClientPortal() {
               </div>
             </div>
             <Badge className="bg-neon-green/20 text-neon-green border-neon-green/30">
-              <Star className="w-3 h-3 mr-1" /> 10/10 Portal
+              <Star className="w-3 h-3 mr-1" /> Secure Portal
             </Badge>
           </div>
         </CardHeader>
