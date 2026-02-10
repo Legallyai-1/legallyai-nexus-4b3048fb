@@ -1,0 +1,91 @@
+name: Speech to Text Transcription
+
+on:
+  workflow_dispatch:
+    inputs:
+      youtube_url:
+        description: 'YouTube URL to transcribe (optional)'
+        required: false
+        type: string
+      audio_path:
+        description: 'Path to audio file in repository (optional)'
+        required: false
+        type: string
+      model:
+        description: 'Whisper model size'
+        required: true
+        type: choice
+        options:
+          - small
+          - medium
+          - large
+        default: small
+      output_format:
+        description: 'Output format'
+        required: true
+        type: choice
+        options:
+          - txt
+          - srt
+          - csv
+        default: txt
+      translate:
+        description: 'Translate to English'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  transcribe:
+    name: Transcribe Audio/Video
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Transcribe from YouTube
+        if: ${{ inputs.youtube_url != '' }}
+        uses: appleboy/whisper-action@v0.1.1
+        with:
+          model: ${{ inputs.model }}
+          youtube_url: ${{ inputs.youtube_url }}
+          output_format: ${{ inputs.output_format }}
+          output_folder: transcripts
+          print_segment: true
+          translate: ${{ inputs.translate }}
+          debug: false
+
+      - name: Transcribe from File
+        if: ${{ inputs.audio_path != '' }}
+        uses: appleboy/whisper-action@v0.1.1
+        with:
+          model: ${{ inputs.model }}
+          audio_path: ${{ inputs.audio_path }}
+          output_format: ${{ inputs.output_format }}
+          output_folder: transcripts
+          print_segment: true
+          translate: ${{ inputs.translate }}
+          debug: false
+
+      - name: Upload transcripts
+        uses: actions/upload-artifact@v4
+        with:
+          name: transcription-results
+          path: transcripts/
+          retention-days: 30
+
+      - name: Commit transcripts to repository
+        if: success()
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add transcripts/
+          git diff --quiet && git diff --staged --quiet || git commit -m "Add transcription: $(date +'%Y-%m-%d %H:%M:%S')"
+
+      - name: Push changes
+        if: success()
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}

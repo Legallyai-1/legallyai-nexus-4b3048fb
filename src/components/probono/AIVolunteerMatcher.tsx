@@ -213,6 +213,7 @@ Generate realistic pro bono case matches. Respond in JSON:
           </div>
           <Badge className="ml-auto bg-neon-green/20 text-neon-green border-neon-green/30">
             <Star className="w-3 h-3 mr-1" /> AI Powered
+            <Star className="w-3 h-3 mr-1" /> AI-Powered
           </Badge>
         </CardHeader>
       </Card>

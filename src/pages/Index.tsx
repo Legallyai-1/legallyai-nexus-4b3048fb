@@ -291,6 +291,7 @@ export default function Index() {
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 Industry-leading AI assistants for specialized legal needs. Choose your assistant.
+                Industry-leading AI assistants for all your legal needs. Choose your specialized assistant.
               </p>
             </div>
             
@@ -314,6 +315,7 @@ export default function Index() {
                   <div className="flex items-center justify-between">
                     <Badge className="bg-neon-green/20 text-neon-green border-neon-green/30 text-xs">
                       <Sparkles className="w-2 h-2 mr-1" /> AI Powered
+                      <Star className="w-2 h-2 mr-1" /> Premium
                     </Badge>
                     <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-neon-cyan group-hover:translate-x-1 transition-all" />
                   </div>

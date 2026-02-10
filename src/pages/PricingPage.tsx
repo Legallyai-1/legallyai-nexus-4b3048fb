@@ -175,6 +175,7 @@ export default function PricingPage() {
     setLoading(planName);
     
     try {
+      const { data: { user } } = await supabase.auth.getUser();
       // Check if payments are enabled
       if (!PAYMENTS_ENABLED) {
         toast({
@@ -188,18 +189,32 @@ export default function PricingPage() {
 
       const { data: { session } } = await supabase.auth.getSession();
       
-      if (!session) {
+      if (!user) {
         toast({
           title: "Login Required",
-          description: "Please log in to purchase a subscription",
+          description: "Please sign in first",
           variant: "destructive",
         });
         navigate("/auth");
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { priceId, mode },
+      // Determine tier from plan name
+      const tier = planName.toLowerCase().replace(' - lawyers', '');
+      
+      // Parse amount from price string (remove $ and convert to number)
+      const amount = parseFloat(plans.find(p => p.name === planName)?.price.replace('$', '') || '0');
+      
+      // Call Paypost checkout function for real payment processing
+      const { data, error } = await supabase.functions.invoke('paypost-checkout', {
+        body: { 
+          amount: amount,
+          currency: 'USD',
+          mode: mode,
+          tier: tier,
+          success_url: `${window.location.origin}/payment-success`,
+          cancel_url: `${window.location.origin}/pricing`,
+        }
       });
 
       if (error) {
@@ -216,17 +231,19 @@ export default function PricingPage() {
         return;
       }
 
-      if (data?.url) {
-        window.open(data.url, "_blank");
+      // Redirect to Paypost hosted payment page
+      if (data?.checkout_url) {
+        window.location.href = data.checkout_url;
+      } else {
+        throw new Error("No checkout URL received");
       }
     } catch (error: any) {
       console.error("Checkout error:", error);
       toast({
         title: "Checkout Error",
-        description: error.message || "Failed to start checkout",
+        description: error.message || "Failed to initiate checkout. Please try again.",
         variant: "destructive",
       });
-    } finally {
       setLoading(null);
     }
   };

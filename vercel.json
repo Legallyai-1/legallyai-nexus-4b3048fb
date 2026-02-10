@@ -2,6 +2,9 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": null,
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "vite",
   "rewrites": [
     {
       "source": "/(.*)",
@@ -26,5 +29,9 @@
     "VITE_ENABLE_PAYMENTS": "@vite_enable_payments",
     "VITE_ADSENSE_CLIENT_ID": "@vite_adsense_client_id",
     "VITE_ENABLE_ADSENSE": "@vite_enable_adsense"
+  "env": {
+    "VITE_SUPABASE_URL": "https://wejiqqtwnhevcjdllodr.supabase.co",
+    "VITE_SUPABASE_PROJECT_ID": "wejiqqtwnhevcjdllodr",
+    "VITE_SUPABASE_ANON_KEY": "@supabase-anon-key"
   }
 }

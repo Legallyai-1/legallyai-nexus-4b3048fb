@@ -128,6 +128,7 @@ Always be compassionate and thorough. Provide state-specific guidance when possi
               </div>
               <Badge className="bg-neon-pink/20 text-neon-pink border-neon-pink/30 mb-3">
                 <Star className="w-3 h-3 mr-1" /> Marriage & Divorce AI
+                <Star className="w-3 h-3 mr-1" /> Premium Service
               </Badge>
               <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-3">
                 Mary<span className="text-neon-pink">AI</span>
