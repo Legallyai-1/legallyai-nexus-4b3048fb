@@ -240,9 +240,6 @@ export default function AIAssistantsPage() {
               <Badge className="bg-neon-cyan/20 text-neon-cyan border-neon-cyan/30">
                 <Sparkles className="w-3 h-3 mr-1" /> Advanced AI Technology
               </Badge>
-              Choose your specialized AI assistant. Industry-leading legal technology for all your needs.
-            </p>
-            <div className="flex justify-center gap-2 mt-4">
               <Badge className="bg-neon-purple/20 text-neon-purple border-neon-purple/30">
                 Premium Voice Access
               </Badge>
