@@ -249,13 +249,6 @@ export default function AIAssistantsPage() {
                 `}
                 style={{ animationDelay: `${index * 50}ms` }}
               >
-                {/* Rating Badge */}
-                <div className="absolute top-3 right-3 z-10">
-                  <Badge className="bg-neon-green/30 text-neon-green border-neon-green/50 text-xs">
-                    <Star className="w-3 h-3 mr-1" /> {assistant.rating}
-                  </Badge>
-                </div>
-
                 {/* Premium Badge */}
                 {assistant.premium && (
                   <div className="absolute top-3 left-3 z-10">
