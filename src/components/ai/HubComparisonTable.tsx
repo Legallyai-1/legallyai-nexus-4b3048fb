@@ -139,6 +139,8 @@ const hubComparisons: HubComparison[] = [
     previousScore: 0,
     currentScore: 10,
     competitors: [
+      { name: "LegalTech Voice AI", rating: "4.2/5", source: "G2" },
+      { name: "Voice Assistant Platforms", rating: "4.5/5", source: "Industry" },
       { name: "Voice Assistants", rating: "General purpose AI", source: "Consumer Tech" },
       { name: "Legal Chatbots", rating: "Limited scope", source: "Legal Tech" },
     ],
@@ -155,6 +157,7 @@ export function HubComparisonTable() {
           2025 Legal Tech Features
         </h2>
         <p className="text-muted-foreground">
+          LegallyAI vs. Industry Leaders • Advanced AI Technology
           LegallyAI - Industry-leading capabilities across all specialized hubs
         </p>
       </div>

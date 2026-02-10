@@ -186,6 +186,7 @@ export function LexiAssistant({ userType = "individual", userName = "there" }: L
           <h3 className="font-display font-semibold text-lg">
             Hi {userName}! I'm <span className="text-neon-cyan">Lee</span>
           </h3>
+          <p className="text-sm text-muted-foreground">Your AI Legal Assistant</p>
           <p className="text-sm text-muted-foreground">Your AI Legal Assistant • Premium Service</p>
         </div>
       </div>

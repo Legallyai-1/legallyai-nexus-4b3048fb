@@ -248,6 +248,7 @@ export function FloatingLeeAssistant() {
                         Ask Lee
                         <Badge className="bg-neon-green/20 text-neon-green text-xs">Premium</Badge>
                       </h3>
+                      <p className="text-xs text-muted-foreground">Site-wide AI Legal Assistant</p>
                       <p className="text-xs text-muted-foreground">Site-wide AI • Advanced Legal Assistant</p>
                     </div>
                   </div>

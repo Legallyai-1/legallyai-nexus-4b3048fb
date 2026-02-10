@@ -1,6 +1,7 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "framework": null,
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "vite",
@@ -10,6 +11,24 @@
       "destination": "/index.html"
     }
   ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
+  "env": {
+    "VITE_SUPABASE_URL": "@vite_supabase_url",
+    "VITE_SUPABASE_PUBLISHABLE_KEY": "@vite_supabase_publishable_key",
+    "VITE_SUPABASE_PROJECT_ID": "@vite_supabase_project_id",
+    "VITE_ENABLE_PAYMENTS": "@vite_enable_payments",
+    "VITE_ADSENSE_CLIENT_ID": "@vite_adsense_client_id",
+    "VITE_ENABLE_ADSENSE": "@vite_enable_adsense"
   "env": {
     "VITE_SUPABASE_URL": "https://wejiqqtwnhevcjdllodr.supabase.co",
     "VITE_SUPABASE_PROJECT_ID": "wejiqqtwnhevcjdllodr",

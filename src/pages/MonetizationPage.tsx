@@ -34,7 +34,8 @@ export default function MonetizationPage() {
       setAnalyticsData(data);
     } catch (error) {
       console.error('Error fetching analytics:', error);
-      toast.error('Could not load analytics. Using demo data.');
+      toast.error('Could not load analytics. Please check your payment configuration.');
+      setAnalyticsData(null);
     } finally {
       setLoading(false);
     }

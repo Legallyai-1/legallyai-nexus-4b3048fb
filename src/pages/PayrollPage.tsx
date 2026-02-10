@@ -83,14 +83,9 @@ export default function PayrollPage() {
       setTotalPayroll(entries.reduce((sum, e) => sum + e.net_pay, 0));
     } catch (error: any) {
       console.error("Payroll error:", error);
-      // Set mock data for demo
-      const mockData: PayrollEntry[] = [
-        { id: "1", employee_name: "John Smith", hours_worked: 160, hourly_rate: 75, gross_pay: 12000, deductions: 2400, net_pay: 9600, pay_period: "December 2024", status: "paid" },
-        { id: "2", employee_name: "Sarah Johnson", hours_worked: 152, hourly_rate: 65, gross_pay: 9880, deductions: 1976, net_pay: 7904, pay_period: "December 2024", status: "processed" },
-        { id: "3", employee_name: "Mike Davis", hours_worked: 168, hourly_rate: 55, gross_pay: 9240, deductions: 1848, net_pay: 7392, pay_period: "December 2024", status: "pending" },
-      ];
-      setPayrollEntries(mockData);
-      setTotalPayroll(mockData.reduce((sum, e) => sum + e.net_pay, 0));
+      toast.error("Failed to load payroll data. Please try again.");
+      setPayrollEntries([]);
+      setTotalPayroll(0);
     } finally {
       setIsLoading(false);
     }

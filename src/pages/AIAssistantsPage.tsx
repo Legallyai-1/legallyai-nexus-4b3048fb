@@ -12,6 +12,7 @@ const assistants = [
   {
     id: "general",
     name: "Lee - Legal AI",
+    description: "Your advanced AI legal assistant with site-wide access. Voice commands, multi-step workflows, 95% accuracy.",
     description: "Your advanced AI legal assistant with site-wide access. Voice commands, multi-step workflows, 95% accuracy for legal queries.",
     icon: MessageSquare,
     variant: "cyan" as const,
@@ -26,6 +27,7 @@ const assistants = [
   {
     id: "custody",
     name: "CustodiAI - Child Custody",
+    description: "Comprehensive custody hub: Intake forms, support calculations, enforcement logs, secure co-parent messaging, court reports.",
     description: "Complete custody management: Intake forms, support calculations, enforcement logs, secure co-parent messaging, court reports.",
     icon: Heart,
     variant: "purple" as const,
@@ -52,6 +54,7 @@ const assistants = [
   {
     id: "defense",
     name: "DefendrAI - Criminal Defense",
+    description: "Complete defense tools: Plea outcome simulations, client portals, violation trackers, e-filing, sentencing guidance.",
     description: "Complete defense toolkit: Plea outcome simulations, client portals, violation trackers, e-filing, sentencing guidance.",
     icon: Gavel,
     variant: "pink" as const,
@@ -65,7 +68,7 @@ const assistants = [
   {
     id: "dui",
     name: "DriveSafeAI - DUI Defense",
-    description: "DUI specialists: Breathalyzer data parsers, hearing simulations, lead matching, contingency billing. Vs. MyCase 4.5/5.",
+    description: "DUI specialists: Breathalyzer data parsers, hearing simulations, lead matching, contingency billing.",
     icon: Car,
     variant: "orange" as const,
     path: "/dui-hub",
@@ -78,6 +81,7 @@ const assistants = [
   {
     id: "probation",
     name: "Freedom AI - Probation/Parole",
+    description: "Comprehensive reentry tools: Geo-fencing alerts, recidivism predictions, rehab plan automation, caseload dashboards.",
     description: "Complete reentry support: Geo-fencing alerts, recidivism predictions, rehab plan automation, caseload dashboards.",
     icon: Users,
     variant: "green" as const,
@@ -117,6 +121,7 @@ const assistants = [
   {
     id: "academy",
     name: "ScholarAI - Legal Academy",
+    description: "Complete learning platform: Micro-certifications, AI tutors, live simulations, bar exam prep, ABA-approved paths.",
     description: "Comprehensive legal education: Micro-certifications, AI tutors, live simulations, bar exam prep, ABA-approved paths.",
     icon: GraduationCap,
     variant: "blue" as const,
@@ -182,6 +187,7 @@ const assistants = [
   {
     id: "jobs",
     name: "JobAI - Legal Careers",
+    description: "AI-powered job board: Resume/job matching, free postings, alerts.",
     description: "Comprehensive job board: AI resume/job matching, free postings, real-time alerts.",
     icon: Briefcase,
     variant: "cyan" as const,
@@ -195,6 +201,7 @@ const assistants = [
   {
     id: "probono",
     name: "ProBonoAI - Volunteer Matching",
+    description: "Pro bono platform: AI case-volunteer pairing, intake forms, progress trackers.",
     description: "Complete pro bono platform: AI case-volunteer pairing, intake forms, progress trackers.",
     icon: Heart,
     variant: "green" as const,
@@ -227,6 +234,12 @@ export default function AIAssistantsPage() {
               AI Legal <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-cyan to-neon-blue">Assistants</span>
             </h1>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Choose your specialized AI assistant. Industry-leading legal AI technology.
+            </p>
+            <div className="flex justify-center gap-2 mt-4">
+              <Badge className="bg-neon-cyan/20 text-neon-cyan border-neon-cyan/30">
+                <Sparkles className="w-3 h-3 mr-1" /> Advanced AI Technology
+              </Badge>
               Choose your specialized AI assistant. Industry-leading legal technology for all your needs.
             </p>
             <div className="flex justify-center gap-2 mt-4">
