@@ -45,6 +45,20 @@ VITE_SUPABASE_PUBLISHABLE_KEY=your_anon_key_here
 
 Get these from your Supabase project dashboard → Settings → API
 
+### Optional: Enable Google AdSense
+
+Google AdSense is already integrated and works out of the box with the default client ID. To use your own:
+
+1. Get your AdSense publisher ID from [google.com/adsense](https://www.google.com/adsense)
+2. Add to `.env`:
+   ```bash
+   VITE_ADSENSE_CLIENT_ID=ca-pub-YOUR_PUBLISHER_ID
+   ```
+3. Update the client ID in `index.html` (line 34)
+4. Restart your dev server
+
+AdSense ads will automatically appear on key pages (home, AI assistants, pricing, etc.).
+
 ### Optional: Enable Stripe Payments
 
 Stripe is **completely optional**. The app works fully without it using:
