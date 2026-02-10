@@ -25,6 +25,7 @@ const DUIHubPage = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [isSimulating, setIsSimulating] = useState(false);
   const [simTranscript, setSimTranscript] = useState<string[]>([]);
+  const [simResponse, setSimResponse] = useState("");
   const [caseData, setCaseData] = useState({
     arrestDate: "",
     bacLevel: "",
@@ -50,6 +51,19 @@ const DUIHubPage = () => {
         "[Voice input enabled - speak your response]"
       ]);
     }, 2000);
+  };
+
+  const handleSimResponse = () => {
+    if (!simResponse.trim()) return;
+    setSimTranscript(prev => [...prev, `You: ${simResponse}`]);
+    setSimResponse("");
+    // Simulate AI judge response
+    setTimeout(() => {
+      setSimTranscript(prev => [...prev,
+        "Judge: Thank you for your response. The court will consider this testimony.",
+        "DuiBot: Strong response. Consider also citing the maintenance logs timeline.",
+      ]);
+    }, 1500);
   };
 
   const predictOutcome = async () => {
@@ -230,11 +244,17 @@ const DUIHubPage = () => {
 
                   {isSimulating && (
                     <div className="flex gap-2">
-                      <Button variant="outline" className="flex-1">
+                      <Button variant="outline" className="flex-shrink-0" onClick={handleSimResponse}>
                         <Mic className="mr-2 h-4 w-4" />
-                        Voice Response
+                        Send
                       </Button>
-                      <Input placeholder="Or type your response..." className="flex-1" />
+                      <Input
+                        placeholder="Or type your response..."
+                        className="flex-1"
+                        value={simResponse}
+                        onChange={(e) => setSimResponse(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleSimResponse()}
+                      />
                     </div>
                   )}
                 </CardContent>

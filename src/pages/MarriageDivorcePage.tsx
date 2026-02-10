@@ -29,6 +29,32 @@ export default function MarriageDivorcePage() {
   const [chatMessages, setChatMessages] = useState<{role: string; content: string}[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Alimony calculator state
+  const [alimonyCalc, setAlimonyCalc] = useState({
+    yourIncome: "",
+    spouseIncome: "",
+    marriageYears: "",
+  });
+  const [alimonyEstimate, setAlimonyEstimate] = useState<number | null>(null);
+
+  const calculateAlimony = () => {
+    const yourIncome = parseFloat(alimonyCalc.yourIncome) || 0;
+    const spouseIncome = parseFloat(alimonyCalc.spouseIncome) || 0;
+    const years = parseInt(alimonyCalc.marriageYears) || 0;
+    
+    if (yourIncome === 0 && spouseIncome === 0) {
+      toast.error("Please enter income amounts");
+      return;
+    }
+    
+    // Simplified alimony formula: (higher income - lower income) * 30% * duration factor
+    const diff = Math.abs(yourIncome - spouseIncome);
+    const durationFactor = Math.min(years / 20, 1); // cap at 20 years
+    const monthly = Math.round((diff * 0.30 * durationFactor) / 12);
+    setAlimonyEstimate(monthly);
+    toast.success("Alimony estimate calculated");
+  };
+
   const handleSendMessage = async () => {
     if (!chatInput.trim() || isLoading) return;
     
@@ -364,19 +390,40 @@ Always be compassionate and thorough. Provide state-specific guidance when possi
                     <div className="space-y-4">
                       <div>
                         <Label>Your Annual Income</Label>
-                        <Input type="number" placeholder="$0" />
+                        <Input
+                          type="number"
+                          placeholder="$0"
+                          value={alimonyCalc.yourIncome}
+                          onChange={(e) => setAlimonyCalc(prev => ({ ...prev, yourIncome: e.target.value }))}
+                        />
                       </div>
                       <div>
                         <Label>Spouse's Annual Income</Label>
-                        <Input type="number" placeholder="$0" />
+                        <Input
+                          type="number"
+                          placeholder="$0"
+                          value={alimonyCalc.spouseIncome}
+                          onChange={(e) => setAlimonyCalc(prev => ({ ...prev, spouseIncome: e.target.value }))}
+                        />
                       </div>
                       <div>
                         <Label>Length of Marriage (years)</Label>
-                        <Input type="number" placeholder="0" />
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          value={alimonyCalc.marriageYears}
+                          onChange={(e) => setAlimonyCalc(prev => ({ ...prev, marriageYears: e.target.value }))}
+                        />
                       </div>
-                      <Button variant="neon-green" className="w-full">
+                      <Button variant="neon-green" className="w-full" onClick={calculateAlimony}>
                         Calculate Estimate
                       </Button>
+                      {alimonyEstimate !== null && (
+                        <div className="p-4 rounded-lg bg-neon-green/10 border border-neon-green/30">
+                          <p className="text-sm text-muted-foreground">Estimated Monthly Alimony</p>
+                          <p className="text-2xl font-bold text-neon-green">${alimonyEstimate.toLocaleString()}/mo</p>
+                        </div>
+                      )}
                       <p className="text-xs text-muted-foreground">
                         *Estimates vary by state. Consult an attorney for accurate figures.
                       </p>
