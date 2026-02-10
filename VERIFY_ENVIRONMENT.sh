@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # VERIFY_ENVIRONMENT.sh - Check all environment configurations
-# Ensures no Railway references and all environments are properly configured
+# Ensures all environments are properly configured
 
 echo "🔍 ENVIRONMENT VERIFICATION"
 echo "=========================="
@@ -16,43 +16,9 @@ NC='\033[0m' # No Color
 ERRORS=0
 WARNINGS=0
 
-# Function to check for Railway references
-check_railway() {
-    echo "1️⃣  Checking for Railway references..."
-    
-    # Search for Railway in code (excluding documentation)
-    RAILWAY_CODE=$(grep -r -i "railway" \
-        --exclude-dir=node_modules \
-        --exclude-dir=.git \
-        --exclude-dir=dist \
-        --exclude="*.md" \
-        --exclude=".env.example" \
-        --exclude="VERIFY_ENVIRONMENT.sh" \
-        --exclude="AUTO_DEPLOY.sh" \
-        . 2>/dev/null || true)
-    
-    if [[ -n "$RAILWAY_CODE" ]]; then
-        echo -e "${RED}❌ Found Railway references in code:${NC}"
-        echo "$RAILWAY_CODE"
-        ERRORS=$((ERRORS + 1))
-    else
-        echo -e "${GREEN}✅ No Railway references in code${NC}"
-    fi
-    
-    # Check for Railway config files
-    if [[ -f "railway.json" ]] || [[ -f "railway.toml" ]]; then
-        echo -e "${RED}❌ Found Railway config files${NC}"
-        ERRORS=$((ERRORS + 1))
-    else
-        echo -e "${GREEN}✅ No Railway config files${NC}"
-    fi
-    
-    echo ""
-}
-
 # Function to verify Supabase environment
 check_supabase() {
-    echo "2️⃣  Checking Supabase configuration..."
+    echo "1️⃣  Checking Supabase configuration..."
     
     # Check if config.toml exists
     if [[ ! -f "supabase/config.toml" ]]; then
@@ -60,14 +26,6 @@ check_supabase() {
         ERRORS=$((ERRORS + 1))
     else
         echo -e "${GREEN}✅ supabase/config.toml exists${NC}"
-        
-        # Check for railway-deploy function
-        if grep -q "railway-deploy" supabase/config.toml; then
-            echo -e "${RED}❌ Found railway-deploy in config.toml${NC}"
-            ERRORS=$((ERRORS + 1))
-        else
-            echo -e "${GREEN}✅ No railway-deploy in config.toml${NC}"
-        fi
     fi
     
     echo ""
@@ -75,7 +33,7 @@ check_supabase() {
 
 # Function to verify Vercel environment
 check_vercel() {
-    echo "3️⃣  Checking Vercel configuration..."
+    echo "2️⃣  Checking Vercel configuration..."
     
     if [[ ! -f "vercel.json" ]]; then
         echo -e "${YELLOW}⚠️  vercel.json not found${NC}"
@@ -97,7 +55,7 @@ check_vercel() {
 
 # Function to verify environment files
 check_env_files() {
-    echo "4️⃣  Checking environment files..."
+    echo "3️⃣  Checking environment files..."
     
     if [[ ! -f ".env.example" ]]; then
         echo -e "${YELLOW}⚠️  .env.example not found${NC}"
@@ -136,7 +94,7 @@ check_env_files() {
 
 # Function to check deployment configs
 check_deployment() {
-    echo "5️⃣  Checking deployment configurations..."
+    echo "4️⃣  Checking deployment configurations..."
     
     # Check for proper deployment platforms
     PLATFORMS=0
@@ -160,7 +118,6 @@ check_deployment() {
 }
 
 # Run all checks
-check_railway
 check_supabase
 check_vercel
 check_env_files
@@ -176,7 +133,6 @@ if [[ $ERRORS -eq 0 ]] && [[ $WARNINGS -eq 0 ]]; then
     echo -e "${GREEN}✅ ALL CHECKS PASSED!${NC}"
     echo ""
     echo "Environment is properly configured:"
-    echo "  ✅ No Railway references"
     echo "  ✅ Supabase configured"
     echo "  ✅ Vercel ready"
     echo "  ✅ Environment files correct"

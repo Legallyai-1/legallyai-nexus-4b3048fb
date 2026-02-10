@@ -252,7 +252,6 @@ This PR consolidates all development work to make the LegallyAI platform 100% pr
 
 **Removed:**
 - ❌ Lovable dependencies (`lovable-tagger` package removed)
-- ❌ Railway references (not needed)
 - ❌ Stripe SDK (replaced with database-powered payments)
 - ❌ External API dependencies
 

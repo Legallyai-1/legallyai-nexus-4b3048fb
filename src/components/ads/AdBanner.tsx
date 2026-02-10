@@ -55,8 +55,6 @@ export default function AdBanner({ slot, format = "auto", className = "" }: AdBa
   if (!adsenseEnabled) {
     return null;
   }
-  // Get AdSense client ID from environment or use fallback
-  const adClient = import.meta.env.VITE_ADSENSE_CLIENT_ID || "ca-pub-4991947741196600";
 
   return (
     <div ref={adRef} className={`ad-container ${className}`}>

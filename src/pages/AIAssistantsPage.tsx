@@ -12,7 +12,6 @@ const assistants = [
   {
     id: "general",
     name: "Lee - Legal AI",
-    description: "Your advanced AI legal assistant with site-wide access. Voice commands, multi-step workflows, 95% accuracy.",
     description: "Your advanced AI legal assistant with site-wide access. Voice commands, multi-step workflows, 95% accuracy for legal queries.",
     icon: MessageSquare,
     variant: "cyan" as const,
@@ -27,7 +26,6 @@ const assistants = [
   {
     id: "custody",
     name: "CustodiAI - Child Custody",
-    description: "Comprehensive custody hub: Intake forms, support calculations, enforcement logs, secure co-parent messaging, court reports.",
     description: "Complete custody management: Intake forms, support calculations, enforcement logs, secure co-parent messaging, court reports.",
     icon: Heart,
     variant: "purple" as const,
@@ -54,7 +52,6 @@ const assistants = [
   {
     id: "defense",
     name: "DefendrAI - Criminal Defense",
-    description: "Complete defense tools: Plea outcome simulations, client portals, violation trackers, e-filing, sentencing guidance.",
     description: "Complete defense toolkit: Plea outcome simulations, client portals, violation trackers, e-filing, sentencing guidance.",
     icon: Gavel,
     variant: "pink" as const,
@@ -81,7 +78,6 @@ const assistants = [
   {
     id: "probation",
     name: "Freedom AI - Probation/Parole",
-    description: "Comprehensive reentry tools: Geo-fencing alerts, recidivism predictions, rehab plan automation, caseload dashboards.",
     description: "Complete reentry support: Geo-fencing alerts, recidivism predictions, rehab plan automation, caseload dashboards.",
     icon: Users,
     variant: "green" as const,
@@ -121,7 +117,6 @@ const assistants = [
   {
     id: "academy",
     name: "ScholarAI - Legal Academy",
-    description: "Complete learning platform: Micro-certifications, AI tutors, live simulations, bar exam prep, ABA-approved paths.",
     description: "Comprehensive legal education: Micro-certifications, AI tutors, live simulations, bar exam prep, ABA-approved paths.",
     icon: GraduationCap,
     variant: "blue" as const,
@@ -187,7 +182,6 @@ const assistants = [
   {
     id: "jobs",
     name: "JobAI - Legal Careers",
-    description: "AI-powered job board: Resume/job matching, free postings, alerts.",
     description: "Comprehensive job board: AI resume/job matching, free postings, real-time alerts.",
     icon: Briefcase,
     variant: "cyan" as const,
@@ -201,7 +195,6 @@ const assistants = [
   {
     id: "probono",
     name: "ProBonoAI - Volunteer Matching",
-    description: "Pro bono platform: AI case-volunteer pairing, intake forms, progress trackers.",
     description: "Complete pro bono platform: AI case-volunteer pairing, intake forms, progress trackers.",
     icon: Heart,
     variant: "green" as const,
