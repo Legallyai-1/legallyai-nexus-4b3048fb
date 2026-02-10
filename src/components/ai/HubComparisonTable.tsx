@@ -170,7 +170,7 @@ export function HubComparisonTable() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">
-                    {hub.previousScore} →
+                    Score: {hub.previousScore} →
                   </span>
                   <Badge className="bg-neon-green/20 text-neon-green">
                     <Star className="h-3 w-3 mr-1 fill-current" />
