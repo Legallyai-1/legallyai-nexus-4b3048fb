@@ -220,7 +220,7 @@ export function FloatingLeeAssistant() {
           <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
             <div className="bg-background/90 backdrop-blur-sm border border-neon-cyan/30 rounded-lg px-3 py-2 whitespace-nowrap">
               <span className="text-sm font-medium text-foreground">Ask Lee</span>
-              <Badge className="ml-2 bg-neon-green/20 text-neon-green text-xs">10/10</Badge>
+              <Badge className="ml-2 bg-neon-green/20 text-neon-green text-xs">Premium</Badge>
             </div>
           </div>
         </button>
@@ -248,7 +248,7 @@ export function FloatingLeeAssistant() {
                         Ask Lee
                         <Badge className="bg-neon-green/20 text-neon-green text-xs">Premium</Badge>
                       </h3>
-                      <p className="text-xs text-muted-foreground">Site-wide AI • Exceeds Siri/Bixby for Law</p>
+                      <p className="text-xs text-muted-foreground">Site-wide AI • Advanced Legal Assistant</p>
                     </div>
                   </div>
                   <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
