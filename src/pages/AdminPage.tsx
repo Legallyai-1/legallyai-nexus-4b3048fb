@@ -208,7 +208,7 @@ export default function AdminPage() {
       job_title: newEmployee.job_title || "Staff",
       department: newEmployee.department || "General",
       role: (newEmployee.role || "employee") as AppRole,
-      employee_id: newEmployee.employee_id || `EMP-${String(employees.length + 1).padStart(3, "0")}`,
+      employee_id: newEmployee.employee_id || `EMP-${String(Date.now()).slice(-5)}`,
       is_active: true,
       hire_date: new Date().toISOString().split("T")[0],
       hourly_rate: parseFloat(newEmployee.hourly_rate) || 0,

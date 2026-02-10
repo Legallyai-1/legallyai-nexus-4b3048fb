@@ -47,7 +47,7 @@ export default function MarriageDivorcePage() {
       return;
     }
     
-    // Simplified alimony formula: (higher income - lower income) * 30% * duration factor
+    // Simplified alimony formula: (higher - lower income) * 30% * duration factor, divided by 12 for monthly estimate
     const diff = Math.abs(yourIncome - spouseIncome);
     const durationFactor = Math.min(years / 20, 1); // cap at 20 years
     const monthly = Math.round((diff * 0.30 * durationFactor) / 12);
