@@ -290,7 +290,7 @@ export default function Index() {
                 AI Hubs for Every Legal Need
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Each hub is rated 10/10 against industry leaders. Choose your specialized assistant.
+                Industry-leading AI assistants for specialized legal needs. Choose your assistant.
               </p>
             </div>
             
@@ -313,7 +313,7 @@ export default function Index() {
                   </div>
                   <div className="flex items-center justify-between">
                     <Badge className="bg-neon-green/20 text-neon-green border-neon-green/30 text-xs">
-                      <Star className="w-2 h-2 mr-1" /> 10/10
+                      <Sparkles className="w-2 h-2 mr-1" /> AI Powered
                     </Badge>
                     <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-neon-cyan group-hover:translate-x-1 transition-all" />
                   </div>

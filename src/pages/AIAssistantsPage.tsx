@@ -12,7 +12,7 @@ const assistants = [
   {
     id: "general",
     name: "Lee - Legal AI",
-    description: "Your advanced AI legal assistant with site-wide access. Voice commands, multi-step workflows, 95% accuracy. Exceeds Siri/Bixby for law.",
+    description: "Your advanced AI legal assistant with site-wide access. Voice commands, multi-step workflows, 95% accuracy.",
     icon: MessageSquare,
     variant: "cyan" as const,
     path: "/chat",
@@ -21,13 +21,12 @@ const assistants = [
     glow: "shadow-[0_0_30px_rgba(0,255,255,0.2)]",
     iconBg: "bg-cyan-500/20",
     questions: ["What are my rights?", "How do I file a case?", "Legal processes"],
-    rating: "10/10",
     premium: true
   },
   {
     id: "custody",
     name: "CustodiAI - Child Custody",
-    description: "10/10 custody hub: Intake forms, support calculations, enforcement logs, secure co-parent messaging, court reports. Vs. OFW 4.7/5.",
+    description: "Comprehensive custody hub: Intake forms, support calculations, enforcement logs, secure co-parent messaging, court reports.",
     icon: Heart,
     variant: "purple" as const,
     path: "/custody",
@@ -35,13 +34,12 @@ const assistants = [
     border: "border-purple-500/30",
     glow: "shadow-[0_0_30px_rgba(168,85,247,0.2)]",
     iconBg: "bg-purple-500/20",
-    questions: ["Custody arrangements", "Support calculator", "Parenting plans"],
-    rating: "10/10"
+    questions: ["Custody arrangements", "Support calculator", "Parenting plans"]
   },
   {
     id: "marriage",
     name: "MaryAI - Marriage & Divorce",
-    description: "Full lifecycle: Marriage licenses, vows, name changes, divorce filings, alimony calculators, mediation simulations. Vs. Rocket Lawyer 4.3/5.",
+    description: "Full lifecycle: Marriage licenses, vows, name changes, divorce filings, alimony calculators, mediation simulations.",
     icon: Heart,
     variant: "pink" as const,
     path: "/marriage-divorce",
@@ -49,13 +47,12 @@ const assistants = [
     border: "border-pink-500/30",
     glow: "shadow-[0_0_30px_rgba(236,72,153,0.2)]",
     iconBg: "bg-pink-500/20",
-    questions: ["Marriage license", "Divorce filing", "Name change"],
-    rating: "10/10"
+    questions: ["Marriage license", "Divorce filing", "Name change"]
   },
   {
     id: "defense",
     name: "DefendrAI - Criminal Defense",
-    description: "10/10 defense: Plea outcome simulations, client portals, violation trackers, e-filing, sentencing guidance. Vs. Clio 4.7/5.",
+    description: "Complete defense tools: Plea outcome simulations, client portals, violation trackers, e-filing, sentencing guidance.",
     icon: Gavel,
     variant: "pink" as const,
     path: "/tickets-defense",
@@ -63,13 +60,12 @@ const assistants = [
     border: "border-rose-500/30",
     glow: "shadow-[0_0_30px_rgba(244,63,94,0.2)]",
     iconBg: "bg-rose-500/20",
-    questions: ["Plea simulator", "Defense strategy", "Court prep"],
-    rating: "10/10"
+    questions: ["Plea simulator", "Defense strategy", "Court prep"]
   },
   {
     id: "dui",
     name: "DriveSafeAI - DUI Defense",
-    description: "DUI specialists: Breathalyzer data parsers, hearing simulations, lead matching, contingency billing. Vs. MyCase 4.5/5.",
+    description: "DUI specialists: Breathalyzer data parsers, hearing simulations, lead matching, contingency billing.",
     icon: Car,
     variant: "orange" as const,
     path: "/dui-hub",
@@ -77,13 +73,12 @@ const assistants = [
     border: "border-orange-500/30",
     glow: "shadow-[0_0_30px_rgba(249,115,22,0.2)]",
     iconBg: "bg-orange-500/20",
-    questions: ["BAC analysis", "DMV hearing", "License restoration"],
-    rating: "10/10"
+    questions: ["BAC analysis", "DMV hearing", "License restoration"]
   },
   {
     id: "probation",
     name: "Freedom AI - Probation/Parole",
-    description: "10/10 reentry: Geo-fencing alerts, recidivism predictions, rehab plan automation, caseload dashboards. Vs. Tyler 4.3/5.",
+    description: "Comprehensive reentry tools: Geo-fencing alerts, recidivism predictions, rehab plan automation, caseload dashboards.",
     icon: Users,
     variant: "green" as const,
     path: "/probation-parole",
@@ -91,13 +86,12 @@ const assistants = [
     border: "border-green-500/30",
     glow: "shadow-[0_0_30px_rgba(34,197,94,0.2)]",
     iconBg: "bg-green-500/20",
-    questions: ["Probation terms", "Parole hearings", "Reentry support"],
-    rating: "10/10"
+    questions: ["Probation terms", "Parole hearings", "Reentry support"]
   },
   {
     id: "will",
     name: "LegacyAI - Living Will & Estate",
-    description: "Estate planning: Health scenario sims, advance directives, asset trackers, inheritance calculators, e-sign. Vs. Trust & Will 4.6/5.",
+    description: "Estate planning: Health scenario sims, advance directives, asset trackers, inheritance calculators, e-sign.",
     icon: Home,
     variant: "blue" as const,
     path: "/will-hub",
@@ -105,13 +99,12 @@ const assistants = [
     border: "border-blue-500/30",
     glow: "shadow-[0_0_30px_rgba(59,130,246,0.2)]",
     iconBg: "bg-blue-500/20",
-    questions: ["Create will", "Living directive", "Estate plan"],
-    rating: "10/10"
+    questions: ["Create will", "Living directive", "Estate plan"]
   },
   {
     id: "workplace",
     name: "WorkAI - Employment Rights",
-    description: "10/10 workplace: HR contract generation, termination risk simulations, EEOC compliance, payroll integrations. Vs. Gusto 4.5/5.",
+    description: "Complete workplace support: HR contract generation, termination risk simulations, EEOC compliance, payroll integrations.",
     icon: Building2,
     variant: "orange" as const,
     path: "/workplace-legal-aid",
@@ -119,13 +112,12 @@ const assistants = [
     border: "border-orange-500/30",
     glow: "shadow-[0_0_30px_rgba(249,115,22,0.2)]",
     iconBg: "bg-orange-500/20",
-    questions: ["Workplace discrimination", "EEOC filing", "Wrongful termination"],
-    rating: "10/10"
+    questions: ["Workplace discrimination", "EEOC filing", "Wrongful termination"]
   },
   {
     id: "academy",
     name: "ScholarAI - Legal Academy",
-    description: "10/10 academy: Micro-certifications, AI tutors, live simulations, bar exam prep, ABA-approved paths. Vs. Lawline 4.5/5.",
+    description: "Complete learning platform: Micro-certifications, AI tutors, live simulations, bar exam prep, ABA-approved paths.",
     icon: GraduationCap,
     variant: "blue" as const,
     path: "/legal-academy",
@@ -133,8 +125,7 @@ const assistants = [
     border: "border-blue-500/30",
     glow: "shadow-[0_0_30px_rgba(59,130,246,0.2)]",
     iconBg: "bg-blue-500/20",
-    questions: ["Law courses", "Bar exam prep", "Legal certificates"],
-    rating: "10/10"
+    questions: ["Law courses", "Bar exam prep", "Legal certificates"]
   },
   {
     id: "telephony",
@@ -147,8 +138,7 @@ const assistants = [
     border: "border-cyan-500/30",
     glow: "shadow-[0_0_30px_rgba(0,255,255,0.2)]",
     iconBg: "bg-cyan-500/20",
-    questions: ["Make calls", "Transcription", "Call history"],
-    rating: "10/10"
+    questions: ["Make calls", "Transcription", "Call history"]
   },
   {
     id: "support",
@@ -161,8 +151,7 @@ const assistants = [
     border: "border-green-500/30",
     glow: "shadow-[0_0_30px_rgba(34,197,94,0.2)]",
     iconBg: "bg-green-500/20",
-    questions: ["Billing help", "Refund request", "Account issues"],
-    rating: "10/10"
+    questions: ["Billing help", "Refund request", "Account issues"]
   },
   {
     id: "document",
@@ -175,13 +164,12 @@ const assistants = [
     border: "border-blue-500/30",
     glow: "shadow-[0_0_30px_rgba(59,130,246,0.2)]",
     iconBg: "bg-blue-500/20",
-    questions: ["Draft NDA", "Create contract", "Review agreement"],
-    rating: "10/10"
+    questions: ["Draft NDA", "Create contract", "Review agreement"]
   },
   {
     id: "business",
     name: "PraxisAI - Law Firm Ops",
-    description: "10/10 firm management: 250+ integrations, trust reconciliation, unified workflows, AI cash-flow predictions. Vs. Clio 4.7/5.",
+    description: "Complete firm management: 250+ integrations, trust reconciliation, unified workflows, AI cash-flow predictions.",
     icon: Briefcase,
     variant: "purple" as const,
     path: "/business-hub",
@@ -189,13 +177,12 @@ const assistants = [
     border: "border-purple-500/30",
     glow: "shadow-[0_0_30px_rgba(168,85,247,0.2)]",
     iconBg: "bg-purple-500/20",
-    questions: ["Case management", "Client intake", "Firm billing"],
-    rating: "10/10"
+    questions: ["Case management", "Client intake", "Firm billing"]
   },
   {
     id: "jobs",
     name: "JobAI - Legal Careers",
-    description: "10/10 job board: AI resume/job matching, free postings, alerts. Vs. LinkedIn 4.7/5, LawJobs 4.5/5.",
+    description: "AI-powered job board: Resume/job matching, free postings, alerts.",
     icon: Briefcase,
     variant: "cyan" as const,
     path: "/job-board",
@@ -203,13 +190,12 @@ const assistants = [
     border: "border-cyan-500/30",
     glow: "shadow-[0_0_30px_rgba(0,255,255,0.2)]",
     iconBg: "bg-cyan-500/20",
-    questions: ["Find jobs", "Resume match", "Career advice"],
-    rating: "10/10"
+    questions: ["Find jobs", "Resume match", "Career advice"]
   },
   {
     id: "probono",
     name: "ProBonoAI - Volunteer Matching",
-    description: "10/10 pro bono: AI case-volunteer pairing, intake forms, progress trackers. Vs. Paladin 4.8/5.",
+    description: "Pro bono platform: AI case-volunteer pairing, intake forms, progress trackers.",
     icon: Heart,
     variant: "green" as const,
     path: "/pro-bono",
@@ -217,8 +203,7 @@ const assistants = [
     border: "border-green-500/30",
     glow: "shadow-[0_0_30px_rgba(34,197,94,0.2)]",
     iconBg: "bg-green-500/20",
-    questions: ["Volunteer", "Get free help", "Tax benefits"],
-    rating: "10/10"
+    questions: ["Volunteer", "Get free help", "Tax benefits"]
   }
 ];
 
@@ -235,18 +220,15 @@ export default function AIAssistantsPage() {
             <div className="flex justify-center mb-6">
               <AnimatedAIHead variant="cyan" size="lg" />
             </div>
-            <Badge className="bg-neon-green/20 text-neon-green border-neon-green/30 mb-4">
-              <Star className="w-3 h-3 mr-1" /> All Hubs Rated 10/10
-            </Badge>
             <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-4">
               AI Legal <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-cyan to-neon-blue">Assistants</span>
             </h1>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Choose your specialized AI assistant. Each rated 10/10 vs industry leaders (Clio, OFW, LinkedIn, Paladin).
+              Choose your specialized AI assistant. Industry-leading legal AI technology.
             </p>
             <div className="flex justify-center gap-2 mt-4">
               <Badge className="bg-neon-cyan/20 text-neon-cyan border-neon-cyan/30">
-                <Sparkles className="w-3 h-3 mr-1" /> Ask Lee: Exceeds Siri/Bixby
+                <Sparkles className="w-3 h-3 mr-1" /> Advanced AI Technology
               </Badge>
               <Badge className="bg-neon-purple/20 text-neon-purple border-neon-purple/30">
                 Premium Voice Access
@@ -270,16 +252,9 @@ export default function AIAssistantsPage() {
                 `}
                 style={{ animationDelay: `${index * 50}ms` }}
               >
-                {/* Rating Badge */}
-                <div className="absolute top-3 right-3 z-10">
-                  <Badge className="bg-neon-green/30 text-neon-green border-neon-green/50 text-xs">
-                    <Star className="w-3 h-3 mr-1" /> {assistant.rating}
-                  </Badge>
-                </div>
-
                 {/* Premium Badge */}
                 {assistant.premium && (
-                  <div className="absolute top-3 left-3 z-10">
+                  <div className="absolute top-3 right-3 z-10">
                     <Badge className="bg-neon-gold/30 text-neon-gold border-neon-gold/50 text-xs">
                       Premium
                     </Badge>
