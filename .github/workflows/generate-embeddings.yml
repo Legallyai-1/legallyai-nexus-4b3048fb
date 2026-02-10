@@ -1,0 +1,37 @@
+name: Generate Documentation Embeddings
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - 'README.md'
+  workflow_dispatch:
+
+jobs:
+  generate-embeddings:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate embeddings for documentation
+        uses: supabase/embeddings-generator@v0.0.6
+        with:
+          supabase-url: ${{ secrets.VITE_SUPABASE_URL }}
+          supabase-service-role-key: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          openai-key: ${{ secrets.OPENAI_API_KEY }}
+          embedding-model: 'text-embedding-3-small'
+          docs-root-path: 'docs'
+
+      - name: Generate embeddings for README
+        uses: supabase/embeddings-generator@v0.0.6
+        with:
+          supabase-url: ${{ secrets.VITE_SUPABASE_URL }}
+          supabase-service-role-key: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          openai-key: ${{ secrets.OPENAI_API_KEY }}
+          embedding-model: 'text-embedding-3-small'
+          docs-root-path: '.'
+          include-pattern: 'README.md'

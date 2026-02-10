@@ -1,0 +1,112 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:  # Manual trigger for secret sync
+
+jobs:
+  # Sync secrets to Vercel
+  sync-secrets:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Sync production secrets to Vercel
+        uses: itstor/sync-secrets-to-vercel@v1
+        with:
+          prefix: 'VITE_'
+          environments: 'production,preview'
+          project: ${{ secrets.VERCEL_PROJECT_ID }}
+          team_id: ${{ secrets.VERCEL_ORG_ID }}
+          token: ${{ secrets.VERCEL_TOKEN }}
+          secrets: '${{ toJSON(secrets) }}'
+          cancel_on_fail: false
+
+  # Deploy to Vercel
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [sync-secrets]
+    if: always() && (needs.sync-secrets.result == 'success' || needs.sync-secrets.result == 'skipped')
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
+        run: npm run build
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        id: vercel-deploy
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && '--prod' || '' }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-comment: ${{ github.event_name == 'pull_request' }}
+          working-directory: ./
+          alias-domains: |
+            ${{ github.event_name == 'pull_request' && format('pr-{0}.legallyai-nexus.vercel.app', github.event.pull_request.number) || '' }}
+            ${{ github.ref == 'refs/heads/main' && 'legallyai-nexus.vercel.app' || '' }}
+
+      - name: Wait for Vercel deployment
+        if: github.event_name == 'pull_request'
+        run: sleep 10
+
+      - name: Get Vercel Preview URL
+        if: github.event_name == 'pull_request'
+        uses: zentered/vercel-preview-url@v1.0.10
+        id: vercel_preview_url
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        with:
+          vercel_team_id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel_project_id: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Comment deployment URL
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const previewUrl = '${{ steps.vercel_preview_url.outputs.preview_url }}' || '${{ steps.vercel-deploy.outputs.preview-url }}';
+            const deploymentState = '${{ steps.vercel_preview_url.outputs.deployment_state }}';
+            const deploymentName = '${{ steps.vercel-deploy.outputs.preview-name }}';
+            
+            const comment = `## 🚀 Vercel Deployment
+            
+            Your PR has been successfully deployed to Vercel!
+            
+            | Name | Link |
+            |------|------|
+            | 🔨 Latest commit | \`${{ github.event.pull_request.head.sha }}\` |
+            | 🔍 Preview URL | [Visit Preview](https://${previewUrl}) |
+            | 📝 Deployment Name | ${deploymentName} |
+            | ✅ Status | ${deploymentState || 'READY'} |
+            
+            ---
+            *Powered by [Vercel](https://vercel.com) via GitHub Actions*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

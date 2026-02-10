@@ -3,9 +3,6 @@ project_id = "wejiqqtwnhevcjdllodr"
 [functions.api-proxy]
 verify_jwt = false
 
-[functions.railway-deploy]
-verify_jwt = false
-
 [functions.check-subscription]
 verify_jwt = true
 

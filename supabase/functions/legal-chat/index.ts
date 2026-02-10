@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { streamText } from "npm:ai@3.4.33";
+import { createAnthropic } from "npm:@ai-sdk/anthropic@1.0.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -66,7 +68,7 @@ serve(async (req) => {
     }
     console.log("Chat request from:", userId);
 
-    const { messages, stream = false } = await req.json();
+    const { messages, stream = true } = await req.json();
     
     if (!messages || !Array.isArray(messages)) {
       return new Response(
@@ -128,68 +130,91 @@ End important responses with: "Remember: This is general legal information, not 
 
     console.log("Chat request from:", userId, "with", messages.length, "messages");
 
-    // Try Lovable AI first (free, no API key needed)
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    // Get Vercel AI Gateway API key
+    const VERCEL_AI_KEY = Deno.env.get("VERCEL_AI_GATEWAY_KEY");
     
-    let response;
-    let usedLovable = false;
+    if (!VERCEL_AI_KEY) {
+      console.error("VERCEL_AI_GATEWAY_KEY not configured");
+      const fallbackResponse = `I'm here to help with your legal questions! While I'm having trouble connecting to my AI capabilities right now, please check back shortly or contact support.
 
-    // Primary: Use Lovable AI (Google Gemini - free)
-    if (LOVABLE_API_KEY) {
-      try {
-        console.log("Using Lovable AI (primary)");
-        response = await fetch("https://api.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
-            messages: [
-              { role: "system", content: systemPrompt },
-              ...messages,
-            ],
-            stream: stream,
-          }),
-        });
-        
-        if (response.ok) {
-          usedLovable = true;
-        } else {
-          console.log("Lovable AI failed with status:", response.status);
-        }
-      } catch (lovableError) {
-        console.error("Lovable AI error:", lovableError);
-      }
-    }
-
-    // Fallback: Use OpenAI if Lovable fails
-    if (!usedLovable && OPENAI_API_KEY) {
-      console.log("Using OpenAI (fallback)");
-      response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...messages,
-          ],
-          stream: stream,
-        }),
-      });
-    }
-
-    if (!response || !response.ok) {
-      const errorText = response ? await response.text() : "No AI service available";
-      console.error("AI API error:", errorText);
+Remember: For urgent legal matters, please consult a licensed attorney.`;
       
-      // Provide a helpful fallback response
+      if (stream) {
+        return new Response(
+          createSSEFallbackStream(fallbackResponse),
+          { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } }
+        );
+      }
+      return new Response(
+        JSON.stringify({ response: fallbackResponse }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Initialize Anthropic provider with Vercel AI Gateway
+    const anthropic = createAnthropic({
+      apiKey: VERCEL_AI_KEY,
+    });
+
+    // Prepare messages for AI SDK format
+    const formattedMessages = messages.map((msg: any) => ({
+      role: msg.role,
+      content: msg.content,
+    }));
+
+    try {
+      // Use streamText from Vercel AI SDK with correct model identifier
+      const result = await streamText({
+        model: anthropic('claude-sonnet-4.5'), // Vercel AI Gateway format
+        system: systemPrompt,
+        messages: formattedMessages,
+      });
+
+      // Handle streaming response
+      if (stream) {
+        console.log("Streaming response with Vercel AI SDK + Claude Sonnet");
+        
+        // Convert AI SDK stream to SSE format
+        const encoder = new TextEncoder();
+        const sseStream = new ReadableStream({
+          async start(controller) {
+            try {
+              for await (const chunk of result.textStream) {
+                const sseData = `data: ${JSON.stringify({ choices: [{ delta: { content: chunk } }] })}\n\n`;
+                controller.enqueue(encoder.encode(sseData));
+              }
+              controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+              controller.close();
+            } catch (error) {
+              console.error("Stream error:", error);
+              controller.error(error);
+            }
+          }
+        });
+
+        return new Response(sseStream, {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+          },
+        });
+      } else {
+        // Non-streaming response
+        const fullText = await result.text;
+        console.log("Response generated with Claude Sonnet, length:", fullText.length);
+        
+        return new Response(
+          JSON.stringify({ response: fullText }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+    } catch (aiError) {
+      console.error("AI SDK error:", aiError);
+      
+      // Provide fallback response
       const fallbackResponse = `I'm here to help with your legal questions! While I'm having trouble connecting to my full AI capabilities right now, here are some general resources:
 
 1. For **document generation**, visit our Generate page
@@ -212,39 +237,6 @@ Remember: For urgent legal matters, please consult a licensed attorney.`;
         );
       }
     }
-
-    // Handle streaming responses
-    if (stream) {
-      console.log("Streaming response from:", usedLovable ? "Lovable" : "OpenAI");
-      
-      // Validate that we have a readable response body
-      if (!response.body) {
-        console.error("No response body for streaming");
-        return new Response(
-          createSSEFallbackStream("Streaming unavailable. Please try again."),
-          { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } }
-        );
-      }
-
-      return new Response(response.body, {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
-          "Connection": "keep-alive",
-        },
-      });
-    }
-
-    // Parse and return the non-streaming response
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || "I couldn't generate a response. Please try again.";
-    console.log("Response generated, length:", content.length, "provider:", usedLovable ? "Lovable" : "OpenAI");
-    
-    return new Response(
-      JSON.stringify({ response: content }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
 
   } catch (error) {
     console.error("Error in legal-chat:", error);
