@@ -163,20 +163,9 @@ export function HubComparisonTable() {
         {hubComparisons.map((hub) => (
           <Card key={hub.hub} className="glass-card border-border/30">
             <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <CardTitle className="text-lg">{hub.hub}</CardTitle>
-                  <Badge className="bg-neon-cyan/20 text-neon-cyan">{hub.aiName}</Badge>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">
-                    {hub.previousScore} →
-                  </span>
-                  <Badge className="bg-neon-green/20 text-neon-green">
-                    <Star className="h-3 w-3 mr-1 fill-current" />
-                    {hub.currentScore}
-                  </Badge>
-                </div>
+              <div className="flex items-center gap-3">
+                <CardTitle className="text-lg">{hub.hub}</CardTitle>
+                <Badge className="bg-neon-cyan/20 text-neon-cyan">{hub.aiName}</Badge>
               </div>
             </CardHeader>
             <CardContent>
@@ -219,15 +208,6 @@ export function HubComparisonTable() {
                     ))}
                   </div>
                 </div>
-              </div>
-
-              {/* Progress bar showing improvement */}
-              <div className="mt-4">
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="text-muted-foreground">Rating Progress</span>
-                  <span className="text-neon-green">+{hub.currentScore - hub.previousScore} points</span>
-                </div>
-                <Progress value={hub.currentScore * 10} className="h-2" />
               </div>
             </CardContent>
           </Card>
