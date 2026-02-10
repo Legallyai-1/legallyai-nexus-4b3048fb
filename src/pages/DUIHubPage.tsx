@@ -71,13 +71,12 @@ const DUIHubPage = () => {
       toast({ title: "Prediction Generated", description: `${(data.confidence * 100).toFixed(0)}% confidence` });
     } catch (error) {
       console.error('Prediction error:', error);
-      // Mock prediction for demo
-      setPrediction({
-        outcome: "Reduced charges likely",
-        confidence: 0.78,
-        factors: ["BAC level borderline", "First offense", "Breathalyzer calibration issues"],
-        recommendations: ["Challenge breathalyzer accuracy", "Request DMV hearing", "Consider plea negotiation"]
+      toast({ 
+        title: "Prediction Failed", 
+        description: "Unable to generate prediction. Please try again.",
+        variant: "destructive"
       });
+      setPrediction(null);
     }
   };
 
@@ -206,7 +205,7 @@ const DUIHubPage = () => {
                   <div className="h-64 bg-muted/30 rounded-lg p-4 overflow-y-auto">
                     {simTranscript.length === 0 ? (
                       <p className="text-muted-foreground text-center mt-20">
-                        Click "Start Simulation" to begin a mock DUI hearing
+                        Click "Start Simulation" to begin a DUI hearing simulation
                       </p>
                     ) : (
                       <div className="space-y-3">

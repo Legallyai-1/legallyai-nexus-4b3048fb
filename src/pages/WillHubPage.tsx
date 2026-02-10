@@ -76,17 +76,9 @@ const WillHubPage = () => {
       if (error) throw error;
       setSimResult(data);
     } catch (error) {
-      // Mock result for demo
-      setSimResult({
-        totalEstate: assets.reduce((sum, a) => sum + a.value, 0),
-        federalTax: 45000,
-        stateTax: 12000,
-        distributions: beneficiaries.map(b => ({
-          name: b.name,
-          amount: (assets.reduce((sum, a) => sum + a.value, 0) - 57000) * (b.percentage / 100)
-        })),
-        multiStateIssues: ["CA property requires ancillary probate if beneficiary in TX"]
-      });
+      console.error('Simulation error:', error);
+      toast.error('Failed to generate estate simulation. Please try again.');
+      setSimResult(null);
     }
   };
 
