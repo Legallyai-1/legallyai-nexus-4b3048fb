@@ -65,6 +65,14 @@ const EnhancedCustodyPage = () => {
   const [calculatedSupport, setCalculatedSupport] = useState<number | null>(null);
   const { toast } = useToast();
 
+  // Intake form state
+  const [intakeForm, setIntakeForm] = useState({
+    parent1Name: "",
+    parent2Name: "",
+    children: "",
+    intakeState: "CA",
+  });
+
   const calculateSupport = () => {
     // California child support formula (simplified)
     const income1 = parseFloat(supportCalc.income1) || 0;
@@ -179,17 +187,29 @@ const EnhancedCustodyPage = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Parent 1 Name</Label>
-                      <Input placeholder="Full legal name" />
+                      <Input
+                        placeholder="Full legal name"
+                        value={intakeForm.parent1Name}
+                        onChange={(e) => setIntakeForm(prev => ({ ...prev, parent1Name: e.target.value }))}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Parent 2 Name</Label>
-                      <Input placeholder="Full legal name" />
+                      <Input
+                        placeholder="Full legal name"
+                        value={intakeForm.parent2Name}
+                        onChange={(e) => setIntakeForm(prev => ({ ...prev, parent2Name: e.target.value }))}
+                      />
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label>Children (Names and Ages)</Label>
-                    <Textarea placeholder="John Smith, 8 years old&#10;Jane Smith, 5 years old" />
+                    <Textarea
+                      placeholder="John Smith, 8 years old&#10;Jane Smith, 5 years old"
+                      value={intakeForm.children}
+                      onChange={(e) => setIntakeForm(prev => ({ ...prev, children: e.target.value }))}
+                    />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">

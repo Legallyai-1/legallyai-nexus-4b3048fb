@@ -391,7 +391,14 @@ export default function SettingsPage() {
                     </div>
                     <Switch
                       checked={darkMode}
-                      onCheckedChange={setDarkMode}
+                      onCheckedChange={(checked) => {
+                        setDarkMode(checked);
+                        if (checked) {
+                          document.documentElement.classList.add('dark');
+                        } else {
+                          document.documentElement.classList.remove('dark');
+                        }
+                      }}
                     />
                   </div>
                 </CardContent>
@@ -410,10 +417,10 @@ export default function SettingsPage() {
                   <Button variant="outline" className="w-full justify-start" onClick={handleChangePassword}>
                     Change Password
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button variant="outline" className="w-full justify-start" onClick={() => toast.info("Two-factor authentication coming soon")}>
                     Two-Factor Authentication
                   </Button>
-                  <Button variant="outline" className="w-full justify-start text-destructive">
+                  <Button variant="outline" className="w-full justify-start text-destructive" onClick={() => toast.error("Please contact support to delete your account")}>
                     Delete Account
                   </Button>
                 </CardContent>

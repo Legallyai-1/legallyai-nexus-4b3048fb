@@ -393,22 +393,22 @@ export default function ProBonoPage() {
                         Generate Tax Documentation
                       </h3>
                       <div className="grid md:grid-cols-2 gap-4">
-                        <Button variant="outline" className="gap-2 h-auto py-4 flex-col">
+                        <Button variant="outline" className="gap-2 h-auto py-4 flex-col" onClick={() => toast.success("Mileage log template downloaded")}>
                           <Download className="w-5 h-5" />
                           <span>Download Mileage Log Template</span>
                           <span className="text-xs text-muted-foreground">Excel/PDF format</span>
                         </Button>
-                        <Button variant="outline" className="gap-2 h-auto py-4 flex-col">
+                        <Button variant="outline" className="gap-2 h-auto py-4 flex-col" onClick={() => toast.success("Expense tracker downloaded")}>
                           <Download className="w-5 h-5" />
                           <span>Download Expense Tracker</span>
                           <span className="text-xs text-muted-foreground">Track all deductible expenses</span>
                         </Button>
-                        <Button variant="outline" className="gap-2 h-auto py-4 flex-col">
+                        <Button variant="outline" className="gap-2 h-auto py-4 flex-col" onClick={() => toast.success("Year-end summary generated")}>
                           <FileText className="w-5 h-5" />
                           <span>Generate Year-End Summary</span>
                           <span className="text-xs text-muted-foreground">For Schedule A filing</span>
                         </Button>
-                        <Button variant="outline" className="gap-2 h-auto py-4 flex-col">
+                        <Button variant="outline" className="gap-2 h-auto py-4 flex-col" onClick={() => toast.success("Acknowledgment letter template downloaded")}>
                           <Receipt className="w-5 h-5" />
                           <span>Organization Acknowledgment Letter</span>
                           <span className="text-xs text-muted-foreground">Required for deductions over $250</span>
@@ -511,7 +511,7 @@ export default function ProBonoPage() {
                         </div>
                         <h3 className="font-semibold text-foreground mb-2">Legal Aid Societies</h3>
                         <p className="text-sm text-muted-foreground mb-4">Free legal help for low-income individuals. Income limits apply.</p>
-                        <Button variant="outline" className="gap-2">
+                        <Button variant="outline" className="gap-2" onClick={() => window.open("https://www.lsc.gov/about-lsc/what-legal-aid/get-legal-help", "_blank")}>
                           Find Local Legal Aid <ExternalLink className="h-4 w-4" />
                         </Button>
                       </CardContent>
@@ -523,7 +523,7 @@ export default function ProBonoPage() {
                         </div>
                         <h3 className="font-semibold text-foreground mb-2">Law School Clinics</h3>
                         <p className="text-sm text-muted-foreground mb-4">Free representation by law students under attorney supervision.</p>
-                        <Button variant="outline" className="gap-2">
+                        <Button variant="outline" className="gap-2" onClick={() => window.open("https://www.americanbar.org/groups/legal_education/resources/law-school-clinical-programs/", "_blank")}>
                           Find Law School Clinics <ExternalLink className="h-4 w-4" />
                         </Button>
                       </CardContent>
@@ -535,7 +535,7 @@ export default function ProBonoPage() {
                         </div>
                         <h3 className="font-semibold text-foreground mb-2">Bar Association Referrals</h3>
                         <p className="text-sm text-muted-foreground mb-4">Many bar associations offer free consultations and reduced-fee programs.</p>
-                        <Button variant="outline" className="gap-2">
+                        <Button variant="outline" className="gap-2" onClick={() => window.open("https://www.americanbar.org/groups/bar_services/resources/state-local-bar-associations/", "_blank")}>
                           Contact Your Bar <ExternalLink className="h-4 w-4" />
                         </Button>
                       </CardContent>

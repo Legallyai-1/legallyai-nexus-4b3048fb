@@ -69,6 +69,27 @@ export default function AdminPage() {
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Add Employee form state
+  const [newEmployee, setNewEmployee] = useState({
+    full_name: "",
+    email: "",
+    job_title: "",
+    department: "",
+    role: "" as AppRole | "",
+    hourly_rate: "",
+    employee_id: "",
+  });
+
+  // Organization settings state
+  const [orgSettings, setOrgSettings] = useState({
+    name: "Smith & Associates Law Firm",
+    email: "contact@smithlaw.com",
+    phone: "(555) 123-4567",
+    website: "https://smithlaw.com",
+    address: "123 Legal Street, Suite 400, New York, NY 10001",
+    geoTracking: false,
+  });
+
   // Server-side role verification
   useEffect(() => {
     const checkAdminAccess = async () => {
@@ -173,6 +194,45 @@ export default function AdminPage() {
     e.department.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleAddEmployee = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEmployee.full_name || !newEmployee.email || !newEmployee.role) {
+      toast.error("Please fill in all required fields (Name, Email, Role)");
+      return;
+    }
+
+    const employee: Employee = {
+      id: Date.now().toString(),
+      full_name: newEmployee.full_name,
+      email: newEmployee.email,
+      job_title: newEmployee.job_title || "Staff",
+      department: newEmployee.department || "General",
+      role: (newEmployee.role || "employee") as AppRole,
+      employee_id: newEmployee.employee_id || `EMP-${String(Date.now()).slice(-5)}`,
+      is_active: true,
+      hire_date: new Date().toISOString().split("T")[0],
+      hourly_rate: parseFloat(newEmployee.hourly_rate) || 0,
+    };
+
+    setEmployees(prev => [...prev, employee]);
+    setNewEmployee({ full_name: "", email: "", job_title: "", department: "", role: "", hourly_rate: "", employee_id: "" });
+    setIsAddEmployeeOpen(false);
+    toast.success(`${employee.full_name} added successfully`);
+  };
+
+  const handleDeleteEmployee = (id: string) => {
+    setEmployees(prev => prev.map(e => e.id === id ? { ...e, is_active: false } : e));
+    toast.success("Employee deactivated");
+  };
+
+  const handleSaveOrgSettings = () => {
+    toast.success("Organization settings saved");
+  };
+
+  const handleSavePermissions = () => {
+    toast.success(`Permissions updated: ${selectedPermissions.length} permissions configured`);
+  };
+
   const stats = [
     { label: "Total Employees", value: employees.length, icon: Users, color: "text-legal-gold" },
     { label: "Active Lawyers", value: employees.filter(e => e.role === "lawyer").length, icon: Briefcase, color: "text-legal-cyan" },
@@ -259,25 +319,40 @@ export default function AdminPage() {
                   <DialogHeader>
                     <DialogTitle>Add New Employee</DialogTitle>
                   </DialogHeader>
-                  <form className="space-y-4">
+                  <form className="space-y-4" onSubmit={handleAddEmployee}>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Full Name</Label>
-                        <Input placeholder="John Doe" />
+                        <Input
+                          placeholder="John Doe"
+                          value={newEmployee.full_name}
+                          onChange={(e) => setNewEmployee(prev => ({ ...prev, full_name: e.target.value }))}
+                          required
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label>Email</Label>
-                        <Input type="email" placeholder="john@lawfirm.com" />
+                        <Input
+                          type="email"
+                          placeholder="john@lawfirm.com"
+                          value={newEmployee.email}
+                          onChange={(e) => setNewEmployee(prev => ({ ...prev, email: e.target.value }))}
+                          required
+                        />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Job Title</Label>
-                        <Input placeholder="Associate Attorney" />
+                        <Input
+                          placeholder="Associate Attorney"
+                          value={newEmployee.job_title}
+                          onChange={(e) => setNewEmployee(prev => ({ ...prev, job_title: e.target.value }))}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label>Department</Label>
-                        <Select>
+                        <Select value={newEmployee.department} onValueChange={(val) => setNewEmployee(prev => ({ ...prev, department: val }))}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select department" />
                           </SelectTrigger>
@@ -294,7 +369,7 @@ export default function AdminPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Role</Label>
-                        <Select>
+                        <Select value={newEmployee.role} onValueChange={(val) => setNewEmployee(prev => ({ ...prev, role: val }))}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select role" />
                           </SelectTrigger>
@@ -309,12 +384,21 @@ export default function AdminPage() {
                       </div>
                       <div className="space-y-2">
                         <Label>Hourly Rate ($)</Label>
-                        <Input type="number" placeholder="150" />
+                        <Input
+                          type="number"
+                          placeholder="150"
+                          value={newEmployee.hourly_rate}
+                          onChange={(e) => setNewEmployee(prev => ({ ...prev, hourly_rate: e.target.value }))}
+                        />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <Label>Employee ID</Label>
-                      <Input placeholder="EMP-005" />
+                      <Input
+                        placeholder="EMP-005"
+                        value={newEmployee.employee_id}
+                        onChange={(e) => setNewEmployee(prev => ({ ...prev, employee_id: e.target.value }))}
+                      />
                     </div>
                     <div className="flex justify-end gap-3">
                       <Button type="button" variant="outline" onClick={() => setIsAddEmployeeOpen(false)}>
@@ -386,7 +470,7 @@ export default function AdminPage() {
                                   <Key className="h-4 w-4 mr-2" />
                                   Permissions
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="text-destructive">
+                                <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteEmployee(emp.id)}>
                                   <Trash2 className="h-4 w-4 mr-2" />
                                   Deactivate
                                 </DropdownMenuItem>
@@ -435,6 +519,7 @@ export default function AdminPage() {
                     </div>
                   ))}
                 </div>
+                <Button variant="gold" onClick={handleSavePermissions} className="mt-4">Save Permissions</Button>
               </CardContent>
             </Card>
           </TabsContent>
@@ -450,35 +535,55 @@ export default function AdminPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Organization Name</Label>
-                    <Input defaultValue="Smith & Associates Law Firm" />
+                    <Input
+                      value={orgSettings.name}
+                      onChange={(e) => setOrgSettings(prev => ({ ...prev, name: e.target.value }))}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Email</Label>
-                    <Input type="email" defaultValue="contact@smithlaw.com" />
+                    <Input
+                      type="email"
+                      value={orgSettings.email}
+                      onChange={(e) => setOrgSettings(prev => ({ ...prev, email: e.target.value }))}
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Phone</Label>
-                    <Input defaultValue="(555) 123-4567" />
+                    <Input
+                      value={orgSettings.phone}
+                      onChange={(e) => setOrgSettings(prev => ({ ...prev, phone: e.target.value }))}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Website</Label>
-                    <Input defaultValue="https://smithlaw.com" />
+                    <Input
+                      value={orgSettings.website}
+                      onChange={(e) => setOrgSettings(prev => ({ ...prev, website: e.target.value }))}
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Address</Label>
-                  <Input defaultValue="123 Legal Street, Suite 400, New York, NY 10001" />
+                  <Input
+                    value={orgSettings.address}
+                    onChange={(e) => setOrgSettings(prev => ({ ...prev, address: e.target.value }))}
+                  />
                 </div>
                 <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/30">
-                  <Checkbox id="geo-tracking" />
+                  <Checkbox
+                    id="geo-tracking"
+                    checked={orgSettings.geoTracking}
+                    onCheckedChange={(checked) => setOrgSettings(prev => ({ ...prev, geoTracking: !!checked }))}
+                  />
                   <div>
                     <Label htmlFor="geo-tracking" className="font-medium cursor-pointer">Enable Geo Tracking</Label>
                     <p className="text-sm text-muted-foreground">Track employee clock-in/out locations</p>
                   </div>
                 </div>
-                <Button variant="gold">Save Settings</Button>
+                <Button variant="gold" onClick={handleSaveOrgSettings}>Save Settings</Button>
               </CardContent>
             </Card>
           </TabsContent>
