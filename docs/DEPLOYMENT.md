@@ -80,11 +80,10 @@ VITE_SUPABASE_PROJECT_ID=your_staging_id
 
 ## CI/CD
 
-GitHub Actions automatically:
-- ✅ Runs tests on every PR
+The current GitHub Actions deploy workflow:
 - ✅ Builds preview for every PR
 - ✅ Deploys to production on merge to `main`
-- ✅ Runs security scans
+- ℹ️ To add automated tests or security scans, extend `.github/workflows/deploy.yml` or add additional workflows.
 
 ## Monitoring
 
