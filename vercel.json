@@ -9,9 +9,5 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "env": {
-    "VITE_SUPABASE_URL": "https://wejiqqtwnhevcjdllodr.supabase.co",
-    "VITE_SUPABASE_PROJECT_ID": "wejiqqtwnhevcjdllodr"
-  }
+  ]
 }
