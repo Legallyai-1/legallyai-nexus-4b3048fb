@@ -159,7 +159,7 @@ export default function Index() {
                     <Check className="w-3 h-3 mr-1 text-neon-green" /> Review generated documents before use
                   </Badge>
                   <Badge variant="outline" className="text-muted-foreground">
-                    <Star className="w-3 h-3 mr-1 text-neon-gold" /> Not a substitute for a licensed attorney
+                    <Star className="w-3 h-3 mr-1 text-neon-gold" /> Not legal advice · Review before use
                   </Badge>
                 </div>
               </div>

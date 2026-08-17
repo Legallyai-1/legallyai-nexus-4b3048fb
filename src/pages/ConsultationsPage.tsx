@@ -45,10 +45,10 @@ const ConsultationsPage = () => {
   ];
 
   const lawyers = [
-    { name: "John Smith", specialty: "Contract Law", rate: 250, rating: 4.9, available: true },
-    { name: "Sarah Johnson", specialty: "Employment Law", rate: 300, rating: 4.8, available: true },
-    { name: "Michael Chen", specialty: "Family Law", rate: 200, rating: 4.7, available: false },
-    { name: "Emily Davis", specialty: "Criminal Defense", rate: 350, rating: 5.0, available: true },
+    { name: "John Smith", specialty: "Contract Law", rate: 250, available: true },
+    { name: "Sarah Johnson", specialty: "Employment Law", rate: 300, available: true },
+    { name: "Michael Chen", specialty: "Family Law", rate: 200, available: false },
+    { name: "Emily Davis", specialty: "Criminal Defense", rate: 350, available: true },
   ];
 
   const upcomingConsultations = [
@@ -123,8 +123,8 @@ const ConsultationsPage = () => {
                               <span className="text-sm text-primary font-medium">
                                 ${lawyer.rate}/hr
                               </span>
-                              <span className="text-sm text-yellow-400">
-                                ★ {lawyer.rating}
+                              <span className="text-sm text-muted-foreground">
+                                Available for consultation
                               </span>
                             </div>
                           </div>

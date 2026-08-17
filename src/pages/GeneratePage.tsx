@@ -10,6 +10,7 @@ import {
 import { VoiceInputButton } from "@/components/ui/VoiceInputButton";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureUserProfile, getUserCreditBalance, deductUserCredits } from '@/lib/ai-credits';
 import AdBanner from "@/components/ads/AdBanner";
 import AdContainer from "@/components/ads/AdContainer";
 import AdMobBanner, { ADMOB_AD_UNITS } from "@/components/ads/AdMobBanner";
@@ -105,7 +106,6 @@ export default function GeneratePage() {
       return;
     }
 
-    // Check authentication before generating
     if (!user) {
       toast.error("Please sign in to generate documents");
       navigate("/auth");
@@ -113,22 +113,37 @@ export default function GeneratePage() {
     }
 
     setIsGenerating(true);
-    
+
     try {
+      await ensureUserProfile(user.id, user.email, user.user_metadata?.full_name);
+      const { credits, tier } = await getUserCreditBalance(user.id);
+
+      if (tier === 'free' && credits <= 0) {
+        toast.error("You have no AI credits left. Upgrade to continue.");
+        return;
+      }
+
+      const cost = tier === 'free' ? 1 : 0;
+      if (tier === 'free') {
+        const deduction = await deductUserCredits(user.id, cost, 'document_generation');
+        if (!deduction.success) {
+          toast.error("Your AI credits are exhausted. Upgrade to continue.");
+          return;
+        }
+      }
+
       const { data, error } = await supabase.functions.invoke('generate-document', {
         body: { prompt: finalPrompt }
       });
 
       if (error) {
         console.error("Generation error:", error);
-        // Handle authentication errors
         if (error.message?.includes("401") || error.message?.includes("Authentication")) {
           toast.error("Please sign in to generate documents");
           navigate("/auth");
           return;
         }
         toast.error("Failed to generate document. Please try again.");
-        setIsGenerating(false);
         return;
       }
 
@@ -139,7 +154,6 @@ export default function GeneratePage() {
           return;
         }
         toast.error(data.error);
-        setIsGenerating(false);
         return;
       }
 

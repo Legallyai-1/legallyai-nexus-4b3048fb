@@ -21,7 +21,6 @@ interface Template {
   category: string;
   description: string;
   downloads: number;
-  rating: number;
   isPremium: boolean;
 }
 
@@ -90,34 +89,34 @@ The non-custodial parent shall have visitation as follows...`,
 
 const templates: Template[] = [
   // Business
-  { id: "1", title: "Non-Disclosure Agreement (NDA)", category: "business", description: "Mutual NDA for business discussions and partnerships.", downloads: 15420, rating: 4.9, isPremium: false },
-  { id: "2", title: "Independent Contractor Agreement", category: "business", description: "Contract for hiring freelancers and contractors.", downloads: 12350, rating: 4.8, isPremium: false },
-  { id: "3", title: "LLC Operating Agreement", category: "business", description: "Operating agreement for Limited Liability Companies.", downloads: 8920, rating: 4.7, isPremium: true },
-  { id: "4", title: "Partnership Agreement", category: "business", description: "Agreement between business partners.", downloads: 6780, rating: 4.6, isPremium: true },
+  { id: "1", title: "Non-Disclosure Agreement (NDA)", category: "business", description: "Mutual NDA for business discussions and partnerships.", downloads: 15420, isPremium: false },
+  { id: "2", title: "Independent Contractor Agreement", category: "business", description: "Contract for hiring freelancers and contractors.", downloads: 12350, isPremium: false },
+  { id: "3", title: "LLC Operating Agreement", category: "business", description: "Operating agreement for Limited Liability Companies.", downloads: 8920, isPremium: true },
+  { id: "4", title: "Partnership Agreement", category: "business", description: "Agreement between business partners.", downloads: 6780, isPremium: true },
   
   // Real Estate
-  { id: "5", title: "Residential Lease Agreement", category: "real-estate", description: "Standard lease for residential property rentals.", downloads: 22100, rating: 4.9, isPremium: false },
-  { id: "6", title: "Commercial Lease Agreement", category: "real-estate", description: "Lease agreement for commercial properties.", downloads: 5430, rating: 4.7, isPremium: true },
-  { id: "7", title: "Property Sale Contract", category: "real-estate", description: "Contract for buying/selling real property.", downloads: 9870, rating: 4.8, isPremium: true },
+  { id: "5", title: "Residential Lease Agreement", category: "real-estate", description: "Standard lease for residential property rentals.", downloads: 22100, isPremium: false },
+  { id: "6", title: "Commercial Lease Agreement", category: "real-estate", description: "Lease agreement for commercial properties.", downloads: 5430, isPremium: true },
+  { id: "7", title: "Property Sale Contract", category: "real-estate", description: "Contract for buying/selling real property.", downloads: 9870, isPremium: true },
   
   // Family
-  { id: "8", title: "Child Custody Agreement", category: "family", description: "Parenting plan and custody arrangement.", downloads: 18900, rating: 4.9, isPremium: false },
-  { id: "9", title: "Divorce Settlement Agreement", category: "family", description: "Agreement for division of assets in divorce.", downloads: 14200, rating: 4.8, isPremium: true },
-  { id: "10", title: "Prenuptial Agreement", category: "family", description: "Pre-marriage financial agreement.", downloads: 7650, rating: 4.6, isPremium: true },
+  { id: "8", title: "Child Custody Agreement", category: "family", description: "Parenting plan and custody arrangement.", downloads: 18900, isPremium: false },
+  { id: "9", title: "Divorce Settlement Agreement", category: "family", description: "Agreement for division of assets in divorce.", downloads: 14200, isPremium: true },
+  { id: "10", title: "Prenuptial Agreement", category: "family", description: "Pre-marriage financial agreement.", downloads: 7650, isPremium: true },
   
   // Employment
-  { id: "11", title: "Employment Offer Letter", category: "employment", description: "Formal job offer letter template.", downloads: 11200, rating: 4.7, isPremium: false },
-  { id: "12", title: "Employee Handbook", category: "employment", description: "Company policies and procedures handbook.", downloads: 4320, rating: 4.5, isPremium: true },
-  { id: "13", title: "Severance Agreement", category: "employment", description: "Separation agreement for departing employees.", downloads: 6890, rating: 4.7, isPremium: true },
+  { id: "11", title: "Employment Offer Letter", category: "employment", description: "Formal job offer letter template.", downloads: 11200, isPremium: false },
+  { id: "12", title: "Employee Handbook", category: "employment", description: "Company policies and procedures handbook.", downloads: 4320, isPremium: true },
+  { id: "13", title: "Severance Agreement", category: "employment", description: "Separation agreement for departing employees.", downloads: 6890, isPremium: true },
   
   // Personal
-  { id: "14", title: "Last Will and Testament", category: "personal", description: "Basic will for estate planning.", downloads: 25600, rating: 4.9, isPremium: false },
-  { id: "15", title: "Power of Attorney", category: "personal", description: "General power of attorney document.", downloads: 19300, rating: 4.8, isPremium: false },
-  { id: "16", title: "Living Will (Healthcare Directive)", category: "personal", description: "Medical wishes and end-of-life instructions.", downloads: 13400, rating: 4.8, isPremium: false },
+  { id: "14", title: "Last Will and Testament", category: "personal", description: "Basic will for estate planning.", downloads: 25600, isPremium: false },
+  { id: "15", title: "Power of Attorney", category: "personal", description: "General power of attorney document.", downloads: 19300, isPremium: false },
+  { id: "16", title: "Living Will (Healthcare Directive)", category: "personal", description: "Medical wishes and end-of-life instructions.", downloads: 13400, isPremium: false },
   
   // Financial
-  { id: "17", title: "Promissory Note", category: "financial", description: "Loan agreement between parties.", downloads: 16700, rating: 4.8, isPremium: false },
-  { id: "18", title: "Personal Guarantee", category: "financial", description: "Personal guarantee for business obligations.", downloads: 4560, rating: 4.5, isPremium: true },
+  { id: "17", title: "Promissory Note", category: "financial", description: "Loan agreement between parties.", downloads: 16700, isPremium: false },
+  { id: "18", title: "Personal Guarantee", category: "financial", description: "Personal guarantee for business obligations.", downloads: 4560, isPremium: true },
 ];
 
 export default function DocumentTemplatesPage() {
@@ -279,7 +278,7 @@ export default function DocumentTemplatesPage() {
                           <Download className="h-4 w-4" /> {template.downloads.toLocaleString()}
                         </span>
                         <span className="flex items-center gap-1">
-                          <Star className="h-4 w-4 fill-amber-400 text-amber-400" /> {template.rating}
+                          <FileText className="h-4 w-4" /> Ready to customize
                         </span>
                       </div>
                       <div className="flex gap-2">

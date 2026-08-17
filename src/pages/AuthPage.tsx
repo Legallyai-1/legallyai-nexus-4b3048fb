@@ -116,7 +116,7 @@ export default function AuthPage() {
     
     const redirectPath = typeToPath[userType];
     const redirectUrl = `${window.location.origin}${redirectPath}`;
-    
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -126,14 +126,21 @@ export default function AuthPage() {
           data: { full_name: fullName, user_type: userType },
         },
       });
+
       if (error) throw error;
 
       if (data.session) {
         toast.success("Account created successfully!");
         navigate(redirectPath);
-      } else {
-        toast.success("Check your email to confirm your account, then sign in.");
+        return;
       }
+
+      if (data.user && !data.session) {
+        toast.success("Check your email to confirm your account, then sign in.");
+        return;
+      }
+
+      toast.success("Account created successfully!");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to create your account. Please try again.");
     } finally {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AnimatedRoutes } from '@/components/AnimatedRoutes';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
+import { setStoredSubscriptionTier, shouldShowAds } from '@/lib/subscription';
 import { supabase } from '@/integrations/supabase/client';
 
 function App() {
@@ -21,6 +22,49 @@ function App() {
     }, 1000);
 
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {
+          // Silently ignore registration failures; the app remains usable without offline support.
+        });
+      });
+    }
+
+    const tier = new URLSearchParams(window.location.search).get('tier');
+    if (tier) {
+      setStoredSubscriptionTier(tier);
+    }
+
+    const syncSubscriptionFromSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
+        setStoredSubscriptionTier('free');
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('subscription_tier')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      const tierName = profile?.subscription_tier || 'free';
+      setStoredSubscriptionTier(tierName);
+      document.body.dataset.subscriptionTier = tierName;
+    };
+
+    syncSubscriptionFromSession();
+  }, []);
+
+  useEffect(() => {
+    const adsEnabled = shouldShowAds();
+    document.body.dataset.adsEnabled = String(adsEnabled);
+    document.body.dataset.subscriptionTier = localStorage.getItem('legallyai_subscription_tier') || 'free';
   }, []);
 
   if (!configReady) {
