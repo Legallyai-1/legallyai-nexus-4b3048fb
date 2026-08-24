@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Android/Gradle build state
+.gradle/
+android/.gradle/
+android/app/.gradle/
+
 # Environment files
 .env
 .env.local
