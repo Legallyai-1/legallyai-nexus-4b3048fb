@@ -144,12 +144,12 @@ export default function ChatPage() {
   return (
     <Layout showFooter={false}>
       <div className="flex flex-col h-[calc(100vh-4rem)] bg-background">
-        {/* Upgrade Banner for non-logged in users */}
+        {/* Authentication banner */}
         {!user && (
           <div className="bg-gradient-to-r from-neon-cyan/10 to-neon-purple/10 border-b border-neon-cyan/30 px-4 py-3">
             <div className="container mx-auto flex items-center justify-center gap-2 text-foreground">
               <Sparkles className="h-4 w-4 text-neon-cyan" />
-              <span className="text-sm">Chat is free! <button onClick={() => navigate("/auth")} className="underline font-medium text-neon-cyan hover:text-neon-purple transition-colors">Sign up</button> to save history & unlock premium features</span>
+              <span className="text-sm"><button onClick={() => navigate("/auth")} className="underline font-medium text-neon-cyan hover:text-neon-purple transition-colors">Create an account</button> or sign in to use AI chat.</span>
             </div>
           </div>
         )}
