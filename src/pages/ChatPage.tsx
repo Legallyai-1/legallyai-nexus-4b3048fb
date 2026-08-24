@@ -28,8 +28,6 @@ const suggestedQuestions = [
   "What is the difference between a will and a trust?",
 ];
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/legal-chat`;
-
 export default function ChatPage() {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
@@ -89,16 +87,10 @@ export default function ChatPage() {
     setIsTyping(true);
 
     try {
-      // Get session if available (for authenticated users) but don't require it
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      
-      // Add auth header if user is logged in
-      if (session?.access_token) {
-        headers["Authorization"] = `Bearer ${session.access_token}`;
+      if (!user) {
+        toast.error("Please sign in to use AI chat.");
+        navigate("/login", { state: { from: "/chat" } });
+        return;
       }
 
       const apiMessages = messages
@@ -106,100 +98,27 @@ export default function ChatPage() {
         .map(m => ({ role: m.role, content: m.content }));
       apiMessages.push({ role: "user", content: currentInput });
 
-      const resp = await fetch(CHAT_URL, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ messages: apiMessages, stream: true }),
+      const { data, error } = await supabase.functions.invoke("legal-chat", {
+        body: { messages: apiMessages },
       });
+      if (error) throw error;
 
-      if (!resp.ok) {
-        const errorData = await resp.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to get response");
+      const assistantContent = data?.response ?? data?.text;
+      if (typeof assistantContent !== "string" || !assistantContent.trim()) {
+        throw new Error("The AI service returned an empty response.");
       }
-
-      if (!resp.body) {
-        throw new Error("No response body");
-      }
-
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let textBuffer = "";
-      let assistantContent = "";
       const assistantMessageId = (Date.now() + 1).toString();
 
       setMessages(prev => [...prev, {
         id: assistantMessageId,
         role: "assistant",
-        content: "",
+        content: assistantContent,
         timestamp: new Date(),
       }]);
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        
-        textBuffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
-
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (line.startsWith(":") || line.trim() === "") continue;
-          if (!line.startsWith("data: ")) continue;
-
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") break;
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              assistantContent += content;
-              setMessages(prev => 
-                prev.map(m => 
-                  m.id === assistantMessageId 
-                    ? { ...m, content: assistantContent }
-                    : m
-                )
-              );
-            }
-          } catch {
-            textBuffer = line + "\n" + textBuffer;
-            break;
-          }
-        }
-      }
-
-      if (textBuffer.trim()) {
-        for (let raw of textBuffer.split("\n")) {
-          if (!raw) continue;
-          if (raw.endsWith("\r")) raw = raw.slice(0, -1);
-          if (!raw.startsWith("data: ")) continue;
-          const jsonStr = raw.slice(6).trim();
-          if (jsonStr === "[DONE]") continue;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              assistantContent += content;
-              setMessages(prev => 
-                prev.map(m => 
-                  m.id === assistantMessageId 
-                    ? { ...m, content: assistantContent }
-                    : m
-                )
-              );
-            }
-          } catch { /* ignore */ }
-        }
-      }
 
     } catch (error) {
       console.error("Chat error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to get response");
-      setMessages(prev => prev.filter(m => m.content !== ""));
     } finally {
       setIsTyping(false);
     }
@@ -225,12 +144,12 @@ export default function ChatPage() {
   return (
     <Layout showFooter={false}>
       <div className="flex flex-col h-[calc(100vh-4rem)] bg-background">
-        {/* Upgrade Banner for non-logged in users */}
+        {/* Authentication banner */}
         {!user && (
           <div className="bg-gradient-to-r from-neon-cyan/10 to-neon-purple/10 border-b border-neon-cyan/30 px-4 py-3">
             <div className="container mx-auto flex items-center justify-center gap-2 text-foreground">
               <Sparkles className="h-4 w-4 text-neon-cyan" />
-              <span className="text-sm">Chat is free! <button onClick={() => navigate("/auth")} className="underline font-medium text-neon-cyan hover:text-neon-purple transition-colors">Sign up</button> to save history & unlock premium features</span>
+              <span className="text-sm"><button onClick={() => navigate("/auth")} className="underline font-medium text-neon-cyan hover:text-neon-purple transition-colors">Create an account</button> or sign in to use AI chat.</span>
             </div>
           </div>
         )}

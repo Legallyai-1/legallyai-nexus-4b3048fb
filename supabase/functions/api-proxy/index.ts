@@ -5,19 +5,41 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-target-url, x-api-key-header",
 };
 
+const ALLOWED_HOSTS = new Set([
+  "api.openai.com",
+  "api.stripe.com",
+  "www.courtlistener.com",
+]);
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const url = new URL(req.url);
     const targetUrl = req.headers.get("x-target-url");
     
     if (!targetUrl) {
       return new Response(
         JSON.stringify({ error: "Missing x-target-url header" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    let target: URL;
+    try {
+      target = new URL(targetUrl);
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "Invalid target URL" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (target.protocol !== "https:" || !ALLOWED_HOSTS.has(target.hostname)) {
+      return new Response(
+        JSON.stringify({ error: "Target URL is not allowed" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -33,24 +55,15 @@ serve(async (req) => {
     };
 
     // Check which API key to use based on the target URL
-    if (targetUrl.includes("api.openai.com")) {
+    if (target.hostname === "api.openai.com") {
       targetHeaders["Authorization"] = `Bearer ${Deno.env.get("OPENAI_API_KEY")}`;
-    } else if (targetUrl.includes("api.stripe.com")) {
+    } else if (target.hostname === "api.stripe.com") {
       targetHeaders["Authorization"] = `Bearer ${Deno.env.get("STRIPE_SECRET_KEY")}`;
-    } else if (targetUrl.includes("courtlistener.com")) {
+    } else if (target.hostname === "www.courtlistener.com") {
       targetHeaders["Authorization"] = `Token ${Deno.env.get("COURTLISTENER_TOKEN")}`;
     }
 
-    // Allow custom API key header name via x-api-key-header
-    const customKeyHeader = req.headers.get("x-api-key-header");
-    if (customKeyHeader) {
-      const customKeyValue = req.headers.get(customKeyHeader);
-      if (customKeyValue) {
-        targetHeaders[customKeyHeader] = customKeyValue;
-      }
-    }
-
-    console.log(`Proxying ${req.method} request to: ${targetUrl}`);
+    console.log(`Proxying ${req.method} request to approved host: ${target.hostname}`);
 
     const response = await fetch(targetUrl, {
       method: req.method,
