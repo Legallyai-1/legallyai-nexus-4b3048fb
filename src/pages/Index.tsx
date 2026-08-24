@@ -134,7 +134,7 @@ export default function Index() {
                 </h1>
                 
                 <p className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0 mb-8 animate-fade-in" style={{ animationDelay: "200ms" }}>
-                  Generate legal documents, get instant answers, and access specialized AI assistants for every legal need. Free chat, premium features.
+                  Explore legal information and draft documents for attorney review. AI responses are educational and are not legal advice.
                 </p>
                 
                 {/* CTAs */}
@@ -153,13 +153,13 @@ export default function Index() {
                   </Link>
                 </div>
                 
-                {/* Trust Badges */}
+                {/* Product disclosures */}
                 <div className="flex flex-wrap justify-center lg:justify-start gap-4 mt-8 animate-fade-in" style={{ animationDelay: "400ms" }}>
                   <Badge variant="outline" className="text-muted-foreground">
-                    <Check className="w-3 h-3 mr-1 text-neon-green" /> 50,000+ Documents Generated
+                    <Check className="w-3 h-3 mr-1 text-neon-green" /> Review generated documents before use
                   </Badge>
                   <Badge variant="outline" className="text-muted-foreground">
-                    <Star className="w-3 h-3 mr-1 text-neon-gold" /> 4.9/5 User Rating
+                    <Star className="w-3 h-3 mr-1 text-neon-gold" /> Not a substitute for a licensed attorney
                   </Badge>
                 </div>
               </div>

@@ -73,21 +73,17 @@ export default function AuthPage() {
 
     setIsLoading(true);
     
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
 
-    if (error) {
-      toast.error(error.message);
+      toast.success("Logged in successfully!");
+      navigate(await redirectToHub());
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to sign in. Please try again.");
+    } finally {
       setIsLoading(false);
-      return;
     }
-    
-    toast.success("Logged in successfully!");
-    const path = await redirectToHub();
-    navigate(path);
-    setIsLoading(false);
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -121,33 +117,28 @@ export default function AuthPage() {
     const redirectPath = typeToPath[userType];
     const redirectUrl = `${window.location.origin}${redirectPath}`;
     
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          full_name: fullName,
-          user_type: userType,
-        }
-      }
-    });
-
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("Account created! Redirecting...");
-      // Auto-login for immediate access
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+    try {
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: { full_name: fullName, user_type: userType },
+        },
       });
-      
-      if (!signInError) {
+      if (error) throw error;
+
+      if (data.session) {
+        toast.success("Account created successfully!");
         navigate(redirectPath);
+      } else {
+        toast.success("Check your email to confirm your account, then sign in.");
       }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to create your account. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const userTypes: { type: UserType; icon: any; label: string; description: string }[] = [
