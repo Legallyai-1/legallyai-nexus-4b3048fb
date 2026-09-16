@@ -114,13 +114,20 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.SUPABASE_ACCESS_TOKEN != ''
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           VERCEL_AI_GATEWAY_KEY: ${{ secrets.VERCEL_AI_GATEWAY_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
         run: |
           if [ -d "supabase/functions" ]; then
-            # Set secrets for edge functions
-            if [ -n "$VERCEL_AI_GATEWAY_KEY" ]; then
-              supabase secrets set VERCEL_AI_GATEWAY_KEY="$VERCEL_AI_GATEWAY_KEY" --project-ref ${{ secrets.VITE_SUPABASE_PROJECT_ID }} || echo "Warning: Failed to set VERCEL_AI_GATEWAY_KEY"
-            fi
+            # Set secrets for edge functions (each is a no-op if the corresponding GitHub secret is empty)
+            for pair in "ANTHROPIC_API_KEY:$ANTHROPIC_API_KEY" "VERCEL_AI_GATEWAY_KEY:$VERCEL_AI_GATEWAY_KEY" "STRIPE_SECRET_KEY:$STRIPE_SECRET_KEY" "STRIPE_WEBHOOK_SECRET:$STRIPE_WEBHOOK_SECRET"; do
+              key="${pair%%:*}"
+              value="${pair#*:}"
+              if [ -n "$value" ]; then
+                supabase secrets set "$key=$value" --project-ref ${{ secrets.VITE_SUPABASE_PROJECT_ID }} || echo "Warning: Failed to set $key"
+              fi
+            done
             
             # Deploy all functions
             for func in supabase/functions/*/; do

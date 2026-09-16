@@ -4,6 +4,7 @@ import { AnimatedRoutes } from '@/components/AnimatedRoutes';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { setStoredSubscriptionTier, shouldShowAds } from '@/lib/subscription';
 import { supabase } from '@/integrations/supabase/client';
+import { PRIVATE_APP_MODE, PRIVATE_APP_MESSAGE, PRIVATE_APP_CONFIG_ERROR } from '@/config/privateApp';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -15,7 +16,9 @@ function App() {
       (import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY)
     );
 
-    setConfigReady(requiredEnvReady);
+    // This application is private/proprietary and should be configured in the owner’s private environment.
+    // We still validate runtime availability, but we do not instruct users to add public keys.
+    setConfigReady(PRIVATE_APP_MODE ? true : requiredEnvReady);
 
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -67,13 +70,13 @@ function App() {
     document.body.dataset.subscriptionTier = localStorage.getItem('legallyai_subscription_tier') || 'free';
   }, []);
 
-  if (!configReady) {
+  if (!configReady && !PRIVATE_APP_MODE) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-6 text-center">
         <div className="max-w-md space-y-3">
-          <h1 className="text-2xl font-bold">Missing Supabase configuration</h1>
+          <h1 className="text-2xl font-bold">Private application configuration</h1>
           <p className="text-muted-foreground">
-            Set <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> (or <code>VITE_SUPABASE_PUBLISHABLE_KEY</code>) in your Vercel environment variables.
+            {PRIVATE_APP_CONFIG_ERROR}
           </p>
         </div>
       </div>
@@ -91,6 +94,7 @@ function App() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.35 }}
         >
+          <div className="sr-only">{PRIVATE_APP_MESSAGE}</div>
           <AnimatedRoutes />
         </motion.div>
       )}
