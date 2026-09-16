@@ -30,6 +30,11 @@ serve(async (req) => {
   ];
 
   const VALID_MODES = ['subscription', 'payment'];
+  const PRICE_TIERS: Record<string, string> = {
+    'price_1Sdfqp0QhWGUtGKvcQuWONuB': 'premium',
+    'price_1SckV70QhWGUtGKvvg1tH7lu': 'pro',
+    'price_1SckVt0QhWGUtGKvl9YdmQqk': 'document',
+  };
 
   try {
     logStep("Function started");
@@ -95,6 +100,11 @@ serve(async (req) => {
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
+      client_reference_id: user.id,
+      metadata: {
+        user_id: user.id,
+        tier: PRICE_TIERS[priceId],
+      },
       line_items: [
         {
           price: priceId,
@@ -102,6 +112,14 @@ serve(async (req) => {
         },
       ],
       mode: mode || "subscription",
+      ...(mode !== "payment" && {
+        subscription_data: {
+          metadata: {
+            user_id: user.id,
+            tier: PRICE_TIERS[priceId],
+          },
+        },
+      }),
       success_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/pricing`,
     });

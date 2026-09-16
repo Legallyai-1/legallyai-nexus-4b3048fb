@@ -180,35 +180,6 @@ export default function ProBonoPage() {
 
   const { mileageDeduction, totalDeductions, estimatedSavings } = calculateTaxSavings();
 
-  const lawyerSystemPrompt = `You are ProBonoAI, helping lawyers maximize the impact of their pro bono work and understand tax benefits.
-  
-  KEY TOPICS:
-  - Finding pro bono opportunities matching practice areas
-  - Understanding IRS rules for charitable deductions
-  - Documenting expenses and time for tax purposes
-  - State bar pro bono requirements and CLE credits
-  - Generating year-end tax documentation
-  
-  TAX DEDUCTION RULES (2024):
-  - Mileage: $0.67/mile for travel to pro bono work
-  - Out-of-pocket expenses: 100% deductible (court fees, copying, postage)
-  - Time/services: NOT deductible (only expenses)
-  - Must have written records with dates, amounts, purposes
-  - Report on Schedule A, Line 11 (Charitable Contributions)
-  
-  Help lawyers document their work properly and maximize legitimate tax deductions.`;
-
-  const clientSystemPrompt = `You are ProBonoAI, helping people find free legal assistance.
-  
-  KEY TOPICS:
-  - Determining eligibility for free legal services
-  - Finding local legal aid organizations
-  - Understanding what to expect from pro bono representation
-  - Preparing documentation for your case
-  - Rights when working with volunteer attorneys
-  
-  Help clients navigate the process of getting free legal help and understand what quality of service they should expect.`;
-
   return (
     <Layout>
       <FuturisticBackground>
@@ -478,7 +449,7 @@ export default function ProBonoPage() {
                   <HubAssistant
                     assistantName="ProBonoAI"
                     assistantVariant="pink"
-                    systemPrompt={lawyerSystemPrompt}
+                    hubType="probono"
                     placeholderText="Ask about pro bono opportunities, tax deductions, or documentation requirements..."
                     welcomeMessage="I'm ProBonoAI, here to help you find meaningful pro bono opportunities and maximize your legitimate tax deductions. Ask me about IRS rules, documentation requirements, or finding opportunities in your practice area."
                   />
@@ -569,7 +540,7 @@ export default function ProBonoPage() {
                   <HubAssistant
                     assistantName="ProBonoAI"
                     assistantVariant="pink"
-                    systemPrompt={clientSystemPrompt}
+                    hubType="probono"
                     placeholderText="Tell me about your legal issue or ask how to find free legal help..."
                     welcomeMessage="I'm ProBonoAI, here to help you find free legal assistance. Tell me about your legal issue and I'll help you understand your options and find resources near you."
                   />

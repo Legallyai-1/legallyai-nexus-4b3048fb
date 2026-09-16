@@ -99,25 +99,6 @@ export default function TicketsDefensePage() {
   const [activeTab, setActiveTab] = useState("assistant");
   const navigate = useNavigate();
 
-  const systemPrompt = `You are Defendr, an AI legal assistant specializing in traffic tickets and criminal defense guidance for U.S. law (2025). 
-  You help users understand their charges, potential defenses, court procedures, and rights.
-  
-  IMPORTANT GUIDELINES:
-  - Provide general information about legal processes and rights
-  - Explain potential defense strategies in understandable terms
-  - Guide users on court preparation and procedures
-  - Analyze any uploaded documents (tickets, citations, police reports)
-  - Help users organize evidence and build their defense
-  - Always recommend consulting with a licensed attorney for specific legal advice
-  - Be compassionate and non-judgmental
-  
-  DOCUMENT ANALYSIS:
-  - When users upload tickets, explain the violation and potential penalties
-  - Identify errors on citations that could help the defense
-  - Suggest what additional evidence might be helpful
-  
-  DISCLAIMER: Always remind users this is informational guidance, not legal advice.`;
-
   return (
     <Layout>
       <FuturisticBackground>
@@ -189,7 +170,7 @@ export default function TicketsDefensePage() {
                 <HubAssistant
                   assistantName="Defendr"
                   colorVariant="pink"
-                  systemPrompt={systemPrompt}
+                  hubType="defense"
                   placeholderText="Describe your case, upload your ticket, or ask about your defense options..."
                   welcomeMessage="I'm Defendr, your AI defense assistant. Upload your ticket or citation and I'll help you understand your options, build your defense, and prepare for court."
                 />

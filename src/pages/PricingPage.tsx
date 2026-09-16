@@ -199,22 +199,8 @@ export default function PricingPage() {
         return;
       }
 
-      // Determine tier from plan name
-      const tier = planName.toLowerCase().replace(' - lawyers', '');
-      
-      // Parse amount from price string (remove $ and convert to number)
-      const amount = parseFloat(plans.find(p => p.name === planName)?.price.replace('$', '') || '0');
-      
-      // Call Paypost checkout function for real payment processing
-      const { data, error } = await supabase.functions.invoke('paypost-checkout', {
-        body: { 
-          amount: amount,
-          currency: 'USD',
-          mode: mode,
-          tier: tier,
-          success_url: `${window.location.origin}/payment-success`,
-          cancel_url: `${window.location.origin}/pricing`,
-        }
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { priceId, mode },
       });
 
       if (error) {
@@ -231,9 +217,8 @@ export default function PricingPage() {
         return;
       }
 
-      // Redirect to Paypost hosted payment page
-      if (data?.checkout_url) {
-        window.location.href = data.checkout_url;
+      if (data?.url) {
+        window.location.href = data.url;
       } else {
         throw new Error("No checkout URL received");
       }

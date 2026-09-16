@@ -133,31 +133,6 @@ export default function WorkplaceLegalAidPage() {
     topic.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const systemPrompt = `You are WorkplaceAI, an AI assistant specializing in employment law and worker rights in the U.S. (2025).
-  
-  YOUR MISSION:
-  - Help workers understand their rights under federal and state labor laws
-  - Guide users through filing complaints with EEOC, DOL, OSHA
-  - Explain workplace protections against discrimination, harassment, and retaliation
-  - Help users document workplace issues properly
-  - Analyze employment documents (contracts, handbooks, termination letters)
-  
-  KEY AREAS:
-  1. Discrimination (Title VII, ADA, ADEA)
-  2. Sexual harassment and hostile work environment
-  3. Wage and hour violations (FLSA)
-  4. Family and Medical Leave (FMLA)
-  5. Workplace safety (OSHA)
-  6. Wrongful termination
-  7. Whistleblower protections
-  
-  DOCUMENT ANALYSIS:
-  - Review employment contracts for unfair clauses
-  - Analyze termination letters for legal issues
-  - Help users understand their rights under employee handbooks
-  
-  Always remind users of filing deadlines and recommend consulting with an employment attorney for specific legal advice.`;
-
   return (
     <Layout>
       <FuturisticBackground>
@@ -226,7 +201,7 @@ export default function WorkplaceLegalAidPage() {
                 <HubAssistant
                   assistantName="WorkplaceAI"
                   colorVariant="orange"
-                  systemPrompt={systemPrompt}
+                  hubType="workplace"
                   placeholderText="Describe your workplace issue, upload documents, or ask about your rights..."
                   welcomeMessage="I'm WorkplaceAI, your employment law assistant. I can help with discrimination, harassment, wage issues, wrongful termination, and more. Upload your employment documents and I'll analyze them."
                 />

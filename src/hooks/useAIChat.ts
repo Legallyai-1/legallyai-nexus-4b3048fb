@@ -1,47 +1,65 @@
-import { useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useCallback, useRef } from "react";
 import { toast } from "sonner";
+import { streamLegalChat, type HubType, type ChatMessage as LegalChatMessage } from "@/lib/legalChat";
 
 export interface Message {
   role: "user" | "assistant" | "system";
   content: string;
+  reviewed?: boolean;
 }
 
 interface UseAIChatOptions {
-  systemPrompt: string;
+  hubType: HubType;
   onError?: (error: Error) => void;
 }
 
-export function useAIChat({ systemPrompt, onError }: UseAIChatOptions) {
+export function useAIChat({ hubType, onError }: UseAIChatOptions) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const sessionIdRef = useRef<string>(crypto.randomUUID());
 
   const sendMessage = useCallback(async (userMessage: string) => {
     if (!userMessage.trim() || isLoading) return;
 
     const userMsg: Message = { role: "user", content: userMessage.trim() };
-    setMessages(prev => [...prev, userMsg]);
+    const history: LegalChatMessage[] = [...messages, userMsg]
+      .filter((m): m is Message & { role: "user" | "assistant" } => m.role !== "system")
+      .map((m) => ({ role: m.role, content: m.content }));
+
+    setMessages(prev => [...prev, userMsg, { role: "assistant", content: "" }]);
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('legal-chat', {
-        body: {
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...messages,
-            userMsg
-          ],
-          stream: false
-        }
+      let reviewerNote = "";
+      const { text, reviewed } = await streamLegalChat({
+        hubType,
+        sessionId: sessionIdRef.current,
+        messages: history,
+        onDelta: (chunk) => {
+          setMessages(prev => {
+            const next = [...prev];
+            next[next.length - 1] = { ...next[next.length - 1], content: next[next.length - 1].content + chunk };
+            return next;
+          });
+        },
+        onReviewerNote: (note) => {
+          reviewerNote = note;
+        },
       });
 
-      if (error) throw error;
+      setMessages(prev => {
+        const next = [...prev];
+        next[next.length - 1] = {
+          role: "assistant",
+          content: reviewerNote ? `${text}\n\n---\n⚠️ ${reviewerNote}` : text,
+          reviewed,
+        };
+        return next;
+      });
 
-      const assistantMsg: Message = { role: "assistant", content: data.response };
-      setMessages(prev => [...prev, assistantMsg]);
-      
-      return data.response;
+      return text;
     } catch (error: any) {
+      setMessages(prev => prev.slice(0, -2));
       const err = new Error(error.message || "Failed to get AI response");
       toast.error(err.message);
       onError?.(err);
@@ -49,10 +67,11 @@ export function useAIChat({ systemPrompt, onError }: UseAIChatOptions) {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, systemPrompt, isLoading, onError]);
+  }, [messages, hubType, isLoading, onError]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
+    sessionIdRef.current = crypto.randomUUID();
   }, []);
 
   const addSystemMessage = useCallback((content: string) => {
@@ -68,3 +87,4 @@ export function useAIChat({ systemPrompt, onError }: UseAIChatOptions) {
     setMessages
   };
 }
+

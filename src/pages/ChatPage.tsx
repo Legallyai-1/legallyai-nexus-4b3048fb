@@ -8,6 +8,7 @@ import { VoiceInputButton } from "@/components/ui/VoiceInputButton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { streamLegalChat } from "@/lib/legalChat";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import AdBanner from "@/components/ads/AdBanner";
 import AdContainer from "@/components/ads/AdContainer";
@@ -18,6 +19,7 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  reviewed?: boolean;
 }
 
 const suggestedQuestions = [
@@ -43,6 +45,7 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const sessionIdRef = useRef<string>(crypto.randomUUID());
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -98,26 +101,46 @@ export default function ChatPage() {
         .map(m => ({ role: m.role, content: m.content }));
       apiMessages.push({ role: "user", content: currentInput });
 
-      const { data, error } = await supabase.functions.invoke("legal-chat", {
-        body: { messages: apiMessages },
-      });
-      if (error) throw error;
-
-      const assistantContent = data?.response ?? data?.text;
-      if (typeof assistantContent !== "string" || !assistantContent.trim()) {
-        throw new Error("The AI service returned an empty response.");
-      }
       const assistantMessageId = (Date.now() + 1).toString();
-
       setMessages(prev => [...prev, {
         id: assistantMessageId,
         role: "assistant",
-        content: assistantContent,
+        content: "",
         timestamp: new Date(),
       }]);
 
+      let reviewerNote = "";
+      const { text, reviewed } = await streamLegalChat({
+        hubType: "general",
+        sessionId: sessionIdRef.current,
+        messages: apiMessages,
+        onDelta: (chunk) => {
+          setMessages(prev => {
+            const next = [...prev];
+            next[next.length - 1] = { ...next[next.length - 1], content: next[next.length - 1].content + chunk };
+            return next;
+          });
+        },
+        onReviewerNote: (note) => {
+          reviewerNote = note;
+        },
+      });
+
+      if (!text.trim()) throw new Error("The AI service returned an empty response.");
+
+      setMessages(prev => {
+        const next = [...prev];
+        next[next.length - 1] = {
+          ...next[next.length - 1],
+          content: reviewerNote ? `${text}\n\n---\n⚠️ ${reviewerNote}` : text,
+          reviewed,
+        };
+        return next;
+      });
+
     } catch (error) {
       console.error("Chat error:", error);
+      setMessages(prev => prev.filter(m => m.content !== "" || m.role !== "assistant"));
       toast.error(error instanceof Error ? error.message : "Failed to get response");
     } finally {
       setIsTyping(false);
@@ -200,6 +223,11 @@ export default function ChatPage() {
                   <p className="whitespace-pre-wrap text-sm leading-relaxed">
                     {message.content || (isTyping && message.role === "assistant" ? "..." : "")}
                   </p>
+                  {message.reviewed && (
+                    <span className="mt-1 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide opacity-60">
+                      ✓ Reviewed by AI fact-checker
+                    </span>
+                  )}
                   <span className="text-xs opacity-60 mt-2 block">
                     {message.timestamp.toLocaleTimeString([], {
                       hour: "2-digit",

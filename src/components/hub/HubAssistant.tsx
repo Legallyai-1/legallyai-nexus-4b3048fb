@@ -4,13 +4,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { Send, Upload, FileText, Mic, MicOff, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { streamLegalChat, type HubType } from "@/lib/legalChat";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
   attachments?: { name: string; type: string }[];
+  reviewed?: boolean;
 }
 
 interface HubAssistantProps {
@@ -18,7 +19,7 @@ interface HubAssistantProps {
   variant?: "cyan" | "purple" | "pink" | "green" | "orange" | "blue";
   colorVariant?: "cyan" | "purple" | "pink" | "green" | "orange" | "blue";
   assistantVariant?: "cyan" | "purple" | "pink" | "green" | "orange" | "blue";
-  systemPrompt: string;
+  hubType: HubType;
   placeholder?: string;
   placeholderText?: string;
   welcomeMessage?: string;
@@ -29,7 +30,7 @@ export function HubAssistant({
   variant,
   colorVariant,
   assistantVariant,
-  systemPrompt,
+  hubType,
   placeholder,
   placeholderText,
   welcomeMessage
@@ -44,6 +45,7 @@ export function HubAssistant({
   const [isListening, setIsListening] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sessionIdRef = useRef<string>(crypto.randomUUID());
 
   const handleSendMessage = async () => {
     if (!input.trim() && attachedFiles.length === 0) return;
@@ -61,7 +63,7 @@ export function HubAssistant({
       attachments: attachedFiles.map(f => ({ name: f.name, type: f.type }))
     };
     
-    setMessages(prev => [...prev, newUserMessage]);
+    setMessages(prev => [...prev, newUserMessage, { role: "assistant", content: "" }]);
     setIsLoading(true);
 
     try {
@@ -70,21 +72,37 @@ export function HubAssistant({
         contextMessage = `User uploaded files: ${fileNames.join(", ")}. ${userMessage}`;
       }
 
-      const { data, error } = await supabase.functions.invoke('legal-chat', {
-        body: {
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...messages.map(m => ({ role: m.role, content: m.content })),
-            { role: "user", content: contextMessage }
-          ],
-          stream: false
-        }
+      let reviewerNote = "";
+      const { text, reviewed } = await streamLegalChat({
+        hubType,
+        sessionId: sessionIdRef.current,
+        messages: [
+          ...messages.map(m => ({ role: m.role, content: m.content })),
+          { role: "user", content: contextMessage }
+        ],
+        onDelta: (chunk) => {
+          setMessages(prev => {
+            const next = [...prev];
+            next[next.length - 1] = { ...next[next.length - 1], content: next[next.length - 1].content + chunk };
+            return next;
+          });
+        },
+        onReviewerNote: (note) => {
+          reviewerNote = note;
+        },
       });
 
-      if (error) throw error;
-
-      setMessages(prev => [...prev, { role: "assistant", content: data.response }]);
+      setMessages(prev => {
+        const next = [...prev];
+        next[next.length - 1] = {
+          role: "assistant",
+          content: reviewerNote ? `${text}\n\n---\n⚠️ ${reviewerNote}` : text,
+          reviewed,
+        };
+        return next;
+      });
     } catch (error: any) {
+      setMessages(prev => prev.slice(0, -2));
       toast.error(error.message || "Failed to get response");
     } finally {
       setIsLoading(false);
@@ -185,10 +203,15 @@ export function HubAssistant({
                 </div>
               )}
               <p className="text-foreground whitespace-pre-wrap">{msg.content}</p>
+              {msg.reviewed && (
+                <span className="mt-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                  ✓ Reviewed by AI fact-checker
+                </span>
+              )}
             </div>
           </div>
         ))}
-        {isLoading && (
+        {isLoading && !messages[messages.length - 1]?.content && (
           <div className="flex justify-start">
             <div className="bg-background/50 border border-border/50 p-3 rounded-xl">
               <div className="flex items-center gap-2">

@@ -128,17 +128,16 @@ export const ChatHistoryManager = ({ userId, hubFilter }: ChatHistoryManagerProp
     return messagesText.includes(searchLower) || session.hub_type.toLowerCase().includes(searchLower);
   });
 
-  const hubTypes = ["all", "general", "custody", "dui", "will", "parole", "defense", "workplace"];
+  const hubTypes = ["all", "general", "custody", "parole", "defense", "workplace", "probono"];
 
   const getHubColor = (hub: string) => {
     const colors: Record<string, string> = {
       general: "cyan",
       custody: "purple",
-      dui: "red",
-      will: "blue",
       parole: "green",
-      defense: "orange",
-      workplace: "yellow"
+      defense: "pink",
+      workplace: "orange",
+      probono: "pink"
     };
     return colors[hub] || "gray";
   };

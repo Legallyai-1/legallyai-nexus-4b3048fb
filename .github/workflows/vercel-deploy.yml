@@ -31,6 +31,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [sync-secrets]
     if: always() && (needs.sync-secrets.result == 'success' || needs.sync-secrets.result == 'skipped')
+    env:
+      VITE_ENABLE_PAYMENTS: 'true'
     
     steps:
       - name: Checkout
@@ -51,6 +53,27 @@ jobs:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
           VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
         run: npm run build
+
+      - name: Configure server-side Vercel variables
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+        run: |
+          test -n "$VERCEL_TOKEN" && test -n "$VERCEL_ORG_ID" && test -n "$SUPABASE_URL" && test -n "$SUPABASE_SECRET_KEY" && test -n "$STRIPE_SECRET_KEY" && test -n "$STRIPE_WEBHOOK_SECRET" || { echo 'Required Vercel/Supabase/Stripe deployment secret is missing'; exit 1; }
+          npm exec --yes --package=vercel@59.17.0 -- vercel env rm SUPABASE_URL production --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --yes >/dev/null 2>&1 || true
+          npm exec --yes --package=vercel@59.17.0 -- vercel env rm SUPABASE_SECRET_KEY production --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --yes >/dev/null 2>&1 || true
+          npm exec --yes --package=vercel@59.17.0 -- vercel env rm SUPABASE_SERVICE_ROLE_KEY production --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --yes >/dev/null 2>&1 || true
+          npm exec --yes --package=vercel@59.17.0 -- vercel env rm STRIPE_SECRET_KEY production --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --yes >/dev/null 2>&1 || true
+          npm exec --yes --package=vercel@59.17.0 -- vercel env rm STRIPE_WEBHOOK_SECRET production --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --yes >/dev/null 2>&1 || true
+          printf '%s' "$SUPABASE_URL" | npm exec --yes --package=vercel@59.17.0 -- vercel env add SUPABASE_URL production --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" >/dev/null
+          printf '%s' "$SUPABASE_SECRET_KEY" | npm exec --yes --package=vercel@59.17.0 -- vercel env add SUPABASE_SECRET_KEY production --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" >/dev/null
+          printf '%s' "$STRIPE_SECRET_KEY" | npm exec --yes --package=vercel@59.17.0 -- vercel env add STRIPE_SECRET_KEY production --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" >/dev/null
+          printf '%s' "$STRIPE_WEBHOOK_SECRET" | npm exec --yes --package=vercel@59.17.0 -- vercel env add STRIPE_WEBHOOK_SECRET production --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" >/dev/null
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25

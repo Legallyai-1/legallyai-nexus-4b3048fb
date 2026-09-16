@@ -186,7 +186,7 @@ Create detailed custody plan with: 1) Legal framework for ${formData.state}, 2) 
                 <HubAssistant
                   assistantName="CustodiAI"
                   variant="purple"
-                  systemPrompt="You are CustodiAI, an expert AI assistant for child custody matters. Help users understand custody types, parental rights, and guide them through the process. Always recommend consulting a licensed family law attorney."
+                  hubType="custody"
                   welcomeMessage="👋 Welcome to the Custody Hub! I'm CustodiAI. I can help you understand custody options, prepare documents, and guide you through court. What would you like help with?"
                   placeholder="Ask about custody, visitation, or child support..."
                 />
@@ -321,7 +321,7 @@ Create detailed custody plan with: 1) Legal framework for ${formData.state}, 2) 
                   <HubAssistant
                     assistantName="CustodiAI"
                     variant="purple"
-                    systemPrompt="You are CustodiAI, an expert AI assistant for child custody. Help with custody plans, parenting schedules, child support calculations, court preparation, and document generation. Analyze uploaded documents. Always recommend consulting a licensed family law attorney for legal advice."
+                    hubType="custody"
                     placeholder="Ask about custody, upload documents, or request help with paperwork..."
                     welcomeMessage="I'm CustodiAI, your child custody assistant. I can help you:\n\n• Generate custody agreements and parenting plans\n• Calculate child support estimates\n• Prepare for court hearings\n• Analyze documents you upload\n• Answer questions about custody law\n\nHow can I help you today?"
                   />

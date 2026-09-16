@@ -14,6 +14,7 @@ import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { streamLegalChat, type HubType } from "@/lib/legalChat";
 
 interface Message {
   role: "user" | "assistant";
@@ -48,6 +49,18 @@ const HUB_ROUTES: Record<string, { path: string; icon: any; name: string }> = {
   document: { path: "/generate", icon: FileText, name: "Document Generator" },
 };
 
+// Only hubs with a dedicated server-side persona get routed to a specialist agent; the rest fall back to general.
+const HUB_TYPE_BY_ROUTE: Record<string, HubType> = {
+  custody: "custody",
+  dui: "defense",
+  criminal: "defense",
+  defense: "defense",
+  parole: "parole",
+  probation: "parole",
+  probono: "probono",
+  volunteer: "probono",
+};
+
 export function FloatingLeeAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -57,6 +70,7 @@ export function FloatingLeeAssistant() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const sessionIdRef = useRef<string>(crypto.randomUUID());
 
   const { isListening, isProcessing: isVoiceProcessing, toggleListening } = useVoiceInput({
     onTranscript: (text) => {
@@ -125,32 +139,34 @@ export function FloatingLeeAssistant() {
     }
 
     const userMessage: Message = { role: "user", content: messageText };
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage, { role: "assistant", content: "" }]);
     setInput("");
     setIsProcessing(true);
 
     try {
-      const { hub, action, query } = parseCommand(messageText);
+      const { hub, action } = parseCommand(messageText);
+      const hubType = HUB_TYPE_BY_ROUTE[hub ?? ""] ?? "general";
 
-      // Call AI for response
-      const { data, error } = await supabase.functions.invoke("legal-chat", {
-        body: {
-          messages: [...messages, userMessage].map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-          stream: false,
-          context: `You are Lee, an advanced AI legal assistant. The user asked: "${query}". 
-          ${hub ? `They seem interested in ${HUB_ROUTES[hub]?.name || hub}.` : ""}
-          ${action ? `They want to ${action}.` : ""}
-          Provide helpful legal guidance and suggest next steps. Be concise but thorough.`,
+      let reviewerNote = "";
+      const { text } = await streamLegalChat({
+        hubType,
+        sessionId: sessionIdRef.current,
+        messages: [...messages, userMessage].map((m) => ({ role: m.role, content: m.content })),
+        onDelta: (chunk) => {
+          setMessages((prev) => {
+            const next = [...prev];
+            next[next.length - 1] = { ...next[next.length - 1], content: next[next.length - 1].content + chunk };
+            return next;
+          });
+        },
+        onReviewerNote: (note) => {
+          reviewerNote = note;
         },
       });
 
-      if (error) throw error;
+      let responseContent = text || "I'm here to help with your legal needs.";
+      if (reviewerNote) responseContent += `\n\n---\n⚠️ ${reviewerNote}`;
 
-      let responseContent = data?.response || data?.text || "I'm here to help with your legal needs.";
-      
       // Build action based on parsed command
       let responseAction: Message["action"] | undefined;
       if (hub && HUB_ROUTES[hub]) {
@@ -162,15 +178,14 @@ export function FloatingLeeAssistant() {
         responseContent += `\n\nWould you like me to take you to ${HUB_ROUTES[hub].name}?`;
       }
 
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: responseContent,
-        action: responseAction,
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages((prev) => {
+        const next = [...prev];
+        next[next.length - 1] = { role: "assistant", content: responseContent, action: responseAction };
+        return next;
+      });
     } catch (error: any) {
       console.error("Lee error:", error);
+      setMessages((prev) => prev.slice(0, -2));
       toast.error("Sorry, I encountered an error. Please try again.");
     } finally {
       setIsProcessing(false);
@@ -344,7 +359,7 @@ export function FloatingLeeAssistant() {
                         </div>
                       </div>
                     ))}
-                    {isProcessing && (
+                    {isProcessing && !messages[messages.length - 1]?.content && (
                       <div className="flex justify-start">
                         <div className="bg-muted/50 rounded-xl px-4 py-2">
                           <Loader2 className="h-4 w-4 animate-spin text-neon-cyan" />
