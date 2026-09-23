@@ -3,7 +3,7 @@
 ## STEP 1: Setup (Do once)
 
 ```bash
-supabase link --project-ref wejiqqtwnhevcjdllodr
+supabase link --project-ref whdljtbtqisoszbrzdwq
 ```
 
 ## STEP 2: Deploy AI Function

@@ -22,8 +22,8 @@ Vercel shows: "Cannot access repository" or "Repository not found"
 ### Step 3: Configure & Deploy
 1. Add these environment variables:
    ```
-   VITE_SUPABASE_URL=https://wejiqqtwnhevcjdllodr.supabase.co
-   VITE_SUPABASE_PROJECT_ID=wejiqqtwnhevcjdllodr
+   VITE_SUPABASE_URL=https://whdljtbtqisoszbrzdwq.supabase.co
+   VITE_SUPABASE_PROJECT_ID=whdljtbtqisoszbrzdwq
    VITE_SUPABASE_ANON_KEY=your_actual_key_here
    ```
 2. Click "Deploy"
@@ -41,7 +41,7 @@ See full guide: [VERCEL_TROUBLESHOOTING.md](./VERCEL_TROUBLESHOOTING.md)
 ## 🔑 Don't Have Your Supabase Key?
 
 1. Go to: https://supabase.com/dashboard
-2. Select your project: `wejiqqtwnhevcjdllodr`
+2. Select your project: `whdljtbtqisoszbrzdwq`
 3. Go to: Settings → API
 4. Copy the "anon public" key
 5. Paste it as `VITE_SUPABASE_ANON_KEY` in Vercel

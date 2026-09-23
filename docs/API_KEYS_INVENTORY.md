@@ -10,7 +10,7 @@ This document provides a comprehensive inventory of all API keys and environment
 **Status:** ✅ ACTIVE - Keys present in `.env`
 
 - **VITE_SUPABASE_URL**
-  - Value: `https://wejiqqtwnhevcjdllodr.supabase.co`
+  - Value: `https://whdljtbtqisoszbrzdwq.supabase.co`
   - Purpose: Supabase project URL for frontend
   - Location: `.env`, `.env.example`
   - Used in: Frontend components, edge function calls
@@ -22,7 +22,7 @@ This document provides a comprehensive inventory of all API keys and environment
   - Used in: `src/integrations/supabase/client.ts`
 
 - **VITE_SUPABASE_PROJECT_ID**
-  - Value: `wejiqqtwnhevcjdllodr`
+  - Value: `whdljtbtqisoszbrzdwq`
   - Purpose: Supabase project reference ID
   - Location: `.env`, `.env.example`, `supabase/config.toml`
   - Used in: CI/CD, deployment configs
@@ -312,9 +312,9 @@ Based on the actual `.env` file in the repository:
 
 ```env
 # ✅ CONFIGURED AND ACTIVE
-VITE_SUPABASE_PROJECT_ID="wejiqqtwnhevcjdllodr"
+VITE_SUPABASE_PROJECT_ID="whdljtbtqisoszbrzdwq"
 VITE_SUPABASE_PUBLISHABLE_KEY="eyJhbGc..." (full key present)
-VITE_SUPABASE_URL="https://wejiqqtwnhevcjdllodr.supabase.co"
+VITE_SUPABASE_URL="https://whdljtbtqisoszbrzdwq.supabase.co"
 
 # ❌ NOT CONFIGURED (Optional)
 # All other keys listed above are either:

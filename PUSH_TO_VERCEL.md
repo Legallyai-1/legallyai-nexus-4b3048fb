@@ -6,8 +6,8 @@ Updated `vercel.json` to include the **correct Vite environment variables**:
 
 ```json
 "env": {
-  "VITE_SUPABASE_URL": "https://wejiqqtwnhevcjdllodr.supabase.co",
-  "VITE_SUPABASE_PROJECT_ID": "wejiqqtwnhevcjdllodr",
+  "VITE_SUPABASE_URL": "https://whdljtbtqisoszbrzdwq.supabase.co",
+  "VITE_SUPABASE_PROJECT_ID": "whdljtbtqisoszbrzdwq",
   "VITE_SUPABASE_ANON_KEY": "@supabase-anon-key"  ← ADDED THIS
 }
 ```
@@ -64,7 +64,7 @@ vercel --prod
 ### Where to Get Your Supabase Anon Key
 
 1. Go to: https://app.supabase.com
-2. Select project: `wejiqqtwnhevcjdllodr`
+2. Select project: `whdljtbtqisoszbrzdwq`
 3. Settings → API
 4. Copy the **anon / public** key
 5. Use it in the steps above
@@ -109,13 +109,13 @@ Open your deployed app → Press F12 → Console:
 
 ```javascript
 console.log(import.meta.env.VITE_SUPABASE_URL)
-// Should show: "https://wejiqqtwnhevcjdllodr.supabase.co"
+// Should show: "https://whdljtbtqisoszbrzdwq.supabase.co"
 
 console.log(import.meta.env.VITE_SUPABASE_ANON_KEY)
 // Should show: "eyJhbGc..." (your anon key)
 
 console.log(import.meta.env.VITE_SUPABASE_PROJECT_ID)
-// Should show: "wejiqqtwnhevcjdllodr"
+// Should show: "whdljtbtqisoszbrzdwq"
 ```
 
 **All 3 show values?** → ✅ **CONNECTED!**
@@ -130,7 +130,7 @@ console.log(import.meta.env.VITE_SUPABASE_PROJECT_ID)
 
 1. Open DevTools → Network tab
 2. Try any database operation
-3. Should see requests to `wejiqqtwnhevcjdllodr.supabase.co` → ✅ **CONNECTED!**
+3. Should see requests to `whdljtbtqisoszbrzdwq.supabase.co` → ✅ **CONNECTED!**
 
 ### Test 4: No Console Errors
 

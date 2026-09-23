@@ -31,9 +31,9 @@
    - Connect GitHub repo
    - Add these environment variables:
      ```
-     VITE_SUPABASE_URL=https://wejiqqtwnhevcjdllodr.supabase.co
+     VITE_SUPABASE_URL=https://whdljtbtqisoszbrzdwq.supabase.co
      VITE_SUPABASE_ANON_KEY=[your_real_anon_key]
-     VITE_SUPABASE_PROJECT_ID=wejiqqtwnhevcjdllodr
+     VITE_SUPABASE_PROJECT_ID=whdljtbtqisoszbrzdwq
      VITE_ENABLE_PAYMENTS=false
      VITE_ADSENSE_CLIENT_ID=ca-pub-4991947741196600
      VITE_ENABLE_ADSENSE=true

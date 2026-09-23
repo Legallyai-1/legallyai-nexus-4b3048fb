@@ -207,8 +207,8 @@ Once Vercel can see the repo:
 
 3. **Add Environment Variables**:
    ```
-   VITE_SUPABASE_URL = https://wejiqqtwnhevcjdllodr.supabase.co
-   VITE_SUPABASE_PROJECT_ID = wejiqqtwnhevcjdllodr
+   VITE_SUPABASE_URL = https://whdljtbtqisoszbrzdwq.supabase.co
+   VITE_SUPABASE_PROJECT_ID = whdljtbtqisoszbrzdwq
    VITE_SUPABASE_ANON_KEY = your_anon_key_here
    ```
 

@@ -341,9 +341,9 @@ This PR consolidates all development work to make the LegallyAI platform 100% pr
 
 **Required Variables (Frontend):**
 ```env
-VITE_SUPABASE_URL=https://wejiqqtwnhevcjdllodr.supabase.co
+VITE_SUPABASE_URL=https://whdljtbtqisoszbrzdwq.supabase.co
 VITE_SUPABASE_ANON_KEY=your_anon_key
-VITE_SUPABASE_PROJECT_ID=wejiqqtwnhevcjdllodr
+VITE_SUPABASE_PROJECT_ID=whdljtbtqisoszbrzdwq
 ```
 
 **Required Variables (Backend):**
