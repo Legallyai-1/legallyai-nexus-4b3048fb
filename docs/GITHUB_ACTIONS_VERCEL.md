@@ -107,9 +107,9 @@ Add these secrets to your repository:
 | `VERCEL_TOKEN` | `vercel_xxxxx...` | From step 2 |
 | `VERCEL_ORG_ID` | From `.vercel/project.json` | Your org/team ID |
 | `VERCEL_PROJECT_ID` | From `.vercel/project.json` | Your project ID |
-| `VITE_SUPABASE_URL` | `https://wejiqqtwnhevcjdllodr.supabase.co` | Already configured |
+| `VITE_SUPABASE_URL` | `https://whdljtbtqisoszbrzdwq.supabase.co` | Already configured |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Your Supabase anon key | Already configured |
-| `VITE_SUPABASE_PROJECT_ID` | `wejiqqtwnhevcjdllodr` | Already configured |
+| `VITE_SUPABASE_PROJECT_ID` | `whdljtbtqisoszbrzdwq` | Already configured |
 
 ### 4. Configure Vercel Environment Variables
 
@@ -121,9 +121,9 @@ Add these for **Production** and **Preview** environments:
 
 | Variable | Value |
 |----------|-------|
-| `VITE_SUPABASE_URL` | `https://wejiqqtwnhevcjdllodr.supabase.co` |
+| `VITE_SUPABASE_URL` | `https://whdljtbtqisoszbrzdwq.supabase.co` |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Your Supabase anon key |
-| `VITE_SUPABASE_PROJECT_ID` | `wejiqqtwnhevcjdllodr` |
+| `VITE_SUPABASE_PROJECT_ID` | `whdljtbtqisoszbrzdwq` |
 
 **Important:** Do NOT add `VERCEL_AI_GATEWAY_KEY` here - it's only for Supabase Edge Functions.
 

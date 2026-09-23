@@ -67,8 +67,8 @@
 
 #### C. Also Add These (Already configured in vercel.json, but verify)
 
-- [ ] `VITE_SUPABASE_URL` = `https://wejiqqtwnhevcjdllodr.supabase.co`
-- [ ] `VITE_SUPABASE_PROJECT_ID` = `wejiqqtwnhevcjdllodr`
+- [ ] `VITE_SUPABASE_URL` = `https://whdljtbtqisoszbrzdwq.supabase.co`
+- [ ] `VITE_SUPABASE_PROJECT_ID` = `whdljtbtqisoszbrzdwq`
 
 #### D. Redeploy
 

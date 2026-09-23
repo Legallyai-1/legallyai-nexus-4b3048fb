@@ -92,15 +92,15 @@ We've implemented a comprehensive CI/CD pipeline with:
 - Keeps environment variables in sync
 - No manual configuration needed
 
-**b) Reliable URL Capture:**
+**b) Preview URL From Deploy Step:**
 ```yaml
-- uses: zentered/vercel-preview-url@v1.0.10
-  id: vercel_preview_url
+- uses: amondnet/vercel-action@v25
+  id: vercel-deploy
 ```
 
-- Gets actual preview URL after deployment completes
-- Includes deployment state (READY, BUILDING, ERROR)
-- More reliable than immediate output
+- Uses the deploy action's built-in `preview-url` and `preview-name` outputs
+- Avoids an extra post-deploy lookup step
+- Keeps the PR comment tied to the same deployment step
 
 **Benefits:**
 - Secrets always in sync

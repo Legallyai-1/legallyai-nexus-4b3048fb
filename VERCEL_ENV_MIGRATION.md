@@ -51,7 +51,7 @@ Your Vercel environment variables use **Next.js format** (`NEXT_PUBLIC_*`) but y
 2. **Add Variable #1**
    - Click "Add New"
    - Name: `VITE_SUPABASE_URL`
-   - Value: `https://wejiqqtwnhevcjdllodr.supabase.co`
+   - Value: `https://whdljtbtqisoszbrzdwq.supabase.co`
    - Environment: Production, Preview, Development (select all)
    - Save
 
@@ -65,7 +65,7 @@ Your Vercel environment variables use **Next.js format** (`NEXT_PUBLIC_*`) but y
 4. **Add Variable #3**
    - Click "Add New"
    - Name: `VITE_SUPABASE_PROJECT_ID`
-   - Value: `wejiqqtwnhevcjdllodr`
+   - Value: `whdljtbtqisoszbrzdwq`
    - Environment: Production, Preview, Development (select all)
    - Save
 
@@ -87,13 +87,13 @@ vercel link
 
 # Add environment variables
 vercel env add VITE_SUPABASE_URL production
-# Enter: https://wejiqqtwnhevcjdllodr.supabase.co
+# Enter: https://whdljtbtqisoszbrzdwq.supabase.co
 
 vercel env add VITE_SUPABASE_ANON_KEY production
 # Paste your anon key from Supabase
 
 vercel env add VITE_SUPABASE_PROJECT_ID production
-# Enter: wejiqqtwnhevcjdllodr
+# Enter: whdljtbtqisoszbrzdwq
 
 # Repeat for preview and development environments
 vercel env add VITE_SUPABASE_URL preview
@@ -122,8 +122,8 @@ Update your `vercel.json` file:
     }
   ],
   "env": {
-    "VITE_SUPABASE_URL": "https://wejiqqtwnhevcjdllodr.supabase.co",
-    "VITE_SUPABASE_PROJECT_ID": "wejiqqtwnhevcjdllodr",
+    "VITE_SUPABASE_URL": "https://whdljtbtqisoszbrzdwq.supabase.co",
+    "VITE_SUPABASE_PROJECT_ID": "whdljtbtqisoszbrzdwq",
     "VITE_SUPABASE_ANON_KEY": "@supabase-anon-key"
   }
 }
@@ -167,7 +167,7 @@ console.log(import.meta.env.VITE_SUPABASE_PROJECT_ID)
 
 1. Open DevTools → Network tab
 2. Try any database operation (signup, login, etc.)
-3. Should see successful requests to `wejiqqtwnhevcjdllodr.supabase.co` ✅
+3. Should see successful requests to `whdljtbtqisoszbrzdwq.supabase.co` ✅
 
 ### Test 4: No Console Errors
 
@@ -219,7 +219,7 @@ Each framework has its own convention for exposing environment variables to the 
 ### `VITE_SUPABASE_URL`
 
 **Purpose:** The URL of your Supabase project  
-**Value:** `https://wejiqqtwnhevcjdllodr.supabase.co`  
+**Value:** `https://whdljtbtqisoszbrzdwq.supabase.co`  
 **Used For:** 
 - Initializing Supabase client
 - All API requests
@@ -239,7 +239,7 @@ Each framework has its own convention for exposing environment variables to the 
 ### `VITE_SUPABASE_PROJECT_ID`
 
 **Purpose:** Your Supabase project identifier  
-**Value:** `wejiqqtwnhevcjdllodr`  
+**Value:** `whdljtbtqisoszbrzdwq`  
 **Used For:**
 - Project identification
 - Some SDK features
@@ -359,9 +359,9 @@ Then reference in `vercel.json`:
 
 Update your local `.env` file to match:
 ```env
-VITE_SUPABASE_URL=https://wejiqqtwnhevcjdllodr.supabase.co
+VITE_SUPABASE_URL=https://whdljtbtqisoszbrzdwq.supabase.co
 VITE_SUPABASE_ANON_KEY=your_anon_key_here
-VITE_SUPABASE_PROJECT_ID=wejiqqtwnhevcjdllodr
+VITE_SUPABASE_PROJECT_ID=whdljtbtqisoszbrzdwq
 ```
 
 ---

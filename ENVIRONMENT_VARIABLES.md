@@ -9,9 +9,9 @@ This document explains the correct environment variable names to use for Supabas
 These variables are used in the React frontend and **MUST** have the `VITE_` prefix to be accessible in the browser:
 
 ```env
-VITE_SUPABASE_URL=https://wejiqqtwnhevcjdllodr.supabase.co
+VITE_SUPABASE_URL=https://whdljtbtqisoszbrzdwq.supabase.co
 VITE_SUPABASE_ANON_KEY=your_anon_key_here
-VITE_SUPABASE_PROJECT_ID=wejiqqtwnhevcjdllodr
+VITE_SUPABASE_PROJECT_ID=whdljtbtqisoszbrzdwq
 ```
 
 ### Backend (Edge Functions) Variables
@@ -19,7 +19,7 @@ VITE_SUPABASE_PROJECT_ID=wejiqqtwnhevcjdllodr
 These variables are used in Supabase Edge Functions and are automatically injected by Supabase:
 
 ```env
-SUPABASE_URL=https://wejiqqtwnhevcjdllodr.supabase.co
+SUPABASE_URL=https://whdljtbtqisoszbrzdwq.supabase.co
 SUPABASE_ANON_KEY=your_anon_key_here
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
 ```
@@ -70,19 +70,19 @@ VERCEL_AI_GATEWAY_KEY=your_vercel_ai_gateway_key_here
 2. Settings → Environment Variables
 3. Add each variable:
    - Name: `VITE_SUPABASE_URL`
-   - Value: `https://wejiqqtwnhevcjdllodr.supabase.co`
+   - Value: `https://whdljtbtqisoszbrzdwq.supabase.co`
    - Environment: Production, Preview, Development
 
 #### Option 2: Vercel CLI
 ```bash
 vercel env add VITE_SUPABASE_URL
-# Paste: https://wejiqqtwnhevcjdllodr.supabase.co
+# Paste: https://whdljtbtqisoszbrzdwq.supabase.co
 
 vercel env add VITE_SUPABASE_ANON_KEY
 # Paste your anon key
 
 vercel env add VITE_SUPABASE_PROJECT_ID
-# Paste: wejiqqtwnhevcjdllodr
+# Paste: whdljtbtqisoszbrzdwq
 ```
 
 #### Option 3: Using Secrets (Advanced)

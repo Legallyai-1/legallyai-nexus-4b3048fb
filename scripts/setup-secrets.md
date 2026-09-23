@@ -6,7 +6,7 @@ Add these secrets to your GitHub repository:
 **Settings → Secrets and variables → Actions → New repository secret**
 
 ### 1. VITE_SUPABASE_PROJECT_ID
-- **Value**: `wejiqqtwnhevcjdllodr`
+- **Value**: `whdljtbtqisoszbrzdwq`
 - **Description**: Your Supabase project reference ID
 
 ### 2. VITE_SUPABASE_PUBLISHABLE_KEY
@@ -15,7 +15,7 @@ Add these secrets to your GitHub repository:
 - **Note**: This is a public key safe to use in client-side code
 
 ### 3. VITE_SUPABASE_URL
-- **Value**: `https://wejiqqtwnhevcjdllodr.supabase.co`
+- **Value**: `https://whdljtbtqisoszbrzdwq.supabase.co`
 - **Description**: Your Supabase project URL
 
 ### 4. SUPABASE_ACCESS_TOKEN
@@ -30,9 +30,9 @@ Add these secrets to your GitHub repository:
 gh auth login
 
 # Set secrets (replace values with your actual secrets)
-gh secret set VITE_SUPABASE_PROJECT_ID --body "wejiqqtwnhevcjdllodr"
+gh secret set VITE_SUPABASE_PROJECT_ID --body "whdljtbtqisoszbrzdwq"
 gh secret set VITE_SUPABASE_PUBLISHABLE_KEY --body "YOUR_ANON_KEY_HERE"
-gh secret set VITE_SUPABASE_URL --body "https://wejiqqtwnhevcjdllodr.supabase.co"
+gh secret set VITE_SUPABASE_URL --body "https://whdljtbtqisoszbrzdwq.supabase.co"
 gh secret set SUPABASE_ACCESS_TOKEN --body "YOUR_ACCESS_TOKEN_HERE"
 ```
 

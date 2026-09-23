@@ -93,8 +93,8 @@ This guide helps you resolve common Vercel deployment issues when connecting to 
 
 5. **Add Environment Variables**
    ```
-   VITE_SUPABASE_URL=https://wejiqqtwnhevcjdllodr.supabase.co
-   VITE_SUPABASE_PROJECT_ID=wejiqqtwnhevcjdllodr
+   VITE_SUPABASE_URL=https://whdljtbtqisoszbrzdwq.supabase.co
+   VITE_SUPABASE_PROJECT_ID=whdljtbtqisoszbrzdwq
    VITE_SUPABASE_ANON_KEY=your_actual_anon_key_here
    ```
    ⚠️ **Important:** You need to add your actual `VITE_SUPABASE_ANON_KEY`
@@ -159,10 +159,10 @@ vercel
 
 ```bash
 vercel env add VITE_SUPABASE_URL
-# Enter: https://wejiqqtwnhevcjdllodr.supabase.co
+# Enter: https://whdljtbtqisoszbrzdwq.supabase.co
 
 vercel env add VITE_SUPABASE_PROJECT_ID
-# Enter: wejiqqtwnhevcjdllodr
+# Enter: whdljtbtqisoszbrzdwq
 
 vercel env add VITE_SUPABASE_ANON_KEY
 # Enter: your_actual_anon_key
@@ -211,8 +211,8 @@ Your repository already has a properly configured `vercel.json`:
     }
   ],
   "env": {
-    "VITE_SUPABASE_URL": "https://wejiqqtwnhevcjdllodr.supabase.co",
-    "VITE_SUPABASE_PROJECT_ID": "wejiqqtwnhevcjdllodr"
+    "VITE_SUPABASE_URL": "https://whdljtbtqisoszbrzdwq.supabase.co",
+    "VITE_SUPABASE_PROJECT_ID": "whdljtbtqisoszbrzdwq"
   }
 }
 ```

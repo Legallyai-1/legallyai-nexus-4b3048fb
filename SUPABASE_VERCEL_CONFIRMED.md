@@ -53,7 +53,7 @@ Result: App connects to Supabase! 🟢
 ┌─────────────────────────────────────────────────────────┐
 │                    SUPABASE BACKEND                      │
 │                                                           │
-│   https://wejiqqtwnhevcjdllodr.supabase.co              │
+│   https://whdljtbtqisoszbrzdwq.supabase.co              │
 │   ├─ PostgreSQL Database ✅                              │
 │   ├─ Authentication ✅                                   │
 │   ├─ Real-time ✅                                        │
@@ -114,7 +114,7 @@ Result: App connects to Supabase! 🟢
 
 **Repository:** `Legallyai-1/legallyai-nexus-4b3048fb`  
 **Branch:** `copilot/fix-android-build-issues-again`  
-**Supabase Project:** `wejiqqtwnhevcjdllodr`  
+**Supabase Project:** `whdljtbtqisoszbrzdwq`  
 **Framework:** Vite (React + TypeScript)  
 **Hosting:** Vercel
 
@@ -134,7 +134,7 @@ Result: App connects to Supabase! 🟢
 The `vercel.json` references `@supabase-anon-key`. Add the actual value:
 
 ```bash
-# Get your key from: https://app.supabase.com/project/wejiqqtwnhevcjdllodr/settings/api
+# Get your key from: https://app.supabase.com/project/whdljtbtqisoszbrzdwq/settings/api
 vercel secrets add supabase-anon-key "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -156,7 +156,7 @@ Open your deployed app and check console:
 
 ```javascript
 console.log(import.meta.env.VITE_SUPABASE_URL)
-// Should show: "https://wejiqqtwnhevcjdllodr.supabase.co"
+// Should show: "https://whdljtbtqisoszbrzdwq.supabase.co"
 
 console.log(import.meta.env.VITE_SUPABASE_ANON_KEY)
 // Should show: "eyJhbGc..." (your anon key)

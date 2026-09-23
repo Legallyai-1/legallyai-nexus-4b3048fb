@@ -61,7 +61,7 @@ vercel --prod
 
 **Get Your Supabase Anon Key**:
 1. https://supabase.com/dashboard
-2. Select project: `wejiqqtwnhevcjdllodr`
+2. Select project: `whdljtbtqisoszbrzdwq`
 3. Settings → API
 4. Copy the "anon / public" key (starts with `eyJ...`)
 
@@ -101,8 +101,8 @@ vercel --prod
 ### ✅ Active (Already Configured)
 
 #### 1. Supabase (Backend)
-- `VITE_SUPABASE_URL` = `https://wejiqqtwnhevcjdllodr.supabase.co` ✅
-- `VITE_SUPABASE_PROJECT_ID` = `wejiqqtwnhevcjdllodr` ✅
+- `VITE_SUPABASE_URL` = `https://whdljtbtqisoszbrzdwq.supabase.co` ✅
+- `VITE_SUPABASE_PROJECT_ID` = `whdljtbtqisoszbrzdwq` ✅
 - `VITE_SUPABASE_ANON_KEY` = In .env ✅, **MISSING from Vercel** ⚠️
 
 **Auto-injected** in edge functions:

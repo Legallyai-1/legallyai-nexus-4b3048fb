@@ -20,8 +20,8 @@
 ```json
 {
   "env": {
-    "VITE_SUPABASE_URL": "https://wejiqqtwnhevcjdllodr.supabase.co",
-    "VITE_SUPABASE_PROJECT_ID": "wejiqqtwnhevcjdllodr"
+    "VITE_SUPABASE_URL": "https://whdljtbtqisoszbrzdwq.supabase.co",
+    "VITE_SUPABASE_PROJECT_ID": "whdljtbtqisoszbrzdwq"
   }
 }
 ```
@@ -56,7 +56,7 @@ export const supabase = createClient<Database>(
 
 **Step 1: Get Your Supabase Key**
 1. Go to https://app.supabase.com
-2. Select your project: `wejiqqtwnhevcjdllodr`
+2. Select your project: `whdljtbtqisoszbrzdwq`
 3. Click **Settings** (gear icon) in sidebar
 4. Click **API** in settings menu
 5. Find **Project API keys** section
@@ -124,8 +124,8 @@ vercel secrets add supabase-anon-key "your_actual_key_here"
 ```json
 {
   "env": {
-    "VITE_SUPABASE_URL": "https://wejiqqtwnhevcjdllodr.supabase.co",
-    "VITE_SUPABASE_PROJECT_ID": "wejiqqtwnhevcjdllodr",
+    "VITE_SUPABASE_URL": "https://whdljtbtqisoszbrzdwq.supabase.co",
+    "VITE_SUPABASE_PROJECT_ID": "whdljtbtqisoszbrzdwq",
     "VITE_SUPABASE_ANON_KEY": "@supabase-anon-key"
   }
 }
@@ -149,7 +149,7 @@ After deployment, open your app in browser and run in console:
 ```javascript
 // Should show Supabase URL
 console.log(import.meta.env.VITE_SUPABASE_URL)
-// Output: "https://wejiqqtwnhevcjdllodr.supabase.co"
+// Output: "https://whdljtbtqisoszbrzdwq.supabase.co"
 
 // Should show anon key (starts with eyJ...)
 console.log(import.meta.env.VITE_SUPABASE_ANON_KEY)
@@ -172,7 +172,7 @@ console.log(import.meta.env.VITE_SUPABASE_ANON_KEY)
 1. Open **DevTools** (F12)
 2. Go to **Network** tab
 3. Try any action (login, load data, etc.)
-4. Look for requests to `wejiqqtwnhevcjdllodr.supabase.co`
+4. Look for requests to `whdljtbtqisoszbrzdwq.supabase.co`
 5. **Expected**: Requests should succeed (200 status)
 6. **If failing**: Check request headers for missing auth
 
@@ -240,7 +240,7 @@ Error: Invalid URL
 
 **Symptoms:**
 ```
-Access to fetch at 'https://wejiqqtwnhevcjdllodr.supabase.co' 
+Access to fetch at 'https://whdljtbtqisoszbrzdwq.supabase.co' 
 from origin 'https://yourapp.vercel.app' has been blocked by CORS
 ```
 
@@ -301,7 +301,7 @@ from origin 'https://yourapp.vercel.app' has been blocked by CORS
 ┌─────────────────────────┼───────────────────────────────┐
 │                         ↓                                │
 │              Supabase Backend                            │
-│      (wejiqqtwnhevcjdllodr.supabase.co)                 │
+│      (whdljtbtqisoszbrzdwq.supabase.co)                 │
 │                                                          │
 │  ┌────────────────┐  ┌────────────────┐  ┌──────────┐  │
 │  │  PostgreSQL    │  │  Auth Service  │  │  Storage │  │

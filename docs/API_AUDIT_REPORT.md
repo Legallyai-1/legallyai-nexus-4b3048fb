@@ -55,7 +55,7 @@ vercel env add VITE_SUPABASE_ANON_KEY
 
 **Get Your Anon Key**:
 1. Go to https://supabase.com/dashboard
-2. Select your project: `wejiqqtwnhevcjdllodr`
+2. Select your project: `whdljtbtqisoszbrzdwq`
 3. Settings → API
 4. Copy "anon/public" key
 5. Add to Vercel Dashboard
