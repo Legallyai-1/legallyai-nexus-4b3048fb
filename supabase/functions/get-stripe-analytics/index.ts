@@ -37,6 +37,20 @@ serve(async (req) => {
     if (!user) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id });
 
+    const { data: roleRecord, error: roleError } = await supabaseClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .in("role", ["admin", "owner"])
+      .maybeSingle();
+    if (roleError) throw new Error(`Authorization check failed: ${roleError.message}`);
+    if (!roleRecord) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 403,
+      });
+    }
+
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     
     // If Stripe is not configured, return Supabase-only analytics

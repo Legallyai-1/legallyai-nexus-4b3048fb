@@ -20,6 +20,7 @@ interface Profile {
   phone: string | null;
   location: string | null;
   timezone: string | null;
+  credits: number;
 }
 
 const timezones = [
@@ -94,6 +95,7 @@ export default function SettingsPage() {
         setPhone(data.phone || "");
         setLocation(data.location || "");
         setTimezone(data.timezone || "America/New_York");
+        setEarnings({ balance: 0, lifetime: data.credits * 0.01 });
       }
     } catch (error) {
       console.error('Error:', error);
@@ -155,71 +157,14 @@ export default function SettingsPage() {
     const fetchEarnings = async () => {
       if (!user) return;
       
-      // Fetch credits/earnings (this table may not exist, so we'll handle gracefully)
-      const { data: credits } = await supabase
-        .from('user_credits')
-        .select('balance, lifetime_earned')
-        .eq('user_id', user.id)
-        .single();
-      
-      if (credits) {
-        setEarnings({
-          balance: credits.balance / 100,
-          lifetime: credits.lifetime_earned / 100
-        });
-      }
-
-      // Fetch payout requests
-      const { data: payouts } = await supabase
-        .from('payout_requests')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      
-      if (payouts) setPayoutRequests(payouts);
+      await fetchProfile(user.id);
     };
 
     fetchEarnings();
   }, [user]);
 
   const requestPayout = async () => {
-    if (earnings.balance < 100) {
-      toast.error('Minimum payout is $100');
-      return;
-    }
-
-    try {
-      const { error } = await supabase.functions.invoke('request-payout', {
-        body: {
-          amount: earnings.balance,
-          bank_account_info: { last4: '1234' } // Get from user input in production
-        }
-      });
-
-      if (!error) {
-        toast.success('Payout requested! Processing within 3-5 business days.');
-        // Refresh earnings
-        if (user) {
-          const { data: credits } = await supabase
-            .from('user_credits')
-            .select('balance, lifetime_earned')
-            .eq('user_id', user.id)
-            .single();
-          
-          if (credits) {
-            setEarnings({
-              balance: credits.balance / 100,
-              lifetime: credits.lifetime_earned / 100
-            });
-          }
-        }
-      } else {
-        toast.error('Failed to request payout');
-      }
-    } catch (error) {
-      console.error('Payout error:', error);
-      toast.error('Failed to request payout');
-    }
+    toast.info('Payouts are not available for this account yet.');
   };
 
   if (loading) {
@@ -447,13 +392,13 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  <Button 
-                    onClick={requestPayout} 
-                    disabled={earnings.balance < 100}
+                  <Button
+                    onClick={requestPayout}
+                    disabled
                     className="w-full"
                     variant="outline"
                   >
-                    Request Payout (Min $100)
+                    Payouts Unavailable
                   </Button>
 
                   <div className="space-y-2">

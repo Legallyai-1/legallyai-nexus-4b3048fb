@@ -77,7 +77,11 @@ const WillHubPage = () => {
       setSimResult(data);
     } catch (error) {
       console.error('Simulation error:', error);
-      toast.error('Failed to generate estate simulation. Please try again.');
+      toast({
+        title: 'Simulation failed',
+        description: 'Failed to generate estate simulation. Please try again.',
+        variant: 'destructive',
+      });
       setSimResult(null);
     }
   };

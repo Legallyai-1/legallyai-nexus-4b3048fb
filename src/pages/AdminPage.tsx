@@ -369,7 +369,7 @@ export default function AdminPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Role</Label>
-                        <Select value={newEmployee.role} onValueChange={(val) => setNewEmployee(prev => ({ ...prev, role: val }))}>
+                        <Select value={newEmployee.role} onValueChange={(val) => setNewEmployee(prev => ({ ...prev, role: val as AppRole }))}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select role" />
                           </SelectTrigger>

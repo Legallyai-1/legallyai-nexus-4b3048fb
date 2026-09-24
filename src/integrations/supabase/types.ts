@@ -2905,6 +2905,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          credits: number
           created_at: string
           display_name: string | null
           email: string
@@ -2912,11 +2913,13 @@ export type Database = {
           id: string
           location: string | null
           phone: string | null
+          subscription_tier: string
           timezone: string | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
+          credits?: number
           created_at?: string
           display_name?: string | null
           email: string
@@ -2924,11 +2927,13 @@ export type Database = {
           id: string
           location?: string | null
           phone?: string | null
+          subscription_tier?: string
           timezone?: string | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
+          credits?: number
           created_at?: string
           display_name?: string | null
           email?: string
@@ -2936,6 +2941,7 @@ export type Database = {
           id?: string
           location?: string | null
           phone?: string | null
+          subscription_tier?: string
           timezone?: string | null
           updated_at?: string
         }
@@ -3713,6 +3719,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      deduct_ai_credits: {
+        Args: { p_cost: number; p_reason: string; p_user_id: string }
+        Returns: { remaining: number; success: boolean }[]
+      }
       has_role: {
         Args: {
           _org_id?: string
