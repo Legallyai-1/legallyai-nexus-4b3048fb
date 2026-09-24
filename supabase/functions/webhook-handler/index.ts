@@ -591,13 +591,17 @@ serve(async (req) => {
         break;
     }
 
-    await supabaseAdmin
+    const { error: processedLogError } = await supabaseAdmin
       .from("webhook_logs")
       .update({
         processing_status: "processed",
         processed_at: new Date().toISOString(),
       })
       .eq("id", savedLog?.id || existingLog?.id);
+
+    if (processedLogError) {
+      throw processedLogError;
+    }
 
     return new Response(
       JSON.stringify({ received: true }),
