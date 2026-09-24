@@ -28,14 +28,6 @@ begin
 end
 $$;
 
-alter type public.app_role add value if not exists 'owner';
-alter type public.app_role add value if not exists 'admin';
-alter type public.app_role add value if not exists 'manager';
-alter type public.app_role add value if not exists 'lawyer';
-alter type public.app_role add value if not exists 'paralegal';
-alter type public.app_role add value if not exists 'employee';
-alter type public.app_role add value if not exists 'client';
-
 do $$
 begin
   if to_regclass('public.profiles') is not null then
@@ -43,6 +35,71 @@ begin
       add column if not exists credits integer,
       add column if not exists subscription_tier text,
       add column if not exists updated_at timestamptz default now();
+
+    if exists (
+      select 1
+      from information_schema.columns
+      where table_schema = 'public'
+        and table_name = 'profiles'
+        and column_name = 'manual_subscription_tier'
+    ) and exists (
+      select 1
+      from information_schema.columns
+      where table_schema = 'public'
+        and table_name = 'profiles'
+        and column_name = 'subscription_expires_at'
+    ) then
+      update public.profiles
+      set subscription_tier = manual_subscription_tier
+      where manual_subscription_tier in ('premium', 'pro')
+        and (subscription_expires_at is null or subscription_expires_at > now())
+        and (subscription_tier is null or btrim(subscription_tier) = '' or subscription_tier = 'free')
+        and (
+          to_regclass('public.subscriptions') is null
+          or not exists (
+            select 1
+            from public.subscriptions s
+            where s.user_id = profiles.id
+              and s.status in ('active', 'trialing', 'past_due')
+          )
+        )
+        and (
+          to_regclass('public.payment_records') is null
+          or (
+            exists (
+              select 1
+              from information_schema.columns
+              where table_schema = 'public'
+                and table_name = 'payment_records'
+                and column_name = 'status'
+            )
+            and not exists (
+              select 1
+              from public.payment_records pr
+              where pr.user_id = profiles.id
+                and pr.status in ('paid', 'succeeded')
+                and pr.tier in ('premium', 'pro', 'enterprise')
+                and (pr.expires_at is null or pr.expires_at > now())
+            )
+          )
+          or (
+            not exists (
+              select 1
+              from information_schema.columns
+              where table_schema = 'public'
+                and table_name = 'payment_records'
+                and column_name = 'status'
+            )
+            and not exists (
+              select 1
+              from public.payment_records pr
+              where pr.user_id = profiles.id
+                and pr.tier in ('premium', 'pro', 'enterprise')
+                and (pr.expires_at is null or pr.expires_at > now())
+            )
+          )
+        );
+    end if;
 
     update public.profiles
     set credits = 50
@@ -590,6 +647,96 @@ begin
 
     create index if not exists idx_payment_records_subscription_id
       on public.payment_records(stripe_subscription_id);
+
+    if exists (
+      select 1
+      from information_schema.columns
+      where table_schema = 'public'
+        and table_name = 'profiles'
+        and column_name = 'manual_subscription_tier'
+    ) and exists (
+      select 1
+      from information_schema.columns
+      where table_schema = 'public'
+        and table_name = 'profiles'
+        and column_name = 'subscription_expires_at'
+    ) then
+      insert into public.payment_records (
+        user_id,
+        tier,
+        amount,
+        payment_method,
+        verified_at,
+        expires_at,
+        metadata,
+        status,
+        last_event_id,
+        created_at,
+        updated_at
+      )
+      select
+        p.id,
+        p.manual_subscription_tier,
+        0,
+        'manual',
+        now(),
+        p.subscription_expires_at,
+        jsonb_build_object('migrated_from_manual_subscription', true),
+        'succeeded',
+        'manual_subscription_migration',
+        now(),
+        now()
+      from public.profiles p
+      where p.manual_subscription_tier in ('premium', 'pro')
+        and (p.subscription_expires_at is null or p.subscription_expires_at > now())
+        and not exists (
+          select 1
+          from public.subscriptions s
+          where s.user_id = p.id
+            and s.status in ('active', 'trialing', 'past_due')
+        )
+        and not exists (
+          select 1
+          from public.payment_records current_pr
+          where current_pr.user_id = p.id
+            and current_pr.status in ('paid', 'succeeded')
+            and current_pr.tier in ('premium', 'pro', 'enterprise')
+            and (current_pr.expires_at is null or current_pr.expires_at > now())
+        )
+        and not exists (
+          select 1
+          from public.payment_records pr
+          where pr.user_id = p.id
+            and pr.payment_method = 'manual'
+            and pr.tier = p.manual_subscription_tier
+            and pr.status = 'succeeded'
+            and (
+              (pr.expires_at is null and p.subscription_expires_at is null)
+              or pr.expires_at = p.subscription_expires_at
+            )
+        );
+
+      update public.profiles p
+      set subscription_tier = 'free'
+      where p.manual_subscription_tier in ('premium', 'pro')
+        and p.subscription_expires_at is not null
+        and p.subscription_expires_at <= now()
+        and p.subscription_tier = p.manual_subscription_tier
+        and not exists (
+          select 1
+          from public.subscriptions s
+          where s.user_id = p.id
+            and s.status in ('active', 'trialing', 'past_due')
+        )
+        and not exists (
+          select 1
+          from public.payment_records pr
+          where pr.user_id = p.id
+            and pr.status in ('paid', 'succeeded')
+            and pr.tier in ('premium', 'pro', 'enterprise')
+            and (pr.expires_at is null or pr.expires_at > now())
+        );
+    end if;
   end if;
 end
 $$;

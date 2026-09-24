@@ -59,6 +59,8 @@ https://whdljtbtqisoszbrzdwq.supabase.co/functions/v1/webhook-handler
 Subscribe Stripe to these events:
 
 - `checkout.session.completed`
+- `checkout.session.async_payment_succeeded`
+- `checkout.session.async_payment_failed`
 - `customer.subscription.created`
 - `customer.subscription.updated`
 - `customer.subscription.deleted`

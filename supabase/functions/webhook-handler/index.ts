@@ -409,6 +409,48 @@ async function handleCheckoutSessionFulfilled(
   });
 }
 
+async function handleCheckoutSessionAsyncPaymentFailed(
+  stripe: Stripe,
+  supabaseAdmin: ReturnType<typeof createClient>,
+  event: Stripe.Event,
+) {
+  const session = event.data.object as Stripe.Checkout.Session;
+  if (session.mode === "subscription") {
+    logStep("Ignoring subscription async payment failure", { sessionId: session.id });
+    return;
+  }
+
+  const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id || null;
+  const userId = await resolveUserId(stripe, supabaseAdmin, customerId, session.metadata);
+  if (!userId) {
+    logStep("Skipping checkout.session.async_payment_failed without resolvable user", { sessionId: session.id });
+    return;
+  }
+
+  const tier = normalizeTier(session.metadata?.tier, "document");
+  await upsertPaymentRecord(supabaseAdmin, {
+    userId,
+    tier,
+    amount: (session.amount_total || 0) / 100,
+    paymentMethod: "stripe",
+    expiresAt: null,
+    customerId,
+    subscriptionId: null,
+    priceId: session.metadata?.price_id || null,
+    productId: session.metadata?.product_id || null,
+    checkoutSessionId: session.id,
+    invoiceId: typeof session.invoice === "string" ? session.invoice : session.invoice?.id || null,
+    chargeId: await resolveCheckoutSessionChargeId(stripe, session),
+    status: session.payment_status || "payment_failed",
+    eventId: event.id,
+    metadata: {
+      checkout_session_id: session.id,
+      payment_intent: typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id || null,
+      mode: session.mode,
+    },
+  });
+}
+
 async function handleSubscriptionEvent(
   stripe: Stripe,
   supabaseAdmin: ReturnType<typeof createClient>,
@@ -690,6 +732,9 @@ serve(async (req) => {
       case "checkout.session.completed":
       case "checkout.session.async_payment_succeeded":
         await handleCheckoutSessionFulfilled(stripe, supabaseAdmin, event);
+        break;
+      case "checkout.session.async_payment_failed":
+        await handleCheckoutSessionAsyncPaymentFailed(stripe, supabaseAdmin, event);
         break;
       case "customer.subscription.created":
       case "customer.subscription.updated":
