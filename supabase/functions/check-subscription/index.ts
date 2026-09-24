@@ -7,6 +7,38 @@ const corsHeaders = {
 };
 
 const PAID_TIERS = new Set(["premium", "pro", "enterprise", "document"]);
+const ACTIVE_PAYMENT_STATUSES = new Set(["paid", "succeeded"]);
+
+function getDocumentEntitlementCount(metadata: Record<string, unknown> | null | undefined) {
+  const rawValue = metadata && typeof metadata === "object" ? metadata.documents_remaining : null;
+  if (typeof rawValue === "number") {
+    return rawValue;
+  }
+
+  if (typeof rawValue === "string") {
+    const parsed = Number(rawValue);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
+function isActivePaymentRecord(paymentRecord: {
+  tier: string | null;
+  expires_at: string | null;
+  status: string | null;
+  metadata?: Record<string, unknown> | null;
+}) {
+  if (!paymentRecord.status || !ACTIVE_PAYMENT_STATUSES.has(paymentRecord.status)) {
+    return false;
+  }
+
+  if (paymentRecord.tier === "document") {
+    return (getDocumentEntitlementCount(paymentRecord.metadata) ?? 1) > 0;
+  }
+
+  return !paymentRecord.expires_at || new Date(paymentRecord.expires_at) > new Date();
+}
 
 const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -46,7 +78,7 @@ serve(async (req) => {
     const [
       { data: profile, error: profileError },
       { data: subscription, error: subscriptionError },
-      { data: paymentRecord, error: paymentError },
+      { data: paymentRecords, error: paymentError },
     ] = await Promise.all([
       supabaseClient
         .from("profiles")
@@ -60,29 +92,25 @@ serve(async (req) => {
         .maybeSingle(),
       supabaseClient
         .from("payment_records")
-        .select("tier, expires_at, status")
+        .select("tier, expires_at, status, metadata, verified_at")
         .eq("user_id", user.id)
         .order("verified_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
+        .limit(10),
     ]);
 
     if (profileError) throw profileError;
     if (subscriptionError) throw subscriptionError;
-    if (paymentError && paymentError.code !== "PGRST116") throw paymentError;
+    if (paymentError) throw paymentError;
 
     const profileTier = profile?.subscription_tier || "free";
     const subscriptionTier = subscription?.tier || null;
-    const paymentTier = paymentRecord?.tier || null;
+    const activePaymentRecord = paymentRecords?.find(isActivePaymentRecord) || null;
+    const paymentTier = activePaymentRecord?.tier || null;
     const activeSubscription = subscription
       ? ["active", "trialing", "past_due"].includes(subscription.status)
       : false;
-    const activePayment = paymentRecord
-      ? (!paymentRecord.expires_at || new Date(paymentRecord.expires_at) > new Date()) &&
-        paymentRecord.status !== "payment_failed" &&
-        paymentRecord.status !== "refunded"
-      : false;
-    const profileFallback = PAID_TIERS.has(profileTier) && !subscription && !paymentRecord;
+    const activePayment = Boolean(activePaymentRecord);
+    const profileFallback = profileTier !== "document" && PAID_TIERS.has(profileTier) && !subscription && !activePaymentRecord;
     const plan = activeSubscription
       ? subscriptionTier || profileTier
       : activePayment
@@ -106,7 +134,7 @@ serve(async (req) => {
       subscribed,
       product_id: null,
       plan,
-      subscription_end: subscription?.current_period_end || paymentRecord?.expires_at || null,
+      subscription_end: subscription?.current_period_end || activePaymentRecord?.expires_at || null,
       cancel_at_period_end: subscription?.cancel_at_period_end || false,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

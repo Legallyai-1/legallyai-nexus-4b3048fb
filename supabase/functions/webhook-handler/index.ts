@@ -15,6 +15,13 @@ const PRICE_TIERS: Record<string, "premium" | "pro" | "document"> = {
 
 type SubscriptionTier = "free" | "premium" | "pro" | "enterprise" | "document";
 type SubscriptionStatus = "inactive" | "trialing" | "active" | "past_due" | "canceled" | "unpaid";
+type WebhookClaim = {
+  id: string;
+  claimed: boolean;
+  processing_status: string;
+};
+
+const FULFILLED_CHECKOUT_PAYMENT_STATUSES = new Set(["paid", "no_payment_required"]);
 
 const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -27,10 +34,6 @@ function normalizeSubscriptionStatus(status: Stripe.Subscription.Status): Subscr
   }
 
   return "inactive";
-}
-
-function isPaidTier(tier: string | null | undefined): tier is Exclude<SubscriptionTier, "free"> {
-  return tier === "premium" || tier === "pro" || tier === "enterprise" || tier === "document";
 }
 
 function normalizeTier(tier: string | null | undefined, fallback: SubscriptionTier = "free"): SubscriptionTier {
@@ -53,6 +56,97 @@ function getSubscriptionTier(subscription: Stripe.Subscription): SubscriptionTie
   const price = getSubscriptionPrice(subscription);
   const metadataTier = price?.metadata?.tier || subscription.metadata?.tier;
   return normalizeTier(metadataTier, normalizeTier(PRICE_TIERS[price?.id || ""]));
+}
+
+function isFulfilledCheckoutPaymentStatus(status: string | null | undefined) {
+  return status ? FULFILLED_CHECKOUT_PAYMENT_STATUSES.has(status) : false;
+}
+
+function getInvoiceSubscriptionId(invoice: Stripe.Invoice) {
+  const parentSubscription = invoice.parent?.type === "subscription_details"
+    ? invoice.parent.subscription_details?.subscription
+    : null;
+
+  return typeof parentSubscription === "string"
+    ? parentSubscription
+    : parentSubscription?.id || null;
+}
+
+function getChargeIdFromPaymentIntent(paymentIntent: string | Stripe.PaymentIntent | null | undefined) {
+  if (!paymentIntent || typeof paymentIntent === "string") {
+    return null;
+  }
+
+  const latestCharge = paymentIntent.latest_charge;
+  return typeof latestCharge === "string" ? latestCharge : latestCharge?.id || null;
+}
+
+function getChargeIdFromInvoicePayments(invoice: Stripe.Invoice) {
+  for (const invoicePayment of invoice.payments?.data || []) {
+    if (invoicePayment.payment.type === "charge") {
+      const charge = invoicePayment.payment.charge;
+      const chargeId = typeof charge === "string" ? charge : charge?.id || null;
+      if (chargeId) {
+        return chargeId;
+      }
+      continue;
+    }
+
+    if (invoicePayment.payment.type === "payment_intent") {
+      const chargeId = getChargeIdFromPaymentIntent(invoicePayment.payment.payment_intent);
+      if (chargeId) {
+        return chargeId;
+      }
+    }
+  }
+
+  return null;
+}
+
+async function resolvePaymentIntentChargeId(
+  stripe: Stripe,
+  paymentIntent: string | Stripe.PaymentIntent | null | undefined,
+) {
+  if (!paymentIntent) {
+    return null;
+  }
+
+  if (typeof paymentIntent !== "string") {
+    return getChargeIdFromPaymentIntent(paymentIntent);
+  }
+
+  const hydratedPaymentIntent = await stripe.paymentIntents.retrieve(paymentIntent, {
+    expand: ["latest_charge"],
+  });
+
+  return getChargeIdFromPaymentIntent(hydratedPaymentIntent);
+}
+
+async function resolveCheckoutSessionChargeId(
+  stripe: Stripe,
+  session: Stripe.Checkout.Session,
+) {
+  return await resolvePaymentIntentChargeId(stripe, session.payment_intent);
+}
+
+async function resolveInvoiceChargeId(
+  stripe: Stripe,
+  invoice: Stripe.Invoice,
+) {
+  const eventChargeId = getChargeIdFromInvoicePayments(invoice);
+  if (eventChargeId) {
+    return eventChargeId;
+  }
+
+  if (!invoice.id) {
+    return null;
+  }
+
+  const hydratedInvoice = await stripe.invoices.retrieve(invoice.id, {
+    expand: ["payments.data.payment.charge", "payments.data.payment.payment_intent.latest_charge"],
+  });
+
+  return getChargeIdFromInvoicePayments(hydratedInvoice);
 }
 
 async function resolveUserId(
@@ -120,8 +214,33 @@ async function upsertSubscription(
     cancelAtPeriodEnd: boolean;
     metadata: Record<string, unknown>;
     eventId: string;
+    eventCreated: number;
   },
 ) {
+  const incomingEventCreatedAt = new Date(input.eventCreated * 1000).toISOString();
+  const { data: existingSubscription, error: existingSubscriptionError } = await supabaseAdmin
+    .from("subscriptions")
+    .select("last_event_created_at")
+    .eq("user_id", input.userId)
+    .maybeSingle();
+
+  if (existingSubscriptionError) {
+    throw existingSubscriptionError;
+  }
+
+  if (
+    existingSubscription?.last_event_created_at &&
+    new Date(existingSubscription.last_event_created_at).getTime() > input.eventCreated * 1000
+  ) {
+    logStep("Skipping stale subscription event", {
+      subscriptionId: input.subscriptionId,
+      eventId: input.eventId,
+      storedEventCreatedAt: existingSubscription.last_event_created_at,
+      incomingEventCreatedAt,
+    });
+    return false;
+  }
+
   const { error } = await supabaseAdmin
     .from("subscriptions")
     .upsert({
@@ -137,6 +256,7 @@ async function upsertSubscription(
       cancel_at_period_end: input.cancelAtPeriodEnd,
       metadata: input.metadata,
       last_event_id: input.eventId,
+      last_event_created_at: incomingEventCreatedAt,
       updated_at: new Date().toISOString(),
     }, { onConflict: "user_id" });
 
@@ -148,6 +268,7 @@ async function upsertSubscription(
     ? input.tier
     : "free";
   await syncProfileTier(supabaseAdmin, input.userId, profileTier);
+  return true;
 }
 
 async function upsertPaymentRecord(
@@ -213,6 +334,7 @@ async function persistStripeSubscription(
   stripe: Stripe,
   supabaseAdmin: ReturnType<typeof createClient>,
   eventId: string,
+  eventCreated: number,
   subscription: Stripe.Subscription,
   fallbackUserId?: string | null,
 ) {
@@ -239,10 +361,11 @@ async function persistStripeSubscription(
     cancelAtPeriodEnd: subscription.cancel_at_period_end,
     metadata: subscription.metadata,
     eventId,
+    eventCreated,
   });
 }
 
-async function handleCheckoutSessionCompleted(
+async function handleCheckoutSessionFulfilled(
   stripe: Stripe,
   supabaseAdmin: ReturnType<typeof createClient>,
   event: Stripe.Event,
@@ -258,7 +381,7 @@ async function handleCheckoutSessionCompleted(
   if (session.mode === "subscription" && session.subscription) {
     const subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription.id;
     const subscription = await loadSubscriptionById(stripe, subscriptionId);
-    await persistStripeSubscription(stripe, supabaseAdmin, event.id, {
+    await persistStripeSubscription(stripe, supabaseAdmin, event.id, event.created, {
       ...subscription,
       metadata: {
         ...subscription.metadata,
@@ -267,6 +390,14 @@ async function handleCheckoutSessionCompleted(
         product_id: subscription.metadata?.product_id || session.metadata?.product_id,
       },
     }, userId);
+    return;
+  }
+
+  if (!isFulfilledCheckoutPaymentStatus(session.payment_status)) {
+    logStep("Skipping unfulfilled checkout session", {
+      sessionId: session.id,
+      paymentStatus: session.payment_status,
+    });
     return;
   }
 
@@ -283,17 +414,16 @@ async function handleCheckoutSessionCompleted(
     productId: session.metadata?.product_id || null,
     checkoutSessionId: session.id,
     invoiceId: typeof session.invoice === "string" ? session.invoice : session.invoice?.id || null,
-    chargeId: null,
+    chargeId: await resolveCheckoutSessionChargeId(stripe, session),
     status: session.payment_status || "completed",
     eventId: event.id,
     metadata: {
       checkout_session_id: session.id,
       payment_intent: typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id || null,
       mode: session.mode,
+      documents_remaining: tier === "document" ? 1 : undefined,
     },
   });
-
-  await syncProfileTier(supabaseAdmin, userId, tier);
 }
 
 async function handleSubscriptionEvent(
@@ -301,8 +431,11 @@ async function handleSubscriptionEvent(
   supabaseAdmin: ReturnType<typeof createClient>,
   event: Stripe.Event,
 ) {
-  const subscription = event.data.object as Stripe.Subscription;
-  await persistStripeSubscription(stripe, supabaseAdmin, event.id, subscription);
+  const eventSubscription = event.data.object as Stripe.Subscription;
+  const subscription = event.type === "customer.subscription.deleted"
+    ? eventSubscription
+    : await loadSubscriptionById(stripe, eventSubscription.id);
+  await persistStripeSubscription(stripe, supabaseAdmin, event.id, event.created, subscription);
 }
 
 async function handleInvoicePaid(
@@ -323,9 +456,7 @@ async function handleInvoicePaid(
   const priceId = price?.price || invoice.metadata?.price_id || null;
   const productId = price?.product || invoice.metadata?.product_id || null;
   const tier = normalizeTier(invoice.metadata?.tier, normalizeTier(PRICE_TIERS[priceId || ""]));
-  const subscriptionId = typeof invoice.subscription === "string"
-    ? invoice.subscription
-    : invoice.subscription?.id || null;
+  const subscriptionId = getInvoiceSubscriptionId(invoice);
 
   await upsertPaymentRecord(supabaseAdmin, {
     userId,
@@ -338,8 +469,8 @@ async function handleInvoicePaid(
     priceId,
     productId,
     checkoutSessionId: null,
-    invoiceId: invoice.id,
-    chargeId: typeof invoice.charge === "string" ? invoice.charge : invoice.charge?.id || null,
+    invoiceId: invoice.id ?? null,
+    chargeId: await resolveInvoiceChargeId(stripe, invoice),
     status: "paid",
     eventId: event.id,
     metadata: {
@@ -366,9 +497,7 @@ async function handleInvoicePaymentFailed(
   const price = line?.pricing?.type === "price_details" ? line.pricing.price_details : null;
   const priceId = price?.price || invoice.metadata?.price_id || null;
   const productId = price?.product || invoice.metadata?.product_id || null;
-  const subscriptionId = typeof invoice.subscription === "string"
-    ? invoice.subscription
-    : invoice.subscription?.id || null;
+  const subscriptionId = getInvoiceSubscriptionId(invoice);
 
   await upsertPaymentRecord(supabaseAdmin, {
     userId,
@@ -381,8 +510,8 @@ async function handleInvoicePaymentFailed(
     priceId,
     productId,
     checkoutSessionId: null,
-    invoiceId: invoice.id,
-    chargeId: typeof invoice.charge === "string" ? invoice.charge : invoice.charge?.id || null,
+    invoiceId: invoice.id ?? null,
+    chargeId: await resolveInvoiceChargeId(stripe, invoice),
     status: "payment_failed",
     eventId: event.id,
     metadata: {
@@ -393,7 +522,7 @@ async function handleInvoicePaymentFailed(
 
   if (subscriptionId) {
     const subscription = await loadSubscriptionById(stripe, subscriptionId);
-    await persistStripeSubscription(stripe, supabaseAdmin, event.id, subscription, userId);
+    await persistStripeSubscription(stripe, supabaseAdmin, event.id, event.created, subscription, userId);
   }
 }
 
@@ -538,39 +667,46 @@ serve(async (req) => {
       : null;
   const subscriptionId = typeof subject.subscription === "string"
     ? subject.subscription
+    : event.data.object.object === "invoice"
+      ? getInvoiceSubscriptionId(event.data.object as Stripe.Invoice)
     : typeof subject.id === "string" && event.type.startsWith("customer.subscription.")
       ? subject.id
       : null;
 
-  const { data: savedLog, error: saveLogError } = await supabaseAdmin
-    .from("webhook_logs")
-    .upsert({
-      id: existingLog?.id,
-      source: "stripe",
-      event_id: event.id,
-      event_type: event.type,
-      payload: JSON.parse(rawBody),
-      stripe_customer_id: customerId,
-      stripe_subscription_id: subscriptionId,
-      processing_status: "pending",
-      processing_error: null,
-      processed_at: null,
-    }, { onConflict: "source,event_id" })
-    .select("id")
-    .maybeSingle();
+  const { data: claimRows, error: claimError } = await supabaseAdmin.rpc("claim_webhook_log", {
+    p_source: "stripe",
+    p_event_id: event.id,
+    p_event_type: event.type,
+    p_payload: JSON.parse(rawBody),
+    p_stripe_customer_id: customerId,
+    p_stripe_subscription_id: subscriptionId,
+  });
 
-  if (saveLogError) {
-    logStep("Failed to save webhook log", { eventId: event.id, error: saveLogError.message });
+  if (claimError) {
+    logStep("Failed to save webhook log", { eventId: event.id, error: claimError.message });
     return new Response(
       JSON.stringify({ error: "Webhook logging failed" }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 },
     );
   }
 
+  const claim = (Array.isArray(claimRows) ? claimRows[0] : claimRows) as WebhookClaim | null;
+  if (!claim?.claimed) {
+    return new Response(
+      JSON.stringify({
+        received: true,
+        duplicate: true,
+        processing: claim?.processing_status === "pending",
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
+    );
+  }
+
   try {
     switch (event.type) {
       case "checkout.session.completed":
-        await handleCheckoutSessionCompleted(stripe, supabaseAdmin, event);
+      case "checkout.session.async_payment_succeeded":
+        await handleCheckoutSessionFulfilled(stripe, supabaseAdmin, event);
         break;
       case "customer.subscription.created":
       case "customer.subscription.updated":
@@ -597,7 +733,7 @@ serve(async (req) => {
         processing_status: "processed",
         processed_at: new Date().toISOString(),
       })
-      .eq("id", savedLog?.id || existingLog?.id);
+      .eq("id", claim.id);
 
     if (processedLogError) {
       throw processedLogError;
@@ -617,7 +753,7 @@ serve(async (req) => {
         processing_status: "error",
         processing_error: message,
       })
-      .eq("id", savedLog?.id || existingLog?.id);
+      .eq("id", claim.id);
 
     return new Response(
       JSON.stringify({ error: "Webhook processing failed" }),

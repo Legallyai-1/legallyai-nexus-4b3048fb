@@ -53,6 +53,10 @@ begin
     where subscription_tier is null or btrim(subscription_tier) = '';
 
     update public.profiles
+    set subscription_tier = 'free'
+    where subscription_tier = 'document';
+
+    update public.profiles
     set updated_at = coalesce(updated_at, now())
     where updated_at is null;
 
@@ -433,6 +437,7 @@ create table if not exists public.subscriptions (
   cancel_at_period_end boolean not null default false,
   metadata jsonb not null default '{}'::jsonb,
   last_event_id text,
+  last_event_created_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -449,6 +454,7 @@ alter table public.subscriptions
   add column if not exists cancel_at_period_end boolean default false,
   add column if not exists metadata jsonb default '{}'::jsonb,
   add column if not exists last_event_id text,
+  add column if not exists last_event_created_at timestamptz,
   add column if not exists created_at timestamptz default now(),
   add column if not exists updated_at timestamptz default now();
 
@@ -547,8 +553,26 @@ begin
       add column if not exists status text default 'succeeded',
       add column if not exists last_event_id text;
 
+    alter table public.payment_records
+      drop constraint if exists payment_records_tier_check;
+
+    alter table public.payment_records
+      add constraint payment_records_tier_check
+      check (tier in ('free', 'premium', 'pro', 'enterprise', 'document'));
+
     update public.payment_records
     set status = coalesce(status, 'succeeded');
+
+    update public.payment_records
+    set metadata = jsonb_set(
+      coalesce(metadata, '{}'::jsonb),
+      '{documents_remaining}',
+      '1'::jsonb,
+      true
+    )
+    where tier = 'document'
+      and status not in ('payment_failed', 'refunded')
+      and not (coalesce(metadata, '{}'::jsonb) ? 'documents_remaining');
 
     alter table public.payment_records
       alter column status set default 'succeeded',
@@ -559,6 +583,10 @@ begin
 
     create unique index if not exists payment_records_stripe_invoice_id_key
       on public.payment_records(stripe_invoice_id);
+
+    create unique index if not exists payment_records_stripe_charge_id_key
+      on public.payment_records(stripe_charge_id)
+      where stripe_charge_id is not null;
 
     create index if not exists idx_payment_records_subscription_id
       on public.payment_records(stripe_subscription_id);
@@ -618,7 +646,7 @@ begin
         user_id
       from public.user_roles
       where organization_id is not null
-        and role = 'owner'::public.app_role
+        and role::text = 'owner'
       order by organization_id, created_at nulls last, user_id
     )
     update public.organizations o
@@ -642,7 +670,7 @@ $$;
 
 create or replace function public.has_role(
   _user_id uuid,
-  _role public.app_role,
+  _role text,
   _org_id uuid default null
 )
 returns boolean
@@ -664,10 +692,37 @@ begin
     select 1
     from public.user_roles ur
     where ur.user_id = _user_id
-      and ur.role = _role
+      and ur.role::text = _role
       and (_org_id is null or ur.organization_id = _org_id)
   );
 end;
+$$;
+
+create or replace function public.has_role(
+  check_user_id uuid,
+  check_role text
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = pg_catalog, public
+as $$
+  select public.has_role(check_user_id, check_role, null::uuid);
+$$;
+
+create or replace function public.has_role(
+  _user_id uuid,
+  _role public.app_role,
+  _org_id uuid default null
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = pg_catalog, public
+as $$
+  select public.has_role(_user_id, _role::text, _org_id);
 $$;
 
 create or replace function public.has_role(
@@ -680,7 +735,7 @@ stable
 security definer
 set search_path = pg_catalog, public
 as $$
-  select public.has_role(check_user_id, check_role, null::uuid);
+  select public.has_role(check_user_id, check_role::text, null::uuid);
 $$;
 
 create or replace function public.is_org_member(
@@ -724,6 +779,9 @@ set search_path = pg_catalog, public
 as $$
 declare
   current_balance integer;
+  profile_tier text;
+  entitlement_record_id uuid;
+  entitlement_remaining integer;
 begin
   if p_cost is null or p_cost <= 0 then
     raise exception 'Credit cost must be a positive integer'
@@ -752,6 +810,40 @@ begin
   end if;
 
   if current_balance < p_cost then
+    select p.subscription_tier
+    into profile_tier
+    from public.profiles p
+    where p.id = p_user_id;
+
+    if profile_tier = 'free' and p_reason = 'document_generation' then
+      select pr.id,
+             coalesce((pr.metadata ->> 'documents_remaining')::integer, 1)
+      into entitlement_record_id, entitlement_remaining
+      from public.payment_records pr
+      where pr.user_id = p_user_id
+        and pr.tier = 'document'
+        and pr.status in ('paid', 'succeeded')
+        and coalesce((pr.metadata ->> 'documents_remaining')::integer, 1) > 0
+      order by pr.verified_at desc, pr.created_at desc, pr.id desc
+      limit 1
+      for update;
+
+      if entitlement_record_id is not null then
+        update public.payment_records
+        set metadata = jsonb_set(
+              coalesce(metadata, '{}'::jsonb),
+              '{documents_remaining}',
+              to_jsonb(entitlement_remaining - 1),
+              true
+            ),
+            updated_at = now()
+        where id = entitlement_record_id;
+
+        return query select true, current_balance;
+        return;
+      end if;
+    end if;
+
     return query select false, current_balance;
     return;
   end if;
@@ -768,15 +860,85 @@ begin
 end;
 $$;
 
+create or replace function public.claim_webhook_log(
+  p_source text,
+  p_event_id text,
+  p_event_type text,
+  p_payload jsonb,
+  p_stripe_customer_id text default null,
+  p_stripe_subscription_id text default null
+)
+returns table (
+  id uuid,
+  claimed boolean,
+  processing_status text
+)
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+begin
+  return query
+  with claimed_row as (
+    insert into public.webhook_logs (
+      source,
+      event_id,
+      event_type,
+      payload,
+      stripe_customer_id,
+      stripe_subscription_id,
+      processing_status,
+      processing_error,
+      processed_at
+    )
+    values (
+      p_source,
+      p_event_id,
+      p_event_type,
+      p_payload,
+      p_stripe_customer_id,
+      p_stripe_subscription_id,
+      'pending',
+      null,
+      null
+    )
+    on conflict (source, event_id) do update
+      set event_type = excluded.event_type,
+          payload = excluded.payload,
+          stripe_customer_id = coalesce(excluded.stripe_customer_id, public.webhook_logs.stripe_customer_id),
+          stripe_subscription_id = coalesce(excluded.stripe_subscription_id, public.webhook_logs.stripe_subscription_id),
+          processing_status = 'pending',
+          processing_error = null,
+          processed_at = null
+    where public.webhook_logs.processing_status = 'error'
+    returning public.webhook_logs.id, public.webhook_logs.processing_status
+  )
+  select claimed_row.id, true, claimed_row.processing_status
+  from claimed_row
+  union all
+  select wl.id, false, wl.processing_status
+  from public.webhook_logs wl
+  where wl.source = p_source
+    and wl.event_id = p_event_id
+    and not exists (select 1 from claimed_row);
+end;
+$$;
+
+revoke all on function public.has_role(uuid, text, uuid) from public;
+revoke all on function public.has_role(uuid, text) from public;
 revoke all on function public.has_role(uuid, public.app_role, uuid) from public;
 revoke all on function public.has_role(uuid, public.app_role) from public;
 revoke all on function public.is_org_member(uuid, uuid) from public;
 revoke all on function public.deduct_ai_credits(uuid, integer, text) from public;
+revoke all on function public.claim_webhook_log(text, text, text, jsonb, text, text) from public;
 
+grant execute on function public.has_role(uuid, text, uuid) to authenticated, service_role;
+grant execute on function public.has_role(uuid, text) to authenticated, service_role;
 grant execute on function public.has_role(uuid, public.app_role, uuid) to authenticated, service_role;
 grant execute on function public.has_role(uuid, public.app_role) to authenticated, service_role;
 grant execute on function public.is_org_member(uuid, uuid) to authenticated, service_role;
 grant execute on function public.deduct_ai_credits(uuid, integer, text) to authenticated, service_role;
+grant execute on function public.claim_webhook_log(text, text, text, jsonb, text, text) to service_role;
 
 alter table public.organization_members enable row level security;
 alter table public.user_roles enable row level security;
@@ -799,7 +961,7 @@ revoke all on table public.ai_credits_ledger from anon, authenticated;
 revoke all on table public.subscriptions from anon, authenticated;
 revoke all on table public.payment_records from anon, authenticated;
 
-grant select, insert, update on table public.profiles to authenticated;
+grant select on table public.profiles to authenticated;
 grant select, insert, update on table public.organizations to authenticated;
 grant select, insert, update, delete on table public.organization_members to authenticated;
 grant select, insert, update, delete on table public.user_roles to authenticated;
@@ -811,9 +973,17 @@ grant select on table public.payment_records to authenticated;
 
 revoke all on table public.webhook_logs from anon, authenticated;
 
+grant insert (id, email, full_name, avatar_url, phone, location, timezone) on table public.profiles to authenticated;
+grant update (email, full_name, avatar_url, phone, location, timezone) on table public.profiles to authenticated;
+
 drop policy if exists "Members can view their org" on public.organizations;
 drop policy if exists "Owners can update org" on public.organizations;
 drop policy if exists "Authenticated users can create org" on public.organizations;
+drop policy if exists "Auth users can create org" on public.organizations;
+drop policy if exists "Anyone can create org" on public.organizations;
+drop policy if exists "Org owners and members can view organizations" on public.organizations;
+drop policy if exists "Authenticated users can create owned organizations" on public.organizations;
+drop policy if exists "Organization owners can update organizations" on public.organizations;
 
 create policy "Org owners and members can view organizations"
   on public.organizations
@@ -842,6 +1012,10 @@ create policy "Organization owners can update organizations"
 
 drop policy if exists "Members can view org members" on public.organization_members;
 drop policy if exists "Admins can manage members" on public.organization_members;
+drop policy if exists "Organization members can view memberships" on public.organization_members;
+drop policy if exists "Owners and admins can insert memberships" on public.organization_members;
+drop policy if exists "Owners and admins can update memberships" on public.organization_members;
+drop policy if exists "Owners and admins can delete memberships" on public.organization_members;
 
 create policy "Organization members can view memberships"
   on public.organization_members
@@ -872,8 +1046,8 @@ create policy "Owners and admins can insert memberships"
           and o.owner_id = auth.uid()
       )
     )
-    or public.has_role(auth.uid(), 'owner'::public.app_role, organization_id)
-    or public.has_role(auth.uid(), 'admin'::public.app_role, organization_id)
+    or public.has_role(auth.uid(), 'owner', organization_id)
+    or public.has_role(auth.uid(), 'admin', organization_id)
   );
 
 create policy "Owners and admins can update memberships"
@@ -887,8 +1061,8 @@ create policy "Owners and admins can update memberships"
       where o.id = organization_members.organization_id
         and o.owner_id = auth.uid()
     )
-    or public.has_role(auth.uid(), 'owner'::public.app_role, organization_id)
-    or public.has_role(auth.uid(), 'admin'::public.app_role, organization_id)
+    or public.has_role(auth.uid(), 'owner', organization_id)
+    or public.has_role(auth.uid(), 'admin', organization_id)
   )
   with check (
     exists (
@@ -897,8 +1071,8 @@ create policy "Owners and admins can update memberships"
       where o.id = organization_members.organization_id
         and o.owner_id = auth.uid()
     )
-    or public.has_role(auth.uid(), 'owner'::public.app_role, organization_id)
-    or public.has_role(auth.uid(), 'admin'::public.app_role, organization_id)
+    or public.has_role(auth.uid(), 'owner', organization_id)
+    or public.has_role(auth.uid(), 'admin', organization_id)
   );
 
 create policy "Owners and admins can delete memberships"
@@ -912,12 +1086,15 @@ create policy "Owners and admins can delete memberships"
       where o.id = organization_members.organization_id
         and o.owner_id = auth.uid()
     )
-    or public.has_role(auth.uid(), 'owner'::public.app_role, organization_id)
-    or public.has_role(auth.uid(), 'admin'::public.app_role, organization_id)
+    or public.has_role(auth.uid(), 'owner', organization_id)
+    or public.has_role(auth.uid(), 'admin', organization_id)
   );
 
 drop policy if exists "Users can view own roles" on public.user_roles;
 drop policy if exists "Owners can manage roles" on public.user_roles;
+drop policy if exists "Owners can insert organization roles" on public.user_roles;
+drop policy if exists "Owners can update organization roles" on public.user_roles;
+drop policy if exists "Owners can delete organization roles" on public.user_roles;
 
 create policy "Users can view own roles"
   on public.user_roles
@@ -932,7 +1109,7 @@ create policy "Owners can insert organization roles"
   with check (
     (
       user_id = auth.uid()
-      and role = 'owner'::public.app_role
+      and role::text = 'owner'
       and organization_id is not null
       and exists (
         select 1
@@ -941,93 +1118,114 @@ create policy "Owners can insert organization roles"
           and o.owner_id = auth.uid()
       )
     )
-    or public.has_role(auth.uid(), 'owner'::public.app_role, organization_id)
+    or public.has_role(auth.uid(), 'owner', organization_id)
   );
 
 create policy "Owners can update organization roles"
   on public.user_roles
   for update
   to authenticated
-  using (public.has_role(auth.uid(), 'owner'::public.app_role, organization_id))
-  with check (public.has_role(auth.uid(), 'owner'::public.app_role, organization_id));
+  using (public.has_role(auth.uid(), 'owner', organization_id))
+  with check (public.has_role(auth.uid(), 'owner', organization_id));
 
 create policy "Owners can delete organization roles"
   on public.user_roles
   for delete
   to authenticated
-  using (public.has_role(auth.uid(), 'owner'::public.app_role, organization_id));
+  using (public.has_role(auth.uid(), 'owner', organization_id));
 
-do $$
-begin
-  if not exists (
-    select 1
-    from pg_policies
-    where schemaname = 'public'
-      and tablename = 'ai_chat_history'
-      and policyname = 'Users can manage own chat history'
-  ) then
-    create policy "Users can manage own chat history"
-      on public.ai_chat_history
-      for all
-      to authenticated
-      using (auth.uid() = user_id)
-      with check (auth.uid() = user_id);
-  end if;
-end
-$$;
+drop policy if exists "Org members can view clients" on public.clients;
+drop policy if exists "Org members can manage clients" on public.clients;
+drop policy if exists "Privileged users can view clients" on public.clients;
+drop policy if exists "Privileged users can manage clients" on public.clients;
+drop policy if exists "Admin roles can manage clients" on public.clients;
+drop policy if exists "Lawyers can update assigned clients" on public.clients;
+drop policy if exists "Assigned lawyers and privileged roles can view clients" on public.clients;
 
-do $$
-begin
-  if not exists (
-    select 1
-    from pg_policies
-    where schemaname = 'public'
-      and tablename = 'ai_credits_ledger'
-      and policyname = 'Users can view own credit ledger'
-  ) then
-    create policy "Users can view own credit ledger"
-      on public.ai_credits_ledger
-      for select
-      to authenticated
-      using (auth.uid() = user_id);
-  end if;
-end
-$$;
+create policy "Assigned lawyers and privileged roles can view clients"
+  on public.clients
+  for select
+  to authenticated
+  using (
+    exists (
+      select 1
+      from public.cases
+      where cases.client_id = clients.id
+        and cases.assigned_lawyer_id = auth.uid()
+        and cases.organization_id = clients.organization_id
+    )
+    or public.has_role(auth.uid(), 'admin', organization_id)
+    or public.has_role(auth.uid(), 'owner', organization_id)
+    or public.has_role(auth.uid(), 'manager', organization_id)
+    or public.has_role(auth.uid(), 'lawyer', organization_id)
+  );
 
-do $$
-begin
-  if not exists (
-    select 1
-    from pg_policies
-    where schemaname = 'public'
-      and tablename = 'subscriptions'
-      and policyname = 'Users can view own subscriptions'
-  ) then
-    create policy "Users can view own subscriptions"
-      on public.subscriptions
-      for select
-      to authenticated
-      using (auth.uid() = user_id);
-  end if;
-end
-$$;
+create policy "Admin roles can manage clients"
+  on public.clients
+  for all
+  to authenticated
+  using (
+    public.has_role(auth.uid(), 'admin', organization_id)
+    or public.has_role(auth.uid(), 'owner', organization_id)
+    or public.has_role(auth.uid(), 'manager', organization_id)
+  )
+  with check (
+    public.has_role(auth.uid(), 'admin', organization_id)
+    or public.has_role(auth.uid(), 'owner', organization_id)
+    or public.has_role(auth.uid(), 'manager', organization_id)
+  );
 
-do $$
-begin
-  if not exists (
-    select 1
-    from pg_policies
-    where schemaname = 'public'
-      and tablename = 'payment_records'
-      and policyname = 'Users can view own payment records'
-  ) then
-    create policy "Users can view own payment records"
-      on public.payment_records
-      for select
-      to authenticated
-      using (auth.uid() = user_id);
-  end if;
-end
-$$;
+create policy "Lawyers can update assigned clients"
+  on public.clients
+  for update
+  to authenticated
+  using (
+    exists (
+      select 1
+      from public.cases
+      where cases.client_id = clients.id
+        and cases.assigned_lawyer_id = auth.uid()
+        and cases.organization_id = clients.organization_id
+    )
+  )
+  with check (
+    exists (
+      select 1
+      from public.cases
+      where cases.client_id = clients.id
+        and cases.assigned_lawyer_id = auth.uid()
+        and cases.organization_id = clients.organization_id
+    )
+  );
+
+drop policy if exists "Users can manage own chat history" on public.ai_chat_history;
+create policy "Users can manage own chat history"
+  on public.ai_chat_history
+  for all
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can view own credit ledger" on public.ai_credits_ledger;
+create policy "Users can view own credit ledger"
+  on public.ai_credits_ledger
+  for select
+  to authenticated
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can view own subscriptions" on public.subscriptions;
+create policy "Users can view own subscriptions"
+  on public.subscriptions
+  for select
+  to authenticated
+  using (auth.uid() = user_id);
+
+drop policy if exists "Admins can manage all payment records" on public.payment_records;
+drop policy if exists "Users can view own payment records" on public.payment_records;
+create policy "Users can view own payment records"
+  on public.payment_records
+  for select
+  to authenticated
+  using (auth.uid() = user_id);
 
 drop policy if exists "Authenticated users can read webhook logs" on public.webhook_logs;
