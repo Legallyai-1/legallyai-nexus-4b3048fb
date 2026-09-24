@@ -924,6 +924,83 @@ begin
 end;
 $$;
 
+create or replace function public.upsert_subscription_state(
+  p_user_id uuid,
+  p_stripe_customer_id text,
+  p_stripe_subscription_id text,
+  p_status text,
+  p_tier text,
+  p_stripe_price_id text,
+  p_stripe_product_id text,
+  p_current_period_start timestamptz,
+  p_current_period_end timestamptz,
+  p_cancel_at_period_end boolean,
+  p_metadata jsonb,
+  p_event_id text,
+  p_event_created_at timestamptz
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+  applied boolean := false;
+begin
+  insert into public.subscriptions (
+    user_id,
+    stripe_customer_id,
+    stripe_subscription_id,
+    status,
+    tier,
+    stripe_price_id,
+    stripe_product_id,
+    current_period_start,
+    current_period_end,
+    cancel_at_period_end,
+    metadata,
+    last_event_id,
+    last_event_created_at,
+    updated_at
+  )
+  values (
+    p_user_id,
+    p_stripe_customer_id,
+    p_stripe_subscription_id,
+    p_status,
+    p_tier,
+    p_stripe_price_id,
+    p_stripe_product_id,
+    p_current_period_start,
+    p_current_period_end,
+    coalesce(p_cancel_at_period_end, false),
+    coalesce(p_metadata, '{}'::jsonb),
+    p_event_id,
+    p_event_created_at,
+    now()
+  )
+  on conflict (user_id) do update
+    set stripe_customer_id = excluded.stripe_customer_id,
+        stripe_subscription_id = excluded.stripe_subscription_id,
+        status = excluded.status,
+        tier = excluded.tier,
+        stripe_price_id = excluded.stripe_price_id,
+        stripe_product_id = excluded.stripe_product_id,
+        current_period_start = excluded.current_period_start,
+        current_period_end = excluded.current_period_end,
+        cancel_at_period_end = excluded.cancel_at_period_end,
+        metadata = excluded.metadata,
+        last_event_id = excluded.last_event_id,
+        last_event_created_at = excluded.last_event_created_at,
+        updated_at = now()
+  where public.subscriptions.last_event_created_at is null
+     or public.subscriptions.last_event_created_at <= excluded.last_event_created_at
+  returning true into applied;
+
+  return coalesce(applied, false);
+end;
+$$;
+
 revoke all on function public.has_role(uuid, text, uuid) from public;
 revoke all on function public.has_role(uuid, text) from public;
 revoke all on function public.has_role(uuid, public.app_role, uuid) from public;
@@ -931,6 +1008,7 @@ revoke all on function public.has_role(uuid, public.app_role) from public;
 revoke all on function public.is_org_member(uuid, uuid) from public;
 revoke all on function public.deduct_ai_credits(uuid, integer, text) from public;
 revoke all on function public.claim_webhook_log(text, text, text, jsonb, text, text) from public;
+revoke all on function public.upsert_subscription_state(uuid, text, text, text, text, text, text, timestamptz, timestamptz, boolean, jsonb, text, timestamptz) from public;
 
 grant execute on function public.has_role(uuid, text, uuid) to authenticated, service_role;
 grant execute on function public.has_role(uuid, text) to authenticated, service_role;
@@ -939,6 +1017,7 @@ grant execute on function public.has_role(uuid, public.app_role) to authenticate
 grant execute on function public.is_org_member(uuid, uuid) to authenticated, service_role;
 grant execute on function public.deduct_ai_credits(uuid, integer, text) to authenticated, service_role;
 grant execute on function public.claim_webhook_log(text, text, text, jsonb, text, text) to service_role;
+grant execute on function public.upsert_subscription_state(uuid, text, text, text, text, text, text, timestamptz, timestamptz, boolean, jsonb, text, timestamptz) to service_role;
 
 alter table public.organization_members enable row level security;
 alter table public.user_roles enable row level security;
@@ -972,6 +1051,29 @@ grant select on table public.subscriptions to authenticated;
 grant select on table public.payment_records to authenticated;
 
 revoke all on table public.webhook_logs from anon, authenticated;
+
+drop policy if exists "Users can view own profile" on public.profiles;
+drop policy if exists "Users can update own profile" on public.profiles;
+drop policy if exists "Users can insert own profile" on public.profiles;
+
+create policy "Users can view own profile"
+  on public.profiles
+  for select
+  to authenticated
+  using (auth.uid() = id);
+
+create policy "Users can update own profile"
+  on public.profiles
+  for update
+  to authenticated
+  using (auth.uid() = id)
+  with check (auth.uid() = id);
+
+create policy "Users can insert own profile"
+  on public.profiles
+  for insert
+  to authenticated
+  with check (auth.uid() = id);
 
 grant insert (id, email, full_name, avatar_url, phone, location, timezone) on table public.profiles to authenticated;
 grant update (email, full_name, avatar_url, phone, location, timezone) on table public.profiles to authenticated;
@@ -1139,6 +1241,8 @@ drop policy if exists "Org members can manage clients" on public.clients;
 drop policy if exists "Privileged users can view clients" on public.clients;
 drop policy if exists "Privileged users can manage clients" on public.clients;
 drop policy if exists "Admin roles can manage clients" on public.clients;
+drop policy if exists "Admin roles can update clients" on public.clients;
+drop policy if exists "Owners and admins can delete clients" on public.clients;
 drop policy if exists "Lawyers can update assigned clients" on public.clients;
 drop policy if exists "Assigned lawyers and privileged roles can view clients" on public.clients;
 
@@ -1162,7 +1266,17 @@ create policy "Assigned lawyers and privileged roles can view clients"
 
 create policy "Admin roles can manage clients"
   on public.clients
-  for all
+  for insert
+  to authenticated
+  with check (
+    public.has_role(auth.uid(), 'admin', organization_id)
+    or public.has_role(auth.uid(), 'owner', organization_id)
+    or public.has_role(auth.uid(), 'manager', organization_id)
+  );
+
+create policy "Admin roles can update clients"
+  on public.clients
+  for update
   to authenticated
   using (
     public.has_role(auth.uid(), 'admin', organization_id)
@@ -1173,6 +1287,15 @@ create policy "Admin roles can manage clients"
     public.has_role(auth.uid(), 'admin', organization_id)
     or public.has_role(auth.uid(), 'owner', organization_id)
     or public.has_role(auth.uid(), 'manager', organization_id)
+  );
+
+create policy "Owners and admins can delete clients"
+  on public.clients
+  for delete
+  to authenticated
+  using (
+    public.has_role(auth.uid(), 'admin', organization_id)
+    or public.has_role(auth.uid(), 'owner', organization_id)
   );
 
 create policy "Lawyers can update assigned clients"

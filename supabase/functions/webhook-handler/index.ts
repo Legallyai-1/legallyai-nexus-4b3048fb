@@ -218,50 +218,33 @@ async function upsertSubscription(
   },
 ) {
   const incomingEventCreatedAt = new Date(input.eventCreated * 1000).toISOString();
-  const { data: existingSubscription, error: existingSubscriptionError } = await supabaseAdmin
-    .from("subscriptions")
-    .select("last_event_created_at")
-    .eq("user_id", input.userId)
-    .maybeSingle();
-
-  if (existingSubscriptionError) {
-    throw existingSubscriptionError;
-  }
-
-  if (
-    existingSubscription?.last_event_created_at &&
-    new Date(existingSubscription.last_event_created_at).getTime() > input.eventCreated * 1000
-  ) {
-    logStep("Skipping stale subscription event", {
-      subscriptionId: input.subscriptionId,
-      eventId: input.eventId,
-      storedEventCreatedAt: existingSubscription.last_event_created_at,
-      incomingEventCreatedAt,
-    });
-    return false;
-  }
-
-  const { error } = await supabaseAdmin
-    .from("subscriptions")
-    .upsert({
-      user_id: input.userId,
-      stripe_customer_id: input.customerId,
-      stripe_subscription_id: input.subscriptionId,
-      status: input.status,
-      tier: input.tier,
-      stripe_price_id: input.priceId,
-      stripe_product_id: input.productId,
-      current_period_start: input.currentPeriodStart,
-      current_period_end: input.currentPeriodEnd,
-      cancel_at_period_end: input.cancelAtPeriodEnd,
-      metadata: input.metadata,
-      last_event_id: input.eventId,
-      last_event_created_at: incomingEventCreatedAt,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: "user_id" });
+  const { data: didApply, error } = await supabaseAdmin.rpc("upsert_subscription_state", {
+    p_user_id: input.userId,
+    p_stripe_customer_id: input.customerId,
+    p_stripe_subscription_id: input.subscriptionId,
+    p_status: input.status,
+    p_tier: input.tier,
+    p_stripe_price_id: input.priceId,
+    p_stripe_product_id: input.productId,
+    p_current_period_start: input.currentPeriodStart,
+    p_current_period_end: input.currentPeriodEnd,
+    p_cancel_at_period_end: input.cancelAtPeriodEnd,
+    p_metadata: input.metadata,
+    p_event_id: input.eventId,
+    p_event_created_at: incomingEventCreatedAt,
+  });
 
   if (error) {
     throw error;
+  }
+
+  if (!didApply) {
+    logStep("Skipping stale subscription event", {
+      subscriptionId: input.subscriptionId,
+      eventId: input.eventId,
+      incomingEventCreatedAt,
+    });
+    return false;
   }
 
   const profileTier = input.status === "active" || input.status === "trialing" || input.status === "past_due"

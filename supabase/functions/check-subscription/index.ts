@@ -1,44 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { resolveSubscriptionAccess } from "../_shared/subscription-access.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const PAID_TIERS = new Set(["premium", "pro", "enterprise", "document"]);
-const ACTIVE_PAYMENT_STATUSES = new Set(["paid", "succeeded"]);
-
-function getDocumentEntitlementCount(metadata: Record<string, unknown> | null | undefined) {
-  const rawValue = metadata && typeof metadata === "object" ? metadata.documents_remaining : null;
-  if (typeof rawValue === "number") {
-    return rawValue;
-  }
-
-  if (typeof rawValue === "string") {
-    const parsed = Number(rawValue);
-    return Number.isFinite(parsed) ? parsed : null;
-  }
-
-  return null;
-}
-
-function isActivePaymentRecord(paymentRecord: {
-  tier: string | null;
-  expires_at: string | null;
-  status: string | null;
-  metadata?: Record<string, unknown> | null;
-}) {
-  if (!paymentRecord.status || !ACTIVE_PAYMENT_STATUSES.has(paymentRecord.status)) {
-    return false;
-  }
-
-  if (paymentRecord.tier === "document") {
-    return (getDocumentEntitlementCount(paymentRecord.metadata) ?? 1) > 0;
-  }
-
-  return !paymentRecord.expires_at || new Date(paymentRecord.expires_at) > new Date();
-}
 
 const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -94,8 +61,7 @@ serve(async (req) => {
         .from("payment_records")
         .select("tier, expires_at, status, metadata, verified_at")
         .eq("user_id", user.id)
-        .order("verified_at", { ascending: false })
-        .limit(10),
+        .order("verified_at", { ascending: false }),
     ]);
 
     if (profileError) throw profileError;
@@ -103,38 +69,23 @@ serve(async (req) => {
     if (paymentError) throw paymentError;
 
     const profileTier = profile?.subscription_tier || "free";
-    const subscriptionTier = subscription?.tier || null;
-    const activePaymentRecord = paymentRecords?.find(isActivePaymentRecord) || null;
-    const paymentTier = activePaymentRecord?.tier || null;
-    const activeSubscription = subscription
-      ? ["active", "trialing", "past_due"].includes(subscription.status)
-      : false;
-    const activePayment = Boolean(activePaymentRecord);
-    const profileFallback = profileTier !== "document" && PAID_TIERS.has(profileTier) && !subscription && !activePaymentRecord;
-    const plan = activeSubscription
-      ? subscriptionTier || profileTier
-      : activePayment
-        ? paymentTier || profileTier
-        : profileTier;
-    const subscribed = (activeSubscription && PAID_TIERS.has(plan)) ||
-      (activePayment && PAID_TIERS.has(plan)) ||
-      profileFallback;
+    const access = resolveSubscriptionAccess(profileTier, subscription, paymentRecords);
 
     logStep("Subscription resolved", {
       userId: user.id,
       profileTier,
-      subscriptionTier,
-      paymentTier,
-      activeSubscription,
-      activePayment,
-      plan,
+      subscriptionTier: subscription?.tier || null,
+      paymentTier: access.activePaymentRecord?.tier || null,
+      activeSubscription: access.activeSubscription,
+      activePayment: access.activePayment,
+      plan: access.plan,
     });
 
     return new Response(JSON.stringify({
-      subscribed,
+      subscribed: access.entitled,
       product_id: null,
-      plan,
-      subscription_end: subscription?.current_period_end || activePaymentRecord?.expires_at || null,
+      plan: access.plan,
+      subscription_end: subscription?.current_period_end || access.activePaymentRecord?.expires_at || null,
       cancel_at_period_end: subscription?.cancel_at_period_end || false,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
