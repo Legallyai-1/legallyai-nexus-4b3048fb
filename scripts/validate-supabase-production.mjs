@@ -1,13 +1,13 @@
 import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 
-const root = "/home/runner/work/legallyai-nexus-4b3048fb/legallyai-nexus-4b3048fb";
-const migration = readFileSync(`${root}/supabase/migrations/20260924034737_restore_core_app_schema_and_stripe_billing.sql`, "utf8");
-const webhookHandler = readFileSync(`${root}/supabase/functions/webhook-handler/index.ts`, "utf8");
-const verifyPayment = readFileSync(`${root}/supabase/functions/verify-payment/index.ts`, "utf8");
-const checkSubscription = readFileSync(`${root}/supabase/functions/check-subscription/index.ts`, "utf8");
-const onboardingPage = readFileSync(`${root}/src/pages/OnboardingPage.tsx`, "utf8");
-const configToml = readFileSync(`${root}/supabase/config.toml`, "utf8");
+const root = new URL("../", import.meta.url);
+const migration = readFileSync(new URL("./supabase/migrations/20260924034737_restore_core_app_schema_and_stripe_billing.sql", root), "utf8");
+const webhookHandler = readFileSync(new URL("./supabase/functions/webhook-handler/index.ts", root), "utf8");
+const verifyPayment = readFileSync(new URL("./supabase/functions/verify-payment/index.ts", root), "utf8");
+const checkSubscription = readFileSync(new URL("./supabase/functions/check-subscription/index.ts", root), "utf8");
+const onboardingPage = readFileSync(new URL("./src/pages/OnboardingPage.tsx", root), "utf8");
+const configToml = readFileSync(new URL("./supabase/config.toml", root), "utf8");
 
 assert.match(migration, /create table if not exists public\.organization_members/i, "migration should restore organization_members");
 assert.match(migration, /create table if not exists public\.user_roles/i, "migration should restore user_roles");
