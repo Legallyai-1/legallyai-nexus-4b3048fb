@@ -9,6 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "smoke:live": "node scripts/smoke-check.mjs",
+    "validate:supabase-production": "node scripts/validate-supabase-production.mjs",
     "preview": "vite preview",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",

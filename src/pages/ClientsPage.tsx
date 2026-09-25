@@ -80,11 +80,29 @@ export default function ClientsPage() {
 
         if (orgError) throw orgError;
 
-        await supabase.from('organization_members').insert({
+        const { error: memberError } = await supabase.from('organization_members').insert({
           organization_id: newOrg.id,
           user_id: userId,
-          role: 'owner'
         });
+        if (memberError) throw memberError;
+
+        const { error: roleError } = await supabase.from('user_roles').insert({
+          organization_id: newOrg.id,
+          user_id: userId,
+          role: 'owner',
+        });
+        if (roleError) {
+          await supabase
+            .from('organization_members')
+            .delete()
+            .eq('organization_id', newOrg.id)
+            .eq('user_id', userId);
+          await supabase
+            .from('organizations')
+            .delete()
+            .eq('id', newOrg.id);
+          throw roleError;
+        }
 
         orgMember = { organization_id: newOrg.id };
       }

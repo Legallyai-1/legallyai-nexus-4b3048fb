@@ -118,11 +118,6 @@ export default function GeneratePage() {
       await ensureUserProfile(user.id, user.email, user.user_metadata?.full_name);
       const { credits, tier } = await getUserCreditBalance(user.id);
 
-      if (tier === 'free' && credits <= 0) {
-        toast.error("You have no AI credits left. Upgrade to continue.");
-        return;
-      }
-
       const cost = tier === 'free' ? 1 : 0;
       if (tier === 'free') {
         const deduction = await deductUserCredits(user.id, cost, 'document_generation');

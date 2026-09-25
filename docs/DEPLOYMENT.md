@@ -8,6 +8,110 @@ This guide covers deploying LegallyAI to production.
 - GitHub repository
 - Domain name (optional)
 
+## Supabase + Stripe production rollout
+
+Use this sequence after the PR merges. Do **not** replay `supabase/schema.sql` or manually rerun every historical migration on an existing database. Apply only the pending forward migration(s), including:
+
+- `20260924034737_restore_core_app_schema_and_stripe_billing.sql`
+
+### 1. Link the production Supabase project
+
+```bash
+npx --yes supabase link --project-ref whdljtbtqisoszbrzdwq
+```
+
+### 2. Apply pending migrations
+
+```bash
+npx --yes supabase db push --project-ref whdljtbtqisoszbrzdwq
+```
+
+### 3. Set required Supabase Edge Function secrets
+
+```bash
+npx --yes supabase secrets set \
+  STRIPE_SECRET_KEY="sk_live_***" \
+  STRIPE_WEBHOOK_SECRET="whsec_***" \
+  SUPABASE_URL="https://whdljtbtqisoszbrzdwq.supabase.co" \
+  SUPABASE_SERVICE_ROLE_KEY="***" \
+  --project-ref whdljtbtqisoszbrzdwq
+```
+
+### 4. Deploy the billing-related Edge Functions
+
+```bash
+npx --yes supabase functions deploy create-checkout --project-ref whdljtbtqisoszbrzdwq
+npx --yes supabase functions deploy check-subscription --project-ref whdljtbtqisoszbrzdwq
+npx --yes supabase functions deploy verify-payment --project-ref whdljtbtqisoszbrzdwq
+npx --yes supabase functions deploy webhook-handler --project-ref whdljtbtqisoszbrzdwq
+```
+
+`webhook-handler` is the Stripe-compatible endpoint in this repo and is configured with `verify_jwt = false` so Stripe can call it without a Supabase JWT.
+
+### 5. Point Stripe to the Supabase webhook endpoint
+
+Configure this production webhook URL in Stripe:
+
+```text
+https://whdljtbtqisoszbrzdwq.supabase.co/functions/v1/webhook-handler
+```
+
+Subscribe Stripe to these events:
+
+- `checkout.session.completed`
+- `checkout.session.async_payment_succeeded`
+- `checkout.session.async_payment_failed`
+- `customer.subscription.created`
+- `customer.subscription.updated`
+- `customer.subscription.deleted`
+- `invoice.paid`
+- `invoice.payment_failed`
+- `charge.refunded`
+
+### 6. Verify the repaired schema
+
+Run these checks in the Supabase SQL editor after the migration deploys:
+
+```sql
+select column_name, data_type
+from information_schema.columns
+where table_schema = 'public'
+  and table_name = 'ai_chat_history'
+  and column_name = 'session_id';
+
+select column_name
+from information_schema.columns
+where table_schema = 'public'
+  and table_name = 'organizations'
+  and column_name = 'owner_id';
+
+select proname
+from pg_proc
+where pronamespace = 'public'::regnamespace
+  and proname in ('has_role', 'is_org_member', 'deduct_ai_credits');
+
+select tablename
+from pg_tables
+where schemaname = 'public'
+  and tablename in (
+    'organization_members',
+    'user_roles',
+    'clients',
+    'ai_chat_history',
+    'ai_credits_ledger',
+    'subscriptions',
+    'webhook_logs'
+  );
+```
+
+### 7. Smoke-test the critical paths
+
+- Sign up or log in as a test user and confirm `profiles.credits` and `profiles.subscription_tier` exist.
+- Create an organization and confirm the creator can insert the initial `organization_members` row.
+- Save and reload AI chat history using a non-UUID session id.
+- Complete a Stripe checkout in test mode and confirm `webhook_logs`, `subscriptions`, and `profiles.subscription_tier` update idempotently.
+- Confirm the legacy `public.org_members` table still exists and remains untouched.
+
 ---
 
 ## Deploy to Vercel

@@ -55,6 +55,7 @@ export default function OnboardingPage() {
         .from("organizations")
         .insert({
           name: formData.firmName,
+          owner_id: user.id,
           description: formData.description,
           address: formData.address,
           city: formData.city,

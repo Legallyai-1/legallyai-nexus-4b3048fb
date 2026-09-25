@@ -2680,6 +2680,7 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          owner_id: string | null
           phone: string | null
           settings: Json | null
           state: string | null
@@ -2697,6 +2698,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
+          owner_id?: string | null
           phone?: string | null
           settings?: Json | null
           state?: string | null
@@ -2714,6 +2716,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          owner_id?: string | null
           phone?: string | null
           settings?: Json | null
           state?: string | null
@@ -2721,7 +2724,15 @@ export type Database = {
           website?: string | null
           zip_code?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "organizations_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       parole_cases: {
         Row: {
