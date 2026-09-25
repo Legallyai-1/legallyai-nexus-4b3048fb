@@ -35,11 +35,15 @@ function isActivePaymentRecord(paymentRecord: PaymentRecordCandidate) {
     return false;
   }
 
+  if (paymentRecord.expires_at && new Date(paymentRecord.expires_at) <= new Date()) {
+    return false;
+  }
+
   if (paymentRecord.tier === "document") {
     return (getDocumentEntitlementCount(paymentRecord.metadata) ?? 1) > 0;
   }
 
-  return !paymentRecord.expires_at || new Date(paymentRecord.expires_at) > new Date();
+  return true;
 }
 
 export function resolveSubscriptionAccess(

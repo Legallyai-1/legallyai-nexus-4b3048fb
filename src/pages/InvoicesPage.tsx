@@ -82,7 +82,11 @@ const InvoicesPage = () => {
           await supabase.from('organization_members').insert({
             organization_id: newOrg.id,
             user_id: userId,
-            role: 'owner'
+          });
+          await supabase.from('user_roles').insert({
+            organization_id: newOrg.id,
+            user_id: userId,
+            role: 'owner',
           });
           orgMember = { organization_id: newOrg.id };
         }

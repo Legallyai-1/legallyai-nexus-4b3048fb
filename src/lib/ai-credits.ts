@@ -20,8 +20,6 @@ export async function ensureUserProfile(userId: string, email?: string | null, f
     id: userId,
     email: email || '',
     full_name: fullName || email || 'User',
-    subscription_tier: 'free',
-    credits: 50,
   });
 
   if (error && error.code !== '23505') {

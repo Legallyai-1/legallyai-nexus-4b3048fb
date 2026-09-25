@@ -1009,10 +1009,15 @@ begin
           payload = excluded.payload,
           stripe_customer_id = coalesce(excluded.stripe_customer_id, public.webhook_logs.stripe_customer_id),
           stripe_subscription_id = coalesce(excluded.stripe_subscription_id, public.webhook_logs.stripe_subscription_id),
+          received_at = now(),
           processing_status = 'pending',
           processing_error = null,
           processed_at = null
     where public.webhook_logs.processing_status = 'error'
+       or (
+         public.webhook_logs.processing_status = 'pending'
+         and public.webhook_logs.received_at < (now() - interval '5 minutes')
+       )
     returning public.webhook_logs.id, public.webhook_logs.processing_status
   )
   select claimed_row.id, true, claimed_row.processing_status

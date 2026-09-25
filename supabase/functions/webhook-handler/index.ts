@@ -557,6 +557,7 @@ async function handleChargeRefunded(
   event: Stripe.Event,
 ) {
   const charge = event.data.object as Stripe.Charge;
+  const isFullyRefunded = charge.refunded || ((charge.amount_refunded || 0) >= (charge.amount || 0));
   const customerId = typeof charge.customer === "string" ? charge.customer : charge.customer?.id || null;
   const userId = await resolveUserId(stripe, supabaseAdmin, customerId, charge.metadata);
   if (!userId) {
@@ -570,7 +571,7 @@ async function handleChargeRefunded(
 
   const { data: existingRecord, error: loadError } = await supabaseAdmin
     .from("payment_records")
-    .select("id")
+    .select("id, status, metadata")
     .eq("stripe_charge_id", charge.id)
     .maybeSingle();
 
@@ -579,12 +580,20 @@ async function handleChargeRefunded(
   }
 
   if (existingRecord?.id) {
+    const updatedMetadata = {
+      ...(existingRecord.metadata && typeof existingRecord.metadata === "object" ? existingRecord.metadata : {}),
+      refunded: isFullyRefunded,
+      amount_refunded: (charge.amount_refunded || 0) / 100,
+      partial_refund: !isFullyRefunded,
+    };
+
     const { error } = await supabaseAdmin
       .from("payment_records")
       .update({
         amount: (charge.amount_refunded || charge.amount || 0) / 100,
-        status: "refunded",
+        status: isFullyRefunded ? "refunded" : (existingRecord.status ?? "succeeded"),
         last_event_id: event.id,
+        metadata: updatedMetadata,
         updated_at: new Date().toISOString(),
       })
       .eq("id", existingRecord.id);
@@ -606,15 +615,17 @@ async function handleChargeRefunded(
       checkoutSessionId: null,
       invoiceId: null,
       chargeId: charge.id,
-      status: "refunded",
+      status: isFullyRefunded ? "refunded" : "succeeded",
       eventId: event.id,
       metadata: {
-        refunded: true,
+        refunded: isFullyRefunded,
+        amount_refunded: (charge.amount_refunded || 0) / 100,
+        partial_refund: !isFullyRefunded,
       },
     });
   }
 
-  if (tier === "document") {
+  if (isFullyRefunded && tier === "document") {
     await syncProfileTier(supabaseAdmin, userId, "free");
   }
 }
@@ -652,7 +663,8 @@ serve(async (req) => {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
+    const cryptoProvider = Stripe.createSubtleCryptoProvider();
+    event = await stripe.webhooks.constructEventAsync(rawBody, signature, webhookSecret, undefined, cryptoProvider);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     logStep("Signature verification failed", { message });
@@ -717,13 +729,14 @@ serve(async (req) => {
 
   const claim = (Array.isArray(claimRows) ? claimRows[0] : claimRows) as WebhookClaim | null;
   if (!claim?.claimed) {
+    const isPendingClaim = claim?.processing_status === "pending";
     return new Response(
       JSON.stringify({
         received: true,
         duplicate: true,
-        processing: claim?.processing_status === "pending",
+        processing: isPendingClaim,
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: isPendingClaim ? 409 : 200 },
     );
   }
 
