@@ -33,6 +33,9 @@ jobs:
     if: always() && (needs.sync-secrets.result == 'success' || needs.sync-secrets.result == 'skipped')
     env:
       VITE_ENABLE_PAYMENTS: 'true'
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     
     steps:
       - name: Checkout
@@ -53,6 +56,10 @@ jobs:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
           VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
         run: npm run build
+
+      - name: Skip Vercel preview deployment when secrets are unavailable
+        if: github.event_name == 'pull_request' && (env.VERCEL_TOKEN == '' || env.VERCEL_ORG_ID == '' || env.VERCEL_PROJECT_ID == '')
+        run: echo "Skipping Vercel preview deployment because required Vercel secrets are unavailable for this pull_request run."
 
       - name: Configure server-side Vercel variables
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -76,12 +83,13 @@ jobs:
           printf '%s' "$STRIPE_WEBHOOK_SECRET" | npm exec --yes --package=vercel@59.17.0 -- vercel env add STRIPE_WEBHOOK_SECRET production --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" >/dev/null
 
       - name: Deploy to Vercel
+        if: github.event_name != 'pull_request' || (env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != '')
         uses: amondnet/vercel-action@v25
         id: vercel-deploy
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-token: ${{ env.VERCEL_TOKEN }}
+          vercel-org-id: ${{ env.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ env.VERCEL_PROJECT_ID }}
           vercel-args: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && '--prod' || '' }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           github-comment: ${{ github.event_name == 'pull_request' }}
@@ -91,7 +99,7 @@ jobs:
             ${{ github.ref == 'refs/heads/main' && 'legallyai-nexus.vercel.app' || '' }}
 
       - name: Comment deployment URL
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && steps.vercel-deploy.outcome == 'success'
         uses: actions/github-script@v7
         with:
           script: |
