@@ -53,52 +53,7 @@ begin
       set subscription_tier = manual_subscription_tier
       where manual_subscription_tier in ('premium', 'pro')
         and (subscription_expires_at is null or subscription_expires_at > now())
-        and (subscription_tier is null or btrim(subscription_tier) = '' or subscription_tier = 'free')
-        and (
-          to_regclass('public.subscriptions') is null
-          or not exists (
-            select 1
-            from public.subscriptions s
-            where s.user_id = profiles.id
-              and s.status in ('active', 'trialing', 'past_due')
-          )
-        )
-        and (
-          to_regclass('public.payment_records') is null
-          or (
-            exists (
-              select 1
-              from information_schema.columns
-              where table_schema = 'public'
-                and table_name = 'payment_records'
-                and column_name = 'status'
-            )
-            and not exists (
-              select 1
-              from public.payment_records pr
-              where pr.user_id = profiles.id
-                and pr.status in ('paid', 'succeeded')
-                and pr.tier in ('premium', 'pro', 'enterprise')
-                and (pr.expires_at is null or pr.expires_at > now())
-            )
-          )
-          or (
-            not exists (
-              select 1
-              from information_schema.columns
-              where table_schema = 'public'
-                and table_name = 'payment_records'
-                and column_name = 'status'
-            )
-            and not exists (
-              select 1
-              from public.payment_records pr
-              where pr.user_id = profiles.id
-                and pr.tier in ('premium', 'pro', 'enterprise')
-                and (pr.expires_at is null or pr.expires_at > now())
-            )
-          )
-        );
+        and (subscription_tier is null or btrim(subscription_tier) = '' or subscription_tier = 'free');
     end if;
 
     update public.profiles
@@ -1408,7 +1363,6 @@ create policy "Assigned lawyers and privileged roles can view clients"
     or public.has_role(auth.uid(), 'admin', organization_id)
     or public.has_role(auth.uid(), 'owner', organization_id)
     or public.has_role(auth.uid(), 'manager', organization_id)
-    or public.has_role(auth.uid(), 'lawyer', organization_id)
   );
 
 create policy "Admin roles can manage clients"
