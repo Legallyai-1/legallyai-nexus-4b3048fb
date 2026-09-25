@@ -591,7 +591,7 @@ async function handleChargeRefunded(
       .from("payment_records")
       .update({
         amount: (charge.amount_refunded || charge.amount || 0) / 100,
-        status: isFullyRefunded ? "refunded" : (existingRecord.status ?? "succeeded"),
+        status: isFullyRefunded ? "refunded" : "succeeded",
         last_event_id: event.id,
         metadata: updatedMetadata,
         updated_at: new Date().toISOString(),

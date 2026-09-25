@@ -97,6 +97,10 @@ export default function ClientsPage() {
             .delete()
             .eq('organization_id', newOrg.id)
             .eq('user_id', userId);
+          await supabase
+            .from('organizations')
+            .delete()
+            .eq('id', newOrg.id);
           throw roleError;
         }
 

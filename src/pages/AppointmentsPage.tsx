@@ -120,6 +120,10 @@ export default function AppointmentsPage() {
               .delete()
               .eq('organization_id', newOrg.id)
               .eq('user_id', userId);
+            await supabase
+              .from('organizations')
+              .delete()
+              .eq('id', newOrg.id);
             throw roleError;
           }
           orgMember = { organization_id: newOrg.id };
