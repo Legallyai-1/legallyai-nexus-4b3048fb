@@ -24,7 +24,7 @@ export default function AdBanner({ slot, format = 'auto', className = '' }: AdBa
     if (!adsenseEnabled || isAdLoaded.current || loadFailed) return;
 
     let cancelled = false;
-    let verificationTimer: ReturnType<typeof setTimeout> | undefined;
+    let statusObserver: MutationObserver | undefined;
 
     const attemptLoad = (attempt = 0) => {
       if (cancelled || !adRef.current) return;
@@ -48,18 +48,42 @@ export default function AdBanner({ slot, format = 'auto', className = '' }: AdBa
 
         isAdLoaded.current = true;
         trackAdPerformance(slot, 'requested');
-        verificationTimer = setTimeout(() => {
-          if (cancelled) return;
-          const adElement = adRef.current?.querySelector('ins');
-          const rendered = Boolean(adElement && adElement.getAttribute('data-ad-status') !== 'unfilled');
-          if (rendered) {
+        const adElement = adRef.current?.querySelector('ins');
+        if (!adElement) {
+          setLoadFailed(true);
+          trackAdPerformance(slot, 'empty', 'ad-element-missing');
+          return;
+        }
+
+        const handleStatusChange = () => {
+          if (cancelled) return true;
+
+          const adStatus = adElement.getAttribute('data-ad-status');
+          if (adStatus === 'filled') {
             trackAdPerformance(slot, 'rendered');
-            return;
+            return true;
           }
 
-          setLoadFailed(true);
-          trackAdPerformance(slot, 'empty', 'ad-status-unfilled');
-        }, 2000);
+          if (adStatus === 'unfilled') {
+            setLoadFailed(true);
+            trackAdPerformance(slot, 'empty', 'ad-status-unfilled');
+            return true;
+          }
+
+          return false;
+        };
+
+        if (!handleStatusChange()) {
+          statusObserver = new MutationObserver(() => {
+            if (handleStatusChange()) {
+              statusObserver?.disconnect();
+            }
+          });
+          statusObserver.observe(adElement, {
+            attributes: true,
+            attributeFilter: ['data-ad-status'],
+          });
+        }
       } catch (error) {
         setLoadFailed(true);
         trackAdPerformance(slot, 'error', error instanceof Error ? error.message : 'unknown');
@@ -71,9 +95,7 @@ export default function AdBanner({ slot, format = 'auto', className = '' }: AdBa
     return () => {
       cancelled = true;
       clearTimeout(timer);
-      if (verificationTimer) {
-        clearTimeout(verificationTimer);
-      }
+      statusObserver?.disconnect();
     };
   }, [adsenseEnabled, loadFailed, slot]);
 
