@@ -179,6 +179,8 @@ jobs:
       - name: Comment deployment URL
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
+        env:
+          SMOKE_BASE_URL: ${{ env.SMOKE_BASE_URL }}
         with:
           script: |
             const previewUrl = process.env.SMOKE_BASE_URL;

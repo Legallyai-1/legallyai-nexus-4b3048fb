@@ -21,18 +21,35 @@ export default function SidebarAd({ slot, className = '' }: SidebarAdProps) {
   useEffect(() => {
     if (!adsenseEnabled || isAdLoaded.current || loadFailed) return;
 
-    try {
-      const queued = queueAdsenseSlot();
-      if (!queued) {
-        throw new Error('adsbygoogle is not available on window');
-      }
+    let cancelled = false;
 
-      isAdLoaded.current = true;
-      trackAdPerformance(slot, 'requested');
-    } catch (error) {
-      setLoadFailed(true);
-      trackAdPerformance(slot, 'error', error instanceof Error ? error.message : 'unknown');
-    }
+    const attemptLoad = (attempt = 0) => {
+      if (cancelled || isAdLoaded.current) return;
+
+      try {
+        const queued = queueAdsenseSlot();
+        if (!queued) {
+          if (attempt < 5) {
+            setTimeout(() => attemptLoad(attempt + 1), 150);
+            return;
+          }
+
+          throw new Error('adsbygoogle is not available on window');
+        }
+
+        isAdLoaded.current = true;
+        trackAdPerformance(slot, 'requested');
+      } catch (error) {
+        setLoadFailed(true);
+        trackAdPerformance(slot, 'error', error instanceof Error ? error.message : 'unknown');
+      }
+    };
+
+    attemptLoad();
+
+    return () => {
+      cancelled = true;
+    };
   }, [adsenseEnabled, loadFailed, slot]);
 
   if (!adsenseEnabled || loadFailed) {
