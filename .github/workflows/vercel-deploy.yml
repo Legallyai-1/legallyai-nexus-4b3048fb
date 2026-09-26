@@ -153,8 +153,11 @@ jobs:
 
       - name: Determine validation URL
         run: |
-          base_url="https://${{ steps.vercel-deploy.outputs.preview-url }}"
-          if [ -z "${{ steps.vercel-deploy.outputs.preview-url }}" ]; then
+          base_url="${{ steps.vercel-deploy.outputs.preview-url }}"
+          if [ -n "$base_url" ] && ! printf '%s' "$base_url" | grep -Eq '^https?://'; then
+            base_url="https://$base_url"
+          fi
+          if [ -z "$base_url" ]; then
             base_url="https://www.legallyai.ai"
           fi
           echo "SMOKE_BASE_URL=$base_url" >> "$GITHUB_ENV"

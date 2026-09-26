@@ -22,6 +22,7 @@ export default function SidebarAd({ slot, className = '' }: SidebarAdProps) {
     if (!adsenseEnabled || isAdLoaded.current || loadFailed) return;
 
     let cancelled = false;
+    const retryTimers: ReturnType<typeof setTimeout>[] = [];
 
     const attemptLoad = (attempt = 0) => {
       if (cancelled || isAdLoaded.current) return;
@@ -30,7 +31,7 @@ export default function SidebarAd({ slot, className = '' }: SidebarAdProps) {
         const queued = queueAdsenseSlot();
         if (!queued) {
           if (attempt < 5) {
-            setTimeout(() => attemptLoad(attempt + 1), 150);
+            retryTimers.push(setTimeout(() => attemptLoad(attempt + 1), 150));
             return;
           }
 
@@ -49,6 +50,7 @@ export default function SidebarAd({ slot, className = '' }: SidebarAdProps) {
 
     return () => {
       cancelled = true;
+      retryTimers.forEach(clearTimeout);
     };
   }, [adsenseEnabled, loadFailed, slot]);
 
