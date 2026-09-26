@@ -14,7 +14,11 @@
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",
     "supabase:functions": "supabase functions serve",
-    "deploy:functions": "supabase functions deploy"
+    "deploy:functions": "supabase functions deploy",
+    "validate:env": "node --experimental-strip-types scripts/validate-env.ts",
+    "validate:secrets": "node --experimental-strip-types scripts/validate-secrets.ts",
+    "validate:deployment": "node --experimental-strip-types scripts/validate-deployment.ts",
+    "prepare": "git config core.hooksPath .githooks || true"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.39",

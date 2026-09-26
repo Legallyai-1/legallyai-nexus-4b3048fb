@@ -1,25 +1,35 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { validateStripeWebhookEnv } from '../../.env.validation.ts';
 
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY || '';
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
-const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const stripe = stripeSecretKey
-  ? new Stripe(stripeSecretKey, { apiVersion: '2025-08-27.basil' })
-  : null;
-const supabase = supabaseUrl && supabaseSecretKey
-  ? createClient(supabaseUrl, supabaseSecretKey)
-  : null;
+const SUPPORTED_EVENTS = new Set([
+  'checkout.session.completed',
+  'checkout.session.async_payment_succeeded',
+  'checkout.session.async_payment_failed',
+  'invoice.paid',
+  'customer.subscription.created',
+  'customer.subscription.updated',
+  'customer.subscription.deleted',
+]);
 
+const MAX_RETRIES = 3;
 const PRICE_TIERS: Record<string, 'premium' | 'pro' | 'document'> = {
   price_1Sdfqp0QhWGUtGKvcQuWONuB: 'premium',
   price_1SckV70QhWGUtGKvvg1tH7lu: 'pro',
   price_1SckVt0QhWGUtGKvl9YdmQqk: 'document',
 };
-
 const VALID_TIERS = new Set(['premium', 'pro', 'document']);
+
+function getWebhookClients() {
+  const env = validateStripeWebhookEnv(process.env);
+
+  return {
+    env,
+    stripe: new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2026-08-26.dahlia' }),
+    supabase: createClient(env.SUPABASE_URL, env.SUPABASE_SERVER_KEY),
+  };
+}
 
 function normalizeStatus(status: Stripe.Subscription.Status): 'inactive' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid' {
   if (status === 'trialing' || status === 'active' || status === 'past_due' || status === 'canceled' || status === 'unpaid') {
@@ -39,20 +49,71 @@ function getTier(subscription: Stripe.Subscription): 'free' | 'premium' | 'pro' 
   return PRICE_TIERS[price?.id || ''] || 'premium';
 }
 
-async function resolveUserId(customerId: string, metadata: Stripe.Metadata) {
-  if (!stripe || !supabase) throw new Error('Billing server is not configured');
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function formatError(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return 'Unknown error';
+}
+
+async function withRetry<T>(label: string, operation: () => Promise<T>) {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt += 1) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      if (attempt === MAX_RETRIES) {
+        break;
+      }
+
+      console.warn(`[stripe-webhook] retrying ${label} after attempt ${attempt}`, formatError(error));
+      await sleep(200 * attempt);
+    }
+  }
+
+  throw lastError;
+}
+
+function getRawBody(req: VercelRequest) {
+  if (Buffer.isBuffer(req.body)) {
+    return req.body;
+  }
+
+  if (typeof req.body === 'string') {
+    return Buffer.from(req.body, 'utf8');
+  }
+
+  return Buffer.from(JSON.stringify(req.body ?? {}), 'utf8');
+}
+
+async function resolveUserId(
+  stripe: Stripe,
+  supabase: ReturnType<typeof createClient>,
+  customerId: string,
+  metadata: Stripe.Metadata,
+) {
   if (metadata.user_id) return metadata.user_id;
 
-  const customer = await stripe.customers.retrieve(customerId);
+  const customer = await withRetry(`customer lookup ${customerId}`, () => stripe.customers.retrieve(customerId));
   if (('deleted' in customer && customer.deleted) || !('email' in customer) || !customer.email) {
     throw new Error(`Unable to resolve Stripe customer ${customerId}`);
   }
 
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('email', customer.email)
-    .maybeSingle();
+  const { data: profile, error: profileError } = await withRetry(`profile lookup ${customer.email}`, () =>
+    supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', customer.email)
+      .maybeSingle(),
+  );
+
   if (profileError || !profile) {
     throw new Error(`Unable to resolve Supabase profile for Stripe customer ${customerId}`);
   }
@@ -60,10 +121,14 @@ async function resolveUserId(customerId: string, metadata: Stripe.Metadata) {
   return profile.id;
 }
 
-async function persistSubscription(subscription: Stripe.Subscription, userId?: string) {
-  if (!stripe || !supabase) throw new Error('Billing server is not configured');
+async function persistSubscription(
+  stripe: Stripe,
+  supabase: ReturnType<typeof createClient>,
+  subscription: Stripe.Subscription,
+  userId?: string,
+) {
   const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id;
-  const resolvedUserId = userId || await resolveUserId(customerId, subscription.metadata);
+  const resolvedUserId = userId || await resolveUserId(stripe, supabase, customerId, subscription.metadata);
   const status = normalizeStatus(subscription.status);
   const tier = status === 'canceled' || status === 'unpaid' ? 'free' : getTier(subscription);
   const period = subscription.items.data[0];
@@ -71,23 +136,48 @@ async function persistSubscription(subscription: Stripe.Subscription, userId?: s
   const periodStart = new Date(period.current_period_start * 1000).toISOString();
   const periodEnd = new Date(period.current_period_end * 1000).toISOString();
 
-  const { error: subscriptionError } = await supabase.from('subscriptions').upsert({
-    user_id: resolvedUserId,
-    stripe_customer_id: customerId,
-    stripe_subscription_id: subscription.id,
-    status,
-    tier,
-    current_period_start: periodStart,
-    current_period_end: periodEnd,
-    cancel_at_period_end: subscription.cancel_at_period_end,
-    updated_at: new Date().toISOString(),
-  }, { onConflict: 'user_id' });
+  const { error: subscriptionError } = await withRetry(`subscription upsert ${subscription.id}`, () =>
+    supabase.from('subscriptions').upsert({
+      user_id: resolvedUserId,
+      stripe_customer_id: customerId,
+      stripe_subscription_id: subscription.id,
+      status,
+      tier,
+      current_period_start: periodStart,
+      current_period_end: periodEnd,
+      cancel_at_period_end: subscription.cancel_at_period_end,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'user_id' }),
+  );
+
   if (subscriptionError) throw subscriptionError;
 
-  const { error: profileError } = await supabase.from('profiles')
-    .update({ subscription_tier: tier, updated_at: new Date().toISOString() })
-    .eq('id', resolvedUserId);
+  const { error: profileError } = await withRetry(`profile update ${resolvedUserId}`, () =>
+    supabase
+      .from('profiles')
+      .update({ subscription_tier: tier, updated_at: new Date().toISOString() })
+      .eq('id', resolvedUserId),
+  );
+
   if (profileError) throw profileError;
+}
+
+export async function checkStripeHealth() {
+  try {
+    const { stripe } = getWebhookClients();
+    const account = await stripe.accounts.retrieve();
+
+    return {
+      ok: true,
+      accountId: account.id,
+      supportedEvents: [...SUPPORTED_EVENTS],
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: formatError(error),
+    };
+  }
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -95,36 +185,56 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  if (!stripe || !supabase || !webhookSecret) {
-    return res.status(503).json({ error: 'Stripe webhook is not configured' });
-  }
-
-  const signature = req.headers['stripe-signature'];
-
-  if (!signature || !webhookSecret) {
-    return res.status(401).json({ error: 'Missing stripe signature or webhook secret' });
-  }
-
-  let event;
+  let clients: ReturnType<typeof getWebhookClients>;
 
   try {
-    const rawBody = req.body;
-    const payload = typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody);
-    event = stripe.webhooks.constructEvent(payload, signature as string, webhookSecret);
+    clients = getWebhookClients();
+  } catch (error) {
+    const details = error instanceof Error ? error.message : 'Invalid webhook configuration';
+    return res.status(503).json({ error: details });
+  }
+
+  const { stripe, supabase, env } = clients;
+  const signature = req.headers['stripe-signature'];
+
+  if (!signature) {
+    return res.status(401).json({ error: 'Missing stripe signature header' });
+  }
+
+  let event: Stripe.Event;
+
+  try {
+    event = stripe.webhooks.constructEvent(getRawBody(req), signature as string, env.STRIPE_WEBHOOK_SECRET);
   } catch (error) {
     console.error('Stripe webhook verification failed', error);
     return res.status(400).json({ error: 'Webhook verification failed' });
   }
 
+  if (!SUPPORTED_EVENTS.has(event.type)) {
+    console.info(`[stripe-webhook] ignored unsupported event ${event.type}`);
+    return res.status(202).json({ received: true, ignored: true });
+  }
+
+  console.info(`[stripe-webhook] processing ${event.type}`, { id: event.id });
+
   try {
     switch (event.type) {
-      case 'checkout.session.completed': {
+      case 'checkout.session.completed':
+      case 'checkout.session.async_payment_succeeded': {
         const session = event.data.object as Stripe.Checkout.Session;
+        if (session.payment_status === 'unpaid') {
+          break;
+        }
+
         if (session.mode === 'subscription' && session.subscription) {
           const subscriptionId = typeof session.subscription === 'string' ? session.subscription : session.subscription.id;
-          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-          await persistSubscription(subscription, session.client_reference_id || session.metadata?.user_id);
+          const subscription = await withRetry(`subscription retrieve ${subscriptionId}`, () => stripe.subscriptions.retrieve(subscriptionId));
+          await persistSubscription(stripe, supabase, subscription, session.client_reference_id || session.metadata?.user_id);
         }
+        break;
+      }
+      case 'checkout.session.async_payment_failed': {
+        console.warn('[stripe-webhook] async payment failed', { id: event.id });
         break;
       }
       case 'invoice.paid': {
@@ -136,20 +246,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           ? parentSubscription
           : parentSubscription?.id;
         if (subscriptionId) {
-          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-          await persistSubscription(subscription);
+          const subscription = await withRetry(`subscription retrieve ${subscriptionId}`, () => stripe.subscriptions.retrieve(subscriptionId));
+          await persistSubscription(stripe, supabase, subscription);
         }
         break;
       }
       case 'customer.subscription.created':
-      case 'customer.subscription.updated': {
-        const subscription = event.data.object as Stripe.Subscription;
-        await persistSubscription(subscription);
-        break;
-      }
+      case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
-        await persistSubscription(subscription);
+        await persistSubscription(stripe, supabase, subscription);
         break;
       }
       default:
@@ -158,7 +264,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({ received: true });
   } catch (error) {
-    console.error('Stripe event processing error', error);
+    console.error('[stripe-webhook] event processing error', {
+      id: event.id,
+      type: event.type,
+      error: formatError(error),
+    });
     return res.status(500).json({ error: 'Event processing failed' });
   }
 }

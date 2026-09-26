@@ -1,0 +1,10 @@
+.agents
+.github
+android
+coverage
+docs
+node_modules
+supabase
+*.log
+*.md
+!README.md

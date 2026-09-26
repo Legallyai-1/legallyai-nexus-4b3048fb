@@ -6,34 +6,38 @@ on:
       - main
   pull_request:
     types: [opened, synchronize, reopened]
-  workflow_dispatch:  # Manual trigger for secret sync
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: vercel-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  # Sync secrets to Vercel
-  sync-secrets:
+  validate-configuration:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
-    steps:
-      - name: Sync production secrets to Vercel
-        uses: itstor/sync-secrets-to-vercel@v1
-        with:
-          prefix: 'VITE_'
-          environments: 'production,preview'
-          project: ${{ secrets.VERCEL_PROJECT_ID }}
-          team_id: ${{ secrets.VERCEL_ORG_ID }}
-          token: ${{ secrets.VERCEL_TOKEN }}
-          secrets: '${{ toJSON(secrets) }}'
-          cancel_on_fail: false
-
-  # Deploy to Vercel
-  deploy:
-    runs-on: ubuntu-latest
-    needs: [sync-secrets]
-    if: always() && (needs.sync-secrets.result == 'success' || needs.sync-secrets.result == 'skipped')
     env:
-      VITE_ENABLE_PAYMENTS: 'true'
-    
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY || secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      VITE_SUPABASE_PROJECT_ID: ${{ vars.VITE_SUPABASE_PROJECT_ID || secrets.VITE_SUPABASE_PROJECT_ID }}
+      VITE_ADSENSE_CLIENT_ID: ${{ vars.VITE_ADSENSE_CLIENT_ID || secrets.VITE_ADSENSE_CLIENT_ID }}
+      VITE_ENABLE_ADSENSE: ${{ vars.VITE_ENABLE_ADSENSE || secrets.VITE_ENABLE_ADSENSE || 'true' }}
+      VITE_ENABLE_PAYMENTS: ${{ vars.VITE_ENABLE_PAYMENTS || secrets.VITE_ENABLE_PAYMENTS || 'true' }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID || secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID || secrets.VERCEL_PROJECT_ID }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+      SUPABASE_URL: ${{ vars.SUPABASE_URL || secrets.SUPABASE_URL || vars.VITE_SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,81 +45,160 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate client environment
+        run: npm run validate:env -- --target=client
+
+      - name: Validate deployment configuration
+        run: |
+          npm run validate:secrets
+          npm run validate:env -- --target=deployment
+
+  deploy:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    needs: [validate-configuration]
+    env:
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY || secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      VITE_SUPABASE_PROJECT_ID: ${{ vars.VITE_SUPABASE_PROJECT_ID || secrets.VITE_SUPABASE_PROJECT_ID }}
+      VITE_ADSENSE_CLIENT_ID: ${{ vars.VITE_ADSENSE_CLIENT_ID || secrets.VITE_ADSENSE_CLIENT_ID }}
+      VITE_ENABLE_ADSENSE: ${{ vars.VITE_ENABLE_ADSENSE || secrets.VITE_ENABLE_ADSENSE || 'true' }}
+      VITE_ENABLE_PAYMENTS: ${{ vars.VITE_ENABLE_PAYMENTS || secrets.VITE_ENABLE_PAYMENTS || 'true' }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID || secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID || secrets.VERCEL_PROJECT_ID }}
+      SUPABASE_URL: ${{ vars.SUPABASE_URL || secrets.SUPABASE_URL || vars.VITE_SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
       - name: Build application
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
-          VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
         run: npm run build
 
-      - name: Configure server-side Vercel variables
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+      - name: Sync Vercel environment variables
         run: |
-          test -n "$VERCEL_TOKEN" && test -n "$VERCEL_ORG_ID" && test -n "$SUPABASE_URL" && test -n "$SUPABASE_SECRET_KEY" && test -n "$STRIPE_SECRET_KEY" && test -n "$STRIPE_WEBHOOK_SECRET" || { echo 'Required Vercel/Supabase/Stripe deployment secret is missing'; exit 1; }
-          npm exec --yes --package=vercel@59.17.0 -- vercel env rm SUPABASE_URL production --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --yes >/dev/null 2>&1 || true
-          npm exec --yes --package=vercel@59.17.0 -- vercel env rm SUPABASE_SECRET_KEY production --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --yes >/dev/null 2>&1 || true
-          npm exec --yes --package=vercel@59.17.0 -- vercel env rm SUPABASE_SERVICE_ROLE_KEY production --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --yes >/dev/null 2>&1 || true
-          npm exec --yes --package=vercel@59.17.0 -- vercel env rm STRIPE_SECRET_KEY production --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --yes >/dev/null 2>&1 || true
-          npm exec --yes --package=vercel@59.17.0 -- vercel env rm STRIPE_WEBHOOK_SECRET production --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --yes >/dev/null 2>&1 || true
-          printf '%s' "$SUPABASE_URL" | npm exec --yes --package=vercel@59.17.0 -- vercel env add SUPABASE_URL production --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" >/dev/null
-          printf '%s' "$SUPABASE_SECRET_KEY" | npm exec --yes --package=vercel@59.17.0 -- vercel env add SUPABASE_SECRET_KEY production --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" >/dev/null
-          printf '%s' "$STRIPE_SECRET_KEY" | npm exec --yes --package=vercel@59.17.0 -- vercel env add STRIPE_SECRET_KEY production --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" >/dev/null
-          printf '%s' "$STRIPE_WEBHOOK_SECRET" | npm exec --yes --package=vercel@59.17.0 -- vercel env add STRIPE_WEBHOOK_SECRET production --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" >/dev/null
+          set -eu
+
+          sync_env() {
+            name="$1"
+            value="$2"
+            target="$3"
+
+            if [ -z "$value" ]; then
+              echo "Skipping $name for $target because no value was provided"
+              return 0
+            fi
+
+            npm exec --yes --package=vercel@59.17.0 -- vercel env rm "$name" "$target" --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --yes >/dev/null 2>&1 || true
+            printf '%s' "$value" | npm exec --yes --package=vercel@59.17.0 -- vercel env add "$name" "$target" --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" >/dev/null
+          }
+
+          targets="preview"
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            targets="preview production"
+          fi
+
+          for target in $targets; do
+            sync_env VITE_SUPABASE_URL "$VITE_SUPABASE_URL" "$target"
+            sync_env VITE_SUPABASE_ANON_KEY "$VITE_SUPABASE_ANON_KEY" "$target"
+            sync_env VITE_SUPABASE_PUBLISHABLE_KEY "$VITE_SUPABASE_PUBLISHABLE_KEY" "$target"
+            sync_env VITE_SUPABASE_PROJECT_ID "$VITE_SUPABASE_PROJECT_ID" "$target"
+            sync_env VITE_ADSENSE_CLIENT_ID "$VITE_ADSENSE_CLIENT_ID" "$target"
+            sync_env VITE_ENABLE_ADSENSE "$VITE_ENABLE_ADSENSE" "$target"
+            sync_env VITE_ENABLE_PAYMENTS "$VITE_ENABLE_PAYMENTS" "$target"
+            sync_env SUPABASE_URL "$SUPABASE_URL" "$target"
+            sync_env SUPABASE_SECRET_KEY "$SUPABASE_SECRET_KEY" "$target"
+            sync_env SUPABASE_SERVICE_ROLE_KEY "$SUPABASE_SERVICE_ROLE_KEY" "$target"
+            sync_env STRIPE_SECRET_KEY "$STRIPE_SECRET_KEY" "$target"
+            sync_env STRIPE_WEBHOOK_SECRET "$STRIPE_WEBHOOK_SECRET" "$target"
+            sync_env OPENAI_API_KEY "$OPENAI_API_KEY" "$target"
+          done
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         id: vercel-deploy
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-org-id: ${{ vars.VERCEL_ORG_ID || secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ vars.VERCEL_PROJECT_ID || secrets.VERCEL_PROJECT_ID }}
           vercel-args: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && '--prod' || '' }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          github-comment: ${{ github.event_name == 'pull_request' }}
+          github-comment: false
           working-directory: ./
           alias-domains: |
             ${{ github.event_name == 'pull_request' && format('pr-{0}.legallyai-nexus.vercel.app', github.event.pull_request.number) || '' }}
-            ${{ github.ref == 'refs/heads/main' && 'legallyai-nexus.vercel.app' || '' }}
+            ${{ github.ref == 'refs/heads/main' && 'www.legallyai.ai' || '' }}
+
+      - name: Determine validation URL
+        run: |
+          base_url="https://${{ steps.vercel-deploy.outputs.preview-url }}"
+          if [ -z "${{ steps.vercel-deploy.outputs.preview-url }}" ]; then
+            base_url="https://www.legallyai.ai"
+          fi
+          echo "SMOKE_BASE_URL=$base_url" >> "$GITHUB_ENV"
+
+      - name: Wait for deployment
+        run: sleep 15
+
+      - name: Run deployment health check
+        id: deployment-health
+        run: npm run validate:deployment
+
+      - name: Publish deployment summary
+        run: |
+          {
+            echo "## Vercel deployment"
+            echo ""
+            echo "- Deployment URL: $SMOKE_BASE_URL"
+            echo "- Vercel name: ${{ steps.vercel-deploy.outputs.preview-name || 'production' }}"
+            echo "- Health check: passed"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Comment deployment URL
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
-            const previewUrl = '${{ steps.vercel-deploy.outputs.preview-url }}';
-            const deploymentState = 'READY';
+            const previewUrl = process.env.SMOKE_BASE_URL;
             const deploymentName = '${{ steps.vercel-deploy.outputs.preview-name }}';
-            
             const comment = `## 🚀 Vercel Deployment
             
-            Your PR has been successfully deployed to Vercel!
+            Your PR has been deployed and validated.
             
             | Name | Link |
             |------|------|
             | 🔨 Latest commit | \`${{ github.event.pull_request.head.sha }}\` |
-            | 🔍 Preview URL | [Visit Preview](https://${previewUrl}) |
-            | 📝 Deployment Name | ${deploymentName} |
-            | ✅ Status | ${deploymentState || 'READY'} |
+            | 🔍 Preview URL | [Visit Preview](${previewUrl}) |
+            | 📝 Deployment Name | ${deploymentName || 'preview'} |
+            | ✅ Health check | Passed |
             
             ---
-            *Powered by [Vercel](https://vercel.com) via GitHub Actions*`;
-            
+            *Powered by Vercel via GitHub Actions*`;
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: comment
+              body: comment,
             });
