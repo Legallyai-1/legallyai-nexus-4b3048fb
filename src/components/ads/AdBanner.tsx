@@ -18,9 +18,10 @@ export default function AdBanner({ slot, format = 'auto', className = '' }: AdBa
   const adRef = useRef<HTMLDivElement>(null);
   const isAdLoaded = useRef(false);
   const [loadFailed, setLoadFailed] = useState(false);
+  const adsenseEnabled = canRenderAds() && shouldShowAds();
 
   useEffect(() => {
-    if (!canRenderAds() || !shouldShowAds() || isAdLoaded.current || loadFailed) return;
+    if (!adsenseEnabled || isAdLoaded.current || loadFailed) return;
 
     let cancelled = false;
     let verificationTimer: ReturnType<typeof setTimeout> | undefined;
@@ -74,9 +75,7 @@ export default function AdBanner({ slot, format = 'auto', className = '' }: AdBa
         clearTimeout(verificationTimer);
       }
     };
-  }, [loadFailed, slot]);
-
-  const adsenseEnabled = canRenderAds() && shouldShowAds();
+  }, [adsenseEnabled, loadFailed, slot]);
 
   if (!adsenseEnabled) {
     return null;

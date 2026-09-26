@@ -16,9 +16,10 @@ export default function SidebarAd({ slot, className = '' }: SidebarAdProps) {
   const adRef = useRef<HTMLDivElement>(null);
   const isAdLoaded = useRef(false);
   const [loadFailed, setLoadFailed] = useState(false);
+  const adsenseEnabled = canRenderAds();
 
   useEffect(() => {
-    if (!canRenderAds() || isAdLoaded.current || loadFailed) return;
+    if (!adsenseEnabled || isAdLoaded.current || loadFailed) return;
 
     try {
       const queued = queueAdsenseSlot();
@@ -32,9 +33,9 @@ export default function SidebarAd({ slot, className = '' }: SidebarAdProps) {
       setLoadFailed(true);
       trackAdPerformance(slot, 'error', error instanceof Error ? error.message : 'unknown');
     }
-  }, [loadFailed, slot]);
+  }, [adsenseEnabled, loadFailed, slot]);
 
-  if (!canRenderAds() || loadFailed) {
+  if (!adsenseEnabled || loadFailed) {
     return null;
   }
 

@@ -1,5 +1,18 @@
-const baseUrl = (process.env.SMOKE_BASE_URL || 'https://www.legallyai.ai').replace(/\/$/, '');
-const supabaseUrl = (process.env.VITE_SUPABASE_URL || 'https://whdljtbtqisoszbrzdwq.supabase.co').replace(/\/$/, '');
+const rawBaseUrl = process.env.SMOKE_BASE_URL;
+const rawSupabaseUrl = process.env.VITE_SUPABASE_URL;
+
+if (!rawBaseUrl) {
+  console.error('SMOKE_BASE_URL is required.');
+  process.exit(1);
+}
+
+if (!rawSupabaseUrl) {
+  console.error('VITE_SUPABASE_URL is required.');
+  process.exit(1);
+}
+
+const baseUrl = rawBaseUrl.replace(/\/$/, '');
+const supabaseUrl = rawSupabaseUrl.replace(/\/$/, '');
 
 const checks = [
   { name: 'homepage', url: `${baseUrl}/`, expected: [200] },
