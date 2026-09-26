@@ -25,6 +25,7 @@ export default function AdBanner({ slot, format = 'auto', className = '' }: AdBa
 
     let cancelled = false;
     let statusObserver: MutationObserver | undefined;
+    let statusTimeout: ReturnType<typeof setTimeout> | undefined;
 
     const attemptLoad = (attempt = 0) => {
       if (cancelled || !adRef.current) return;
@@ -77,12 +78,21 @@ export default function AdBanner({ slot, format = 'auto', className = '' }: AdBa
           statusObserver = new MutationObserver(() => {
             if (handleStatusChange()) {
               statusObserver?.disconnect();
+              if (statusTimeout) {
+                clearTimeout(statusTimeout);
+              }
             }
           });
           statusObserver.observe(adElement, {
             attributes: true,
             attributeFilter: ['data-ad-status'],
           });
+          statusTimeout = setTimeout(() => {
+            statusObserver?.disconnect();
+            if (cancelled || handleStatusChange()) return;
+            setLoadFailed(true);
+            trackAdPerformance(slot, 'empty', 'ad-status-timeout');
+          }, 10000);
         }
       } catch (error) {
         setLoadFailed(true);
@@ -96,6 +106,9 @@ export default function AdBanner({ slot, format = 'auto', className = '' }: AdBa
       cancelled = true;
       clearTimeout(timer);
       statusObserver?.disconnect();
+      if (statusTimeout) {
+        clearTimeout(statusTimeout);
+      }
     };
   }, [adsenseEnabled, loadFailed, slot]);
 
