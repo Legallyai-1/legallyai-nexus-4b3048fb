@@ -26,7 +26,7 @@ function getWebhookClients() {
 
   return {
     env,
-    stripe: new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2026-08-26.dahlia' }),
+    stripe: new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2025-08-27.basil' }),
     supabase: createClient(env.SUPABASE_URL, env.SUPABASE_SERVER_KEY),
   };
 }
