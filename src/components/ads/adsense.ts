@@ -2,6 +2,9 @@ import { getAdsenseClientId, isAdsenseEnabled } from '@/lib/env';
 
 export type AdPerformanceEvent = 'requested' | 'rendered' | 'empty' | 'error';
 
+const ADSENSE_SCRIPT_ID = 'legallyai-adsense-script';
+const ADSENSE_SCRIPT_BASE_URL = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+
 export function getAdClient() {
   return getAdsenseClientId();
 }
@@ -27,8 +30,37 @@ export function trackAdPerformance(slot: string, event: AdPerformanceEvent, deta
   }
 }
 
+function ensureAdsenseScriptLoaded() {
+  if (typeof document === 'undefined') {
+    return;
+  }
+
+  const scriptSrc = `${ADSENSE_SCRIPT_BASE_URL}?client=${encodeURIComponent(getAdsenseClientId())}`;
+  const existingScript = document.getElementById(ADSENSE_SCRIPT_ID);
+
+  if (existingScript instanceof HTMLScriptElement) {
+    if (existingScript.src !== scriptSrc) {
+      existingScript.src = scriptSrc;
+    }
+    return;
+  }
+
+  const script = document.createElement('script');
+  script.id = ADSENSE_SCRIPT_ID;
+  script.async = true;
+  script.crossOrigin = 'anonymous';
+  script.src = scriptSrc;
+  document.head.appendChild(script);
+}
+
 export function queueAdsenseSlot() {
-  if (typeof window === 'undefined' || !Array.isArray(window.adsbygoogle)) {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  ensureAdsenseScriptLoaded();
+
+  if (!Array.isArray(window.adsbygoogle)) {
     return false;
   }
 
