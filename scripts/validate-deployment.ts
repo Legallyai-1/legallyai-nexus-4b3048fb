@@ -1,0 +1,58 @@
+const rawBaseUrl = process.env.SMOKE_BASE_URL;
+const rawSupabaseUrl = process.env.VITE_SUPABASE_URL;
+
+if (!rawBaseUrl) {
+  console.error('SMOKE_BASE_URL is required.');
+  process.exit(1);
+}
+
+if (!rawSupabaseUrl) {
+  console.error('VITE_SUPABASE_URL is required.');
+  process.exit(1);
+}
+
+const baseUrl = rawBaseUrl.replace(/\/$/, '');
+const supabaseUrl = rawSupabaseUrl.replace(/\/$/, '');
+
+const checks = [
+  { name: 'homepage', url: `${baseUrl}/`, expected: [200] },
+  { name: 'auth route', url: `${baseUrl}/auth`, expected: [200] },
+  { name: 'pricing route', url: `${baseUrl}/pricing`, expected: [200] },
+  { name: 'ads.txt', url: `${baseUrl}/ads.txt`, expected: [200] },
+  {
+    name: 'stripe webhook',
+    url: `${baseUrl}/api/webhooks/stripe`,
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: '{}',
+    expected: [401],
+  },
+  { name: 'supabase jwks', url: `${supabaseUrl}/auth/v1/.well-known/jwks.json`, expected: [200] },
+];
+
+let failures = 0;
+
+for (const check of checks) {
+  try {
+    const response = await fetch(check.url, {
+      method: check.method ?? 'GET',
+      headers: check.headers,
+      body: check.body,
+      redirect: 'manual',
+    });
+    const passed = check.expected.includes(response.status);
+    console.log(`${passed ? 'PASS' : 'FAIL'} ${check.name}: ${response.status}`);
+    if (!passed) {
+      failures += 1;
+    }
+  } catch (error) {
+    failures += 1;
+    console.log(`FAIL ${check.name}: ${error instanceof Error ? error.message : 'request failed'}`);
+  }
+}
+
+if (failures > 0) {
+  process.exit(1);
+}
+
+console.log(`Deployment validation passed for ${baseUrl}.`);

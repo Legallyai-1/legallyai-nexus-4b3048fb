@@ -1,9 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from 'react';
 import { shouldShowAds } from '@/lib/subscription';
+import { canRenderAds, getAdClient, queueAdsenseSlot, trackAdPerformance } from './adsense';
 
 interface AdBannerProps {
   slot: string;
-  format?: "auto" | "horizontal" | "vertical" | "rectangle";
+  format?: 'auto' | 'horizontal' | 'vertical' | 'rectangle';
   className?: string;
 }
 
@@ -13,50 +14,125 @@ declare global {
   }
 }
 
-export default function AdBanner({ slot, format = "auto", className = "" }: AdBannerProps) {
+export default function AdBanner({ slot, format = 'auto', className = '' }: AdBannerProps) {
   const adRef = useRef<HTMLDivElement>(null);
   const isAdLoaded = useRef(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const adsenseEnabled = canRenderAds() && shouldShowAds();
 
   useEffect(() => {
-    if (!shouldShowAds() || isAdLoaded.current) return;
+    if (!adsenseEnabled || isAdLoaded.current || loadFailed) return;
 
-    const checkAndLoadAd = () => {
-      if (!adRef.current) return;
+    let cancelled = false;
+    let statusObserver: MutationObserver | undefined;
+    let statusTimeout: ReturnType<typeof setTimeout> | undefined;
 
-      const containerWidth = adRef.current.offsetWidth;
-      if (containerWidth <= 0) {
-        setTimeout(checkAndLoadAd, 100);
+    const attemptLoad = (attempt = 0) => {
+      if (cancelled || !adRef.current) return;
+
+      if (adRef.current.offsetWidth <= 0) {
+        if (attempt < 5) {
+          setTimeout(() => attemptLoad(attempt + 1), 150);
+          return;
+        }
+
+        setLoadFailed(true);
+        trackAdPerformance(slot, 'empty', 'container-width-unavailable');
         return;
       }
 
       try {
-        if (typeof window !== "undefined" && window.adsbygoogle) {
-          window.adsbygoogle.push({});
-          isAdLoaded.current = true;
+        const queued = queueAdsenseSlot();
+        if (!queued) {
+          throw new Error('adsbygoogle is not available on window');
         }
-      } catch (err) {
-        if (process.env.NODE_ENV === 'production') {
-          console.error("AdSense error:", err);
+
+        isAdLoaded.current = true;
+        trackAdPerformance(slot, 'requested');
+        const adElement = adRef.current?.querySelector('ins');
+        if (!adElement) {
+          setLoadFailed(true);
+          trackAdPerformance(slot, 'empty', 'ad-element-missing');
+          return;
         }
+
+        const handleStatusChange = () => {
+          if (cancelled) return true;
+
+          const adStatus = adElement.getAttribute('data-ad-status');
+          if (adStatus === 'filled') {
+            trackAdPerformance(slot, 'rendered');
+            return true;
+          }
+
+          if (adStatus === 'unfilled') {
+            setLoadFailed(true);
+            trackAdPerformance(slot, 'empty', 'ad-status-unfilled');
+            return true;
+          }
+
+          return false;
+        };
+
+        if (!handleStatusChange()) {
+          statusObserver = new MutationObserver(() => {
+            if (handleStatusChange()) {
+              statusObserver?.disconnect();
+              if (statusTimeout) {
+                clearTimeout(statusTimeout);
+              }
+            }
+          });
+          statusObserver.observe(adElement, {
+            attributes: true,
+            attributeFilter: ['data-ad-status'],
+          });
+          statusTimeout = setTimeout(() => {
+            statusObserver?.disconnect();
+            if (cancelled || handleStatusChange()) return;
+            setLoadFailed(true);
+            trackAdPerformance(slot, 'empty', 'ad-status-timeout');
+          }, 10000);
+        }
+      } catch (error) {
+        setLoadFailed(true);
+        trackAdPerformance(slot, 'error', error instanceof Error ? error.message : 'unknown');
       }
     };
 
-    setTimeout(checkAndLoadAd, 200);
-  }, []);
+    const timer = setTimeout(() => attemptLoad(), 200);
 
-  const adClient = import.meta.env.VITE_ADSENSE_CLIENT_ID || "ca-pub-4991947741196600";
-  const adsenseEnabled = import.meta.env.VITE_ENABLE_ADSENSE !== "false" && shouldShowAds();
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      statusObserver?.disconnect();
+      if (statusTimeout) {
+        clearTimeout(statusTimeout);
+      }
+    };
+  }, [adsenseEnabled, loadFailed, slot]);
 
   if (!adsenseEnabled) {
     return null;
   }
 
+  if (loadFailed) {
+    return (
+      <div
+        className={`ad-container flex min-h-24 items-center justify-center rounded-md border border-dashed border-border/50 text-xs text-muted-foreground/70 ${className}`}
+        data-ad-slot={slot}
+      >
+        Sponsored
+      </div>
+    );
+  }
+
   return (
-    <div ref={adRef} className={`ad-container ${className}`}>
+    <div ref={adRef} className={`ad-container ${className}`} data-ad-slot={slot}>
       <ins
         className="adsbygoogle"
-        style={{ display: "block" }}
-        data-ad-client={adClient}
+        style={{ display: 'block' }}
+        data-ad-client={getAdClient()}
         data-ad-slot={slot}
         data-ad-format={format}
         data-full-width-responsive="true"
