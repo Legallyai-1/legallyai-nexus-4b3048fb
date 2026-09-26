@@ -80,6 +80,7 @@ jobs:
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
       STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      IS_PRODUCTION: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -116,7 +117,7 @@ jobs:
           }
 
           targets="preview"
-          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          if [ "$IS_PRODUCTION" = "true" ]; then
             targets="preview production"
           fi
 
@@ -143,13 +144,13 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ vars.VERCEL_ORG_ID || secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ vars.VERCEL_PROJECT_ID || secrets.VERCEL_PROJECT_ID }}
-          vercel-args: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && '--prod' || '' }}
+          vercel-args: ${{ env.IS_PRODUCTION == 'true' && '--prod' || '' }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           github-comment: false
           working-directory: ./
           alias-domains: |
             ${{ github.event_name == 'pull_request' && format('pr-{0}.legallyai-nexus.vercel.app', github.event.pull_request.number) || '' }}
-            ${{ github.ref == 'refs/heads/main' && 'www.legallyai.ai' || '' }}
+            ${{ env.IS_PRODUCTION == 'true' && 'www.legallyai.ai' || '' }}
 
       - name: Determine validation URL
         run: |
