@@ -1,5 +1,6 @@
 import type { AuthChangeEvent, Session, SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from './client';
+import { getSupabaseBrowserConfig } from '@/lib/env';
 
 export interface SupabaseHealthCheckResult {
   ok: boolean;
@@ -42,16 +43,17 @@ export function subscribeToSupabaseAuthState(
   });
 }
 
-export async function checkSupabaseHealth(client: SupabaseClient = supabase): Promise<SupabaseHealthCheckResult> {
+export async function checkSupabaseHealth(): Promise<SupabaseHealthCheckResult> {
   try {
-    const response = await fetch(`${client.supabaseUrl}/rest/v1/`, {
+    const { url, publicKey } = getSupabaseBrowserConfig();
+    const response = await fetch(`${url}/rest/v1/`, {
       method: 'HEAD',
       headers: {
-        apikey: client.supabaseKey,
+        apikey: publicKey,
       },
     });
 
-    if (response.status >= 500) {
+    if (!response.ok) {
       return {
         ok: false,
         status: response.status,

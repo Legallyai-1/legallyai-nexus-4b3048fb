@@ -63,7 +63,7 @@ export function queueAdsenseSlot() {
   window.adsbygoogle = window.adsbygoogle || [];
 
   if (!Array.isArray(window.adsbygoogle)) {
-    return false;
+    window.adsbygoogle = [];
   }
 
   window.adsbygoogle.push({});

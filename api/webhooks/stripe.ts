@@ -81,7 +81,26 @@ async function withRetry<T>(label: string, operation: () => Promise<T>) {
   throw lastError;
 }
 
-function getRawBody(req: VercelRequest) {
+async function getRawBody(req: VercelRequest) {
+  const chunks: Buffer[] = [];
+
+  for await (const chunk of req) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+
+  if (chunks.length > 0) {
+    return Buffer.concat(chunks);
+  }
+
+  const rawBody = (req as VercelRequest & { rawBody?: Buffer | string }).rawBody;
+  if (Buffer.isBuffer(rawBody)) {
+    return rawBody;
+  }
+
+  if (typeof rawBody === 'string') {
+    return Buffer.from(rawBody, 'utf8');
+  }
+
   if (Buffer.isBuffer(req.body)) {
     return req.body;
   }
@@ -106,7 +125,7 @@ async function resolveUserId(
     throw new Error(`Unable to resolve Stripe customer ${customerId}`);
   }
 
-  const { data: profile, error: profileError } = await withRetry(`profile lookup ${customer.email}`, () =>
+  const { data: profile } = await withRetry(`profile lookup ${customerId}`, () =>
     supabase
       .from('profiles')
       .select('id')
@@ -115,7 +134,7 @@ async function resolveUserId(
       .throwOnError(),
   );
 
-  if (profileError || !profile) {
+  if (!profile) {
     throw new Error(`Unable to resolve Supabase profile for Stripe customer ${customerId}`);
   }
 
@@ -137,7 +156,7 @@ async function persistSubscription(
   const periodStart = new Date(period.current_period_start * 1000).toISOString();
   const periodEnd = new Date(period.current_period_end * 1000).toISOString();
 
-  const { error: subscriptionError } = await withRetry(`subscription upsert ${subscription.id}`, () =>
+  await withRetry(`subscription upsert ${subscription.id}`, () =>
     supabase.from('subscriptions').upsert({
       user_id: resolvedUserId,
       stripe_customer_id: customerId,
@@ -151,17 +170,13 @@ async function persistSubscription(
     }, { onConflict: 'user_id' }).throwOnError(),
   );
 
-  if (subscriptionError) throw subscriptionError;
-
-  const { error: profileError } = await withRetry(`profile update ${resolvedUserId}`, () =>
+  await withRetry(`profile update ${resolvedUserId}`, () =>
     supabase
       .from('profiles')
       .update({ subscription_tier: tier, updated_at: new Date().toISOString() })
       .eq('id', resolvedUserId)
       .throwOnError(),
   );
-
-  if (profileError) throw profileError;
 }
 
 export async function checkStripeHealth() {
@@ -206,7 +221,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(getRawBody(req), signature as string, env.STRIPE_WEBHOOK_SECRET);
+    event = stripe.webhooks.constructEvent(await getRawBody(req), signature as string, env.STRIPE_WEBHOOK_SECRET);
   } catch (error) {
     console.error('Stripe webhook verification failed', error);
     return res.status(400).json({ error: 'Webhook verification failed' });

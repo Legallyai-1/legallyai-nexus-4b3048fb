@@ -19,7 +19,14 @@ const checks = [
   { name: 'auth route', url: `${baseUrl}/auth`, expected: [200] },
   { name: 'pricing route', url: `${baseUrl}/pricing`, expected: [200] },
   { name: 'ads.txt', url: `${baseUrl}/ads.txt`, expected: [200] },
-  { name: 'stripe webhook', url: `${baseUrl}/api/webhooks/stripe`, expected: [405] },
+  {
+    name: 'stripe webhook',
+    url: `${baseUrl}/api/webhooks/stripe`,
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: '{}',
+    expected: [401],
+  },
   { name: 'supabase jwks', url: `${supabaseUrl}/auth/v1/.well-known/jwks.json`, expected: [200] },
 ];
 
@@ -27,7 +34,12 @@ let failures = 0;
 
 for (const check of checks) {
   try {
-    const response = await fetch(check.url, { redirect: 'manual' });
+    const response = await fetch(check.url, {
+      method: check.method ?? 'GET',
+      headers: check.headers,
+      body: check.body,
+      redirect: 'manual',
+    });
     const passed = check.expected.includes(response.status);
     console.log(`${passed ? 'PASS' : 'FAIL'} ${check.name}: ${response.status}`);
     if (!passed) {
