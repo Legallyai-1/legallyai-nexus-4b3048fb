@@ -39,10 +39,11 @@ function ensureAdsenseScriptLoaded() {
   const existingScript = document.getElementById(ADSENSE_SCRIPT_ID);
 
   if (existingScript instanceof HTMLScriptElement) {
-    if (existingScript.src !== scriptSrc) {
-      existingScript.src = scriptSrc;
+    if (existingScript.src === scriptSrc) {
+      return;
     }
-    return;
+
+    existingScript.remove();
   }
 
   const script = document.createElement('script');
@@ -59,6 +60,7 @@ export function queueAdsenseSlot() {
   }
 
   ensureAdsenseScriptLoaded();
+  window.adsbygoogle = window.adsbygoogle || [];
 
   if (!Array.isArray(window.adsbygoogle)) {
     return false;
