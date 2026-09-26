@@ -111,7 +111,8 @@ async function resolveUserId(
       .from('profiles')
       .select('id')
       .eq('email', customer.email)
-      .maybeSingle(),
+      .maybeSingle()
+      .throwOnError(),
   );
 
   if (profileError || !profile) {
@@ -147,7 +148,7 @@ async function persistSubscription(
       current_period_end: periodEnd,
       cancel_at_period_end: subscription.cancel_at_period_end,
       updated_at: new Date().toISOString(),
-    }, { onConflict: 'user_id' }),
+    }, { onConflict: 'user_id' }).throwOnError(),
   );
 
   if (subscriptionError) throw subscriptionError;
@@ -156,7 +157,8 @@ async function persistSubscription(
     supabase
       .from('profiles')
       .update({ subscription_tier: tier, updated_at: new Date().toISOString() })
-      .eq('id', resolvedUserId),
+      .eq('id', resolvedUserId)
+      .throwOnError(),
   );
 
   if (profileError) throw profileError;
