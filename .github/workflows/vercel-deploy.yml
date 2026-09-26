@@ -155,7 +155,6 @@ jobs:
           github-comment: false
           working-directory: ./
           alias-domains: |
-            ${{ github.event_name == 'pull_request' && format('pr-{0}.legallyai-nexus.vercel.app', github.event.pull_request.number) || '' }}
             ${{ env.IS_PRODUCTION == 'true' && 'www.legallyai.ai' || '' }}
 
       - name: Determine validation URL
