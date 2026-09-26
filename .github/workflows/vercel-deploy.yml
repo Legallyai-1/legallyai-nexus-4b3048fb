@@ -179,33 +179,3 @@ jobs:
             echo "- Vercel name: ${{ steps.vercel-deploy.outputs.preview-name || 'production' }}"
             echo "- Health check: passed"
           } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Comment deployment URL
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        env:
-          SMOKE_BASE_URL: ${{ env.SMOKE_BASE_URL }}
-        with:
-          script: |
-            const previewUrl = process.env.SMOKE_BASE_URL;
-            const deploymentName = '${{ steps.vercel-deploy.outputs.preview-name }}';
-            const comment = `## 🚀 Vercel Deployment
-            
-            Your PR has been deployed and validated.
-            
-            | Name | Link |
-            |------|------|
-            | 🔨 Latest commit | \`${{ github.event.pull_request.head.sha }}\` |
-            | 🔍 Preview URL | [Visit Preview](${previewUrl}) |
-            | 📝 Deployment Name | ${deploymentName || 'preview'} |
-            | ✅ Health check | Passed |
-            
-            ---
-            *Powered by Vercel via GitHub Actions*`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment,
-            });
