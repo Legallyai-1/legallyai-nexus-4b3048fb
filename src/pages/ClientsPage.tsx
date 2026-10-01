@@ -12,6 +12,7 @@ import { Users, Search, Plus, Phone, Mail, FileText, ArrowLeft, Loader2, Trash2 
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { Layout } from "@/components/layout/Layout";
 import type { User } from "@supabase/supabase-js";
+import { ensureUserOrganization } from "@/lib/organizations";
 
 interface Client {
   id: string;
@@ -63,36 +64,12 @@ export default function ClientsPage() {
   const fetchClients = async (userId: string) => {
     setLoading(true);
     try {
-      // First get or create an organization for this user
-      let { data: orgMember } = await supabase
-        .from('organization_members')
-        .select('organization_id')
-        .eq('user_id', userId)
-        .single();
-
-      if (!orgMember) {
-        // Create a default organization
-        const { data: newOrg, error: orgError } = await supabase
-          .from('organizations')
-          .insert({ name: 'My Law Practice', owner_id: userId })
-          .select()
-          .single();
-
-        if (orgError) throw orgError;
-
-        await supabase.from('organization_members').insert({
-          organization_id: newOrg.id,
-          user_id: userId,
-          role: 'owner'
-        });
-
-        orgMember = { organization_id: newOrg.id };
-      }
+      const organizationId = await ensureUserOrganization(userId);
 
       const { data, error } = await supabase
         .from('clients')
         .select('*')
-        .eq('organization_id', orgMember.organization_id)
+        .eq('organization_id', organizationId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

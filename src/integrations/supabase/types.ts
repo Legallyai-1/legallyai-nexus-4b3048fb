@@ -2609,6 +2609,54 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_logs: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          metadata: Json
+          org_id: string
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          org_id: string
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          org_id?: string
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_logs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_members: {
         Row: {
           created_at: string
@@ -2669,6 +2717,57 @@ export type Database = {
           },
         ]
       }
+      organization_invites: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string | null
+          organization_id: string
+          role: Database["public"]["Enums"]["app_role"]
+          token_hash: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          invited_by?: string | null
+          organization_id: string
+          role: Database["public"]["Enums"]["app_role"]
+          token_hash: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          organization_id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_invites_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_invites_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           address: string | null
@@ -2682,6 +2781,7 @@ export type Database = {
           name: string
           phone: string | null
           settings: Json | null
+          slug: string
           state: string | null
           updated_at: string
           website: string | null
@@ -2699,6 +2799,7 @@ export type Database = {
           name: string
           phone?: string | null
           settings?: Json | null
+          slug?: string
           state?: string | null
           updated_at?: string
           website?: string | null
@@ -2716,6 +2817,7 @@ export type Database = {
           name?: string
           phone?: string | null
           settings?: Json | null
+          slug?: string
           state?: string | null
           updated_at?: string
           website?: string | null
@@ -3719,9 +3821,65 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_organization_invite: {
+        Args: {
+          p_actor_email: string
+          p_actor_user_id: string
+          p_token_hash: string
+        }
+        Returns: {
+          assigned_role: Database["public"]["Enums"]["app_role"] | null
+          organization_id: string | null
+          status: string
+        }[]
+      }
+      count_org_owners: {
+        Args: { check_org_id: string }
+        Returns: number
+      }
+      create_organization_atomic: {
+        Args: {
+          p_address?: string
+          p_city?: string
+          p_description?: string
+          p_email?: string
+          p_name: string
+          p_phone?: string
+          p_slug: string
+          p_state?: string
+          p_website?: string
+          p_zip_code?: string
+        }
+        Returns: {
+          address: string | null
+          city: string | null
+          created_at: string
+          description: string | null
+          email: string | null
+          geo_tracking_enabled: boolean | null
+          id: string
+          logo_url: string | null
+          name: string
+          phone: string | null
+          settings: Json | null
+          slug: string
+          state: string | null
+          updated_at: string
+          website: string | null
+          zip_code: string | null
+        }
+      }
       deduct_ai_credits: {
         Args: { p_cost: number; p_reason: string; p_user_id: string }
         Returns: { remaining: number; success: boolean }[]
+      }
+      has_org_role: {
+        Args: {
+          check_org_id: string
+          check_roles: Database["public"]["Enums"]["app_role"][]
+          check_user_id: string
+        }
+        Returns: boolean
       }
       has_role: {
         Args: {
@@ -3734,6 +3892,24 @@ export type Database = {
       is_org_member: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
+      }
+      remove_org_member: {
+        Args: { p_org_id: string; p_target_user_id: string }
+        Returns: undefined
+      }
+      set_org_member_role: {
+        Args: {
+          p_new_role: Database["public"]["Enums"]["app_role"]
+          p_org_id: string
+          p_target_user_id: string
+        }
+        Returns: {
+          created_at: string
+          id: string
+          organization_id: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
       }
     }
     Enums: {

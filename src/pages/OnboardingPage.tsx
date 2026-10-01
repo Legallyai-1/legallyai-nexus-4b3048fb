@@ -12,6 +12,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
+import { buildOrganizationSlug } from "@/lib/organizations";
 
 const steps = [
   { id: 1, title: "Firm Details", icon: Building2 },
@@ -51,46 +52,20 @@ export default function OnboardingPage() {
         return;
       }
 
-      const { data: org, error: orgError } = await supabase
-        .from("organizations")
-        .insert({
-          name: formData.firmName,
-          description: formData.description,
-          address: formData.address,
-          city: formData.city,
-          state: formData.state,
-          zip_code: formData.zipCode,
-          phone: formData.phone,
-          email: formData.email,
-          website: formData.website,
-        })
-        .select()
-        .single();
+      const { data: org, error: orgError } = await supabase.rpc("create_organization_atomic", {
+        p_name: formData.firmName,
+        p_slug: buildOrganizationSlug(formData.firmName, user.id),
+        p_description: formData.description || null,
+        p_address: formData.address || null,
+        p_city: formData.city || null,
+        p_state: formData.state || null,
+        p_zip_code: formData.zipCode || null,
+        p_phone: formData.phone || null,
+        p_email: formData.email || null,
+        p_website: formData.website || null,
+      });
 
       if (orgError) throw orgError;
-
-      // Add the user as owner
-      const { error: memberError } = await supabase
-        .from("organization_members")
-        .insert({
-          organization_id: org.id,
-          user_id: user.id,
-          job_title: "Owner",
-          department: "Management",
-        });
-
-      if (memberError) throw memberError;
-
-      // Add owner role
-      const { error: roleError } = await supabase
-        .from("user_roles")
-        .insert({
-          user_id: user.id,
-          organization_id: org.id,
-          role: "owner",
-        });
-
-      if (roleError) throw roleError;
 
       toast.success("Law firm created successfully!");
       navigate("/dashboard");

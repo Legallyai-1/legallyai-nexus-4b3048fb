@@ -2,6 +2,22 @@
 
 This guide covers deploying LegallyAI to production.
 
+## Organization Security Rollout (Supabase)
+
+Use this sequence for the organization membership hardening changes:
+
+1. `supabase login`
+2. `supabase link --project-ref whdljtbtqisoszbrzdwq`
+3. `supabase migration list`
+4. `supabase db push --dry-run`
+5. Human review gate on the generated SQL plan and affected functions
+6. Only after approval: `supabase db push`
+7. Deploy only the changed functions:
+   - `supabase functions deploy invite-member`
+   - `supabase functions deploy accept-invite`
+
+Do **not** deploy unrelated functions as part of this rollout.
+
 ## Prerequisites
 
 - Supabase project set up (see [SUPABASE_SETUP.md](./SUPABASE_SETUP.md))
