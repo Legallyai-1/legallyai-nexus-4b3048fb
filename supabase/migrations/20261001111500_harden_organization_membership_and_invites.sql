@@ -263,8 +263,16 @@ BEGIN
 
   IF v_old_role = 'owner'::public.app_role
      AND p_new_role <> 'owner'::public.app_role
-     AND public.count_org_owners(p_org_id) <= 1 THEN
-    RAISE EXCEPTION 'Organization must retain at least one owner';
+  THEN
+    PERFORM 1
+    FROM public.user_roles
+    WHERE organization_id = p_org_id
+      AND role = 'owner'::public.app_role
+    FOR UPDATE;
+
+    IF public.count_org_owners(p_org_id) <= 1 THEN
+      RAISE EXCEPTION 'Organization must retain at least one owner';
+    END IF;
   END IF;
 
   DELETE FROM public.user_roles
@@ -356,8 +364,16 @@ BEGIN
   END IF;
 
   IF v_target_role = 'owner'::public.app_role
-     AND public.count_org_owners(p_org_id) <= 1 THEN
-    RAISE EXCEPTION 'Organization must retain at least one owner';
+  THEN
+    PERFORM 1
+    FROM public.user_roles
+    WHERE organization_id = p_org_id
+      AND role = 'owner'::public.app_role
+    FOR UPDATE;
+
+    IF public.count_org_owners(p_org_id) <= 1 THEN
+      RAISE EXCEPTION 'Organization must retain at least one owner';
+    END IF;
   END IF;
 
   DELETE FROM public.user_roles
@@ -439,12 +455,12 @@ BEGIN
     SELECT 1
     FROM public.organization_members
     WHERE organization_id = v_invite.organization_id
-      AND user_id = v_actor_user_id
+      AND user_id = p_actor_user_id
   ) OR EXISTS (
     SELECT 1
     FROM public.user_roles
     WHERE organization_id = v_invite.organization_id
-      AND user_id = v_actor_user_id
+      AND user_id = p_actor_user_id
   ) THEN
     UPDATE public.organization_invites
     SET accepted_at = now()
