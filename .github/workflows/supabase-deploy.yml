@@ -79,9 +79,9 @@ jobs:
       - name: Build application
         env:
           # Use preview database for PRs, production for main
-          VITE_SUPABASE_URL: ${{ github.event_name == 'pull_request' && needs.preview-database.outputs.api-url || secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ github.event_name == 'pull_request' && needs.preview-database.outputs.anon-key || secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
-          VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
+          VITE_SUPABASE_URL: ${{ github.event_name == 'pull_request' && needs.preview-database.outputs.api-url || vars.VITE_SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ github.event_name == 'pull_request' && needs.preview-database.outputs.anon-key || vars.VITE_SUPABASE_PUBLISHABLE_KEY || secrets.VITE_SUPABASE_PUBLISHABLE_KEY || vars.VITE_SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_PROJECT_ID: ${{ vars.VITE_SUPABASE_PROJECT_ID || secrets.VITE_SUPABASE_PROJECT_ID }}
           VITE_ADSENSE_CLIENT_ID: ${{ vars.VITE_ADSENSE_CLIENT_ID || secrets.VITE_ADSENSE_CLIENT_ID }}
           VITE_ENABLE_ADSENSE: ${{ github.event_name == 'pull_request' && 'false' || vars.VITE_ENABLE_ADSENSE || secrets.VITE_ENABLE_ADSENSE || 'true' }}
         run: npm run build
