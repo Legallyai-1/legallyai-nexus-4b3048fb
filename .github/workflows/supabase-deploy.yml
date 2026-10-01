@@ -82,6 +82,8 @@ jobs:
           VITE_SUPABASE_URL: ${{ github.event_name == 'pull_request' && needs.preview-database.outputs.api-url || secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ github.event_name == 'pull_request' && needs.preview-database.outputs.anon-key || secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
           VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
+          VITE_ADSENSE_CLIENT_ID: ${{ vars.VITE_ADSENSE_CLIENT_ID || secrets.VITE_ADSENSE_CLIENT_ID }}
+          VITE_ENABLE_ADSENSE: ${{ github.event_name == 'pull_request' && 'false' || vars.VITE_ENABLE_ADSENSE || secrets.VITE_ENABLE_ADSENSE || 'true' }}
         run: npm run build
 
       - name: Setup Supabase CLI
