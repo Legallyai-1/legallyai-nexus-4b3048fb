@@ -76,7 +76,7 @@ serve(async (req) => {
         return json({ success: false, status: result.status }, 400);
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return json({ error: message }, 500);
+    console.error("[accept-invite]", error);
+    return json({ error: "Failed to accept organization invite" }, 500);
   }
 });
