@@ -153,7 +153,7 @@ serve(async (req) => {
       deliveryDetail: emailResult.sent ? null : emailResult.reason,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return json({ error: message }, 500);
+    console.error("[invite-member]", error);
+    return json({ error: "Failed to create organization invite" }, 500);
   }
 });
