@@ -52,7 +52,7 @@ export default function OnboardingPage() {
         return;
       }
 
-      const { data: org, error: orgError } = await supabase.rpc("create_organization_atomic", {
+      const { error: orgError } = await supabase.rpc("create_organization_atomic", {
         p_name: formData.firmName,
         p_slug: buildOrganizationSlug(formData.firmName, user.id),
         p_description: formData.description || null,

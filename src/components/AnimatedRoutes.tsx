@@ -34,6 +34,7 @@ const DocumentSigningPage = lazy(() => import("@/pages/DocumentSigningPage"));
 const InvoicesPage = lazy(() => import("@/pages/InvoicesPage"));
 const ConsultationsPage = lazy(() => import("@/pages/ConsultationsPage"));
 const PaymentSuccessPage = lazy(() => import("@/pages/PaymentSuccessPage"));
+const AcceptInvitePage = lazy(() => import("@/pages/AcceptInvitePage"));
 const AIAssistantsPage = lazy(() => import("@/pages/AIAssistantsPage"));
 const OnboardingPage = lazy(() => import("@/pages/OnboardingPage"));
 const PayrollPage = lazy(() => import("@/pages/PayrollPage"));
@@ -88,6 +89,7 @@ export function AnimatedRoutes() {
         <Route path="/signup" element={<PageTransition><SignupPage /></PageTransition>} />
         <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
         <Route path="/auth" element={<PageTransition><AuthPage /></PageTransition>} />
+        <Route path="/accept-invite" element={<PageTransition><LazyRoute><AcceptInvitePage /></LazyRoute></PageTransition>} />
         <Route path="/forgot-password" element={<PageTransition><LazyRoute><ForgotPasswordPage /></LazyRoute></PageTransition>} />
         <Route path="/reset-password" element={<PageTransition><LazyRoute><ResetPasswordPage /></LazyRoute></PageTransition>} />
         <Route path="/dashboard" element={<PageTransition><LazyRoute><DashboardPage /></LazyRoute></PageTransition>} />

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,16 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { loginSchema } from "@/lib/validations/auth";
 import { useRoleBasedRedirect } from "@/hooks/useRoleBasedRedirect";
+import { getInviteAcceptanceReturnTo } from "@/lib/invite";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { redirectToHub } = useRoleBasedRedirect();
+  const inviteReturnTo = getInviteAcceptanceReturnTo(
+    searchParams.get("returnTo"),
+    window.location.origin,
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -22,12 +28,16 @@ export default function LoginPage() {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        const path = await redirectToHub();
-        navigate(path);
+        if (inviteReturnTo) {
+          navigate(inviteReturnTo, { replace: true });
+        } else {
+          const path = await redirectToHub();
+          navigate(path);
+        }
       }
     };
     checkAuth();
-  }, [navigate, redirectToHub]);
+  }, [inviteReturnTo, navigate, redirectToHub]);
 
   const validateField = (field: "email" | "password", value: string) => {
     const result = loginSchema.shape[field].safeParse(value);
@@ -64,8 +74,12 @@ export default function LoginPage() {
       });
       if (error) throw error;
       toast.success("Welcome back!");
-      const path = await redirectToHub();
-      navigate(path);
+      if (inviteReturnTo) {
+        navigate(inviteReturnTo, { replace: true });
+      } else {
+        const path = await redirectToHub();
+        navigate(path);
+      }
     } catch (error: any) {
       toast.error(error.message || "Login failed");
     } finally {
@@ -162,7 +176,10 @@ export default function LoginPage() {
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Don't have an account?{" "}
-            <Link to="/signup" className="text-legal-gold font-medium hover:underline">
+            <Link
+              to={inviteReturnTo ? `/signup?returnTo=${encodeURIComponent(inviteReturnTo)}` : "/signup"}
+              className="text-legal-gold font-medium hover:underline"
+            >
               Create one
             </Link>
           </p>

@@ -15,6 +15,10 @@ WHERE slug IS NULL OR slug = '';
 ALTER TABLE public.organizations
 ALTER COLUMN slug SET NOT NULL;
 
+DROP POLICY IF EXISTS "Auth users can create org" ON public.organizations;
+DROP POLICY IF EXISTS "Authenticated users can create org" ON public.organizations;
+DROP POLICY IF EXISTS "Anyone can create org" ON public.organizations;
+
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -226,6 +230,15 @@ BEGIN
     RAISE EXCEPTION 'Organization and target user are required';
   END IF;
 
+  PERFORM 1
+  FROM public.organizations
+  WHERE id = p_org_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Organization not found';
+  END IF;
+
   v_actor_is_owner := public.has_org_role(v_actor_user_id, p_org_id, ARRAY['owner'::public.app_role]);
   v_actor_can_manage := v_actor_is_owner
     OR public.has_org_role(v_actor_user_id, p_org_id, ARRAY['admin'::public.app_role]);
@@ -264,12 +277,6 @@ BEGIN
   IF v_old_role = 'owner'::public.app_role
      AND p_new_role <> 'owner'::public.app_role
   THEN
-    PERFORM 1
-    FROM public.user_roles
-    WHERE organization_id = p_org_id
-      AND role = 'owner'::public.app_role
-    FOR UPDATE;
-
     IF public.count_org_owners(p_org_id) <= 1 THEN
       RAISE EXCEPTION 'Organization must retain at least one owner';
     END IF;
@@ -330,6 +337,15 @@ BEGIN
     RAISE EXCEPTION 'Organization and target user are required';
   END IF;
 
+  PERFORM 1
+  FROM public.organizations
+  WHERE id = p_org_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Organization not found';
+  END IF;
+
   v_actor_is_owner := public.has_org_role(v_actor_user_id, p_org_id, ARRAY['owner'::public.app_role]);
   v_actor_can_manage := v_actor_is_owner
     OR public.has_org_role(v_actor_user_id, p_org_id, ARRAY['admin'::public.app_role]);
@@ -365,12 +381,6 @@ BEGIN
 
   IF v_target_role = 'owner'::public.app_role
   THEN
-    PERFORM 1
-    FROM public.user_roles
-    WHERE organization_id = p_org_id
-      AND role = 'owner'::public.app_role
-    FOR UPDATE;
-
     IF public.count_org_owners(p_org_id) <= 1 THEN
       RAISE EXCEPTION 'Organization must retain at least one owner';
     END IF;
@@ -420,6 +430,7 @@ AS $$
 DECLARE
   v_invite public.organization_invites%ROWTYPE;
   v_org_name text;
+  v_existing_role public.app_role;
 BEGIN
   IF p_actor_user_id IS NULL OR NULLIF(trim(COALESCE(p_actor_email, '')), '') IS NULL THEN
     RAISE EXCEPTION 'Authenticated user context is required';
@@ -451,6 +462,16 @@ BEGIN
     RETURN;
   END IF;
 
+  PERFORM 1
+  FROM public.organizations
+  WHERE id = v_invite.organization_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RETURN QUERY SELECT 'invalid'::text, NULL::uuid, NULL::public.app_role;
+    RETURN;
+  END IF;
+
   IF EXISTS (
     SELECT 1
     FROM public.organization_members
@@ -462,6 +483,32 @@ BEGIN
     WHERE organization_id = v_invite.organization_id
       AND user_id = p_actor_user_id
   ) THEN
+    SELECT role
+    INTO v_existing_role
+    FROM public.user_roles
+    WHERE organization_id = v_invite.organization_id
+      AND user_id = p_actor_user_id
+    ORDER BY CASE role
+      WHEN 'owner'::public.app_role THEN 1
+      WHEN 'admin'::public.app_role THEN 2
+      ELSE 3
+    END
+    LIMIT 1;
+
+    INSERT INTO public.organization_members (organization_id, user_id, is_active)
+    VALUES (v_invite.organization_id, p_actor_user_id, true)
+    ON CONFLICT (organization_id, user_id)
+    DO UPDATE SET is_active = true;
+
+    IF v_existing_role IS DISTINCT FROM 'owner'::public.app_role THEN
+      DELETE FROM public.user_roles
+      WHERE organization_id = v_invite.organization_id
+        AND user_id = p_actor_user_id;
+
+      INSERT INTO public.user_roles (user_id, organization_id, role)
+      VALUES (p_actor_user_id, v_invite.organization_id, v_invite.role);
+    END IF;
+
     UPDATE public.organization_invites
     SET accepted_at = now()
     WHERE id = v_invite.id;
@@ -480,10 +527,15 @@ BEGIN
       'organization.invite_accepted_existing_member',
       'organization_invite',
       v_invite.id::text,
-      jsonb_build_object('email', v_invite.email, 'role', v_invite.role)
+      jsonb_build_object(
+        'email', v_invite.email,
+        'invited_role', v_invite.role,
+        'old_role', v_existing_role,
+        'new_role', COALESCE(v_existing_role, v_invite.role)
+      )
     );
 
-    RETURN QUERY SELECT 'already_member'::text, v_invite.organization_id, v_invite.role;
+    RETURN QUERY SELECT 'already_member'::text, v_invite.organization_id, COALESCE(v_existing_role, v_invite.role);
     RETURN;
   END IF;
 
@@ -548,9 +600,11 @@ CREATE POLICY "Org admins can update memberships"
   TO authenticated
   USING (
     public.has_org_role(auth.uid(), organization_id, ARRAY['owner'::public.app_role, 'admin'::public.app_role])
+    AND NOT public.has_org_role(user_id, organization_id, ARRAY['owner'::public.app_role])
   )
   WITH CHECK (
     public.has_org_role(auth.uid(), organization_id, ARRAY['owner'::public.app_role, 'admin'::public.app_role])
+    AND NOT public.has_org_role(user_id, organization_id, ARRAY['owner'::public.app_role])
   );
 
 CREATE POLICY "Org admins can delete non-owner memberships"
@@ -580,10 +634,7 @@ CREATE POLICY "Org admins can insert non-owner roles"
   TO authenticated
   WITH CHECK (
     public.has_org_role(auth.uid(), organization_id, ARRAY['owner'::public.app_role, 'admin'::public.app_role])
-    AND (
-      role <> 'owner'::public.app_role
-      OR public.has_org_role(auth.uid(), organization_id, ARRAY['owner'::public.app_role])
-    )
+    AND role <> 'owner'::public.app_role
   );
 
 CREATE POLICY "Org admins can update non-owner roles"
@@ -592,17 +643,11 @@ CREATE POLICY "Org admins can update non-owner roles"
   TO authenticated
   USING (
     public.has_org_role(auth.uid(), organization_id, ARRAY['owner'::public.app_role, 'admin'::public.app_role])
-    AND (
-      role <> 'owner'::public.app_role
-      OR public.has_org_role(auth.uid(), organization_id, ARRAY['owner'::public.app_role])
-    )
+    AND role <> 'owner'::public.app_role
   )
   WITH CHECK (
     public.has_org_role(auth.uid(), organization_id, ARRAY['owner'::public.app_role, 'admin'::public.app_role])
-    AND (
-      role <> 'owner'::public.app_role
-      OR public.has_org_role(auth.uid(), organization_id, ARRAY['owner'::public.app_role])
-    )
+    AND role <> 'owner'::public.app_role
   );
 
 CREATE POLICY "Org admins can delete non-owner roles"
@@ -658,3 +703,5 @@ REVOKE ALL ON FUNCTION public.remove_org_member(uuid, uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.remove_org_member(uuid, uuid) TO authenticated;
 
 REVOKE ALL ON FUNCTION public.accept_organization_invite(text, uuid, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.accept_organization_invite(text, uuid, text) FROM anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.accept_organization_invite(text, uuid, text) TO service_role;
