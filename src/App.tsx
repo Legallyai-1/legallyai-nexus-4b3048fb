@@ -7,6 +7,7 @@ import { getSupabaseBrowserConfig } from '@/lib/env';
 import { supabase } from '@/integrations/supabase/client';
 import { getSupabaseSessionSafely, subscribeToSupabaseAuthState } from '@/integrations/supabase/helpers';
 import { PRIVATE_APP_MODE, PRIVATE_APP_MESSAGE, PRIVATE_APP_CONFIG_ERROR } from '@/config/privateApp';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -101,21 +102,24 @@ function App() {
   }
 
   return (
-    <AnimatePresence mode="wait">
-      {isLoading ? (
-        <LoadingScreen key="loading" />
-      ) : (
-        <motion.div
-          key="app-content"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.35 }}
-        >
-          <div className="sr-only">{PRIVATE_APP_MESSAGE}</div>
-          <AnimatedRoutes />
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <>
+      <AnimatePresence mode="wait">
+        {isLoading ? (
+          <LoadingScreen key="loading" />
+        ) : (
+          <motion.div
+            key="app-content"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.35 }}
+          >
+            <div className="sr-only">{PRIVATE_APP_MESSAGE}</div>
+            <AnimatedRoutes />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <SpeedInsights />
+    </>
   );
 }
 
