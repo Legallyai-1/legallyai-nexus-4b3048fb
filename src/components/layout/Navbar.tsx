@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ActiveOrganizationSwitcher } from "./ActiveOrganizationSwitcher";
 
 const navLinks = [
   { name: "Home", path: "/" },
@@ -133,6 +134,7 @@ export function Navbar() {
 
           {/* Desktop CTA */}
           <div className="hidden lg:flex items-center gap-3">
+            <ActiveOrganizationSwitcher />
             <Link to="/login">
               <Button 
                 variant="ghost" 
@@ -174,6 +176,7 @@ export function Navbar() {
           <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:20px_20px]" />
           
           <div className="relative container mx-auto px-4 py-4 flex flex-col gap-2">
+            <ActiveOrganizationSwitcher className="px-4" />
             {navLinks.map((link, index) => (
               <Link
                 key={link.path}

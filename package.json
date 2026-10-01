@@ -16,7 +16,11 @@
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",
     "supabase:functions": "supabase functions serve",
-    "deploy:functions": "supabase functions deploy"
+    "deploy:functions": "supabase functions deploy",
+    "validate:env": "node --experimental-strip-types scripts/validate-env.ts",
+    "validate:secrets": "node --experimental-strip-types scripts/validate-secrets.ts",
+    "validate:deployment": "node --experimental-strip-types scripts/validate-deployment.ts",
+    "prepare": "git config core.hooksPath .githooks || true"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.39",
@@ -54,6 +58,7 @@
     "@supabase/supabase-js": "^2.87.1",
     "@tanstack/react-query": "^5.83.0",
     "@vercel/node": "^5.10.2",
+    "@vercel/speed-insights": "^2.0.0",
     "ai": "^6.0.78",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -69,7 +74,7 @@
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.61.1",
     "react-resizable-panels": "^2.1.9",
-    "react-router-dom": "^6.30.1",
+    "react-router-dom": "^7.18.4",
     "recharts": "^2.15.4",
     "serve": "^14.2.5",
     "sonner": "^1.7.4",
@@ -95,6 +100,6 @@
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",
-    "vite": "^5.4.19"
+    "vite": "^7.1.5"
   }
 }

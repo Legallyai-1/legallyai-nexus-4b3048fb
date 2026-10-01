@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { getActiveOrganizationId, setActiveOrganizationId } from "@/lib/organizations";
 
 type AppRole = "owner" | "admin" | "manager" | "lawyer" | "paralegal" | "employee" | "client";
 
@@ -38,13 +39,24 @@ export function useRoleBasedRedirect() {
       }
 
       // Check user roles
-      const { data: roleRecord } = await supabase
+      const { data: roleRecords, error: rolesError } = await supabase
         .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .maybeSingle();
+        .select("role, organization_id")
+        .eq("user_id", user.id);
+
+      if (rolesError) throw rolesError;
+
+      const activeOrganizationId = getActiveOrganizationId();
+      const roleRecord = activeOrganizationId
+        ? roleRecords?.find(({ organization_id }) => organization_id === activeOrganizationId)
+        : roleRecords?.length === 1
+          ? roleRecords[0]
+          : null;
 
       if (roleRecord?.role) {
+        if (!activeOrganizationId && roleRecord.organization_id) {
+          setActiveOrganizationId(roleRecord.organization_id);
+        }
         const path = roleToPath[roleRecord.role as AppRole] || "/ai-assistants";
         setRoleData({
           role: roleRecord.role as AppRole,
@@ -71,14 +83,24 @@ export function useRoleBasedRedirect() {
       }
 
       // Check organization membership
-      const { data: memberRecord } = await supabase
+      const { data: memberRecords, error: membershipsError } = await supabase
         .from("organization_members")
-        .select("id, job_title")
+        .select("id, job_title, organization_id")
         .eq("user_id", user.id)
-        .eq("is_active", true)
-        .maybeSingle();
+        .eq("is_active", true);
+
+      if (membershipsError) throw membershipsError;
+
+      const memberRecord = activeOrganizationId
+        ? memberRecords?.find(({ organization_id }) => organization_id === activeOrganizationId)
+        : memberRecords?.length === 1
+          ? memberRecords[0]
+          : null;
 
       if (memberRecord) {
+        if (!activeOrganizationId) {
+          setActiveOrganizationId(memberRecord.organization_id);
+        }
         // Employee with org membership goes to dashboard
         setRoleData({
           role: "employee",

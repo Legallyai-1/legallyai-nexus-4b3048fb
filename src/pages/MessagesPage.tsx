@@ -13,6 +13,7 @@ import {
   MessageSquare, Search, Send, ChevronLeft, Loader2, Paperclip
 } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
+import { ensureUserOrganization } from "@/lib/organizations";
 
 interface Message {
   id: string;
@@ -160,14 +161,7 @@ export default function MessagesPage() {
     
     setIsSending(true);
     try {
-      // Get user's organization first
-      const { data: orgMember } = await supabase
-        .from('organization_members')
-        .select('organization_id')
-        .eq('user_id', userId)
-        .single();
-
-      if (!orgMember) throw new Error("No organization found");
+      const organizationId = await ensureUserOrganization(userId);
 
       const { data, error } = await supabase
         .from('messages')
@@ -176,7 +170,7 @@ export default function MessagesPage() {
           recipient_id: selectedConversation.other_user_id,
           content: newMessage.trim(),
           is_read: false,
-          organization_id: orgMember.organization_id,
+          organization_id: organizationId,
           subject: 'Message'
         }])
         .select()

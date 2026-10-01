@@ -1,21 +1,28 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
+import { getSupabaseBrowserConfig } from '@/lib/env';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const { url, publicKey } = getSupabaseBrowserConfig();
 
-if (!SUPABASE_URL) {
-  throw new Error('Missing VITE_SUPABASE_URL');
-}
+const supabaseFetch: typeof fetch = async (input, init) => {
+  try {
+    return await fetch(input, init);
+  } catch (error) {
+    console.error('Supabase network request failed', error);
+    throw error instanceof Error
+      ? new Error(`Supabase network request failed: ${error.message}`)
+      : new Error('Supabase network request failed');
+  }
+};
 
-if (!SUPABASE_ANON_KEY) {
-  throw new Error('Missing VITE_SUPABASE_ANON_KEY or VITE_SUPABASE_PUBLISHABLE_KEY');
-}
-
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+export const supabase = createClient<Database>(url, publicKey, {
   auth: {
-    storage: localStorage,
-    persistSession: true,
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    persistSession: typeof window !== 'undefined',
     autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+  global: {
+    fetch: supabaseFetch,
   },
 });

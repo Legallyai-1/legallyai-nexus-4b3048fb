@@ -12,6 +12,7 @@ import { Users, Search, Plus, Phone, Mail, FileText, ArrowLeft, Loader2, Trash2 
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { Layout } from "@/components/layout/Layout";
 import type { User } from "@supabase/supabase-js";
+import { ensureUserOrganization } from "@/lib/organizations";
 
 interface Client {
   id: string;
@@ -63,54 +64,12 @@ export default function ClientsPage() {
   const fetchClients = async (userId: string) => {
     setLoading(true);
     try {
-      // First get or create an organization for this user
-      let { data: orgMember } = await supabase
-        .from('organization_members')
-        .select('organization_id')
-        .eq('user_id', userId)
-        .single();
-
-      if (!orgMember) {
-        // Create a default organization
-        const { data: newOrg, error: orgError } = await supabase
-          .from('organizations')
-          .insert({ name: 'My Law Practice', owner_id: userId })
-          .select()
-          .single();
-
-        if (orgError) throw orgError;
-
-        const { error: memberError } = await supabase.from('organization_members').insert({
-          organization_id: newOrg.id,
-          user_id: userId,
-        });
-        if (memberError) throw memberError;
-
-        const { error: roleError } = await supabase.from('user_roles').insert({
-          organization_id: newOrg.id,
-          user_id: userId,
-          role: 'owner',
-        });
-        if (roleError) {
-          await supabase
-            .from('organization_members')
-            .delete()
-            .eq('organization_id', newOrg.id)
-            .eq('user_id', userId);
-          await supabase
-            .from('organizations')
-            .delete()
-            .eq('id', newOrg.id);
-          throw roleError;
-        }
-
-        orgMember = { organization_id: newOrg.id };
-      }
+      const organizationId = await ensureUserOrganization(userId);
 
       const { data, error } = await supabase
         .from('clients')
         .select('*')
-        .eq('organization_id', orgMember.organization_id)
+        .eq('organization_id', organizationId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -132,22 +91,16 @@ export default function ClientsPage() {
 
     setIsSubmitting(true);
     try {
-      // Get user's organization
-      const { data: orgMember } = await supabase
-        .from('organization_members')
-        .select('organization_id')
-        .eq('user_id', user?.id)
-        .single();
-
-      if (!orgMember) throw new Error("No organization found");
+      if (!user) throw new Error("You must be signed in");
+      const organizationId = await ensureUserOrganization(user.id);
 
       const { error } = await supabase.from('clients').insert({
         full_name: newClient.full_name,
         email: newClient.email || null,
         phone: newClient.phone || null,
         notes: newClient.notes || null,
-        organization_id: orgMember.organization_id,
-        user_id: user?.id
+        organization_id: organizationId,
+        user_id: user.id
       });
 
       if (error) throw error;
