@@ -5,6 +5,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { buildInviteAcceptancePath } from "@/lib/invite";
+import { setActiveOrganizationId } from "@/lib/organizations";
 
 type AcceptanceStatus =
   | "already_accepted"
@@ -76,6 +77,7 @@ export default function AcceptInvitePage() {
       }
 
       if (result?.success && result.organizationId) {
+        setActiveOrganizationId(result.organizationId);
         const destination = rolePaths[result.role] ?? "/dashboard";
         navigate(destination, { replace: true });
         return;

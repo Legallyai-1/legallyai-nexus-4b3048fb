@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import SidebarAd from "@/components/ads/SidebarAd";
+import { ActiveOrganizationSwitcher } from "./ActiveOrganizationSwitcher";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -16,6 +17,7 @@ export default function DashboardLayout({
     <div className="flex min-h-screen">
       {/* Main Content */}
       <div className="flex-1">
+        <ActiveOrganizationSwitcher containerClassName="flex justify-end px-4 py-2" />
         {children}
       </div>
       
