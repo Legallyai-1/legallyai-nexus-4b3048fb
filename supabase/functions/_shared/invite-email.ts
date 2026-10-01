@@ -1,5 +1,14 @@
 const encoder = new TextEncoder();
 
+const escapeHtml = (value: string) =>
+  value.replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[character] ?? character);
+
 const toHex = (buffer: ArrayBuffer) =>
   Array.from(new Uint8Array(buffer))
     .map((byte) => byte.toString(16).padStart(2, "0"))
@@ -40,7 +49,10 @@ export const sendOrganizationInviteEmail = async ({
   }
 
   const from = Deno.env.get("INVITE_FROM_EMAIL") ?? "LegallyAI <notifications@legallyai.ai>";
-  const inviterLabel = inviterName?.trim() ? `${inviterName.trim()} ` : "";
+  const escapedOrganizationName = escapeHtml(organizationName);
+  const escapedRole = escapeHtml(role);
+  const inviterLabel = inviterName?.trim() ? `${escapeHtml(inviterName.trim())} ` : "";
+  const escapedInviteLink = escapeHtml(inviteLink);
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -54,13 +66,13 @@ export const sendOrganizationInviteEmail = async ({
       subject: `Join ${organizationName} on LegallyAI`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto;">
-          <h2 style="color: #1a365d;">You're invited to join ${organizationName}</h2>
+          <h2 style="color: #1a365d;">You're invited to join ${escapedOrganizationName}</h2>
           <p style="color: #4a5568; line-height: 1.6;">
-            ${inviterLabel}invited you to join <strong>${organizationName}</strong> as <strong>${role}</strong>.
+            ${inviterLabel}invited you to join <strong>${escapedOrganizationName}</strong> as <strong>${escapedRole}</strong>.
           </p>
           <p style="margin: 24px 0;">
             <a
-              href="${inviteLink}"
+              href="${escapedInviteLink}"
               style="background: #0f766e; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 8px; display: inline-block;"
             >
               Accept invite
@@ -68,7 +80,7 @@ export const sendOrganizationInviteEmail = async ({
           </p>
           <p style="color: #718096; font-size: 12px; line-height: 1.5;">
             If the button does not work, copy and paste this link into your browser:<br />
-            <a href="${inviteLink}">${inviteLink}</a>
+            <a href="${escapedInviteLink}">${escapedInviteLink}</a>
           </p>
         </div>
       `,

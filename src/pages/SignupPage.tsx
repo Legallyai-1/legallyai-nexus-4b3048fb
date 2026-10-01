@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Scale, Sparkles, ArrowRight, CheckCircle, Loader2 } from "lucide-react"
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { signupSchema } from "@/lib/validations/auth";
+import { getInviteAcceptanceReturnTo } from "@/lib/invite";
 
 const benefits = [
   "Generate unlimited legal documents",
@@ -18,6 +19,11 @@ const benefits = [
 
 export default function SignupPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const inviteReturnTo = getInviteAcceptanceReturnTo(
+    searchParams.get("returnTo"),
+    window.location.origin,
+  );
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,11 +34,11 @@ export default function SignupPage() {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        navigate("/dashboard");
+        navigate(inviteReturnTo ?? "/dashboard", { replace: true });
       }
     };
     checkAuth();
-  }, [navigate]);
+  }, [inviteReturnTo, navigate]);
 
   const validateField = (field: "name" | "email" | "password", value: string) => {
     const result = signupSchema.shape[field].safeParse(value);
@@ -67,7 +73,7 @@ export default function SignupPage() {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          emailRedirectTo: `${window.location.origin}${inviteReturnTo ?? "/dashboard"}`,
           data: {
             full_name: name,
           },
@@ -75,7 +81,9 @@ export default function SignupPage() {
       });
       if (error) throw error;
       toast.success("Account created successfully! You can now sign in.");
-      navigate("/login");
+      navigate(inviteReturnTo
+        ? `/login?returnTo=${encodeURIComponent(inviteReturnTo)}`
+        : "/login");
     } catch (error: any) {
       toast.error(error.message || "Sign up failed");
     } finally {
@@ -187,7 +195,10 @@ export default function SignupPage() {
 
             <p className="mt-6 text-center text-sm text-muted-foreground">
               Already have an account?{" "}
-              <Link to="/login" className="text-legal-gold font-medium hover:underline">
+              <Link
+                to={inviteReturnTo ? `/login?returnTo=${encodeURIComponent(inviteReturnTo)}` : "/login"}
+                className="text-legal-gold font-medium hover:underline"
+              >
                 Sign in
               </Link>
             </p>
