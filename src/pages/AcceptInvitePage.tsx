@@ -45,6 +45,10 @@ export default function AcceptInvitePage() {
       if (!active) return;
       setUserEmail(user?.email ?? null);
       setCheckingSession(false);
+    }).catch(() => {
+      if (!active) return;
+      setUserEmail(null);
+      setCheckingSession(false);
     });
 
     return () => {
