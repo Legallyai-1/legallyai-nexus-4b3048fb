@@ -87,6 +87,9 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil",
     });
 
+    const price = await stripe.prices.retrieve(priceId);
+    const productId = typeof price.product === "string" ? price.product : price.product?.id;
+
     // Check if customer exists
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId;
@@ -104,6 +107,8 @@ serve(async (req) => {
       metadata: {
         user_id: user.id,
         tier: PRICE_TIERS[priceId],
+        price_id: priceId,
+        product_id: productId || "",
       },
       line_items: [
         {
@@ -117,6 +122,8 @@ serve(async (req) => {
           metadata: {
             user_id: user.id,
             tier: PRICE_TIERS[priceId],
+            price_id: priceId,
+            product_id: productId || "",
           },
         },
       }),
