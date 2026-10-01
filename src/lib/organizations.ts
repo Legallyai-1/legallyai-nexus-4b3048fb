@@ -64,6 +64,28 @@ export const ensureUserOrganization = async (userId: string) => {
   });
 
   if (createError) {
+    if (createError.code === "23505") {
+      const { data: retryMembers, error: retryError } = await supabase
+        .from("organization_members")
+        .select("organization_id, is_active")
+        .eq("user_id", userId);
+
+      if (retryError) {
+        throw retryError;
+      }
+
+      const retryActiveMembers = (retryMembers ?? []).filter(({ is_active }) => is_active === true);
+      if (retryActiveMembers.length === 1) {
+        const organizationId = retryActiveMembers[0].organization_id;
+        setActiveOrganizationId(organizationId);
+        return organizationId;
+      }
+
+      if (retryActiveMembers.length > 1) {
+        throw new Error("Choose an organization from the organization menu before continuing");
+      }
+    }
+
     throw createError;
   }
 

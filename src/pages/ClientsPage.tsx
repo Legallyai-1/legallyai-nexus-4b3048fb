@@ -91,22 +91,16 @@ export default function ClientsPage() {
 
     setIsSubmitting(true);
     try {
-      // Get user's organization
-      const { data: orgMember } = await supabase
-        .from('organization_members')
-        .select('organization_id')
-        .eq('user_id', user?.id)
-        .single();
-
-      if (!orgMember) throw new Error("No organization found");
+      if (!user) throw new Error("You must be signed in");
+      const organizationId = await ensureUserOrganization(user.id);
 
       const { error } = await supabase.from('clients').insert({
         full_name: newClient.full_name,
         email: newClient.email || null,
         phone: newClient.phone || null,
         notes: newClient.notes || null,
-        organization_id: orgMember.organization_id,
-        user_id: user?.id
+        organization_id: organizationId,
+        user_id: user.id
       });
 
       if (error) throw error;
