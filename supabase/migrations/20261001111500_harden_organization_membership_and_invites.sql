@@ -1,6 +1,9 @@
 ALTER TABLE public.organizations
 ADD COLUMN IF NOT EXISTS slug text;
 
+ALTER TABLE public.organizations
+ALTER COLUMN slug SET DEFAULT ('org-' || replace(gen_random_uuid()::text, '-', ''));
+
 UPDATE public.organizations
 SET slug = CONCAT(
   COALESCE(
