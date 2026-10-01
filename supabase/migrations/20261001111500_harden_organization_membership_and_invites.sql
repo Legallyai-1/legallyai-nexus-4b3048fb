@@ -105,6 +105,22 @@ AS $$
     AND role = 'owner'::public.app_role;
 $$;
 
+CREATE OR REPLACE FUNCTION public.has_active_org_membership(check_user_id uuid, check_org_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.organization_members AS member
+    WHERE member.user_id = check_user_id
+      AND member.organization_id = check_org_id
+      AND member.is_active = true
+  );
+$$;
+
 CREATE OR REPLACE FUNCTION public.create_organization_atomic(
   p_name text,
   p_slug text,
@@ -252,20 +268,20 @@ BEGIN
 
   IF NOT EXISTS (
     SELECT 1
-    FROM public.organization_members
-    WHERE organization_id = p_org_id
-      AND user_id = p_target_user_id
-      AND is_active = true
+    FROM public.organization_members AS member
+    WHERE member.organization_id = p_org_id
+      AND member.user_id = p_target_user_id
+      AND member.is_active = true
   ) THEN
     RAISE EXCEPTION 'Target user is not an active organization member';
   END IF;
 
   SELECT role
   INTO v_old_role
-  FROM public.user_roles
-  WHERE user_id = p_target_user_id
-    AND organization_id = p_org_id
-  ORDER BY CASE role
+  FROM public.user_roles AS target_role
+  WHERE target_role.user_id = p_target_user_id
+    AND target_role.organization_id = p_org_id
+  ORDER BY CASE target_role.role
     WHEN 'owner'::public.app_role THEN 1
     WHEN 'admin'::public.app_role THEN 2
     ELSE 3
@@ -359,19 +375,19 @@ BEGIN
 
   IF NOT EXISTS (
     SELECT 1
-    FROM public.organization_members
-    WHERE organization_id = p_org_id
-      AND user_id = p_target_user_id
+    FROM public.organization_members AS member
+    WHERE member.organization_id = p_org_id
+      AND member.user_id = p_target_user_id
   ) THEN
     RAISE EXCEPTION 'Target user is not an organization member';
   END IF;
 
   SELECT role
   INTO v_target_role
-  FROM public.user_roles
-  WHERE user_id = p_target_user_id
-    AND organization_id = p_org_id
-  ORDER BY CASE role
+  FROM public.user_roles AS target_role
+  WHERE target_role.user_id = p_target_user_id
+    AND target_role.organization_id = p_org_id
+  ORDER BY CASE target_role.role
     WHEN 'owner'::public.app_role THEN 1
     WHEN 'admin'::public.app_role THEN 2
     ELSE 3
@@ -477,21 +493,21 @@ BEGIN
 
   IF EXISTS (
     SELECT 1
-    FROM public.organization_members
-    WHERE organization_id = v_invite.organization_id
-      AND user_id = p_actor_user_id
+    FROM public.organization_members AS member
+    WHERE member.organization_id = v_invite.organization_id
+      AND member.user_id = p_actor_user_id
   ) OR EXISTS (
     SELECT 1
-    FROM public.user_roles
-    WHERE organization_id = v_invite.organization_id
-      AND user_id = p_actor_user_id
+    FROM public.user_roles AS actor_role
+    WHERE actor_role.organization_id = v_invite.organization_id
+      AND actor_role.user_id = p_actor_user_id
   ) THEN
-    SELECT role
+    SELECT actor_role.role
     INTO v_existing_role
-    FROM public.user_roles
-    WHERE organization_id = v_invite.organization_id
-      AND user_id = p_actor_user_id
-    ORDER BY CASE role
+    FROM public.user_roles AS actor_role
+    WHERE actor_role.organization_id = v_invite.organization_id
+      AND actor_role.user_id = p_actor_user_id
+    ORDER BY CASE actor_role.role
       WHEN 'owner'::public.app_role THEN 1
       WHEN 'admin'::public.app_role THEN 2
       ELSE 3
@@ -504,17 +520,17 @@ BEGIN
     DO UPDATE SET is_active = true;
 
     IF v_existing_role IS DISTINCT FROM 'owner'::public.app_role THEN
-      DELETE FROM public.user_roles
-      WHERE organization_id = v_invite.organization_id
-        AND user_id = p_actor_user_id;
+      DELETE FROM public.user_roles AS actor_role
+      WHERE actor_role.organization_id = v_invite.organization_id
+        AND actor_role.user_id = p_actor_user_id;
 
       INSERT INTO public.user_roles (user_id, organization_id, role)
       VALUES (p_actor_user_id, v_invite.organization_id, v_invite.role);
     END IF;
 
-    UPDATE public.organization_invites
+    UPDATE public.organization_invites AS invite
     SET accepted_at = now()
-    WHERE id = v_invite.id;
+    WHERE invite.id = v_invite.id;
 
     INSERT INTO public.audit_logs (
       org_id,
@@ -534,32 +550,41 @@ BEGIN
         'email', v_invite.email,
         'invited_role', v_invite.role,
         'old_role', v_existing_role,
-        'new_role', COALESCE(v_existing_role, v_invite.role)
+        'new_role', CASE
+          WHEN v_existing_role = 'owner'::public.app_role THEN v_existing_role
+          ELSE v_invite.role
+        END
       )
     );
 
-    RETURN QUERY SELECT 'already_member'::text, v_invite.organization_id, COALESCE(v_existing_role, v_invite.role);
+    RETURN QUERY SELECT
+      'already_member'::text,
+      v_invite.organization_id,
+      CASE
+        WHEN v_existing_role = 'owner'::public.app_role THEN v_existing_role
+        ELSE v_invite.role
+      END;
     RETURN;
   END IF;
 
   INSERT INTO public.organization_members (organization_id, user_id)
   VALUES (v_invite.organization_id, p_actor_user_id);
 
-  DELETE FROM public.user_roles
-  WHERE organization_id = v_invite.organization_id
-    AND user_id = p_actor_user_id;
+  DELETE FROM public.user_roles AS actor_role
+  WHERE actor_role.organization_id = v_invite.organization_id
+    AND actor_role.user_id = p_actor_user_id;
 
   INSERT INTO public.user_roles (user_id, organization_id, role)
   VALUES (p_actor_user_id, v_invite.organization_id, v_invite.role);
 
-  UPDATE public.organization_invites
+  UPDATE public.organization_invites AS invite
   SET accepted_at = now()
-  WHERE id = v_invite.id;
+  WHERE invite.id = v_invite.id;
 
   SELECT name
   INTO v_org_name
-  FROM public.organizations
-  WHERE id = v_invite.organization_id;
+  FROM public.organizations AS organization
+  WHERE organization.id = v_invite.organization_id;
 
   INSERT INTO public.audit_logs (
     org_id,
@@ -587,6 +612,8 @@ END;
 $$;
 
 DROP POLICY IF EXISTS "Admins can manage members" ON public.organization_members;
+DROP POLICY IF EXISTS "Org admins can update memberships" ON public.organization_members;
+DROP POLICY IF EXISTS "Org admins can delete non-owner memberships" ON public.organization_members;
 
 CREATE POLICY "Org admins can insert memberships"
   ON public.organization_members
@@ -597,30 +624,10 @@ CREATE POLICY "Org admins can insert memberships"
     AND NOT public.has_org_role(user_id, organization_id, ARRAY['owner'::public.app_role])
   );
 
-CREATE POLICY "Org admins can update memberships"
-  ON public.organization_members
-  FOR UPDATE
-  TO authenticated
-  USING (
-    public.has_org_role(auth.uid(), organization_id, ARRAY['owner'::public.app_role, 'admin'::public.app_role])
-    AND NOT public.has_org_role(user_id, organization_id, ARRAY['owner'::public.app_role])
-  )
-  WITH CHECK (
-    public.has_org_role(auth.uid(), organization_id, ARRAY['owner'::public.app_role, 'admin'::public.app_role])
-    AND NOT public.has_org_role(user_id, organization_id, ARRAY['owner'::public.app_role])
-  );
-
-CREATE POLICY "Org admins can delete non-owner memberships"
-  ON public.organization_members
-  FOR DELETE
-  TO authenticated
-  USING (
-    public.has_org_role(auth.uid(), organization_id, ARRAY['owner'::public.app_role, 'admin'::public.app_role])
-    AND NOT public.has_org_role(user_id, organization_id, ARRAY['owner'::public.app_role])
-  );
-
 DROP POLICY IF EXISTS "Users can view own roles" ON public.user_roles;
 DROP POLICY IF EXISTS "Owners can manage roles" ON public.user_roles;
+DROP POLICY IF EXISTS "Org admins can update non-owner roles" ON public.user_roles;
+DROP POLICY IF EXISTS "Org admins can delete non-owner roles" ON public.user_roles;
 
 CREATE POLICY "Users can view organization roles"
   ON public.user_roles
@@ -638,28 +645,7 @@ CREATE POLICY "Org admins can insert non-owner roles"
   WITH CHECK (
     public.has_org_role(auth.uid(), organization_id, ARRAY['owner'::public.app_role, 'admin'::public.app_role])
     AND role <> 'owner'::public.app_role
-  );
-
-CREATE POLICY "Org admins can update non-owner roles"
-  ON public.user_roles
-  FOR UPDATE
-  TO authenticated
-  USING (
-    public.has_org_role(auth.uid(), organization_id, ARRAY['owner'::public.app_role, 'admin'::public.app_role])
-    AND role <> 'owner'::public.app_role
-  )
-  WITH CHECK (
-    public.has_org_role(auth.uid(), organization_id, ARRAY['owner'::public.app_role, 'admin'::public.app_role])
-    AND role <> 'owner'::public.app_role
-  );
-
-CREATE POLICY "Org admins can delete non-owner roles"
-  ON public.user_roles
-  FOR DELETE
-  TO authenticated
-  USING (
-    public.has_org_role(auth.uid(), organization_id, ARRAY['owner'::public.app_role, 'admin'::public.app_role])
-    AND role <> 'owner'::public.app_role
+    AND public.has_active_org_membership(user_id, organization_id)
   );
 
 CREATE POLICY "Org admins can view audit logs"
@@ -695,6 +681,9 @@ GRANT EXECUTE ON FUNCTION public.has_org_role(uuid, uuid, public.app_role[]) TO 
 
 REVOKE ALL ON FUNCTION public.count_org_owners(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.count_org_owners(uuid) TO authenticated;
+
+REVOKE ALL ON FUNCTION public.has_active_org_membership(uuid, uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.has_active_org_membership(uuid, uuid) TO authenticated;
 
 REVOKE ALL ON FUNCTION public.create_organization_atomic(text, text, text, text, text, text, text, text, text, text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.create_organization_atomic(text, text, text, text, text, text, text, text, text, text) TO authenticated;
