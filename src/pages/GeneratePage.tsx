@@ -10,7 +10,7 @@ import {
 import { VoiceInputButton } from "@/components/ui/VoiceInputButton";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { ensureUserProfile, getUserCreditBalance, deductUserCredits } from '@/lib/ai-credits';
+import { ensureUserProfile } from '@/lib/ai-credits';
 import AdBanner from "@/components/ads/AdBanner";
 import AdContainer from "@/components/ads/AdContainer";
 import AdMobBanner, { ADMOB_AD_UNITS } from "@/components/ads/AdMobBanner";
@@ -87,15 +87,50 @@ export default function GeneratePage() {
     }
   };
 
+  const authenticatedUserId = user?.id;
+  useEffect(() => {
+    if (!authenticatedUserId) return;
+
+    const refreshEntitlement = async () => {
+      setIsVerifyingPayment(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('verify-payment');
+        if (!error) setIsPaid(data?.hasPaid === true);
+      } finally {
+        setIsVerifyingPayment(false);
+      }
+    };
+
+    const channel = typeof BroadcastChannel === 'undefined'
+      ? null
+      : new BroadcastChannel('legallyai-checkout');
+    const handleCheckoutMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'payment-verified') void refreshEntitlement();
+    };
+    const handleWindowFocus = () => void refreshEntitlement();
+
+    channel?.addEventListener('message', handleCheckoutMessage);
+    window.addEventListener('focus', handleWindowFocus);
+
+    return () => {
+      channel?.removeEventListener('message', handleCheckoutMessage);
+      channel?.close();
+      window.removeEventListener('focus', handleWindowFocus);
+    };
+  }, [authenticatedUserId]);
+
   // Check for prompt in URL params (from homepage)
   useEffect(() => {
     const urlPrompt = searchParams.get("prompt");
+    const urlTemplate = searchParams.get("template");
     if (urlPrompt) {
       setPrompt(urlPrompt);
       // Only auto-generate if user is authenticated
       if (user) {
         handleGenerate(urlPrompt);
       }
+    } else if (urlTemplate) {
+      setPrompt(`Draft a ${urlTemplate}. Ask for essential missing details, including jurisdiction, and clearly identify assumptions and provisions that require review by a licensed attorney.`);
     }
   }, [searchParams, user]);
 
@@ -116,16 +151,6 @@ export default function GeneratePage() {
 
     try {
       await ensureUserProfile(user.id, user.email, user.user_metadata?.full_name);
-      const { credits, tier } = await getUserCreditBalance(user.id);
-
-      const cost = tier === 'free' ? 1 : 0;
-      if (tier === 'free') {
-        const deduction = await deductUserCredits(user.id, cost, 'document_generation');
-        if (!deduction.success) {
-          toast.error("Your AI credits are exhausted. Upgrade to continue.");
-          return;
-        }
-      }
 
       const { data, error } = await supabase.functions.invoke('generate-document', {
         body: { prompt: finalPrompt }
@@ -133,12 +158,19 @@ export default function GeneratePage() {
 
       if (error) {
         console.error("Generation error:", error);
-        if (error.message?.includes("401") || error.message?.includes("Authentication")) {
+        const errorContext = (error as { context?: unknown }).context;
+        const errorResponse = errorContext instanceof Response ? errorContext : null;
+        const errorBody = errorResponse
+          ? await errorResponse.clone().json().catch(() => null)
+          : null;
+        const errorMessage = typeof errorBody?.error === "string" ? errorBody.error : null;
+
+        if (error.message?.includes("401") || error.message?.includes("Authentication") || errorMessage?.includes("Authentication")) {
           toast.error("Please sign in to generate documents");
           navigate("/auth");
           return;
         }
-        toast.error("Failed to generate document. Please try again.");
+        toast.error(errorMessage || "Failed to generate document. Please try again.");
         return;
       }
 
@@ -171,7 +203,7 @@ export default function GeneratePage() {
 
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { priceId: 'price_1SckVt0QhWGUtGKvl9YdmQqk' } // Document generation price
+        body: { priceId: 'price_1SckVt0QhWGUtGKvl9YdmQqk', mode: 'payment' }
       });
 
       if (error) {
@@ -272,8 +304,7 @@ export default function GeneratePage() {
               Generate Legal Documents
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Describe your legal needs in plain English. Our AI will generate a professional, 
-              legally-accurate document in seconds.
+              Describe your needs to draft a starting point. Requirements vary by jurisdiction; have a licensed attorney review any document before relying on it.
             </p>
             {!user && (
               <div className="mt-4 p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 max-w-md mx-auto">
@@ -335,7 +366,7 @@ export default function GeneratePage() {
                   {documentTypes.slice(0, 6).map((type) => (
                     <button
                       key={type}
-                      onClick={() => setPrompt(`Create a comprehensive ${type} for my business. Include all standard legal provisions, definitions, and signature blocks.`)}
+                      onClick={() => setPrompt(`Draft a ${type}. Ask for any essential missing details, including jurisdiction. Clearly mark assumptions and provisions that need review by a licensed attorney.`)}
                       className="px-3 py-2 text-sm rounded-lg bg-background border border-border hover:border-legal-gold/50 hover:bg-legal-gold/5 transition-colors"
                     >
                       {type}
@@ -387,13 +418,13 @@ export default function GeneratePage() {
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-foreground mb-2">
-                        Unlock Full Document
+                        Unlock Document Exports
                       </h3>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Download as PDF with professional formatting for just $5.
+                        Download a text copy or use Print to save as PDF for $5.
                       </p>
                       <Button onClick={handleUnlock} variant="gold" className="w-full sm:w-auto">
-                        Pay $5 – Unlock PDF Download
+                        Pay $5 – Unlock Exports
                       </Button>
                     </div>
                   </div>

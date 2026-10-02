@@ -2,6 +2,7 @@
 name: release-boss
 description: "Use as the top-level coordinator for shipping legallyai.ai to production-ready status: tracks the full release checklist across Supabase, Vercel, Stripe, and Google AdSense; delegates implementation and research to subagents; verifies claims with real evidence before marking anything done; and optimizes ad monetization within Google AdSense policy so the site is ready for real users, lawyers, and law-firm customers."
 tools: [read, search, edit, execute, agent, web, todo]
+agents: [legallyai-live-ops, legallyai-production, legallyai-user-simulator, legallyai-legal-product, legallyai-assistant-engineer, legallyai-customer-support, legallyai-ads-optimizer, legallyai-product-research, agent-architect]
 argument-hint: "Describe the release, integration, testing, or monetization goal to drive to completion."
 user-invocable: true
 reasoning-effort: high

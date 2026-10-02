@@ -55,8 +55,8 @@ serve(async (req) => {
       );
     }
 
-    const { priceId, mode } = await req.json();
-    logStep("Request params", { priceId, mode });
+    const { priceId, mode: requestedMode } = await req.json();
+    logStep("Request params", { priceId, mode: requestedMode });
 
     // Validate priceId against allowlist
     if (!priceId || !VALID_PRICES.includes(priceId)) {
@@ -68,8 +68,8 @@ serve(async (req) => {
     }
 
     // Validate mode
-    if (mode && !VALID_MODES.includes(mode)) {
-      logStep("Invalid mode", { mode });
+    if (requestedMode && !VALID_MODES.includes(requestedMode)) {
+      logStep("Invalid mode", { mode: requestedMode });
       return new Response(
         JSON.stringify({ error: 'Invalid payment mode' }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
@@ -88,6 +88,14 @@ serve(async (req) => {
     });
 
     const price = await stripe.prices.retrieve(priceId);
+    const checkoutMode = price.recurring ? "subscription" : "payment";
+    if (requestedMode && requestedMode !== checkoutMode) {
+      return new Response(
+        JSON.stringify({ error: "Payment mode does not match the selected price." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 },
+      );
+    }
+
     const productId = typeof price.product === "string" ? price.product : price.product?.id;
 
     // Check if customer exists
@@ -116,8 +124,8 @@ serve(async (req) => {
           quantity: 1,
         },
       ],
-      mode: mode || "subscription",
-      ...(mode !== "payment" && {
+      mode: checkoutMode,
+      ...(checkoutMode === "subscription" && {
         subscription_data: {
           metadata: {
             user_id: user.id,
