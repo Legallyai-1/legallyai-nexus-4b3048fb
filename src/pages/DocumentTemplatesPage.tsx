@@ -147,9 +147,13 @@ export default function DocumentTemplatesPage() {
       toast.error("Premium template - Please upgrade to download");
       navigate("/pricing");
     } else {
+      const content = templatePreviews[template.id];
+      if (!content) {
+        toast.error("A downloadable sample is not available for this template yet.");
+        return;
+      }
+
       toast.success(`Downloading "${template.title}"...`);
-      // Create a simple text download
-      const content = templatePreviews[template.id] || `${template.title}\n\n${template.description}\n\n[Template content would appear here]`;
       const blob = new Blob([content], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -187,8 +191,7 @@ export default function DocumentTemplatesPage() {
                 Professional <span className="text-neon-blue">Legal Templates</span>
               </h1>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                100+ attorney-drafted legal document templates. 
-                Customize with AI or download ready-to-use.
+                Browse 18 starter templates. Use them to prepare a draft, confirm the relevant jurisdiction, and have a licensed attorney review it before relying on it.
               </p>
             </div>
           </div>
