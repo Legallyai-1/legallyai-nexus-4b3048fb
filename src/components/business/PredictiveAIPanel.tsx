@@ -9,6 +9,7 @@ import {
   Lightbulb, Scale, DollarSign, Clock, Info
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { getSupabaseFunctionHeaders } from '@/lib/supabase-functions';
 import { toast } from 'sonner';
 
 interface PredictionResult {
@@ -46,10 +47,7 @@ export function PredictiveAIPanel({ caseId, matterId, organizationId = 'default-
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/predictive-ai`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
+        headers: getSupabaseFunctionHeaders(session.access_token),
         body: JSON.stringify({
           type,
           case_id: caseId,

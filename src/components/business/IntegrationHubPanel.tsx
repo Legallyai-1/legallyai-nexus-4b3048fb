@@ -11,6 +11,7 @@ import {
   Cloud, Briefcase, CreditCard, Zap, Users, BookOpen
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { getSupabaseFunctionHeaders } from '@/lib/supabase-functions';
 import { toast } from 'sonner';
 
 interface IntegrationHubPanelProps {
@@ -46,10 +47,7 @@ export function IntegrationHubPanel({ organizationId = 'default-org' }: Integrat
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/integration-hub`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
+        headers: getSupabaseFunctionHeaders(session.access_token),
         body: JSON.stringify({
           action: 'list',
           organization_id: organizationId
@@ -75,10 +73,7 @@ export function IntegrationHubPanel({ organizationId = 'default-org' }: Integrat
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/integration-hub`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
+        headers: getSupabaseFunctionHeaders(session.access_token),
         body: JSON.stringify({
           action: 'connect',
           organization_id: organizationId,
@@ -105,10 +100,7 @@ export function IntegrationHubPanel({ organizationId = 'default-org' }: Integrat
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/integration-hub`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
+        headers: getSupabaseFunctionHeaders(session.access_token),
         body: JSON.stringify({
           action: 'disconnect',
           organization_id: organizationId,
@@ -134,10 +126,7 @@ export function IntegrationHubPanel({ organizationId = 'default-org' }: Integrat
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/integration-hub`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
+        headers: getSupabaseFunctionHeaders(session.access_token),
         body: JSON.stringify({
           action: 'sync',
           organization_id: organizationId,

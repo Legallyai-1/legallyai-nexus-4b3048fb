@@ -7,6 +7,7 @@ const webhookHandler = readFileSync(new URL("./supabase/functions/webhook-handle
 const verifyPayment = readFileSync(new URL("./supabase/functions/verify-payment/index.ts", root), "utf8");
 const checkSubscription = readFileSync(new URL("./supabase/functions/check-subscription/index.ts", root), "utf8");
 const onboardingPage = readFileSync(new URL("./src/pages/OnboardingPage.tsx", root), "utf8");
+const ownerIdMigration = readFileSync(new URL("./supabase/migrations/20261002090000_default_organization_owner_id.sql", root), "utf8");
 const configToml = readFileSync(new URL("./supabase/config.toml", root), "utf8");
 
 assert.match(migration, /create table if not exists public\.organization_members/i, "migration should restore organization_members");
@@ -29,6 +30,7 @@ assert.match(webhookHandler, /duplicate: true/i, "webhook handler must return id
 
 assert.match(verifyPayment, /from\("subscriptions"\)/i, "verify-payment should read canonical subscription state");
 assert.match(checkSubscription, /from\("subscriptions"\)/i, "check-subscription should read canonical subscription state");
-assert.match(onboardingPage, /owner_id: user\.id/i, "onboarding must set owner_id for bootstrap membership");
+assert.match(onboardingPage, /rpc\("create_organization_atomic"/i, "onboarding must create organizations through the atomic RPC");
+assert.match(ownerIdMigration, /NEW\.owner_id := auth\.uid\(\)/i, "organizations.owner_id must default to the creating user");
 
 console.log("Supabase production validation checks passed.");

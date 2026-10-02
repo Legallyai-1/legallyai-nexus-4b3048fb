@@ -23,6 +23,14 @@ jobs:
         run: npm ci
 
       - name: Build web app
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY || secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_SUPABASE_PROJECT_ID: ${{ vars.VITE_SUPABASE_PROJECT_ID || secrets.VITE_SUPABASE_PROJECT_ID }}
+          VITE_ADSENSE_CLIENT_ID: ${{ vars.VITE_ADSENSE_CLIENT_ID || secrets.VITE_ADSENSE_CLIENT_ID }}
+          VITE_ENABLE_ADSENSE: ${{ vars.VITE_ENABLE_ADSENSE || secrets.VITE_ENABLE_ADSENSE || 'false' }}
+          VITE_ENABLE_PAYMENTS: ${{ vars.VITE_ENABLE_PAYMENTS || secrets.VITE_ENABLE_PAYMENTS || 'true' }}
         run: npm run build
 
       - name: Setup Java
@@ -138,7 +146,7 @@ jobs:
           find android/app/build/outputs -name "*.aab" -type f 2>/dev/null || echo "No AABs found"
 
       - name: Upload Debug APK
-        if: always()
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: legallyai-debug-apk-v7-${{ github.run_number }}
