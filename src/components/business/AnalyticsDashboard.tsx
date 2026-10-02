@@ -14,6 +14,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
+import { getSupabaseFunctionHeaders } from '@/lib/supabase-functions';
 import { toast } from 'sonner';
 
 interface AnalyticsDashboardProps {
@@ -38,10 +39,7 @@ export function AnalyticsDashboard({ organizationId = 'default-org' }: Analytics
       const [dashboardRes, insightsRes, badgesRes] = await Promise.all([
         fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analytics-engine`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`
-          },
+          headers: getSupabaseFunctionHeaders(session.access_token),
           body: JSON.stringify({
             action: 'dashboard',
             organization_id: organizationId,
@@ -50,10 +48,7 @@ export function AnalyticsDashboard({ organizationId = 'default-org' }: Analytics
         }),
         fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analytics-engine`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`
-          },
+          headers: getSupabaseFunctionHeaders(session.access_token),
           body: JSON.stringify({
             action: 'insights',
             organization_id: organizationId
@@ -61,10 +56,7 @@ export function AnalyticsDashboard({ organizationId = 'default-org' }: Analytics
         }),
         fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analytics-engine`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`
-          },
+          headers: getSupabaseFunctionHeaders(session.access_token),
           body: JSON.stringify({
             action: 'badges',
             organization_id: organizationId

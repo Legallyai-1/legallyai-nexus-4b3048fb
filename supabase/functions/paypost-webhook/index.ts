@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { createHmac } from "https://deno.land/std@0.190.0/node/crypto.ts";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,7 +16,9 @@ function verifyWebhookSignature(payload: string, signature: string, secret: stri
   const hmac = createHmac("sha256", secret);
   hmac.update(payload);
   const computedSignature = `sha256=${hmac.digest("hex")}`;
-  return computedSignature === signature;
+  const a = Buffer.from(computedSignature);
+  const b = Buffer.from(signature);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 serve(async (req) => {
@@ -37,7 +39,7 @@ serve(async (req) => {
     const signature = req.headers.get("x-paypost-signature") || req.headers.get("x-gp-signature");
     const rawBody = await req.text();
     
-    if (signature && !verifyWebhookSignature(rawBody, signature, webhookSecret)) {
+    if (!signature || !verifyWebhookSignature(rawBody, signature, webhookSecret)) {
       logStep("Invalid signature");
       return new Response(JSON.stringify({ error: "Invalid signature" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

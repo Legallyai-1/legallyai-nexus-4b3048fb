@@ -34,6 +34,8 @@ begin
     alter table public.profiles
       add column if not exists credits integer,
       add column if not exists subscription_tier text,
+      add column if not exists location text,
+      add column if not exists timezone text,
       add column if not exists updated_at timestamptz default now();
 
     if exists (
@@ -102,6 +104,17 @@ begin
 
     create index if not exists idx_organizations_owner_id
       on public.organizations(owner_id);
+  end if;
+end
+$$;
+
+do $$
+begin
+  if to_regclass('public.cases') is not null then
+    alter table public.cases
+      add column if not exists client_id uuid,
+      add column if not exists assigned_lawyer_id uuid,
+      add column if not exists organization_id uuid;
   end if;
 end
 $$;
@@ -708,6 +721,7 @@ do $$
 begin
   if to_regclass('public.webhook_logs') is not null then
     alter table public.webhook_logs
+      add column if not exists received_at timestamptz default now(),
       add column if not exists event_id text,
       add column if not exists event_type text,
       add column if not exists processing_status text default 'pending',

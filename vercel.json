@@ -8,10 +8,13 @@
   "github": {
     "enabled": false
   },
-  "regions": ["iad1"],
+  "regions": [
+    "iad1"
+  ],
   "functions": {
     "api/**/*.ts": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "includeFiles": ".env.validation.ts"
     }
   },
   "rewrites": [

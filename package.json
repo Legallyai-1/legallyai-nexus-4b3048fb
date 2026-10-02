@@ -20,7 +20,9 @@
     "validate:env": "node --experimental-strip-types scripts/validate-env.ts",
     "validate:secrets": "node --experimental-strip-types scripts/validate-secrets.ts",
     "validate:deployment": "node --experimental-strip-types scripts/validate-deployment.ts",
-    "prepare": "git config core.hooksPath .githooks || true"
+    "prepare": "git config core.hooksPath .githooks || true",
+    "deploy:local": "node scripts/deploy-local.mjs",
+    "master:agent": "node scripts/deploy-local.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.39",
@@ -57,7 +59,6 @@
     "@radix-ui/react-tooltip": "^1.2.7",
     "@supabase/supabase-js": "^2.87.1",
     "@tanstack/react-query": "^5.83.0",
-    "@vercel/node": "^5.10.2",
     "@vercel/speed-insights": "^2.0.0",
     "ai": "^6.0.78",
     "class-variance-authority": "^0.7.1",
@@ -90,6 +91,7 @@
     "@types/node": "^22.16.5",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
+    "@vercel/node": "^5.10.2",
     "@vitejs/plugin-react-swc": "^3.11.0",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.32.0",
