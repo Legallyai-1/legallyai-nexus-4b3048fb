@@ -21,7 +21,8 @@
     "validate:secrets": "node --experimental-strip-types scripts/validate-secrets.ts",
     "validate:deployment": "node --experimental-strip-types scripts/validate-deployment.ts",
     "prepare": "git config core.hooksPath .githooks || true",
-    "deploy:local": "node scripts/deploy-local.mjs"
+    "deploy:local": "node scripts/deploy-local.mjs",
+    "master:agent": "node scripts/deploy-local.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.39",
