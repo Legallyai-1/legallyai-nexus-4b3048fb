@@ -77,3 +77,6 @@ verify_jwt = false
 
 [functions.plaid-integration]
 verify_jwt = true
+
+[functions.paypost-webhook]
+verify_jwt = false
