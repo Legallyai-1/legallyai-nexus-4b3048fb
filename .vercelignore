@@ -1,10 +1,10 @@
-.agents
-.github
-android
-coverage
-docs
-node_modules
-supabase
+/.agents
+/.github
+/android
+/coverage
+/docs
+/node_modules
+/supabase
 *.log
 AI_CHAT_FIX.md
 CHANGES_SUMMARY.md
