@@ -1,8 +1,6 @@
 // Zero-credit autonomous release: audit, validate, sync Supabase, deploy to Vercel, smoke test, commit and push the current branch.
 import { execSync } from "node:child_process";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
-
-const REF = "whdljtbtqisoszbrzdwq";
+import { readFileSync } from "node:fs";
 const run = (cmd, { optional = false } = {}) => {
   console.log(`\n> ${cmd}`);
   try {
@@ -16,17 +14,6 @@ const run = (cmd, { optional = false } = {}) => {
 };
 const out = (cmd) => execSync(cmd, { encoding: "utf-8" }).trim();
 const tokenFlag = process.env.VERCEL_TOKEN ? ' --token "$VERCEL_TOKEN"' : "";
-
-async function sql(query) {
-  const res = await fetch(`https://api.supabase.com/v1/projects/${REF}/database/query`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${process.env.SUPABASE_ACCESS_TOKEN}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ query }),
-  });
-  const body = await res.json();
-  if (!res.ok) throw new Error(body.message || `HTTP ${res.status}`);
-  return body;
-}
 
 console.log("[1/7] Audit (legal disclaimers, AdSense, placeholders)");
 const failures = [];
@@ -53,29 +40,10 @@ run("npx tsc -p tsconfig.app.json --noEmit");
 run("npm run lint", { optional: true });
 
 console.log("[3/7] Supabase migrations");
-if (process.env.SUPABASE_DB_PASSWORD) {
-  run("npx --yes supabase@latest db push --yes");
-} else if (process.env.SUPABASE_ACCESS_TOKEN && existsSync("supabase/migrations")) {
-  try {
-    const applied = new Set((await sql("select version from supabase_migrations.schema_migrations")).map((r) => r.version));
-    // Only files newer than the latest recorded version are applied; older history is treated as baseline.
-    const latestApplied = [...applied].sort().pop() ?? "";
-    const pending = readdirSync("supabase/migrations")
-      .filter((f) => f.endsWith(".sql") && !applied.has(f.split("_")[0]) && f.split("_")[0] > latestApplied)
-      .sort();
-    for (const file of pending) {
-      console.log(`Applying ${file}`);
-      await sql(readFileSync(`supabase/migrations/${file}`, "utf-8"));
-      const [version, ...rest] = file.replace(/\.sql$/, "").split("_");
-      await sql(`insert into supabase_migrations.schema_migrations(version,name) values ('${version}','${rest.join("_")}') on conflict do nothing`);
-    }
-    if (!pending.length) console.log("No pending migrations.");
-  } catch (e) {
-    console.error(`Migration sync failed: ${e.message}`);
-    process.exit(1);
-  }
+if (process.env.SUPABASE_ACCESS_TOKEN) {
+  run("node scripts/sync-supabase-migrations.mjs");
 } else {
-  console.log("No Supabase credentials; skipping migrations.");
+  console.log("No SUPABASE_ACCESS_TOKEN; skipping migrations.");
 }
 
 console.log("[4/7] Vercel build");
