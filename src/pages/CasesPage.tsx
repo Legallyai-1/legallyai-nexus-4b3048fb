@@ -120,7 +120,15 @@ export default function CasesPage() {
 
     setIsSubmitting(true);
     try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        navigate("/auth");
+        return;
+      }
+
       const { error } = await supabase.from('cases').insert({
+        user_id: user.id,
+        org_id: organizationId,
         title: newCase.title,
         case_number: newCase.case_number || null,
         case_type: newCase.case_type || null,

@@ -4,9 +4,12 @@ const supabaseUrl = (process.env.VITE_SUPABASE_URL || "https://whdljtbtqisoszbrz
 const checks = [
   { name: "homepage", url: `${baseUrl}/`, expected: [200] },
   { name: "auth route", url: `${baseUrl}/auth`, expected: [200] },
+  { name: "login route", url: `${baseUrl}/login`, expected: [200] },
+  { name: "signup route", url: `${baseUrl}/signup`, expected: [200] },
   { name: "pricing route", url: `${baseUrl}/pricing`, expected: [200] },
   { name: "dashboard route", url: `${baseUrl}/dashboard`, expected: [200] },
-  { name: "lawyer route", url: `${baseUrl}/lawyer`, expected: [200] },
+  { name: "lawyer route", url: `${baseUrl}/lawyers`, expected: [200] },
+  { name: "disclaimer route", url: `${baseUrl}/disclaimer`, expected: [200] },
   { name: "AdSense authorization", url: `${baseUrl}/ads.txt`, expected: [200] },
   { name: "Stripe webhook route", url: `${baseUrl}/api/webhooks/stripe`, expected: [405] },
   { name: "Supabase REST protection", url: `${supabaseUrl}/rest/v1/`, expected: [401] },

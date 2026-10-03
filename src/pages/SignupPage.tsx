@@ -11,10 +11,10 @@ import { signupSchema } from "@/lib/validations/auth";
 import { getInviteAcceptanceReturnTo } from "@/lib/invite";
 
 const benefits = [
-  "Generate unlimited legal documents",
+  "AI-assisted legal document drafting",
   "AI-powered legal chat assistant",
-  "50+ document templates",
-  "State-specific compliance",
+  "Document templates and starting points",
+  "Prompts to identify jurisdiction-specific issues",
 ];
 
 export default function SignupPage() {
@@ -69,7 +69,7 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -80,7 +80,13 @@ export default function SignupPage() {
         },
       });
       if (error) throw error;
-      toast.success("Account created successfully! You can now sign in.");
+      toast.success(data.session
+        ? "Account created successfully."
+        : "Check your email to confirm your account before signing in.");
+      if (data.session) {
+        navigate(inviteReturnTo ?? "/dashboard", { replace: true });
+        return;
+      }
       navigate(inviteReturnTo
         ? `/login?returnTo=${encodeURIComponent(inviteReturnTo)}`
         : "/login");
@@ -221,7 +227,7 @@ export default function SignupPage() {
             </div>
 
             <h2 className="font-display text-3xl font-bold mb-6">
-              Get Professional Legal Documents Instantly
+              Start with AI-assisted legal drafting
             </h2>
 
             <ul className="space-y-4 mb-8">
@@ -234,12 +240,8 @@ export default function SignupPage() {
             </ul>
 
             <div className="p-6 rounded-xl bg-primary-foreground/5 border border-primary-foreground/10">
-              <p className="text-primary-foreground/80 italic">
-                "LegallyAI saved me hours of work. The documents are professional 
-                and legally sound. Highly recommend!"
-              </p>
-              <p className="mt-3 font-semibold text-legal-gold">
-                — Sarah M., Small Business Owner
+              <p className="text-primary-foreground/80">
+                AI-generated content is a starting point, not legal advice. Review documents with a licensed attorney before relying on them.
               </p>
             </div>
           </div>
