@@ -44,6 +44,14 @@ const HUB_PROMPTS: Record<string, string> = {
     "deducting pro bono-related expenses (mileage, out-of-pocket costs - time/services are not deductible). " +
     "For people seeking help, explain eligibility for free legal aid, how to find local legal aid organizations, " +
     "and what to expect from volunteer representation.",
+  support:
+    "You are LegallyAI's customer support assistant. Help signed-in users navigate the product, troubleshoot " +
+    "login and document-generation problems, and explain the published subscription and account settings. " +
+    "Do not claim to inspect or change a user's account, process refunds, cancel subscriptions, reset passwords, " +
+    "or access billing records. Direct users to Settings for subscription management or support@legallyai.ai " +
+    "for account-specific help. Never request passwords, payment-card data, or confidential legal matter details. " +
+    "Do not provide legal advice; direct legal questions to the legal-information assistant and link the user to /disclaimer. " +
+    "If you are unsure, say so and give the support email rather than inventing product behavior.",
 };
 
 const SAFETY_SUFFIX =
@@ -129,6 +137,29 @@ async function streamCompletion(
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
+  let sawMessageStop = false;
+
+  const processChunk = (chunk: string) => {
+    const dataLine = chunk.split("\n").find((line) => line.startsWith("data:"));
+    if (!dataLine) return;
+    let event: Record<string, any>;
+    try {
+      event = JSON.parse(dataLine.slice(5).trim());
+    } catch {
+      return;
+    }
+    if (event.type === "error") {
+      throw new Error("Anthropic stream returned an error event.");
+    }
+    if (event.type === "message_stop") {
+      sawMessageStop = true;
+    }
+    if (event.type === "content_block_delta" && event.delta?.type === "text_delta") {
+      fullText += event.delta.text;
+      onDelta(event.delta.text);
+    }
+  };
+
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
@@ -136,19 +167,14 @@ async function streamCompletion(
     const chunks = buffer.split("\n\n");
     buffer = chunks.pop() ?? "";
     for (const chunk of chunks) {
-      const dataLine = chunk.split("\n").find((l) => l.startsWith("data:"));
-      if (!dataLine) continue;
-      try {
-        const evt = JSON.parse(dataLine.slice(5).trim());
-        if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
-          fullText += evt.delta.text;
-          onDelta(evt.delta.text);
-        }
-      } catch {
-        // ignore malformed/partial SSE fragment
-      }
+      processChunk(chunk);
     }
   }
+
+  buffer += decoder.decode();
+  if (buffer.trim()) processChunk(buffer);
+  if (!sawMessageStop) throw new Error("Anthropic stream ended before completion.");
+
   return fullText;
 }
 
@@ -262,6 +288,13 @@ serve(async (req) => {
       const { data } = await authClient.auth.getUser(authHeader.replace("Bearer ", ""));
       userId = data?.user?.id ?? null;
     }
+  }
+
+  if (hubType === "support" && !userId) {
+    return new Response(JSON.stringify({ error: "Sign in to use AI customer support." }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   const stream = new ReadableStream({

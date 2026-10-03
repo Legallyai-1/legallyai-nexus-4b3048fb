@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { streamLegalChat, type ChatMessage } from "@/lib/legalChat";
 
 const quickActions = [
   { id: "billing", name: "Billing & Payments", icon: CreditCard, desc: "Subscriptions, refunds, payment issues" },
@@ -29,16 +30,18 @@ const quickActions = [
 ];
 
 const faqItems = [
-  { q: "How do I cancel my subscription?", a: "Go to Settings > Subscription > Cancel. Your access continues until the billing period ends." },
-  { q: "Can I get a refund?", a: "Refunds are available within 7 days of purchase. ServeAI can process this for you." },
-  { q: "How do I download my documents?", a: "After generation, click the Download button. Documents are saved as PDF files." },
+  { q: "How do I cancel my subscription?", a: "Open Settings and choose Manage or Cancel Subscription. Your access continues until the billing period ends." },
+  { q: "Can I get a refund?", a: "Contact support@legallyai.ai to request a refund. Requests are reviewed case by case." },
+  { q: "How do I download my documents?", a: "After generation, use Download for a text file or Print to save as PDF." },
   { q: "Is my data secure?", a: "Your data is encrypted in transit and stored with Supabase using per-user access rules. We do not sell your data. See our Privacy Policy for details." },
 ];
 
 export default function CustomerSupportPage() {
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [supportError, setSupportError] = useState<string | null>(null);
+  const [sessionId] = useState(() => crypto.randomUUID());
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -46,64 +49,44 @@ export default function CustomerSupportPage() {
   const handleSendMessage = async () => {
     if (!message.trim() || isLoading) return;
 
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      toast({ title: "Sign in required", description: "Sign in to use AI customer support." });
+      navigate(`/login?returnTo=${encodeURIComponent("/support")}`);
+      return;
+    }
+
     const userMessage = message.trim();
     setMessage("");
-    setMessages(prev => [...prev, { role: "user", content: userMessage }]);
+    setSupportError(null);
+    const conversation = [...messages, { role: "user" as const, content: userMessage }];
+    setMessages(conversation);
     setIsLoading(true);
 
     try {
-      const systemPrompt = `You are ServeAI, the fully autonomous customer support AI for LegallyAI platform. 
-
-      YOUR CAPABILITIES (Full Autonomy):
-      - Answer any questions about LegallyAI services
-      - Process refund requests (within policy)
-      - Help with account issues and settings
-      - Troubleshoot document generation problems
-      - Explain subscription plans and billing
-      - Detect and flag potential scam/fraud attempts
-      - Escalate complex issues to human support when needed
-
-      COMMUNICATION STYLE:
-      - Friendly, helpful, and professional
-      - Clear and concise responses
-      - Proactive in offering solutions
-      - Acknowledge frustration with empathy
-
-      GUIDELINES:
-      - Always verify user identity before making account changes
-      - Follow company refund policy (7 days)
-      - Detect suspicious activity and protect users
-      - Provide accurate information about services
-      - Offer alternatives when primary solution isn't available
-
-      AVAILABLE ACTIONS:
-      - Check subscription status
-      - Process refunds (with user confirmation)
-      - Reset passwords (send reset link)
-      - Explain features and pricing
-      - Submit feedback to product team
-      - Escalate to human agent
-
-      Be helpful, efficient, and make users feel heard!`;
-
-      const { data, error } = await supabase.functions.invoke('legal-chat', {
-        body: { 
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...messages,
-            { role: "user", content: userMessage }
-          ],
-          stream: false
-        }
+      const result = await streamLegalChat({
+        hubType: "support",
+        sessionId,
+        messages: conversation,
+        onDelta: (chunk) => setMessages((current) => {
+          const last = current[current.length - 1];
+          if (last?.role === "assistant") {
+            return [...current.slice(0, -1), { ...last, content: last.content + chunk }];
+          }
+          return [...current, { role: "assistant", content: chunk }];
+        }),
       });
 
-      if (error) throw error;
-
-      setMessages(prev => [...prev, { role: "assistant", content: data.response }]);
+      if (!result.text.trim()) throw new Error("The support assistant returned no response.");
     } catch (error: any) {
+      const message = error.message || "Failed to get response";
+      setMessages((current) => current[current.length - 1]?.role === "assistant"
+        ? current.slice(0, -1)
+        : current);
+      setSupportError(message);
       toast({
         title: "Error",
-        description: error.message || "Failed to get response",
+        description: message,
         variant: "destructive"
       });
     } finally {
@@ -133,11 +116,11 @@ export default function CustomerSupportPage() {
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-cyan to-neon-green">ServeAI</span>
               </h1>
               <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                24/7 AI Customer Support - Instant Help, Real Solutions
+                AI help for product questions and troubleshooting. Account changes and refunds are handled by support.
               </p>
               <div className="flex items-center justify-center gap-2 mt-2 text-sm text-neon-green">
                 <Zap className="w-4 h-4" />
-                <span>Fully Autonomous Support</span>
+                <span>AI support assistant</span>
                 <span className="w-2 h-2 rounded-full bg-neon-green animate-pulse" />
               </div>
             </div>
@@ -168,7 +151,7 @@ export default function CustomerSupportPage() {
                     <Headphones className="w-12 h-12 text-neon-cyan/30 mx-auto mb-4" />
                     <p className="text-foreground font-medium mb-2">Hi! I'm ServeAI, your support assistant.</p>
                     <p className="text-muted-foreground text-sm">
-                      Select a quick action above or describe what you need help with.
+                      Select a quick action above or describe what you need help with. AI support requires sign-in.
                     </p>
                   </div>
                 ) : (
@@ -194,6 +177,11 @@ export default function CustomerSupportPage() {
                       </div>
                     </div>
                   ))
+                )}
+                {supportError && (
+                  <p role="alert" className="text-sm text-destructive">
+                    {supportError} Contact <a href="mailto:support@legallyai.ai" className="underline">support@legallyai.ai</a> if you need more help.
+                  </p>
                 )}
                 {isLoading && (
                   <div className="flex justify-start">

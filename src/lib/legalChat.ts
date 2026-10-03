@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export const HUB_TYPES = ["general", "custody", "parole", "defense", "workplace", "probono"] as const;
+export const HUB_TYPES = ["general", "custody", "parole", "defense", "workplace", "probono", "support"] as const;
 export type HubType = typeof HUB_TYPES[number];
 
 export interface ChatMessage {
