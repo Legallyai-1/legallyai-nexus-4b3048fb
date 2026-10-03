@@ -39,14 +39,8 @@ interface Beneficiary {
 
 const WillHubPage = () => {
   const [activeTab, setActiveTab] = useState("overview");
-  const [assets, setAssets] = useState<Asset[]>([
-    { id: "1", type: "Real Estate", name: "Primary Residence", value: 750000, state: "CA" },
-    { id: "2", type: "Investment", name: "Stock Portfolio", value: 250000, state: "CA" },
-  ]);
-  const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([
-    { id: "1", name: "John Smith Jr.", relationship: "Son", percentage: 50 },
-    { id: "2", name: "Jane Smith", relationship: "Daughter", percentage: 50 },
-  ]);
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([]);
   const [selectedClauses, setSelectedClauses] = useState<string[]>([]);
   const [simResult, setSimResult] = useState<any>(null);
   const { toast } = useToast();

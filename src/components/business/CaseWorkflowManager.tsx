@@ -47,21 +47,9 @@ const DEFAULT_STAGES: Stage[] = [
   { id: '6', name: 'Resolution', order_index: 5, color: '#10b981' }
 ];
 
-const MOCK_TASKS: Task[] = [
-  { id: '1', title: 'Initial client interview', status: 'completed', priority: 'high', due_date: '2024-01-15', is_auto_generated: true },
-  { id: '2', title: 'Gather initial documents', status: 'completed', priority: 'high', due_date: '2024-01-20', is_auto_generated: true },
-  { id: '3', title: 'File complaint', status: 'in_progress', priority: 'high', due_date: '2024-02-01', is_auto_generated: false },
-  { id: '4', title: 'Serve defendant', status: 'pending', priority: 'high', due_date: '2024-02-15', is_auto_generated: true },
-  { id: '5', title: 'Prepare interrogatories', status: 'pending', priority: 'medium', due_date: '2024-03-01', is_auto_generated: false },
-  { id: '6', title: 'Request production of documents', status: 'pending', priority: 'medium', due_date: '2024-03-15', is_auto_generated: true },
-];
+const MOCK_TASKS: Task[] = [];
 
-const TIMELINE_EVENTS = [
-  { id: '1', type: 'case_opened', title: 'Case Opened', date: '2024-01-10', description: 'New case file created' },
-  { id: '2', type: 'document', title: 'Complaint Filed', date: '2024-01-20', description: 'Initial complaint filed with court' },
-  { id: '3', type: 'milestone', title: 'Service Completed', date: '2024-02-01', description: 'Defendant served successfully' },
-  { id: '4', type: 'deadline', title: 'Answer Due', date: '2024-03-01', description: 'Defendant response deadline' },
-];
+const TIMELINE_EVENTS = [];
 
 export function CaseWorkflowManager({ caseId, organizationId = 'default-org' }: CaseWorkflowManagerProps) {
   const [stages, setStages] = useState<Stage[]>(DEFAULT_STAGES);

@@ -39,53 +39,7 @@ export function NotificationCenter() {
 
   useEffect(() => {
     // Load initial notifications (demo data)
-    setNotifications([
-      {
-        id: "1",
-        type: "appointment",
-        title: "Upcoming Consultation",
-        description: "You have a consultation with John Smith in 1 hour",
-        timestamp: new Date(Date.now() - 1000 * 60 * 30),
-        read: false,
-        actionUrl: "/appointments"
-      },
-      {
-        id: "2",
-        type: "message",
-        title: "New Message",
-        description: "Sarah Williams sent you a message about Case #1234",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-        read: false,
-        actionUrl: "/messages"
-      },
-      {
-        id: "3",
-        type: "case",
-        title: "Case Status Updated",
-        description: "Smith vs. Johnson has been moved to 'Active' status",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4),
-        read: true,
-        actionUrl: "/cases"
-      },
-      {
-        id: "4",
-        type: "invoice",
-        title: "Payment Received",
-        description: "Invoice #INV-2024-001 has been paid ($2,500)",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-        read: true,
-        actionUrl: "/invoices"
-      },
-      {
-        id: "5",
-        type: "system",
-        title: "Welcome to LegallyAI!",
-        description: "Get started by exploring our AI assistants",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48),
-        read: true,
-        actionUrl: "/ai-assistants"
-      }
-    ]);
+    setNotifications([]);
 
     // Set up real-time subscription for new messages
     const channel = supabase

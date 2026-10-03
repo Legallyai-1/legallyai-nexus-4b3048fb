@@ -42,11 +42,7 @@ const mockTemplates: Template[] = [
   { id: "8", name: "Power of Attorney", category: "Estate", lastUsed: "2024-01-03", timesUsed: 27, isFavorite: false, variables: 8 },
 ];
 
-const mockGeneratedDocs: GeneratedDoc[] = [
-  { id: "1", name: "NDA - ABC Corp & XYZ Inc", template: "Non-Disclosure Agreement", createdAt: "2024-01-12", status: "signed", client: "ABC Corporation" },
-  { id: "2", name: "Employment Contract - John Smith", template: "Employment Contract", createdAt: "2024-01-11", status: "final", client: "TechCo Industries" },
-  { id: "3", name: "Retainer - Williams Family", template: "Retainer Agreement", createdAt: "2024-01-10", status: "draft", client: "Williams Family" },
-];
+const mockGeneratedDocs: GeneratedDoc[] = [];
 
 const categories = ["All", "Corporate", "Employment", "Real Estate", "Family Law", "Estate", "General"];
 
@@ -225,13 +221,6 @@ export function DocumentAssembly() {
                   <div className="flex items-center gap-2 mb-4">
                     <Badge variant="outline">{template.category}</Badge>
                     <span className="text-xs text-muted-foreground">{template.variables} variables</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {new Date(template.lastUsed).toLocaleDateString()}
-                    </span>
-                    <span>Used {template.timesUsed}x</span>
                   </div>
                   <div className="flex gap-2">
                     <Button 
