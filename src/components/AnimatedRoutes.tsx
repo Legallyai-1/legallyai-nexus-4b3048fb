@@ -58,7 +58,6 @@ const EnhancedCustodyPage = lazy(() => import("@/pages/EnhancedCustodyPage"));
 const EnhancedParolePage = lazy(() => import("@/pages/EnhancedParolePage"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const StoreAssetsPage = lazy(() => import("@/pages/StoreAssetsPage"));
-const TestingPage = lazy(() => import("@/pages/TestingPage"));
 const NotificationsPage = lazy(() => import("@/pages/NotificationsPage"));
 
 // Loading fallback component
@@ -130,7 +129,6 @@ export function AnimatedRoutes() {
         <Route path="/will-hub" element={<PageTransition><LazyRoute><WillHubPage /></LazyRoute></PageTransition>} />
         <Route path="/marriage-divorce" element={<PageTransition><LazyRoute><MarriageDivorcePage /></LazyRoute></PageTransition>} />
         <Route path="/store-assets" element={<PageTransition><LazyRoute><StoreAssetsPage /></LazyRoute></PageTransition>} />
-        <Route path="/testing" element={<PageTransition><LazyRoute><TestingPage /></LazyRoute></PageTransition>} />
         <Route path="/notifications" element={<PageTransition><LazyRoute><NotificationsPage /></LazyRoute></PageTransition>} />
         <Route path="*" element={<PageTransition><LazyRoute><NotFound /></LazyRoute></PageTransition>} />
       </Routes>

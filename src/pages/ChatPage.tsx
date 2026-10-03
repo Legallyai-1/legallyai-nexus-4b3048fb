@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, User, Sparkles, AlertCircle, Loader2, Mic } from "lucide-react";
-import { VoiceInputButton } from "@/components/ui/VoiceInputButton";
+import { Send, User, Sparkles, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -301,10 +300,6 @@ export default function ChatPage() {
                 placeholder="Ask me anything about legal matters..."
                 className="flex-1 h-12 text-base bg-muted/50 border-border/50 focus:border-neon-cyan/50 focus:shadow-glow-sm transition-all rounded-xl"
                 disabled={isTyping}
-              />
-              <VoiceInputButton
-                onTranscript={(text) => setInput(prev => prev ? `${prev} ${text}` : text)}
-                className="h-12 w-12 rounded-xl"
               />
               <Button
                 type="submit"

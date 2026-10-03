@@ -36,7 +36,6 @@ const AVAILABLE_INTEGRATIONS = [
   { name: 'hubspot', type: 'crm', displayName: 'HubSpot', description: 'Marketing and CRM', icon: 'users' },
   { name: 'lexisnexis', type: 'research', displayName: 'LexisNexis', description: 'Legal research integration', icon: 'search' },
   { name: 'westlaw', type: 'research', displayName: 'Westlaw', description: 'Legal research database', icon: 'search' },
-  { name: 'courtlistener', type: 'research', displayName: 'CourtListener', description: 'Court records API', icon: 'search' },
 ];
 
 serve(async (req) => {

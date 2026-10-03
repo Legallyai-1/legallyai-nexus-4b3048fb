@@ -29,62 +29,40 @@ async function verifyAuth(req: Request): Promise<{ userId: string } | null> {
   return { userId: user.id };
 }
 
-async function callAI(head: string, messages: any[]) {
-  console.log(`Calling AI for: ${head}`);
-  
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-  
-  // Try Lovable AI first (free)
-  if (LOVABLE_API_KEY) {
-    try {
-      const resp = await fetch("https://api.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { 
-          Authorization: `Bearer ${LOVABLE_API_KEY}`, 
-          "Content-Type": "application/json" 
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages
-        })
-      });
-      
-      if (resp.ok) {
-        const json = await resp.json();
-        const content = json.choices?.[0]?.message?.content ?? null;
-        console.log(`${head} response received from Lovable (${content?.length || 0} chars)`);
-        return content;
-      }
-    } catch (e) {
-      console.error(`Lovable AI failed for ${head}:`, e);
-    }
-  }
-  
-  // Fallback to OpenAI
-  if (OPENAI_API_KEY) {
-    const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+async function callAnthropic(messages: { role: string; content: string }[], maxTokens = 2048): Promise<string | null> {
+  const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+  if (!apiKey) return null;
+  const system = messages.filter((m) => m.role === "system").map((m) => m.content).join("\n\n");
+  const convo = messages.filter((m) => m.role !== "system");
+  try {
+    const resp = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { 
-        Authorization: `Bearer ${OPENAI_API_KEY}`, 
-        "Content-Type": "application/json" 
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages
-      })
+        model: Deno.env.get("ANTHROPIC_MODEL") || "claude-sonnet-4-20250514",
+        max_tokens: maxTokens,
+        ...(system ? { system } : {}),
+        messages: convo,
+      }),
     });
-    
-    if (resp.ok) {
-      const json = await resp.json();
-      const content = json.choices?.[0]?.message?.content ?? null;
-      console.log(`${head} response received from OpenAI (${content?.length || 0} chars)`);
-      return content;
-    }
+    if (!resp.ok) return null;
+    const json = await resp.json();
+    return json.content?.find((b: { type?: string }) => b.type === "text")?.text ?? null;
+  } catch (e) {
+    console.error("Anthropic request failed:", e);
+    return null;
   }
-  
-  // Return a basic fallback message
-  return `Analysis for ${head} is temporarily unavailable. Please ensure AI services are configured correctly.`;
+}
+
+async function callAI(head: string, messages: { role: string; content: string }[]) {
+  console.log(`Calling AI for: ${head}`);
+  const content = await callAnthropic(messages);
+  if (content) return content;
+  return `Analysis for ${head} is temporarily unavailable. Please try again later.`;
 }
 
 serve(async (req) => {

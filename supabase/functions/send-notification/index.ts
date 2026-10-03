@@ -19,8 +19,6 @@ interface NotificationPayload {
   hub?: string;
   referenceId?: string;
   referenceType?: string;
-  sendEmail?: boolean;
-  email?: string;
 }
 
 serve(async (req) => {
@@ -54,7 +52,7 @@ serve(async (req) => {
     logStep("User authenticated", { userId: authUser.id });
 
     const payload: NotificationPayload = await req.json();
-    const { userId, title, message, type, hub, referenceId, referenceType, sendEmail, email } = payload;
+    const { userId, title, message, type, hub, referenceId, referenceType } = payload;
 
     if (!userId || !title || !message) {
       throw new Error("Missing required fields: userId, title, message");
@@ -102,55 +100,10 @@ serve(async (req) => {
 
     logStep("Notification created", { id: notification.id });
 
-    // Send email if requested and Resend is configured
-    let emailSent = false;
-    if (sendEmail && email) {
-      const resendKey = Deno.env.get("RESEND_API_KEY");
-      if (resendKey) {
-        try {
-          const emailResponse = await fetch("https://api.resend.com/emails", {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${resendKey}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              from: "LegallyAI <notifications@legallyai.ai>",
-              to: [email],
-              subject: title,
-              html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                  <h2 style="color: #1a365d;">${title}</h2>
-                  <p style="color: #4a5568; line-height: 1.6;">${message}</p>
-                  <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
-                  <p style="color: #718096; font-size: 12px;">
-                    This notification is from LegallyAI. 
-                    <a href="https://legallyai.ai" style="color: #3182ce;">Visit our website</a>
-                  </p>
-                </div>
-              `,
-            }),
-          });
-
-          if (emailResponse.ok) {
-            emailSent = true;
-            logStep("Email sent", { to: email });
-          } else {
-            const errorData = await emailResponse.json();
-            logStep("Email failed", { error: errorData });
-          }
-        } catch (emailError: any) {
-          logStep("Email failed", { error: emailError.message });
-        }
-      } else {
-        logStep("Resend API key not configured, skipping email");
-      }
-    }
-
     return new Response(JSON.stringify({
       success: true,
       notification,
-      emailSent
+      emailSent: false
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

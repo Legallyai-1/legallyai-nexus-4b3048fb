@@ -50,7 +50,6 @@ const mockIntegrations: Integration[] = [
   { id: "12", name: "Box", category: "Storage", description: "Enterprise cloud storage", icon: "📂", connected: false, status: "disconnected" },
   { id: "13", name: "Westlaw", category: "Legal Research", description: "Legal research database", icon: "⚖️", connected: true, lastSync: "2024-01-11", status: "active" },
   { id: "14", name: "LexisNexis", category: "Legal Research", description: "Legal research and analytics", icon: "📚", connected: false, status: "disconnected" },
-  { id: "15", name: "PACER", category: "Court Filing", description: "Federal court records", icon: "🏛️", connected: true, lastSync: "2024-01-10", status: "active" },
   { id: "16", name: "Calendly", category: "Calendar", description: "Appointment scheduling", icon: "📅", connected: true, lastSync: "2024-01-12", status: "active" },
 ];
 
