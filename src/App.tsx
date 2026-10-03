@@ -3,21 +3,26 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { AnimatedRoutes } from '@/components/AnimatedRoutes';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { setStoredSubscriptionTier, shouldShowAds } from '@/lib/subscription';
+import { getSupabaseBrowserConfig } from '@/lib/env';
 import { supabase } from '@/integrations/supabase/client';
+import { getSupabaseSessionSafely, subscribeToSupabaseAuthState } from '@/integrations/supabase/helpers';
 import { PRIVATE_APP_MODE, PRIVATE_APP_MESSAGE, PRIVATE_APP_CONFIG_ERROR } from '@/config/privateApp';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [configReady, setConfigReady] = useState(true);
 
   useEffect(() => {
-    const requiredEnvReady = Boolean(
-      import.meta.env.VITE_SUPABASE_URL &&
-      (import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY)
-    );
+    let requiredEnvReady = false;
 
-    // This application is private/proprietary and should be configured in the owner’s private environment.
-    // We still validate runtime availability, but we do not instruct users to add public keys.
+    try {
+      getSupabaseBrowserConfig();
+      requiredEnvReady = true;
+    } catch {
+      requiredEnvReady = false;
+    }
+
     setConfigReady(PRIVATE_APP_MODE ? true : requiredEnvReady);
 
     const timer = setTimeout(() => {
@@ -41,27 +46,40 @@ function App() {
       setStoredSubscriptionTier(tier);
     }
 
-    const syncSubscriptionFromSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    const syncSubscriptionFromSession = async (overrideSession?: Awaited<ReturnType<typeof getSupabaseSessionSafely>>) => {
+      const session = overrideSession ?? await getSupabaseSessionSafely();
       const user = session?.user;
 
       if (!user) {
         setStoredSubscriptionTier('free');
+        document.body.dataset.subscriptionTier = 'free';
         return;
       }
 
-      const { data: profile } = await supabase
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('subscription_tier')
         .eq('id', user.id)
         .maybeSingle();
+
+      if (error) {
+        console.error('Unable to sync subscription tier', error);
+      }
 
       const tierName = profile?.subscription_tier || 'free';
       setStoredSubscriptionTier(tierName);
       document.body.dataset.subscriptionTier = tierName;
     };
 
-    syncSubscriptionFromSession();
+    void syncSubscriptionFromSession();
+
+    const { data: { subscription } } = subscribeToSupabaseAuthState((_event, session) => {
+      void syncSubscriptionFromSession(session);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -84,21 +102,24 @@ function App() {
   }
 
   return (
-    <AnimatePresence mode="wait">
-      {isLoading ? (
-        <LoadingScreen key="loading" />
-      ) : (
-        <motion.div
-          key="app-content"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.35 }}
-        >
-          <div className="sr-only">{PRIVATE_APP_MESSAGE}</div>
-          <AnimatedRoutes />
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <>
+      <AnimatePresence mode="wait">
+        {isLoading ? (
+          <LoadingScreen key="loading" />
+        ) : (
+          <motion.div
+            key="app-content"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.35 }}
+          >
+            <div className="sr-only">{PRIVATE_APP_MESSAGE}</div>
+            <AnimatedRoutes />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <SpeedInsights />
+    </>
   );
 }
 

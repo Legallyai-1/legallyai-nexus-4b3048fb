@@ -39,3 +39,5 @@ transcripts/
 *.vtt
 .vercel
 .env*
+!.env.example
+!.env.validation.ts

@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Search, Scale } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ActiveOrganizationSwitcher } from "./ActiveOrganizationSwitcher";
+import { getActiveOrganizationId, setActiveOrganizationId } from "@/lib/organizations";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -24,13 +26,24 @@ export function MainLayout({ children, showSidebar = true, showHeader = true }: 
       setUser(user);
 
       // Get user role
-      const { data: roleData } = await supabase
+      const { data: roles, error } = await supabase
         .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .maybeSingle();
+        .select("role, organization_id")
+        .eq("user_id", user.id);
+
+      if (error) return;
+
+      const activeOrganizationId = getActiveOrganizationId();
+      const roleData = activeOrganizationId
+        ? roles?.find(({ organization_id }) => organization_id === activeOrganizationId)
+        : roles?.length === 1
+          ? roles[0]
+          : null;
 
       if (roleData?.role) {
+        if (!activeOrganizationId && roleData.organization_id) {
+          setActiveOrganizationId(roleData.organization_id);
+        }
         setUserRole(roleData.role);
       }
     };
@@ -57,6 +70,7 @@ export function MainLayout({ children, showSidebar = true, showHeader = true }: 
                   className="pl-10 h-9"
                 />
               </div>
+              <ActiveOrganizationSwitcher />
             </div>
             
             <div className="flex items-center gap-2">

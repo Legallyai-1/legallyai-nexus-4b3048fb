@@ -54,9 +54,8 @@ const plans = [
     features: [
       "Everything in Free, plus:",
       "Unlimited document generation",
-      "Download as PDF",
+      "Download text or print/save as PDF",
       "All document types",
-      "State-specific templates",
       "Priority email support",
     ],
     cta: "Subscribe Now",
@@ -73,10 +72,9 @@ const plans = [
     period: "one-time",
     description: "Pay only for what you need",
     features: [
-      "Single professional document",
-      "Download as PDF",
+      "One document-generation allowance",
+      "Download text or print/save as PDF",
       "All document types",
-      "State-specific templates",
       "No subscription required",
     ],
     cta: "Buy Document",
@@ -380,8 +378,8 @@ export default function PricingPage() {
             <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               {[
                 {
-                  q: "Is LegallyAI legally accurate?",
-                  a: "LegallyAI is trained on current US law (2025) and generates legally-sound documents. However, we recommend consulting with a licensed attorney before signing any legal document.",
+                  q: "Is LegallyAI legal advice?",
+                  a: "No. LegallyAI provides AI-generated drafts and general information that may be incomplete, inaccurate, out of date, or unsuitable for your jurisdiction. It is not a substitute for advice from a licensed attorney. Have a qualified lawyer review documents before signing or relying on them.",
                 },
                 {
                   q: "Can I get a refund?",
@@ -393,7 +391,7 @@ export default function PricingPage() {
                 },
                 {
                   q: "What document types are supported?",
-                  a: "We support 50+ document types including NDAs, contracts, wills, custody agreements, LLCs, leases, and more. New templates are added regularly.",
+                  a: "The template library currently lists 18 starter items. You can also request other AI-generated drafts, but availability and accuracy are not guaranteed.",
                 },
               ].map((faq, i) => (
                 <div key={i} className="glass-card-hover p-6 rounded-xl">

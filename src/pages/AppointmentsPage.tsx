@@ -21,6 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import type { Database } from "@/integrations/supabase/types";
+import { ensureUserOrganization } from "@/lib/organizations";
 
 type AppointmentStatus = Database["public"]["Enums"]["appointment_status"];
 
@@ -89,54 +90,14 @@ export default function AppointmentsPage() {
   const fetchData = async (userId: string) => {
     setLoading(true);
     try {
-      let { data: orgMember } = await supabase
-        .from('organization_members')
-        .select('organization_id')
-        .eq('user_id', userId)
-        .single();
-
-      if (!orgMember) {
-        const { data: newOrg } = await supabase
-          .from('organizations')
-          .insert({ name: 'My Law Practice', owner_id: userId })
-          .select()
-          .single();
-
-        if (newOrg) {
-          const { error: memberError } = await supabase.from('organization_members').insert({
-            organization_id: newOrg.id,
-            user_id: userId,
-          });
-          if (memberError) throw memberError;
-
-          const { error: roleError } = await supabase.from('user_roles').insert({
-            organization_id: newOrg.id,
-            user_id: userId,
-            role: 'owner',
-          });
-          if (roleError) {
-            await supabase
-              .from('organization_members')
-              .delete()
-              .eq('organization_id', newOrg.id)
-              .eq('user_id', userId);
-            await supabase
-              .from('organizations')
-              .delete()
-              .eq('id', newOrg.id);
-            throw roleError;
-          }
-          orgMember = { organization_id: newOrg.id };
-        }
-      }
-
-      if (orgMember) {
-        setOrganizationId(orgMember.organization_id);
+      const organizationId = await ensureUserOrganization(userId);
+      if (organizationId) {
+        setOrganizationId(organizationId);
 
         const { data: apptData, error: apptError } = await supabase
           .from('appointments')
           .select('*, clients(full_name)')
-          .eq('organization_id', orgMember.organization_id)
+          .eq('organization_id', organizationId)
           .order('start_time', { ascending: true });
 
         if (apptError) throw apptError;
@@ -145,7 +106,7 @@ export default function AppointmentsPage() {
         const { data: clientsData } = await supabase
           .from('clients')
           .select('id, full_name')
-          .eq('organization_id', orgMember.organization_id)
+          .eq('organization_id', organizationId)
           .order('full_name');
 
         setClients(clientsData || []);

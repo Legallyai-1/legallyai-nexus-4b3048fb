@@ -60,6 +60,14 @@ const PaymentSuccessPage = () => {
     };
   }, [searchParams]);
 
+  useEffect(() => {
+    if (!verified || typeof BroadcastChannel === "undefined") return;
+
+    const channel = new BroadcastChannel("legallyai-checkout");
+    channel.postMessage({ type: "payment-verified" });
+    channel.close();
+  }, [verified]);
+
   return (
     <Layout>
       <div className="min-h-screen bg-background flex items-center justify-center py-16">
