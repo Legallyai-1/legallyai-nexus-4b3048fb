@@ -41,7 +41,9 @@ serve(async (req) => {
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
+      .is("organization_id", null)
       .in("role", ["admin", "owner"])
+      .limit(1)
       .maybeSingle();
     if (roleError) throw new Error(`Authorization check failed: ${roleError.message}`);
     if (!roleRecord) {
@@ -214,7 +216,7 @@ serve(async (req) => {
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status: /authorization|authenticat|unauthorized|invalid jwt|auth session/i.test(errorMessage) ? 401 : /no stripe customer|required|missing|not found/i.test(errorMessage) ? 400 : 500,
     });
   }
 });

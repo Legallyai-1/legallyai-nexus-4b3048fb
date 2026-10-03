@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+import { getAnthropicKey } from "../_shared/anthropic-key.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -32,7 +33,7 @@ interface TrustAccount {
 }
 
 async function callAnthropic(messages: { role: string; content: string }[], maxTokens = 2048): Promise<string | null> {
-  const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+  const apiKey = getAnthropicKey();
   if (!apiKey) return null;
   const system = messages.filter((m) => m.role === "system").map((m) => m.content).join("\n\n");
   const convo = messages.filter((m) => m.role !== "system");
