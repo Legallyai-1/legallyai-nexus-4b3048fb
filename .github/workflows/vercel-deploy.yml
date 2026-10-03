@@ -105,8 +105,15 @@ jobs:
           if [ "$IS_PRODUCTION" = "true" ]; then
             vercel_args+=(--prod)
           fi
+          set +e
           deploy_output=$(npx --yes vercel@62.2.0 deploy --cwd "$GITHUB_WORKSPACE" "${vercel_args[@]}" 2>&1)
+          deploy_status=$?
+          set -e
           printf '%s\n' "$deploy_output"
+          if [ "$deploy_status" -ne 0 ]; then
+            echo "Vercel CLI deploy failed with exit code $deploy_status"
+            exit "$deploy_status"
+          fi
           deployment_url=$(printf '%s\n' "$deploy_output" | grep -Eo 'https://[^[:space:]]+\.vercel\.app' | tail -1)
           if [ -z "$deployment_url" ]; then
             echo "Vercel CLI did not return a deployment URL"
