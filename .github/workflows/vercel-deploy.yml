@@ -97,7 +97,7 @@ jobs:
         id: vercel-deploy
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_SCOPE: ${{ vars.VERCEL_ORG_SLUG || secrets.VERCEL_ORG_SLUG || 'dakota-lefavers-projects' }}
+          VERCEL_SCOPE: ${{ vars.VERCEL_ORG_ID || secrets.VERCEL_ORG_ID || 'team_ACIjhOlfoTDfEvu93dbW4ThU' }}
           VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID || secrets.VERCEL_PROJECT_ID }}
         run: |
           set -euo pipefail
