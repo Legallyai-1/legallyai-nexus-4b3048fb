@@ -31,7 +31,6 @@ const DisclaimerPage = lazy(() => import("@/pages/DisclaimerPage"));
 const TermsPage = lazy(() => import("@/pages/TermsPage"));
 const PrivacyPage = lazy(() => import("@/pages/PrivacyPage"));
 const ClientPortalPage = lazy(() => import("@/pages/ClientPortalPage"));
-const DocumentSigningPage = lazy(() => import("@/pages/DocumentSigningPage"));
 const InvoicesPage = lazy(() => import("@/pages/InvoicesPage"));
 const ConsultationsPage = lazy(() => import("@/pages/ConsultationsPage"));
 const PaymentSuccessPage = lazy(() => import("@/pages/PaymentSuccessPage"));
@@ -49,7 +48,6 @@ const LegalAcademyPage = lazy(() => import("@/pages/LegalAcademyPage"));
 const QuizPage = lazy(() => import("@/pages/QuizPage"));
 const TelephonyPage = lazy(() => import("@/pages/TelephonyPage"));
 const CustomerSupportPage = lazy(() => import("@/pages/CustomerSupportPage"));
-const MonetizationPage = lazy(() => import("@/pages/MonetizationPage"));
 const CourtRecordsPage = lazy(() => import("@/pages/CourtRecordsPage"));
 const BusinessHubPage = lazy(() => import("@/pages/BusinessHubPage"));
 const DUIHubPage = lazy(() => import("@/pages/DUIHubPage"));
@@ -105,7 +103,6 @@ export function AnimatedRoutes() {
         <Route path="/terms" element={<PageTransition><LazyRoute><TermsPage /></LazyRoute></PageTransition>} />
         <Route path="/privacy" element={<PageTransition><LazyRoute><PrivacyPage /></LazyRoute></PageTransition>} />
         <Route path="/client-portal" element={<PageTransition><LazyRoute><ClientPortalPage /></LazyRoute></PageTransition>} />
-        <Route path="/document-signing" element={<PageTransition><LazyRoute><DocumentSigningPage /></LazyRoute></PageTransition>} />
         <Route path="/invoices" element={<PageTransition><LazyRoute><InvoicesPage /></LazyRoute></PageTransition>} />
         <Route path="/consultations" element={<PageTransition><LazyRoute><ConsultationsPage /></LazyRoute></PageTransition>} />
         <Route path="/payment-success" element={<PageTransition><LazyRoute><PaymentSuccessPage /></LazyRoute></PageTransition>} />
@@ -124,7 +121,6 @@ export function AnimatedRoutes() {
         <Route path="/quiz" element={<PageTransition><LazyRoute><QuizPage /></LazyRoute></PageTransition>} />
         <Route path="/telephony" element={<PageTransition><LazyRoute><TelephonyPage /></LazyRoute></PageTransition>} />
         <Route path="/support" element={<PageTransition><LazyRoute><CustomerSupportPage /></LazyRoute></PageTransition>} />
-        <Route path="/monetization" element={<PageTransition><LazyRoute><MonetizationPage /></LazyRoute></PageTransition>} />
         <Route path="/court-records" element={<PageTransition><LazyRoute><CourtRecordsPage /></LazyRoute></PageTransition>} />
         <Route path="/business-hub" element={<PageTransition><LazyRoute><BusinessHubPage /></LazyRoute></PageTransition>} />
         <Route path="/dui-hub" element={<PageTransition><LazyRoute><DUIHubPage /></LazyRoute></PageTransition>} />
