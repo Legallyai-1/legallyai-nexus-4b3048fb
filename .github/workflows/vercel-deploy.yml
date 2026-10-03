@@ -76,14 +76,6 @@ jobs:
       VITE_ADSENSE_CLIENT_ID: ${{ vars.VITE_ADSENSE_CLIENT_ID || secrets.VITE_ADSENSE_CLIENT_ID }}
       VITE_ENABLE_ADSENSE: ${{ vars.VITE_ENABLE_ADSENSE || secrets.VITE_ENABLE_ADSENSE || 'true' }}
       VITE_ENABLE_PAYMENTS: ${{ vars.VITE_ENABLE_PAYMENTS || secrets.VITE_ENABLE_PAYMENTS || 'true' }}
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID || secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID || secrets.VERCEL_PROJECT_ID }}
-      SUPABASE_URL: ${{ vars.SUPABASE_URL || secrets.SUPABASE_URL || vars.VITE_SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
-      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
       IS_PRODUCTION: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_production == 'true')) }}
     steps:
       - name: Checkout
@@ -100,45 +92,6 @@ jobs:
 
       - name: Build application
         run: npm run build
-
-      - name: Sync Vercel environment variables
-        if: github.event_name != 'pull_request'
-        run: |
-          set -eu
-
-          sync_env() {
-            name="$1"
-            value="$2"
-            target="$3"
-
-            if [ -z "$value" ]; then
-              echo "Skipping $name for $target because no value was provided"
-              return 0
-            fi
-
-            npm exec --yes --package=vercel@59.17.0 -- vercel env rm "$name" "$target" --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --yes >/dev/null 2>&1 || true
-            printf '%s' "$value" | npm exec --yes --package=vercel@59.17.0 -- vercel env add "$name" "$target" --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" >/dev/null
-          }
-
-          targets="preview"
-          if [ "$IS_PRODUCTION" = "true" ]; then
-            targets="preview production"
-          fi
-
-          for target in $targets; do
-            sync_env VITE_SUPABASE_URL "$VITE_SUPABASE_URL" "$target"
-            sync_env VITE_SUPABASE_ANON_KEY "$VITE_SUPABASE_ANON_KEY" "$target"
-            sync_env VITE_SUPABASE_PUBLISHABLE_KEY "$VITE_SUPABASE_PUBLISHABLE_KEY" "$target"
-            sync_env VITE_SUPABASE_PROJECT_ID "$VITE_SUPABASE_PROJECT_ID" "$target"
-            sync_env VITE_ADSENSE_CLIENT_ID "$VITE_ADSENSE_CLIENT_ID" "$target"
-            sync_env VITE_ENABLE_ADSENSE "$VITE_ENABLE_ADSENSE" "$target"
-            sync_env VITE_ENABLE_PAYMENTS "$VITE_ENABLE_PAYMENTS" "$target"
-            sync_env SUPABASE_URL "$SUPABASE_URL" "$target"
-            sync_env SUPABASE_SECRET_KEY "$SUPABASE_SECRET_KEY" "$target"
-            sync_env SUPABASE_SERVICE_ROLE_KEY "$SUPABASE_SERVICE_ROLE_KEY" "$target"
-            sync_env STRIPE_SECRET_KEY "$STRIPE_SECRET_KEY" "$target"
-            sync_env STRIPE_WEBHOOK_SECRET "$STRIPE_WEBHOOK_SECRET" "$target"
-          done
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
