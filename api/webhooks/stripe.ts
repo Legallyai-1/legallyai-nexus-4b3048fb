@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
-import { validateStripeWebhookEnv } from '../../.env.validation.ts';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { validateStripeWebhookEnv } from '../../.env.validation';
 
 const SUPPORTED_EVENTS = new Set([
   'checkout.session.completed',
@@ -20,6 +20,7 @@ const PRICE_TIERS: Record<string, 'premium' | 'pro' | 'document'> = {
   price_1SckVt0QhWGUtGKvl9YdmQqk: 'document',
 };
 const VALID_TIERS = new Set(['premium', 'pro', 'document']);
+type StripeSupabaseClient = SupabaseClient<any>;
 
 function getWebhookClients() {
   const env = validateStripeWebhookEnv(process.env);
@@ -27,7 +28,7 @@ function getWebhookClients() {
   return {
     env,
     stripe: new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2025-08-27.basil' }),
-    supabase: createClient(env.SUPABASE_URL, env.SUPABASE_SERVER_KEY),
+    supabase: createClient<any>(env.SUPABASE_URL, env.SUPABASE_SERVER_KEY),
   };
 }
 
@@ -61,7 +62,7 @@ function formatError(error: unknown) {
   return 'Unknown error';
 }
 
-async function withRetry<T>(label: string, operation: () => Promise<T>) {
+async function withRetry<T>(label: string, operation: () => PromiseLike<T>): Promise<T> {
   let lastError: unknown;
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt += 1) {
@@ -114,7 +115,7 @@ async function getRawBody(req: VercelRequest) {
 
 async function resolveUserId(
   stripe: Stripe,
-  supabase: ReturnType<typeof createClient>,
+  supabase: StripeSupabaseClient,
   customerId: string,
   metadata: Stripe.Metadata,
 ) {
@@ -143,7 +144,7 @@ async function resolveUserId(
 
 async function persistSubscription(
   stripe: Stripe,
-  supabase: ReturnType<typeof createClient>,
+  supabase: StripeSupabaseClient,
   subscription: Stripe.Subscription,
   userId?: string,
 ) {
