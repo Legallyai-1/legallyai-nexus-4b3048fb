@@ -16,16 +16,19 @@ CREATE TABLE IF NOT EXISTS public.notifications (
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 
 -- Users can only view their own notifications
+DROP POLICY IF EXISTS "Users can view own notifications" ON public.notifications;
 CREATE POLICY "Users can view own notifications"
 ON public.notifications FOR SELECT
 USING (auth.uid() = user_id);
 
 -- Users can update own notifications (mark as read)
+DROP POLICY IF EXISTS "Users can update own notifications" ON public.notifications;
 CREATE POLICY "Users can update own notifications"
 ON public.notifications FOR UPDATE
 USING (auth.uid() = user_id);
 
 -- System can insert notifications for any user (via service role)
+DROP POLICY IF EXISTS "Service role can insert notifications" ON public.notifications;
 CREATE POLICY "Service role can insert notifications"
 ON public.notifications FOR INSERT
 WITH CHECK (true);
@@ -49,16 +52,19 @@ CREATE TABLE IF NOT EXISTS public.loan_payments (
 ALTER TABLE public.loan_payments ENABLE ROW LEVEL SECURITY;
 
 -- Users can view their own payments
+DROP POLICY IF EXISTS "Users can view own loan payments" ON public.loan_payments;
 CREATE POLICY "Users can view own loan payments"
 ON public.loan_payments FOR SELECT
 USING (auth.uid() = user_id);
 
 -- Users can insert their own payments
+DROP POLICY IF EXISTS "Users can insert own loan payments" ON public.loan_payments;
 CREATE POLICY "Users can insert own loan payments"
 ON public.loan_payments FOR INSERT
 WITH CHECK (auth.uid() = user_id);
 
 -- Admins can manage all payments
+DROP POLICY IF EXISTS "Admins can manage loan payments" ON public.loan_payments;
 CREATE POLICY "Admins can manage loan payments"
 ON public.loan_payments FOR ALL
 USING (EXISTS (
