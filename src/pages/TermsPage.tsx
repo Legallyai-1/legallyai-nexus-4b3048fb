@@ -13,7 +13,7 @@ const TermsPage = () => {
           </Button>
           
           <h1 className="text-4xl font-bold text-foreground mb-8">Terms of Service</h1>
-          <p className="text-muted-foreground mb-8">Last Updated: December 10, 2024</p>
+          <p className="text-muted-foreground mb-8">Last Updated: October 3, 2026</p>
           
           <div className="prose prose-invert max-w-none space-y-8 text-foreground/90">
             
@@ -34,15 +34,13 @@ const TermsPage = () => {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-foreground mb-4">4. Platform Fee & Revenue Share</h2>
-              <p>By using LegallyAI's paid services, you acknowledge and agree that:</p>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">4. Subscriptions & Payments</h2>
               <ul className="list-disc pl-6 space-y-2">
-                <li>LegallyAI charges a <strong>1% platform fee</strong> on all revenue generated through the platform by law firms, lawyers, and business users</li>
-                <li>This fee applies to: client payments processed through the platform, subscription fees, and any other monetized services facilitated by LegallyAI</li>
-                <li>The platform fee is automatically calculated and deducted from transactions</li>
-                <li>This fee helps maintain and improve the platform for all users</li>
+                <li>Paid plans are billed through Stripe. We do not store your full card number.</li>
+                <li>Subscriptions renew automatically each billing period until you cancel.</li>
+                <li>You can cancel at any time; access continues until the end of the paid period.</li>
+                <li>To request a refund, contact support@legallyai.ai. Refund requests are reviewed case by case.</li>
               </ul>
-              <p className="mt-4 font-medium">This revenue share clause is binding upon acceptance of these terms and applies in all U.S. states where the Service is available.</p>
             </section>
 
             <section>
@@ -141,7 +139,7 @@ const TermsPage = () => {
             <section>
               <h2 className="text-2xl font-semibold text-foreground mb-4">15. Contact Information</h2>
               <p>For questions about these Terms, contact us at:</p>
-              <p className="mt-2">Email: legal@legallyai.ai</p>
+              <p className="mt-2">Email: support@legallyai.ai</p>
             </section>
 
             <section className="border-t border-border pt-8 mt-8">

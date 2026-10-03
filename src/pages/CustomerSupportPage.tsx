@@ -32,7 +32,7 @@ const faqItems = [
   { q: "How do I cancel my subscription?", a: "Go to Settings > Subscription > Cancel. Your access continues until the billing period ends." },
   { q: "Can I get a refund?", a: "Refunds are available within 7 days of purchase. ServeAI can process this for you." },
   { q: "How do I download my documents?", a: "After generation, click the Download button. Documents are saved as PDF files." },
-  { q: "Is my data secure?", a: "Yes! We use end-to-end encryption and comply with HIPAA, GDPR, and industry standards." },
+  { q: "Is my data secure?", a: "Your data is encrypted in transit and stored with Supabase using per-user access rules. We do not sell your data. See our Privacy Policy for details." },
 ];
 
 export default function CustomerSupportPage() {

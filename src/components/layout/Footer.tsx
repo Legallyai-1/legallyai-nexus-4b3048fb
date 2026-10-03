@@ -19,6 +19,7 @@ const footerLinks = {
   legal: [
     { name: "Privacy Policy", path: "/privacy" },
     { name: "Terms of Service", path: "/terms" },
+    { name: "Disclaimer", path: "/disclaimer" },
   ],
 };
 
@@ -47,14 +48,6 @@ export function Footer() {
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
                 <span>support@legallyai.ai</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4" />
-                <span>1-800-LEGALLY</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                <span>San Francisco, CA</span>
               </div>
             </div>
           </div>

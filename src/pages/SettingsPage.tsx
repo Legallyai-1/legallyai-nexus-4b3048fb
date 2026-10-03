@@ -136,6 +136,15 @@ export default function SettingsPage() {
     }
   };
 
+  const handleManageSubscription = async () => {
+    const { data, error } = await supabase.functions.invoke("customer-portal");
+    if (error || !data?.url) {
+      toast.error("No active subscription found. Contact support@legallyai.ai for help.");
+      return;
+    }
+    window.location.href = data.url;
+  };
+
   const handleChangePassword = async () => {
     if (!email) return;
     
@@ -362,60 +371,12 @@ export default function SettingsPage() {
                   <Button variant="outline" className="w-full justify-start" onClick={handleChangePassword}>
                     Change Password
                   </Button>
-                  <Button variant="outline" className="w-full justify-start" onClick={() => toast.info("Two-factor authentication coming soon")}>
-                    Two-Factor Authentication
+                  <Button variant="outline" className="w-full justify-start" onClick={handleManageSubscription}>
+                    Manage or Cancel Subscription
                   </Button>
                   <Button variant="outline" className="w-full justify-start text-destructive" onClick={() => toast.error("Please contact support to delete your account")}>
                     Delete Account
                   </Button>
-                </CardContent>
-              </Card>
-
-              {/* Earnings & Payouts */}
-              <Card className="glass-card border-border/30">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <DollarSign className="w-5 h-5 text-neon-green" />
-                    Earnings & Payouts
-                  </CardTitle>
-                  <CardDescription>View your earnings and request payouts</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-background/30 rounded-lg">
-                      <p className="text-sm text-muted-foreground">Available Balance</p>
-                      <p className="text-2xl font-bold text-neon-green">${earnings.balance.toFixed(2)}</p>
-                    </div>
-                    <div className="p-4 bg-background/30 rounded-lg">
-                      <p className="text-sm text-muted-foreground">Lifetime Earnings</p>
-                      <p className="text-2xl font-bold text-neon-cyan">${earnings.lifetime.toFixed(2)}</p>
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={requestPayout}
-                    disabled
-                    className="w-full"
-                    variant="outline"
-                  >
-                    Payouts Unavailable
-                  </Button>
-
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Recent Payouts</h4>
-                    {payoutRequests.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No payout requests yet</p>
-                    ) : (
-                      payoutRequests.slice(0, 5).map((payout: any) => (
-                        <div key={payout.id} className="flex justify-between p-2 bg-background/30 rounded">
-                          <span className="text-sm">${(payout.amount / 100).toFixed(2)}</span>
-                          <Badge variant={payout.status === 'completed' ? 'default' : 'outline'}>
-                            {payout.status}
-                          </Badge>
-                        </div>
-                      ))
-                    )}
-                  </div>
                 </CardContent>
               </Card>
 
