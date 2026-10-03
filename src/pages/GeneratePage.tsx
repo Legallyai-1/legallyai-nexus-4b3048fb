@@ -33,6 +33,7 @@ export default function GeneratePage() {
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedDoc, setGeneratedDoc] = useState<string | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
   const [isPaid, setIsPaid] = useState(false);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -146,6 +147,8 @@ export default function GeneratePage() {
       return;
     }
 
+    setGenerationError(null);
+    setGeneratedDoc(null);
     setIsGenerating(true);
 
     try {
@@ -169,25 +172,38 @@ export default function GeneratePage() {
           navigate("/auth");
           return;
         }
-        toast.error(errorMessage || "Failed to generate document. Please try again.");
+        const message = errorMessage || "Failed to generate document. Please try again.";
+        setGenerationError(message);
+        toast.error(message);
         return;
       }
 
-      if (data.error) {
+      if (typeof data?.error === "string" && data.error) {
         if (data.error.includes("Authentication") || data.error.includes("sign in")) {
           toast.error(data.error);
+          setGenerationError(data.error);
           navigate("/auth");
           return;
         }
+        setGenerationError(data.error);
         toast.error(data.error);
         return;
       }
 
-      setGeneratedDoc(data.document);
+      if (typeof data?.document !== "string" || !data.document.trim()) {
+        const message = "The generator returned no document. Please retry; your allowance was not confirmed as successful.";
+        setGenerationError(message);
+        toast.error(message);
+        return;
+      }
+
+      setGeneratedDoc(data.document.trim());
       toast.success("Document generated successfully!");
     } catch (error) {
       console.error("Error:", error);
-      toast.error("An error occurred. Please try again.");
+      const message = error instanceof Error ? error.message : "An error occurred. Please try again.";
+      setGenerationError(message);
+      toast.error(message);
     } finally {
       setIsGenerating(false);
     }
@@ -391,10 +407,14 @@ export default function GeneratePage() {
 
                 {!generatedDoc ? (
                   <div className="flex flex-col items-center justify-center h-64 text-center">
-                    <FileText className="h-16 w-16 text-muted-foreground/30 mb-4" />
-                    <p className="text-muted-foreground">
-                      Your generated document will appear here
-                    </p>
+                    {generationError ? (
+                      <p role="alert" className="max-w-lg text-sm text-destructive">{generationError}</p>
+                    ) : (
+                      <>
+                        <FileText className="h-16 w-16 text-muted-foreground/30 mb-4" />
+                        <p className="text-muted-foreground">Your generated document will appear here</p>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <div className="max-h-[500px] overflow-y-auto">
