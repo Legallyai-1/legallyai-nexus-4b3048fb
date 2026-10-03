@@ -27,6 +27,7 @@ const MessagesPage = lazy(() => import("@/pages/MessagesPage"));
 const TimeClockPage = lazy(() => import("@/pages/TimeClockPage"));
 const EmployeePortalPage = lazy(() => import("@/pages/EmployeePortalPage"));
 const AdminPage = lazy(() => import("@/pages/AdminPage"));
+const DisclaimerPage = lazy(() => import("@/pages/DisclaimerPage"));
 const TermsPage = lazy(() => import("@/pages/TermsPage"));
 const PrivacyPage = lazy(() => import("@/pages/PrivacyPage"));
 const ClientPortalPage = lazy(() => import("@/pages/ClientPortalPage"));
@@ -100,6 +101,7 @@ export function AnimatedRoutes() {
         <Route path="/timeclock" element={<PageTransition><LazyRoute><TimeClockPage /></LazyRoute></PageTransition>} />
         <Route path="/employee" element={<PageTransition><LazyRoute><EmployeePortalPage /></LazyRoute></PageTransition>} />
         <Route path="/admin" element={<PageTransition><LazyRoute><AdminPage /></LazyRoute></PageTransition>} />
+        <Route path="/disclaimer" element={<PageTransition><LazyRoute><DisclaimerPage /></LazyRoute></PageTransition>} />
         <Route path="/terms" element={<PageTransition><LazyRoute><TermsPage /></LazyRoute></PageTransition>} />
         <Route path="/privacy" element={<PageTransition><LazyRoute><PrivacyPage /></LazyRoute></PageTransition>} />
         <Route path="/client-portal" element={<PageTransition><LazyRoute><ClientPortalPage /></LazyRoute></PageTransition>} />

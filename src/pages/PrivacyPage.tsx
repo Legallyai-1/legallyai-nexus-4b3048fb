@@ -57,10 +57,9 @@ const PrivacyPage = () => {
               <p>Our Service uses artificial intelligence (AI) and machine learning technologies to provide legal document generation, chat assistance, and other features:</p>
               <ul className="list-disc pl-6 space-y-2">
                 <li><strong>AI Processing:</strong> Your inputs (text, voice, documents) are processed by AI systems to generate responses and documents</li>
-                <li><strong>Data Use:</strong> We may use anonymized, aggregated data to improve our AI models</li>
                 <li><strong>No Training on Personal Data:</strong> We do not use your personal legal documents or case details to train our AI models without explicit consent</li>
                 <li><strong>Third-Party AI:</strong> We use third-party AI services (Anthropic Claude) which have their own privacy practices</li>
-                <li><strong>Voice Data:</strong> When using voice input, audio is converted to text and may be processed by third-party speech recognition services</li>
+                <li><strong>Voice Input:</strong> Where offered, voice input uses your browser's built-in speech recognition, which is handled by your browser provider under its own privacy policy</li>
               </ul>
             </section>
 
@@ -118,9 +117,7 @@ const PrivacyPage = () => {
               <h2 className="text-2xl font-semibold text-foreground mb-4">8. Data Security</h2>
               <p>We implement appropriate technical and organizational measures to protect your personal data, including:</p>
               <ul className="list-disc pl-6 space-y-2">
-                <li>Encryption of data in transit (TLS/SSL) and at rest</li>
-                <li>Regular security assessments and penetration testing</li>
-                <li>Access controls and authentication (including optional 2FA)</li>
+                <li>Encryption of data in transit (TLS/SSL)</li>
                 <li>Secure data centers with industry-standard protections</li>
                 <li>Employee training on data protection</li>
               </ul>
@@ -149,7 +146,7 @@ const PrivacyPage = () => {
                 <li><strong>Opt-out:</strong> Opt out of marketing communications and personalized advertising</li>
                 <li><strong>Restriction:</strong> Request restriction of processing in certain circumstances</li>
               </ul>
-              <p className="mt-2">To exercise these rights, contact us at privacy@legallyai.ai</p>
+              <p className="mt-2">To exercise these rights, contact us at support@legallyai.ai</p>
             </section>
 
             <section>
@@ -191,10 +188,10 @@ const PrivacyPage = () => {
               <h2 className="text-2xl font-semibold text-foreground mb-4">14. Voice Input and Speech Recognition</h2>
               <p>When using voice input features:</p>
               <ul className="list-disc pl-6 space-y-2">
-                <li>Audio is converted to text using speech recognition technology</li>
+                <li>Speech is converted to text by your browser's built-in speech recognition</li>
                 <li>We do not store raw audio recordings</li>
                 <li>Text transcriptions are processed like other text inputs</li>
-                <li>You can disable voice features in app settings</li>
+                <li>You can choose not to use voice input at any time</li>
               </ul>
             </section>
 
@@ -208,9 +205,9 @@ const PrivacyPage = () => {
               <p>The Service may contain links to third-party websites and integrations with third-party services. We are not responsible for the privacy practices of these third parties. We encourage you to review their privacy policies. Third-party services include:</p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>Stripe (payment processing)</li>
-                <li>Google (AdSense, speech recognition)</li>
-                <li>AI providers (document and chat processing)</li>
-                <li>Cloud infrastructure providers</li>
+                <li>Google (AdSense advertising). Manage ad personalization at <a href="https://adssettings.google.com" className="underline" target="_blank" rel="noopener noreferrer">adssettings.google.com</a></li>
+                <li>Anthropic (AI chat and document processing)</li>
+                <li>Supabase (database and authentication) and Vercel (hosting)</li>
               </ul>
             </section>
 
@@ -233,7 +230,7 @@ const PrivacyPage = () => {
             <section>
               <h2 className="text-2xl font-semibold text-foreground mb-4">19. Contact Us</h2>
               <p>For questions about this Privacy Policy or our data practices, contact us at:</p>
-              <p className="mt-2">Email: privacy@legallyai.ai</p>
+              <p className="mt-2">Email: support@legallyai.ai</p>
               <p>Address: San Francisco, CA, United States</p>
             </section>
 

@@ -359,11 +359,11 @@ export default function PricingPage() {
               })}
             </div>
 
-            {/* Platform Fee Notice */}
+            
             <p className="text-center text-sm text-muted-foreground mt-8 max-w-2xl mx-auto">
               By purchasing, you agree to our{" "}
               <Link to="/terms" className="text-neon-cyan underline hover:text-neon-cyan/80">Terms of Service</Link>
-              {" "}including the 1% platform fee on law firm revenue generated through the platform.
+              .
             </p>
           </div>
         </section>
@@ -383,7 +383,7 @@ export default function PricingPage() {
                 },
                 {
                   q: "Can I get a refund?",
-                  a: "Yes! We offer a 30-day money-back guarantee on all paid plans. If you're not satisfied, contact support for a full refund.",
+                  a: "Contact support@legallyai.ai to request a refund. Requests are reviewed case by case. You can cancel any time and keep access until the end of the paid period.",
                 },
                 {
                   q: "What's included in the Pro plan?",

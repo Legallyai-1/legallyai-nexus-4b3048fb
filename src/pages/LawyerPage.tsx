@@ -18,7 +18,7 @@ const features = [
   {
     icon: FileText,
     title: "Document Templates",
-    description: "Access 100+ professional legal document templates",
+    description: "Access professional legal document templates",
     color: "neon-green",
   },
   {
@@ -42,7 +42,7 @@ const features = [
 ];
 
 const benefits = [
-  "50% faster document drafting",
+  "Faster first drafts of common documents",
   "AI-powered research assistance",
   "State-specific compliance checks",
   "Secure client portal",
@@ -297,7 +297,7 @@ export default function LawyerPage() {
                   <div className="mt-6 pt-6 border-t border-border/30">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Shield className="h-4 w-4 text-neon-green" />
-                      <span>HIPAA & Attorney-Client Privilege Compliant</span>
+                      <span>Client data is isolated per organization</span>
                     </div>
                   </div>
                 </div>
