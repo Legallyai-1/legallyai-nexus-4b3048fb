@@ -82,11 +82,11 @@ export default function AdminPage() {
 
   // Organization settings state
   const [orgSettings, setOrgSettings] = useState({
-    name: "Smith & Associates Law Firm",
-    email: "contact@smithlaw.com",
-    phone: "(555) 123-4567",
-    website: "https://smithlaw.com",
-    address: "123 Legal Street, Suite 400, New York, NY 10001",
+    name: "",
+    email: "",
+    phone: "",
+    website: "",
+    address: "",
     geoTracking: false,
   });
 
@@ -136,56 +136,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (!isAuthorized) return;
     // Demo employees
-    setEmployees([
-      {
-        id: "1",
-        full_name: "John Smith",
-        email: "john@lawfirm.com",
-        job_title: "Senior Associate",
-        department: "Litigation",
-        role: "lawyer",
-        employee_id: "EMP-001",
-        is_active: true,
-        hire_date: "2022-03-15",
-        hourly_rate: 175,
-      },
-      {
-        id: "2",
-        full_name: "Sarah Johnson",
-        email: "sarah@lawfirm.com",
-        job_title: "Paralegal",
-        department: "Corporate",
-        role: "paralegal",
-        employee_id: "EMP-002",
-        is_active: true,
-        hire_date: "2023-01-10",
-        hourly_rate: 75,
-      },
-      {
-        id: "3",
-        full_name: "Michael Brown",
-        email: "michael@lawfirm.com",
-        job_title: "Managing Partner",
-        department: "Management",
-        role: "admin",
-        employee_id: "EMP-003",
-        is_active: true,
-        hire_date: "2018-06-01",
-        hourly_rate: 350,
-      },
-      {
-        id: "4",
-        full_name: "Emily Davis",
-        email: "emily@lawfirm.com",
-        job_title: "Office Manager",
-        department: "Operations",
-        role: "manager",
-        employee_id: "EMP-004",
-        is_active: true,
-        hire_date: "2021-09-20",
-        hourly_rate: 45,
-      },
-    ]);
+    setEmployees([]);
   }, []);
 
   const filteredEmployees = employees.filter(e =>
