@@ -94,24 +94,34 @@ jobs:
         run: npm run build
 
       - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
         id: vercel-deploy
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ vars.VERCEL_ORG_ID || secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ vars.VERCEL_PROJECT_ID || secrets.VERCEL_PROJECT_ID }}
-          vercel-args: ${{ env.IS_PRODUCTION == 'true' && '--prod' || '' }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          github-comment: false
-          working-directory: ./
-          alias-domains: |
-            ${{ env.IS_PRODUCTION == 'true' && 'www.legallyai.ai' || '' }}
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID || secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID || secrets.VERCEL_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          vercel_args=(--yes --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --project "$VERCEL_PROJECT_ID")
+          if [ "$IS_PRODUCTION" = "true" ]; then
+            vercel_args+=(--prod)
+          fi
+          deploy_output=$(npx --yes vercel@62.2.0 deploy --cwd "$GITHUB_WORKSPACE" "${vercel_args[@]}" 2>&1)
+          printf '%s\n' "$deploy_output"
+          deployment_url=$(printf '%s\n' "$deploy_output" | grep -Eo 'https://[^[:space:]]+\.vercel\.app' | tail -1)
+          if [ -z "$deployment_url" ]; then
+            echo "Vercel CLI did not return a deployment URL"
+            exit 1
+          fi
+          echo "url=$deployment_url" >> "$GITHUB_OUTPUT"
 
       - name: Determine validation URL
         run: |
-          base_url="${{ steps.vercel-deploy.outputs.preview-url }}"
+          base_url="${{ steps.vercel-deploy.outputs.url }}"
           if [ -n "$base_url" ] && ! printf '%s' "$base_url" | grep -Eq '^https?://'; then
             base_url="https://$base_url"
+          fi
+          if [ "$IS_PRODUCTION" = "true" ]; then
+            base_url="https://www.legallyai.ai"
           fi
           if [ -z "$base_url" ]; then
             base_url="https://www.legallyai.ai"
@@ -131,6 +141,6 @@ jobs:
             echo "## Vercel deployment"
             echo ""
             echo "- Deployment URL: $SMOKE_BASE_URL"
-            echo "- Vercel name: ${{ steps.vercel-deploy.outputs.preview-name || 'production' }}"
+            echo "- Vercel project: $VERCEL_PROJECT_ID"
             echo "- Health check: passed"
           } >> "$GITHUB_STEP_SUMMARY"
