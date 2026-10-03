@@ -313,15 +313,11 @@ const ClientPortalPage = () => {
               <Card className="bg-card border-border">
                 <CardHeader>
                   <CardTitle>Documents</CardTitle>
-                  <CardDescription>View and sign your legal documents</CardDescription>
+                  <CardDescription>Documents shared by your attorney</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button onClick={() => navigate("/document-signing")} className="w-full mb-4">
-                    <FileText className="h-4 w-4 mr-2" />
-                    Go to Document Signing
-                  </Button>
                   <p className="text-sm text-muted-foreground text-center">
-                    View and sign documents shared by your attorney
+                    Documents your attorney shares with you will appear here
                   </p>
                 </CardContent>
               </Card>

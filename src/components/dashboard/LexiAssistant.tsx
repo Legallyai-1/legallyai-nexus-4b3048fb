@@ -126,7 +126,7 @@ export function LexiAssistant({ userType = "individual", userName = "there" }: L
         id: "2",
         title: "Track Revenue",
         description: "PayAI monitors subscriptions, payments, and revenue analytics.",
-        action: { label: "View Analytics", href: "/monetization" },
+        action: { label: "View Dashboard", href: "/dashboard" },
         icon: <Target className="w-5 h-5 text-neon-green" />
       },
       {
