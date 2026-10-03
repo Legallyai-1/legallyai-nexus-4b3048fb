@@ -3,7 +3,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { corsHeaders } from "../_shared/cors.ts";
 import {
   generateInviteToken,
-  sendOrganizationInviteEmail,
   sha256Hex,
 } from "../_shared/invite-email.ts";
 
@@ -130,27 +129,14 @@ serve(async (req) => {
     const baseUrl = (Deno.env.get("INVITE_BASE_URL") ?? "https://legallyai.ai/accept-invite").replace(/\/+$/, "");
     const inviteLink = `${baseUrl}?token=${encodeURIComponent(rawToken)}`;
 
-    const emailResult = await sendOrganizationInviteEmail({
-      inviteeEmail: email,
-      organizationName: organization.name,
-      role,
-      inviteLink,
-      inviterName: user.user_metadata?.full_name ?? null,
-    });
-
-    const deliveryStatus = emailResult.sent
-      ? "sent"
-      : emailResult.reason === "RESEND_API_KEY not configured"
-        ? "not_configured"
-        : "failed";
-
     return json({
       success: true,
       inviteId: invite.id,
       expiresAt: invite.expires_at,
-      emailSent: emailResult.sent,
-      deliveryStatus,
-      deliveryDetail: emailResult.sent ? null : emailResult.reason,
+      inviteLink,
+      emailSent: false,
+      deliveryStatus: "manual_share",
+      deliveryDetail: "Email delivery is not available; share the invite link with the invitee.",
     });
   } catch (error) {
     console.error("[invite-member]", error);

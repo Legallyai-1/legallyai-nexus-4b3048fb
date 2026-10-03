@@ -18,7 +18,6 @@ export const clientEnvSchema = z.object({
   VITE_ADSENSE_CLIENT_ID: nonEmptyString.optional(),
   VITE_ENABLE_ADSENSE: booleanFlag.default('true'),
   VITE_ENABLE_PAYMENTS: booleanFlag.default('true'),
-  VITE_AI_GATEWAY_KEY: nonEmptyString.optional(),
 }).superRefine((env, ctx) => {
   if (!env.VITE_SUPABASE_ANON_KEY && !env.VITE_SUPABASE_PUBLISHABLE_KEY) {
     ctx.addIssue({
@@ -46,8 +45,6 @@ export const serverEnvSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: nonEmptyString.optional(),
   STRIPE_SECRET_KEY: nonEmptyString.optional(),
   STRIPE_WEBHOOK_SECRET: nonEmptyString.optional(),
-  OPENAI_API_KEY: nonEmptyString.optional(),
-  AI_GATEWAY_API_KEY: nonEmptyString.optional(),
   SUPABASE_ACCESS_TOKEN: nonEmptyString.optional(),
   VERCEL_TOKEN: nonEmptyString.optional(),
   VERCEL_ORG_ID: nonEmptyString.optional(),
@@ -88,7 +85,6 @@ export const deploymentEnvSchema = clientEnvSchema.and(z.object({
   VERCEL_TOKEN: nonEmptyString,
   VERCEL_ORG_ID: nonEmptyString,
   VERCEL_PROJECT_ID: nonEmptyString,
-  OPENAI_API_KEY: nonEmptyString.optional(),
   SUPABASE_ACCESS_TOKEN: nonEmptyString.optional(),
   SUPABASE_SECRET_KEY: nonEmptyString.optional(),
   SUPABASE_SERVICE_ROLE_KEY: nonEmptyString.optional(),

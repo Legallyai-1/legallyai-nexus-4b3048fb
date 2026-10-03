@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Mic, MicOff, X, Send, Loader2, Sparkles, Volume2, 
+  X, Send, Loader2, Sparkles, Volume2, 
   Brain, FileText, Scale, Users, Briefcase, Heart,
   Car, Home, Shield, GraduationCap, ChevronDown
 } from "lucide-react";
@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
-import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -71,13 +70,6 @@ export function FloatingLeeAssistant() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const sessionIdRef = useRef<string>(crypto.randomUUID());
-
-  const { isListening, isProcessing: isVoiceProcessing, toggleListening } = useVoiceInput({
-    onTranscript: (text) => {
-      setInput(text);
-      handleSend(text);
-    },
-  });
 
   useEffect(() => {
     checkPremiumStatus();
@@ -373,21 +365,6 @@ export function FloatingLeeAssistant() {
               {/* Input */}
               <div className="p-4 border-t border-border/30 bg-background/50">
                 <div className="flex gap-2">
-                  <Button
-                    variant={isListening ? "destructive" : "outline"}
-                    size="icon"
-                    onClick={toggleListening}
-                    disabled={isVoiceProcessing || !isPremium}
-                    className={isListening ? "animate-pulse" : ""}
-                  >
-                    {isVoiceProcessing ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : isListening ? (
-                      <MicOff className="h-4 w-4" />
-                    ) : (
-                      <Mic className="h-4 w-4" />
-                    )}
-                  </Button>
                   <Input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
@@ -409,9 +386,6 @@ export function FloatingLeeAssistant() {
                     )}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2 text-center">
-                  Voice commands: "Lee, draft a will" • "Research custody laws in CA"
-                </p>
               </div>
             </div>
           </motion.div>

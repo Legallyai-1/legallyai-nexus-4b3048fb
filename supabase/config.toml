@@ -1,8 +1,5 @@
 project_id = "whdljtbtqisoszbrzdwq"
 
-[functions.api-proxy]
-verify_jwt = true
-
 [functions.check-subscription]
 verify_jwt = true
 
@@ -24,16 +21,7 @@ verify_jwt = true
 [functions.webhook-handler]
 verify_jwt = false
 
-[functions.voice-to-text]
-verify_jwt = true
-
 [functions.get-stripe-analytics]
-verify_jwt = true
-
-[functions.court-records-search]
-verify_jwt = true
-
-[functions.import-courtlistener]
 verify_jwt = true
 
 [functions.process-case-ai]
@@ -54,8 +42,6 @@ verify_jwt = true
 [functions.certification-engine]
 verify_jwt = true
 
-[functions.seed-test-data]
-verify_jwt = false
 
 [functions.send-notification]
 verify_jwt = true
@@ -66,17 +52,7 @@ verify_jwt = true
 [functions.accept-invite]
 verify_jwt = true
 
-[functions.run-automated-tests]
-verify_jwt = false
-
-[functions.job-search]
-verify_jwt = false
 
 [functions.notification-scheduler]
 verify_jwt = false
 
-[functions.plaid-integration]
-verify_jwt = true
-
-[functions.paypost-webhook]
-verify_jwt = false

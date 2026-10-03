@@ -90,7 +90,7 @@ function sseEvent(payload: Record<string, unknown>): Uint8Array {
 }
 
 interface ModelProvider {
-  name: "anthropic" | "gateway";
+  name: "anthropic";
   apiKey: string;
   model: string;
 }
@@ -99,10 +99,6 @@ function getProvider(): ModelProvider | null {
   const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
   if (anthropicKey) {
     return { name: "anthropic", apiKey: anthropicKey, model: Deno.env.get("ANTHROPIC_MODEL") || "claude-sonnet-4-20250514" };
-  }
-  const gatewayKey = Deno.env.get("VERCEL_AI_GATEWAY_KEY");
-  if (gatewayKey) {
-    return { name: "gateway", apiKey: gatewayKey, model: Deno.env.get("AI_GATEWAY_MODEL") || "anthropic/claude-sonnet-4-20250514" };
   }
   return null;
 }
@@ -116,60 +112,18 @@ async function streamCompletion(
 ): Promise<string> {
   let fullText = "";
 
-  if (provider.name === "anthropic") {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": provider.apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({ model: provider.model, max_tokens: 1024, system, messages, stream: true }),
-    });
-    if (!response.ok || !response.body) {
-      const errText = await response.text().catch(() => "");
-      throw new Error(`Anthropic request failed: ${response.status} ${errText}`);
-    }
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const chunks = buffer.split("\n\n");
-      buffer = chunks.pop() ?? "";
-      for (const chunk of chunks) {
-        const dataLine = chunk.split("\n").find((l) => l.startsWith("data:"));
-        if (!dataLine) continue;
-        try {
-          const evt = JSON.parse(dataLine.slice(5).trim());
-          if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
-            fullText += evt.delta.text;
-            onDelta(evt.delta.text);
-          }
-        } catch {
-          // ignore malformed/partial SSE fragment
-        }
-      }
-    }
-    return fullText;
-  }
-
-  // Vercel AI Gateway - OpenAI-compatible chat completions endpoint.
-  const response = await fetch("https://ai-gateway.vercel.sh/v1/chat/completions", {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
-    headers: { Authorization: `Bearer ${provider.apiKey}`, "content-type": "application/json" },
-    body: JSON.stringify({
-      model: provider.model,
-      max_tokens: 1024,
-      stream: true,
-      messages: [{ role: "system", content: system }, ...messages],
-    }),
+    headers: {
+      "x-api-key": provider.apiKey,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ model: provider.model, max_tokens: 1024, system, messages, stream: true }),
   });
   if (!response.ok || !response.body) {
     const errText = await response.text().catch(() => "");
-    throw new Error(`AI Gateway request failed: ${response.status} ${errText}`);
+    throw new Error(`Anthropic request failed: ${response.status} ${errText}`);
   }
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
@@ -183,14 +137,11 @@ async function streamCompletion(
     for (const chunk of chunks) {
       const dataLine = chunk.split("\n").find((l) => l.startsWith("data:"));
       if (!dataLine) continue;
-      const raw = dataLine.slice(5).trim();
-      if (raw === "[DONE]") continue;
       try {
-        const evt = JSON.parse(raw);
-        const delta = evt.choices?.[0]?.delta?.content;
-        if (typeof delta === "string" && delta) {
-          fullText += delta;
-          onDelta(delta);
+        const evt = JSON.parse(dataLine.slice(5).trim());
+        if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
+          fullText += evt.delta.text;
+          onDelta(evt.delta.text);
         }
       } catch {
         // ignore malformed/partial SSE fragment
@@ -201,38 +152,23 @@ async function streamCompletion(
 }
 
 async function callOnce(provider: ModelProvider, system: string, userText: string): Promise<string> {
-  if (provider.name === "anthropic") {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": provider.apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: provider.model,
-        max_tokens: 150,
-        system,
-        messages: [{ role: "user", content: userText }],
-      }),
-    });
-    if (!response.ok) return "";
-    const result = await response.json();
-    return result?.content?.find((b: { type?: string }) => b.type === "text")?.text?.trim() ?? "";
-  }
-
-  const response = await fetch("https://ai-gateway.vercel.sh/v1/chat/completions", {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
-    headers: { Authorization: `Bearer ${provider.apiKey}`, "content-type": "application/json" },
+    headers: {
+      "x-api-key": provider.apiKey,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+    },
     body: JSON.stringify({
       model: provider.model,
       max_tokens: 150,
-      messages: [{ role: "system", content: system }, { role: "user", content: userText }],
+      system,
+      messages: [{ role: "user", content: userText }],
     }),
   });
   if (!response.ok) return "";
   const result = await response.json();
-  return result?.choices?.[0]?.message?.content?.trim() ?? "";
+  return result?.content?.find((b: { type?: string }) => b.type === "text")?.text?.trim() ?? "";
 }
 
 async function persistHistory(

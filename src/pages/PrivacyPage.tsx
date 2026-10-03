@@ -59,7 +59,7 @@ const PrivacyPage = () => {
                 <li><strong>AI Processing:</strong> Your inputs (text, voice, documents) are processed by AI systems to generate responses and documents</li>
                 <li><strong>Data Use:</strong> We may use anonymized, aggregated data to improve our AI models</li>
                 <li><strong>No Training on Personal Data:</strong> We do not use your personal legal documents or case details to train our AI models without explicit consent</li>
-                <li><strong>Third-Party AI:</strong> We use third-party AI services (including Google Gemini and OpenAI) which have their own privacy practices</li>
+                <li><strong>Third-Party AI:</strong> We use third-party AI services (Anthropic Claude) which have their own privacy practices</li>
                 <li><strong>Voice Data:</strong> When using voice input, audio is converted to text and may be processed by third-party speech recognition services</li>
               </ul>
             </section>

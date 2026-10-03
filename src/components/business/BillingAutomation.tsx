@@ -365,7 +365,7 @@ export function BillingAutomation() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
                   { method: "Credit Card", provider: "Stripe", status: "active", icon: CreditCard },
-                  { method: "ACH Transfer", provider: "Plaid", status: "active", icon: DollarSign },
+                  { method: "ACH Transfer", provider: "Bank", status: "active", icon: DollarSign },
                   { method: "Check", provider: "Manual", status: "active", icon: FileText },
                 ].map((payment, i) => (
                   <Card key={i} className="border-2">

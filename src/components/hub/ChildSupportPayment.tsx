@@ -259,7 +259,7 @@ export function ChildSupportPayment() {
           
           <div className="p-3 rounded-lg bg-neon-cyan/10 border border-neon-cyan/20">
             <p className="text-xs text-muted-foreground">
-              🔒 Bank connections are secured with 256-bit encryption. We use Plaid for secure bank linking.
+              🔒 Bank connections are secured with 256-bit encryption.
             </p>
           </div>
         </TabsContent>

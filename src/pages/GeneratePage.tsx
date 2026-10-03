@@ -5,9 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   FileText, Download, Printer, Copy, 
-  Loader2, Sparkles, AlertCircle, Lock, Mic
+  Loader2, Sparkles, AlertCircle, Lock
 } from "lucide-react";
-import { VoiceInputButton } from "@/components/ui/VoiceInputButton";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureUserProfile } from '@/lib/ai-credits';
@@ -331,10 +330,6 @@ export default function GeneratePage() {
                     onChange={(e) => setPrompt(e.target.value)}
                     placeholder="Example: Create an NDA for a California startup hiring a Texas-based developer. Include non-compete clause and intellectual property protection..."
                     className="min-h-[200px] mb-4 resize-none text-base pr-14"
-                  />
-                  <VoiceInputButton
-                    onTranscript={(text) => setPrompt(prev => prev ? `${prev} ${text}` : text)}
-                    className="absolute bottom-6 right-2"
                   />
                 </div>
 

@@ -93,9 +93,9 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (!LOVABLE_API_KEY && !OPENAI_API_KEY) {
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    const ANTHROPIC_MODEL = Deno.env.get("ANTHROPIC_MODEL") || "claude-sonnet-4-20250514";
+    if (!ANTHROPIC_API_KEY) {
       return new Response(
         JSON.stringify({ error: "Document generation is temporarily unavailable." }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -164,32 +164,24 @@ serve(async (req) => {
 
     const systemPrompt = `You draft legal document templates; you are not a lawyer and do not provide legal advice. Prepare a clear first draft based only on the user's facts. Do not claim that a document is complete, legally accurate, or enforceable. Never invent statutes or citations. If jurisdiction or key facts are missing, clearly mark assumptions and identify what needs confirmation. Flag jurisdiction-specific or high-risk provisions for review by a licensed attorney. Include appropriate signature blocks and a concise review disclaimer.`;
 
-    let response;
-    let usedLovable = false;
-
-    if (LOVABLE_API_KEY) {
-      try {
-        response = await fetch("https://api.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
-            messages: [{ role: "system", content: systemPrompt }, { role: "user", content: normalizedPrompt }],
-          }),
-        });
-        if (response.ok) usedLovable = true;
-      } catch (e) { console.error("Lovable error:", e); }
-    }
-
-    if (!usedLovable && OPENAI_API_KEY) {
-      response = await fetch("https://api.openai.com/v1/chat/completions", {
+    let response: Response | undefined;
+    try {
+      response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
+        headers: {
+          "x-api-key": ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
+        },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [{ role: "system", content: systemPrompt }, { role: "user", content: normalizedPrompt }],
+          model: ANTHROPIC_MODEL,
+          max_tokens: 4096,
+          system: systemPrompt,
+          messages: [{ role: "user", content: normalizedPrompt }],
         }),
       });
+    } catch (e) {
+      console.error("Anthropic request error:", e);
     }
 
     if (!response || !response.ok) {
@@ -200,7 +192,7 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const document = data.choices?.[0]?.message?.content?.trim();
+    const document = data.content?.find((b: { type?: string }) => b.type === "text")?.text?.trim();
     if (!document) {
       return new Response(
         JSON.stringify({ error: usageCharged ? "No document was returned after your document allowance was used. Check your balance before retrying." : "No document was returned. Please try again." }),
