@@ -137,6 +137,29 @@ async function streamCompletion(
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
+  let sawMessageStop = false;
+
+  const processChunk = (chunk: string) => {
+    const dataLine = chunk.split("\n").find((line) => line.startsWith("data:"));
+    if (!dataLine) return;
+    let event: Record<string, any>;
+    try {
+      event = JSON.parse(dataLine.slice(5).trim());
+    } catch {
+      return;
+    }
+    if (event.type === "error") {
+      throw new Error("Anthropic stream returned an error event.");
+    }
+    if (event.type === "message_stop") {
+      sawMessageStop = true;
+    }
+    if (event.type === "content_block_delta" && event.delta?.type === "text_delta") {
+      fullText += event.delta.text;
+      onDelta(event.delta.text);
+    }
+  };
+
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
@@ -144,19 +167,14 @@ async function streamCompletion(
     const chunks = buffer.split("\n\n");
     buffer = chunks.pop() ?? "";
     for (const chunk of chunks) {
-      const dataLine = chunk.split("\n").find((l) => l.startsWith("data:"));
-      if (!dataLine) continue;
-      try {
-        const evt = JSON.parse(dataLine.slice(5).trim());
-        if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
-          fullText += evt.delta.text;
-          onDelta(evt.delta.text);
-        }
-      } catch {
-        // ignore malformed/partial SSE fragment
-      }
+      processChunk(chunk);
     }
   }
+
+  buffer += decoder.decode();
+  if (buffer.trim()) processChunk(buffer);
+  if (!sawMessageStop) throw new Error("Anthropic stream ended before completion.");
+
   return fullText;
 }
 
