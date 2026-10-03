@@ -1,7 +1,26 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { validateStripeWebhookEnv } from '../../.env.validation';
+import { z } from 'zod';
+
+const stripeWebhookEnvSchema = z.object({
+  STRIPE_SECRET_KEY: z.string().trim().min(1),
+  STRIPE_WEBHOOK_SECRET: z.string().trim().min(1),
+  SUPABASE_URL: z.string().trim().url(),
+  SUPABASE_SECRET_KEY: z.string().trim().min(1).optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().trim().min(1).optional(),
+}).superRefine((env, ctx) => {
+  if (!env.SUPABASE_SECRET_KEY && !env.SUPABASE_SERVICE_ROLE_KEY) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Set SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY for Stripe webhook writes.',
+      path: ['SUPABASE_SECRET_KEY'],
+    });
+  }
+}).transform((env) => ({
+  ...env,
+  SUPABASE_SERVER_KEY: env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY || '',
+}));
 
 const SUPPORTED_EVENTS = new Set([
   'checkout.session.completed',
@@ -23,7 +42,7 @@ const VALID_TIERS = new Set(['premium', 'pro', 'document']);
 type StripeSupabaseClient = SupabaseClient<any>;
 
 function getWebhookClients() {
-  const env = validateStripeWebhookEnv(process.env);
+  const env = stripeWebhookEnvSchema.parse(process.env);
 
   return {
     env,
