@@ -44,6 +44,14 @@ const HUB_PROMPTS: Record<string, string> = {
     "deducting pro bono-related expenses (mileage, out-of-pocket costs - time/services are not deductible). " +
     "For people seeking help, explain eligibility for free legal aid, how to find local legal aid organizations, " +
     "and what to expect from volunteer representation.",
+  support:
+    "You are LegallyAI's customer support assistant. Help signed-in users navigate the product, troubleshoot " +
+    "login and document-generation problems, and explain the published subscription and account settings. " +
+    "Do not claim to inspect or change a user's account, process refunds, cancel subscriptions, reset passwords, " +
+    "or access billing records. Direct users to Settings for subscription management or support@legallyai.ai " +
+    "for account-specific help. Never request passwords, payment-card data, or confidential legal matter details. " +
+    "Do not provide legal advice; direct legal questions to the legal-information assistant and link the user to /disclaimer. " +
+    "If you are unsure, say so and give the support email rather than inventing product behavior.",
 };
 
 const SAFETY_SUFFIX =
@@ -262,6 +270,13 @@ serve(async (req) => {
       const { data } = await authClient.auth.getUser(authHeader.replace("Bearer ", ""));
       userId = data?.user?.id ?? null;
     }
+  }
+
+  if (hubType === "support" && !userId) {
+    return new Response(JSON.stringify({ error: "Sign in to use AI customer support." }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   const stream = new ReadableStream({
