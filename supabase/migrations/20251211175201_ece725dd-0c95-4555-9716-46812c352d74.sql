@@ -1,6 +1,6 @@
 
 -- DUI Hub tables
-CREATE TABLE public.dui_cases (
+CREATE TABLE IF NOT EXISTS public.dui_cases (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL,
   organization_id UUID REFERENCES public.organizations(id),
@@ -22,7 +22,7 @@ CREATE TABLE public.dui_cases (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
-CREATE TABLE public.dui_hearing_sims (
+CREATE TABLE IF NOT EXISTS public.dui_hearing_sims (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   case_id UUID REFERENCES public.dui_cases(id) ON DELETE CASCADE,
   user_id UUID NOT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE public.dui_hearing_sims (
 );
 
 -- Will/Estate Hub tables
-CREATE TABLE public.will_cases (
+CREATE TABLE IF NOT EXISTS public.will_cases (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL,
   organization_id UUID REFERENCES public.organizations(id),
@@ -53,7 +53,7 @@ CREATE TABLE public.will_cases (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
-CREATE TABLE public.will_clause_library (
+CREATE TABLE IF NOT EXISTS public.will_clause_library (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   category TEXT NOT NULL,
   clause_name TEXT NOT NULL,
@@ -65,7 +65,7 @@ CREATE TABLE public.will_clause_library (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
-CREATE TABLE public.inheritance_sims (
+CREATE TABLE IF NOT EXISTS public.inheritance_sims (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   will_id UUID REFERENCES public.will_cases(id) ON DELETE CASCADE,
   user_id UUID NOT NULL,
@@ -77,7 +77,7 @@ CREATE TABLE public.inheritance_sims (
 );
 
 -- Enhanced Parole/Probation tables
-CREATE TABLE public.parole_cases (
+CREATE TABLE IF NOT EXISTS public.parole_cases (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL,
   organization_id UUID REFERENCES public.organizations(id),
@@ -101,7 +101,7 @@ CREATE TABLE public.parole_cases (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
-CREATE TABLE public.rehab_sessions (
+CREATE TABLE IF NOT EXISTS public.rehab_sessions (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   parole_case_id UUID REFERENCES public.parole_cases(id) ON DELETE CASCADE,
   session_type TEXT DEFAULT 'individual',
@@ -114,7 +114,7 @@ CREATE TABLE public.rehab_sessions (
 );
 
 -- Persistent Chat Storage
-CREATE TABLE public.ai_chat_history (
+CREATE TABLE IF NOT EXISTS public.ai_chat_history (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL,
   hub_type TEXT NOT NULL,
@@ -127,12 +127,12 @@ CREATE TABLE public.ai_chat_history (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
-CREATE INDEX idx_chat_history_user ON public.ai_chat_history(user_id);
-CREATE INDEX idx_chat_history_hub ON public.ai_chat_history(hub_type);
-CREATE INDEX idx_chat_history_search ON public.ai_chat_history USING gin(to_tsvector('english', searchable_text));
+CREATE INDEX IF NOT EXISTS idx_chat_history_user ON public.ai_chat_history(user_id);
+CREATE INDEX IF NOT EXISTS idx_chat_history_hub ON public.ai_chat_history(hub_type);
+CREATE INDEX IF NOT EXISTS idx_chat_history_search ON public.ai_chat_history USING gin(to_tsvector('english', searchable_text));
 
 -- Enhanced Custody tables
-CREATE TABLE public.custody_cases (
+CREATE TABLE IF NOT EXISTS public.custody_cases (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL,
   organization_id UUID REFERENCES public.organizations(id),
@@ -156,7 +156,7 @@ CREATE TABLE public.custody_cases (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
-CREATE TABLE public.custody_payments (
+CREATE TABLE IF NOT EXISTS public.custody_payments (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   custody_case_id UUID REFERENCES public.custody_cases(id) ON DELETE CASCADE,
   payer_id UUID,
@@ -169,7 +169,7 @@ CREATE TABLE public.custody_payments (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
-CREATE TABLE public.custody_calendar_events (
+CREATE TABLE IF NOT EXISTS public.custody_calendar_events (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   custody_case_id UUID REFERENCES public.custody_cases(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
@@ -184,7 +184,7 @@ CREATE TABLE public.custody_calendar_events (
 );
 
 -- Revenue share tracking
-CREATE TABLE public.revenue_share_transactions (
+CREATE TABLE IF NOT EXISTS public.revenue_share_transactions (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL,
   transaction_type TEXT NOT NULL,
@@ -198,7 +198,7 @@ CREATE TABLE public.revenue_share_transactions (
 );
 
 -- Lead matching for DUI
-CREATE TABLE public.dui_leads (
+CREATE TABLE IF NOT EXISTS public.dui_leads (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   client_name TEXT,
   email TEXT,
@@ -228,18 +228,31 @@ ALTER TABLE public.revenue_share_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.dui_leads ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
+DROP POLICY IF EXISTS "Users can manage own DUI cases" ON public.dui_cases;
 CREATE POLICY "Users can manage own DUI cases" ON public.dui_cases FOR ALL USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can manage own hearing sims" ON public.dui_hearing_sims;
 CREATE POLICY "Users can manage own hearing sims" ON public.dui_hearing_sims FOR ALL USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can manage own wills" ON public.will_cases;
 CREATE POLICY "Users can manage own wills" ON public.will_cases FOR ALL USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Public clauses viewable" ON public.will_clause_library;
 CREATE POLICY "Public clauses viewable" ON public.will_clause_library FOR SELECT USING (is_public = true OR organization_id IS NULL);
+DROP POLICY IF EXISTS "Users can manage own inheritance sims" ON public.inheritance_sims;
 CREATE POLICY "Users can manage own inheritance sims" ON public.inheritance_sims FOR ALL USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can manage own parole cases" ON public.parole_cases;
 CREATE POLICY "Users can manage own parole cases" ON public.parole_cases FOR ALL USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can manage own rehab sessions" ON public.rehab_sessions;
 CREATE POLICY "Users can manage own rehab sessions" ON public.rehab_sessions FOR ALL USING (EXISTS (SELECT 1 FROM parole_cases WHERE id = parole_case_id AND user_id = auth.uid()));
+DROP POLICY IF EXISTS "Users can manage own chat history" ON public.ai_chat_history;
 CREATE POLICY "Users can manage own chat history" ON public.ai_chat_history FOR ALL USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can manage own custody cases" ON public.custody_cases;
 CREATE POLICY "Users can manage own custody cases" ON public.custody_cases FOR ALL USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can manage own custody payments" ON public.custody_payments;
 CREATE POLICY "Users can manage own custody payments" ON public.custody_payments FOR ALL USING (EXISTS (SELECT 1 FROM custody_cases WHERE id = custody_case_id AND user_id = auth.uid()));
+DROP POLICY IF EXISTS "Users can manage own calendar events" ON public.custody_calendar_events;
 CREATE POLICY "Users can manage own calendar events" ON public.custody_calendar_events FOR ALL USING (EXISTS (SELECT 1 FROM custody_cases WHERE id = custody_case_id AND user_id = auth.uid()));
+DROP POLICY IF EXISTS "Users can view own revenue transactions" ON public.revenue_share_transactions;
 CREATE POLICY "Users can view own revenue transactions" ON public.revenue_share_transactions FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can manage own leads" ON public.dui_leads;
 CREATE POLICY "Users can manage own leads" ON public.dui_leads FOR ALL USING (auth.uid() = matched_lawyer_id);
 
 -- Seed will clause library
