@@ -191,7 +191,7 @@ export default function GeneratePage() {
       }
 
       if (typeof data?.document !== "string" || !data.document.trim()) {
-        const message = "The generator returned no document. Please retry; your allowance was not confirmed as successful.";
+        const message = "The generator returned no document. Your allowance may have been used; check your balance before retrying.";
         setGenerationError(message);
         toast.error(message);
         return;
