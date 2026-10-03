@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
+import { getAnthropicKey } from "../_shared/anthropic-key.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -96,7 +97,7 @@ interface ModelProvider {
 }
 
 function getProvider(): ModelProvider | null {
-  const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
+  const anthropicKey = getAnthropicKey();
   if (anthropicKey) {
     return { name: "anthropic", apiKey: anthropicKey, model: Deno.env.get("ANTHROPIC_MODEL") || "claude-sonnet-4-20250514" };
   }

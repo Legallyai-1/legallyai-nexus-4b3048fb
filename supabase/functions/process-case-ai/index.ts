@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
+import { getAnthropicKey } from "../_shared/anthropic-key.ts";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const TABLE = Deno.env.get("SUPABASE_TABLE_CASES") ?? "cases_imported";
@@ -30,7 +31,7 @@ async function verifyAuth(req: Request): Promise<{ userId: string } | null> {
 }
 
 async function callAnthropic(messages: { role: string; content: string }[], maxTokens = 2048): Promise<string | null> {
-  const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+  const apiKey = getAnthropicKey();
   if (!apiKey) return null;
   const system = messages.filter((m) => m.role === "system").map((m) => m.content).join("\n\n");
   const convo = messages.filter((m) => m.role !== "system");
