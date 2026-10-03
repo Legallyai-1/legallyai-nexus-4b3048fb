@@ -97,10 +97,11 @@ jobs:
         id: vercel-deploy
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_SCOPE: ${{ vars.VERCEL_ORG_SLUG || secrets.VERCEL_ORG_SLUG || 'dakota-lefavers-projects' }}
           VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID || secrets.VERCEL_PROJECT_ID }}
         run: |
           set -euo pipefail
-          vercel_args=(--yes --token "$VERCEL_TOKEN" --project "$VERCEL_PROJECT_ID")
+          vercel_args=(--yes --token "$VERCEL_TOKEN" --scope "$VERCEL_SCOPE" --project "$VERCEL_PROJECT_ID")
           if [ "$IS_PRODUCTION" = "true" ]; then
             vercel_args+=(--prod)
           fi
