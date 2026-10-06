@@ -75,7 +75,22 @@ jobs:
           printf '%s' "$STRIPE_SECRET_KEY" | npm exec --yes --package=vercel@59.17.0 -- vercel env add STRIPE_SECRET_KEY production --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" >/dev/null
           printf '%s' "$STRIPE_WEBHOOK_SECRET" | npm exec --yes --package=vercel@59.17.0 -- vercel env add STRIPE_WEBHOOK_SECRET production --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" >/dev/null
 
+      - name: Check Vercel deployment credentials
+        id: vercel-credentials
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -n "$VERCEL_TOKEN" ] && [ -n "$VERCEL_ORG_ID" ] && [ -n "$VERCEL_PROJECT_ID" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping Vercel deployment because required Vercel credentials are unavailable."
+          fi
+
       - name: Deploy to Vercel
+        if: steps.vercel-credentials.outputs.available == 'true'
         uses: amondnet/vercel-action@v25
         id: vercel-deploy
         with:
@@ -91,7 +106,7 @@ jobs:
             ${{ github.ref == 'refs/heads/main' && 'legallyai-nexus.vercel.app' || '' }}
 
       - name: Comment deployment URL
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && steps.vercel-deploy.outcome == 'success'
         uses: actions/github-script@v7
         with:
           script: |
