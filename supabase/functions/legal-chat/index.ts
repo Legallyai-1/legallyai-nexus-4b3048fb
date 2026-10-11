@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 import { getAnthropicKey } from "../_shared/anthropic-key.ts";
-import { resolveSubscriptionAccess } from "../_shared/subscription-access.ts";
+import { consumePaidAIQuota, hasPaidAIQuota } from "../_shared/paid-ai-access.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -310,43 +310,21 @@ serve(async (req) => {
     });
   }
 
-  let provider: ModelProvider | null = null;
-  if (Deno.env.get("ENABLE_PAID_AI") === "true" && userId && supabaseUrl && serviceKey) {
-    const configuredProvider = getProvider();
-    if (configuredProvider) {
-      const adminClient = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
-      const [
-        { data: profile, error: profileError },
-        { data: subscription, error: subscriptionError },
-        { data: paymentRecords, error: paymentError },
-      ] = await Promise.all([
-        adminClient.from("profiles").select("credits, subscription_tier").eq("id", userId).maybeSingle(),
-        adminClient.from("subscriptions").select("status, tier, current_period_end, cancel_at_period_end").eq("user_id", userId).maybeSingle(),
-        adminClient.from("payment_records").select("tier, payment_method, expires_at, status, metadata").eq("user_id", userId),
-      ]);
-
-      if (!profileError && !subscriptionError && !paymentError && profile) {
-        const access = resolveSubscriptionAccess(profile.subscription_tier || "free", subscription, paymentRecords);
-        const hasPaidPlan = access.entitled && access.plan !== "document";
-        if (hasPaidPlan) {
-          provider = configuredProvider;
-        } else if (Number(profile.credits ?? 0) > 0 && authHeader) {
-          const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-          if (anonKey) {
-            const userClient = createClient(supabaseUrl, anonKey, {
-              auth: { persistSession: false },
-              global: { headers: { Authorization: authHeader } },
-            });
-            const { data: deduction, error: deductionError } = await userClient.rpc("deduct_ai_credits", {
-              p_user_id: userId,
-              p_cost: 1,
-              p_reason: "legal_chat",
-            });
-            const result = Array.isArray(deduction) ? deduction[0] : deduction;
-            if (!deductionError && result?.success) provider = configuredProvider;
-          }
-        }
+  const paidAIQuotaOptions = userId && authHeader && supabaseUrl && serviceKey
+    ? {
+        userId,
+        authorization: authHeader,
+        supabaseUrl,
+        serviceRoleKey: serviceKey,
+        anonKey: Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        reason: "legal_chat",
       }
+    : null;
+  let provider: ModelProvider | null = null;
+  if (paidAIQuotaOptions && Deno.env.get("ENABLE_PAID_AI") === "true") {
+    const configuredProvider = getProvider();
+    if (configuredProvider && await hasPaidAIQuota(paidAIQuotaOptions)) {
+      provider = configuredProvider;
     }
   }
 
@@ -354,15 +332,20 @@ serve(async (req) => {
     async start(controller) {
       let fullText = "";
       let reviewed = false;
+      let completed = false;
       try {
         if (provider) {
-          fullText = await streamCompletion(provider, system, messages, (chunk) => {
-            controller.enqueue(sseEvent({ delta: chunk }));
-          });
+          fullText = await streamCompletion(provider, system, messages, () => {});
+          if (!fullText.trim() || !paidAIQuotaOptions || !await consumePaidAIQuota(paidAIQuotaOptions)) {
+            fullText = "";
+            throw new Error("Paid AI access was unavailable after the response completed.");
+          }
         } else {
           fullText = buildNoCostGuidance(hubType);
-          controller.enqueue(sseEvent({ delta: fullText }));
         }
+
+        controller.enqueue(sseEvent({ delta: fullText }));
+        completed = true;
 
         if (provider && fullText.trim() && needsReview(fullText)) {
           const reviewerSystem =
@@ -387,7 +370,7 @@ serve(async (req) => {
         console.error("legal-chat pipeline failed", error);
         controller.enqueue(sseEvent({ error: "The AI service could not complete this request. Please try again later." }));
       } finally {
-        if (userId && fullText.trim()) {
+        if (completed && userId && fullText.trim()) {
           const finalMessages: ChatMessage[] = [...messages, { role: "assistant", content: fullText }];
           try {
             await persistHistory(userId, hubType, sessionId, finalMessages, reviewed);

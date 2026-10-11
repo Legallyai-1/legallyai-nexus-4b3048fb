@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 import { getAnthropicKey } from "../_shared/anthropic-key.ts";
-import { consumePaidAIQuota } from "../_shared/paid-ai-access.ts";
+import { consumePaidAIQuota, hasPaidAIQuota } from "../_shared/paid-ai-access.ts";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const TABLE = Deno.env.get("SUPABASE_TABLE_CASES") ?? "cases_imported";
@@ -60,11 +60,9 @@ async function callAnthropic(messages: { role: string; content: string }[], maxT
   }
 }
 
-async function callAI(head: string, messages: { role: string; content: string }[]) {
+async function callAI(head: string, messages: { role: string; content: string }[]): Promise<string | null> {
   console.log(`Calling AI for: ${head}`);
-  const content = await callAnthropic(messages);
-  if (content) return content;
-  return `Analysis for ${head} is temporarily unavailable. Please try again later.`;
+  return await callAnthropic(messages);
 }
 
 serve(async (req) => {
@@ -121,7 +119,7 @@ serve(async (req) => {
 
     const caseText = JSON.stringify(data.raw || {}).slice(0, 10000);
     const caseTitle = data.title || "Unknown Case";
-    const hasAIQuota = await consumePaidAIQuota({
+    const quotaOptions = {
       userId: auth.userId,
       authorization: req.headers.get("Authorization") ?? "",
       supabaseUrl: SUPABASE_URL,
@@ -129,8 +127,8 @@ serve(async (req) => {
       anonKey: Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       cost: 3,
       reason: "case_analysis",
-    });
-    if (!hasAIQuota) {
+    };
+    if (!await hasPaidAIQuota(quotaOptions)) {
       return new Response(JSON.stringify({ error: "Paid AI analysis is unavailable for this account or deployment." }), {
         status: 402,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -142,7 +140,7 @@ serve(async (req) => {
     const defendrMsg = [
       { 
         role: "system", 
-        content: "You are Defendr, a criminal defense AI assistant. Analyze the case and provide: 1) Defense checklist with specific tasks, 2) Probable case outcomes with percentages, 3) Immediate next steps for the defense team, 4) Key weaknesses in prosecution's case if apparent." 
+        content: "You are Defendr, a criminal defense AI assistant. Analyze the case and provide: 1) Defense checklist with specific tasks, 2) Immediate next steps for the defense team, 3) Key weaknesses in prosecution's case if apparent. Do not predict case outcomes or assign probabilities; explain uncertainty and relevant factors instead."
       },
       { role: "user", content: `Case: ${caseTitle}\n\nCase data: ${caseText}` }
     ];
@@ -169,6 +167,19 @@ serve(async (req) => {
       { role: "user", content: `Case: ${caseTitle}\n\nCase data: ${caseText}` }
     ];
     const custodyNotes = await callAI("CustodiAI", custodyMsg);
+
+    if (!defensePlan || !clientSummary || !custodyNotes) {
+      return new Response(JSON.stringify({ error: "AI services are temporarily unavailable. No analysis was saved or charged." }), {
+        status: 503,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!await consumePaidAIQuota(quotaOptions)) {
+      return new Response(JSON.stringify({ error: "Paid AI access changed before the analysis completed. No analysis was saved." }), {
+        status: 402,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     console.log("Storing AI analysis results...");
     const { error: updateError } = await supabase
