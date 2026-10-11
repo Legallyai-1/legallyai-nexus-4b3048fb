@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { getAnthropicKey } from "../_shared/anthropic-key.ts";
-import { consumePaidAIQuota } from "../_shared/paid-ai-access.ts";
+import { consumePaidAIQuota, hasPaidAIQuota } from "../_shared/paid-ai-access.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -63,18 +63,24 @@ async function callAnthropic(messages: { role: string; content: string }[], maxT
 }
 
 async function callAI(prompt: string, userId: string, authorization: string): Promise<string> {
-  const hasAccess = await consumePaidAIQuota({
+  const quotaOptions = {
     userId,
     authorization,
     supabaseUrl: Deno.env.get("SUPABASE_URL") ?? "",
     serviceRoleKey: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     anonKey: Deno.env.get("SUPABASE_ANON_KEY") ?? "",
     reason: "business_hub",
-  });
-  if (!hasAccess) return '{"status": "Paid AI is unavailable or your AI credits are exhausted"}';
+  };
+  if (!await hasPaidAIQuota(quotaOptions)) {
+    throw new Error("Paid AI is unavailable or your AI credits are exhausted");
+  }
 
   const content = await callAnthropic([{ role: 'user', content: prompt }]);
-  return content || '{"status": "AI services temporarily unavailable"}';
+  if (!content) throw new Error("AI services are temporarily unavailable");
+  if (!await consumePaidAIQuota(quotaOptions)) {
+    throw new Error("Paid AI access changed before the analysis completed");
+  }
+  return content;
 }
 
 Deno.serve(async (req) => {

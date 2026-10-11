@@ -14,7 +14,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key_here
 VITE_SUPABASE_PROJECT_ID=whdljtbtqisoszbrzdwq
 VITE_ADSENSE_CLIENT_ID=ca-pub-4991947741196600
 VITE_ENABLE_ADSENSE=true
-VITE_ENABLE_PAYMENTS=true
+VITE_ENABLE_PAYMENTS=false
 ```
 
 Use either `VITE_SUPABASE_ANON_KEY` or `VITE_SUPABASE_PUBLISHABLE_KEY`; the app accepts both and normalizes them at build time.
@@ -28,11 +28,14 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_admin_key_here
 SUPABASE_ACCESS_TOKEN=your_supabase_access_token
 STRIPE_SECRET_KEY=your_stripe_secret_key_here
 STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret_here
+ENABLE_PAYMENTS=false
 OPENAI_API_KEY=your_openai_api_key
 VERCEL_TOKEN=your_vercel_token
 VERCEL_ORG_ID=dakota-lefavers-projects
 VERCEL_PROJECT_ID=prj_KSzIDIhU2EzZo8Fr24KQOMogqEmZ
 ```
+
+Checkout is disabled by default. To enable it, set both `VITE_ENABLE_PAYMENTS=true` and `ENABLE_PAYMENTS=true`, and provide both Stripe secrets. The first flag controls browser checkout UI; the second controls the Supabase checkout function. The Vercel deployment validator rejects mismatched flags, and the Supabase deploy workflow syncs `ENABLE_PAYMENTS` to Edge Functions.
 
 ## Validation entry points
 

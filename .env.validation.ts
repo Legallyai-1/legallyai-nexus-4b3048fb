@@ -80,6 +80,7 @@ export const stripeWebhookEnvSchema = z.object({
 
 export const deploymentEnvSchema = clientEnvSchema.and(z.object({
   SUPABASE_URL: urlString,
+  ENABLE_PAYMENTS: booleanFlag.default('false'),
   STRIPE_SECRET_KEY: nonEmptyString.optional(),
   STRIPE_WEBHOOK_SECRET: nonEmptyString.optional(),
   VERCEL_TOKEN: nonEmptyString,
@@ -89,6 +90,14 @@ export const deploymentEnvSchema = clientEnvSchema.and(z.object({
   SUPABASE_SECRET_KEY: nonEmptyString.optional(),
   SUPABASE_SERVICE_ROLE_KEY: nonEmptyString.optional(),
 })).superRefine((env, ctx) => {
+  if (env.VITE_ENABLE_PAYMENTS !== env.ENABLE_PAYMENTS) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'VITE_ENABLE_PAYMENTS and ENABLE_PAYMENTS must match for checkout to work.',
+      path: ['ENABLE_PAYMENTS'],
+    });
+  }
+
   if (env.VITE_ENABLE_PAYMENTS === 'true') {
     if (!env.STRIPE_SECRET_KEY) {
       ctx.addIssue({
