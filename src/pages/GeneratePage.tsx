@@ -313,13 +313,13 @@ export default function GeneratePage() {
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-legal-gold/10 border border-legal-gold/30 mb-6">
               <Sparkles className="h-4 w-4 text-legal-gold" />
-              <span className="text-sm font-medium text-legal-gold">AI-Powered</span>
+              <span className="text-sm font-medium text-legal-gold">No-cost templates by default</span>
             </div>
             <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Generate Legal Documents
+              Generate Legal Document Drafts
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Describe your needs to draft a starting point. Requirements vary by jurisdiction; have a licensed attorney review any document before relying on it.
+              Create a structured starting point without paid AI credits. Paid AI is used only when explicitly enabled for the deployment. Requirements vary by jurisdiction; have a licensed attorney review any document before relying on it.
             </p>
             {!user && (
               <div className="mt-4 p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 max-w-md mx-auto">

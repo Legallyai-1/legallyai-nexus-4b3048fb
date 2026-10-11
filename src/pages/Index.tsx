@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import AdBanner from "@/components/ads/AdBanner";
 import AdContainer from "@/components/ads/AdContainer";
 import AdMobBanner, { ADMOB_AD_UNITS } from "@/components/ads/AdMobBanner";
-import { supabase } from "@/integrations/supabase/client";
+import { streamLegalChat } from "@/lib/legalChat";
 import { toast } from "sonner";
 import { 
   Scale, Sparkles, FileText, MessageSquare, Heart, Shield, 
@@ -77,6 +77,7 @@ export default function Index() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const sessionIdRef = useRef(crypto.randomUUID());
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -93,17 +94,14 @@ export default function Index() {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("legal-chat", {
-        body: {
-          messages: [...chatMessages, userMessage].map(m => ({ role: m.role, content: m.content })),
-          stream: false,
-        },
+      const { text } = await streamLegalChat({
+        hubType: "general",
+        sessionId: sessionIdRef.current,
+        messages: [...chatMessages, userMessage],
+        onDelta: () => {},
       });
-
-      if (error) throw error;
-
-      const responseContent = data?.response || data?.text || "I'm here to help with your legal questions. How can I assist you today?";
-      setChatMessages(prev => [...prev, { role: "assistant", content: responseContent }]);
+      if (!text.trim()) throw new Error("The legal assistant returned an empty response.");
+      setChatMessages(prev => [...prev, { role: "assistant", content: text }]);
     } catch (error: any) {
       console.error("Chat error:", error);
       toast.error("Unable to get response. Please try again.");

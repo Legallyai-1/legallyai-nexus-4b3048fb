@@ -85,6 +85,15 @@ function needsReview(draft: string): boolean {
   return draft.length > 400 || REVIEW_TRIGGER.test(draft);
 }
 
+function buildNoCostGuidance(): string {
+  return [
+    "No-cost guidance mode is active; no paid AI model was called.",
+    "I can’t research current law, predict an outcome, or confirm a deadline. To prepare for help, write down the jurisdiction, important dates, and the questions you need answered.",
+    "Verify procedures and deadlines with the relevant court or government agency. In the U.S., you can find free legal-aid organizations at https://www.lsc.gov/find-legal-aid.",
+    "Please avoid sharing names, case numbers, or confidential documents here. For advice about your situation, consult a licensed attorney.",
+  ].join("\n\n");
+}
+
 function isMessage(value: unknown): value is ChatMessage {
   if (!value || typeof value !== "object") return false;
   const m = value as Record<string, unknown>;
@@ -263,13 +272,7 @@ serve(async (req) => {
     });
   }
 
-  const provider = getProvider();
-  if (!provider) {
-    return new Response(JSON.stringify({ error: "AI chat is not configured. Please contact support." }), {
-      status: 503,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
+  const provider = Deno.env.get("ENABLE_PAID_AI") === "true" ? getProvider() : null;
 
   const requestedHub = typeof payload.hub_type === "string" ? payload.hub_type : undefined;
   const lastUserMessage = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
@@ -301,12 +304,17 @@ serve(async (req) => {
     async start(controller) {
       let fullText = "";
       try {
-        fullText = await streamCompletion(provider, system, messages, (chunk) => {
-          controller.enqueue(sseEvent({ delta: chunk }));
-        });
+        if (provider) {
+          fullText = await streamCompletion(provider, system, messages, (chunk) => {
+            controller.enqueue(sseEvent({ delta: chunk }));
+          });
+        } else {
+          fullText = buildNoCostGuidance();
+          controller.enqueue(sseEvent({ delta: fullText }));
+        }
 
         let reviewed = false;
-        if (fullText.trim() && needsReview(fullText)) {
+        if (provider && fullText.trim() && needsReview(fullText)) {
           const reviewerSystem =
             "You are a legal-accuracy reviewer. Given a draft answer from another AI assistant, reply with exactly " +
             "'OK' if it is accurate and appropriately hedged, or otherwise a corrective note under 60 words " +
