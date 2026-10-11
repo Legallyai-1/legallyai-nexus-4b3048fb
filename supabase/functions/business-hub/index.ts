@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { getAnthropicKey } from "../_shared/anthropic-key.ts";
+import { consumePaidAIQuota } from "../_shared/paid-ai-access.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -61,7 +62,17 @@ async function callAnthropic(messages: { role: string; content: string }[], maxT
   }
 }
 
-async function callAI(prompt: string): Promise<string> {
+async function callAI(prompt: string, userId: string, authorization: string): Promise<string> {
+  const hasAccess = await consumePaidAIQuota({
+    userId,
+    authorization,
+    supabaseUrl: Deno.env.get("SUPABASE_URL") ?? "",
+    serviceRoleKey: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    anonKey: Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+    reason: "business_hub",
+  });
+  if (!hasAccess) return '{"status": "Paid AI is unavailable or your AI credits are exhausted"}';
+
   const content = await callAnthropic([{ role: 'user', content: prompt }]);
   return content || '{"status": "AI services temporarily unavailable"}';
 }
@@ -103,11 +114,11 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case 'ai-intake':
-        result = await processAIIntake(supabase, user.id, organizationId!, intakeData!);
+        result = await processAIIntake(supabase, user.id, authHeader, organizationId!, intakeData!);
         break;
 
       case 'document-assembly':
-        result = await assembleDocument(supabase, templateId!, variables!);
+        result = await assembleDocument(supabase, user.id, authHeader, templateId!, variables!);
         break;
 
       case 'billing-automation':
@@ -157,7 +168,7 @@ Deno.serve(async (req) => {
   }
 });
 
-async function processAIIntake(supabase: any, userId: string, organizationId: string, intakeData: Record<string, any>) {
+async function processAIIntake(supabase: any, userId: string, authorization: string, organizationId: string, intakeData: Record<string, any>) {
   console.log('Processing AI intake for organization:', organizationId);
   
   const prompt = `Analyze this legal intake form and extract key information for case management:
@@ -176,7 +187,7 @@ async function processAIIntake(supabase: any, userId: string, organizationId: st
   - estimated_timeline
   - potential_conflicts_to_check`;
 
-  const analysis = await callAI(prompt);
+  const analysis = await callAI(prompt, userId, authorization);
   
   const { data: client, error: clientError } = await supabase
     .from('clients')
@@ -217,7 +228,7 @@ async function processAIIntake(supabase: any, userId: string, organizationId: st
   };
 }
 
-async function assembleDocument(supabase: any, templateId: string, variables: Record<string, string>) {
+async function assembleDocument(supabase: any, userId: string, authorization: string, templateId: string, variables: Record<string, string>) {
   console.log('Assembling document from template:', templateId);
   
   const { data: template, error } = await supabase
@@ -241,7 +252,7 @@ ${assembledContent}
 
 Return the enhanced document maintaining all original intent and legal requirements.`;
 
-  const enhancedContent = await callAI(enhancePrompt);
+  const enhancedContent = await callAI(enhancePrompt, userId, authorization);
 
   await supabase
     .from('document_templates')
