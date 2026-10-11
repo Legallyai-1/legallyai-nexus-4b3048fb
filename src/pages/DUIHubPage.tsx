@@ -122,12 +122,12 @@ const DUIHubPage = () => {
 
                 <Card className="bg-card/50 border-yellow-500/20">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium">Prediction Accuracy</CardTitle>
+                    <CardTitle className="text-sm font-medium">Outcome Predictions</CardTitle>
                     <Brain className="h-4 w-4 text-yellow-400" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">95%</div>
-                    <p className="text-xs text-muted-foreground">ML model v2.1</p>
+                    <div className="text-sm font-medium">Unavailable</div>
+                    <p className="text-xs text-muted-foreground">No validated legal-outcome model is configured.</p>
                   </CardContent>
                 </Card>
               </div>

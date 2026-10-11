@@ -573,11 +573,10 @@ const EnhancedCustodyPage = () => {
                   <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/30">
                     <div className="flex items-center gap-2 mb-2">
                       <Scale className="h-4 w-4 text-blue-400" />
-                      <span className="font-medium">AI Outcome Prediction</span>
+                      <span className="font-medium">Custody Outcome Predictions Unavailable</span>
                     </div>
                     <p className="text-sm">
-                      Based on current violations and history, there's a <strong>50% probability</strong> of 
-                      custody modification if you file a motion.
+                      No validated custody-outcome model is configured. Speak with a licensed family-law attorney about your case.
                     </p>
                   </div>
                 </CardContent>
