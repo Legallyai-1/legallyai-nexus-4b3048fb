@@ -25,6 +25,79 @@ function validatePrompt(prompt: string): { valid: boolean; reason?: string } {
   return { valid: true };
 }
 
+function buildNoCostTemplate(prompt: string): string {
+  const templates = [
+    {
+      keywords: ["nda", "non-disclosure"],
+      title: "Confidentiality Agreement Worksheet",
+      sections: ["Parties and effective date", "Confidential information", "Permitted use and safeguards", "Exclusions", "Term and return or destruction", "Governing law and dispute process"],
+    },
+    {
+      keywords: ["employment contract", "employment agreement"],
+      title: "Employment Agreement Worksheet",
+      sections: ["Employer and role", "Duties and work location", "Compensation and benefits", "Term and termination", "Confidentiality and intellectual property", "Governing law and review"],
+    },
+    {
+      keywords: ["freelancer", "independent contractor"],
+      title: "Freelance Services Agreement Worksheet",
+      sections: ["Parties and project", "Services and deliverables", "Schedule and acceptance", "Fees and expenses", "Ownership and confidentiality", "Changes and termination", "Governing law and review"],
+    },
+    {
+      keywords: ["llc operating", "operating agreement"],
+      title: "LLC Operating Agreement Worksheet",
+      sections: ["Company and members", "Contributions and ownership", "Management and voting", "Allocations and distributions", "Transfers and withdrawal", "Dissolution and records"],
+    },
+    {
+      keywords: ["lease"],
+      title: "Lease Agreement Worksheet",
+      sections: ["Parties and premises", "Term and possession", "Rent, deposit, and other charges", "Utilities and maintenance", "Use, notices, and entry", "Termination and governing law"],
+    },
+    {
+      keywords: ["service agreement", "services agreement"],
+      title: "Services Agreement Worksheet",
+      sections: ["Parties and scope", "Deliverables and schedule", "Fees and expenses", "Confidentiality and ownership", "Warranties and limitations", "Changes and termination", "Governing law and review"],
+    },
+    {
+      keywords: ["will", "testament", "power of attorney", "trust"],
+      title: "Estate Planning Review Worksheet",
+      sections: ["People and roles to discuss", "Assets and ownership", "Intended beneficiaries", "Decision-making and care preferences", "Questions about signing and witnesses", "Questions for a licensed estate-planning attorney"],
+      worksheetOnly: true,
+    },
+  ];
+  const lowerPrompt = prompt.toLowerCase();
+  const template = templates.find(({ keywords }) => keywords.some((keyword) => lowerPrompt.includes(keyword)));
+  const title = template?.title ?? "Legal Document Planning Worksheet";
+  const sections = template?.sections ?? [
+    "Parties and jurisdiction",
+    "Purpose and scope",
+    "Responsibilities and timing",
+    "Payment or other consideration",
+    "Confidentiality, ownership, and records",
+    "Changes, termination, and dispute process",
+    "Governing law and attorney review",
+  ];
+  const notice = template?.worksheetOnly
+    ? "This worksheet is not a will, trust, power of attorney, or other legal instrument. Do not sign or rely on it as one."
+    : "This is a fill-in planning template, not legal advice or a completed or enforceable agreement.";
+
+  return [
+    title,
+    "",
+    "NO-COST TEMPLATE MODE — no paid AI service or document-generation credits were used.",
+    notice,
+    "Fill in every bracketed field, remove provisions that do not apply, and have a licensed attorney review the final document before signing or relying on it.",
+    "",
+    "Request for this draft:",
+    prompt,
+    "",
+    ...sections.flatMap((section, index) => [`${index + 1}. ${section}`, "[Add the agreed details here.]",
+      ""]),
+    "Jurisdiction: [State or country]",
+    "Effective date: [Date]",
+    "Names and signatures: [Complete only after legal review]",
+  ].join("\n");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -35,7 +108,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
     const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
+    if (!supabaseUrl || !supabaseAnonKey) {
       return new Response(
         JSON.stringify({ error: "Document generation is temporarily unavailable." }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -47,12 +120,6 @@ serve(async (req) => {
       supabaseAnonKey,
       { auth: { persistSession: false, autoRefreshToken: false } },
     );
-    const supabaseAdmin = createClient(
-      supabaseUrl,
-      supabaseServiceRoleKey,
-      { auth: { persistSession: false, autoRefreshToken: false } },
-    );
-
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(
@@ -94,14 +161,26 @@ serve(async (req) => {
       );
     }
 
-    const ANTHROPIC_API_KEY = getAnthropicKey();
+    const ANTHROPIC_API_KEY = Deno.env.get("ENABLE_PAID_AI") === "true" ? getAnthropicKey() : null;
     const ANTHROPIC_MODEL = Deno.env.get("ANTHROPIC_MODEL") || "claude-sonnet-4-20250514";
     if (!ANTHROPIC_API_KEY) {
       return new Response(
-        JSON.stringify({ error: "Document generation is temporarily unavailable." }),
+        JSON.stringify({ document: buildNoCostTemplate(normalizedPrompt), success: true, mode: "template" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    if (!supabaseServiceRoleKey) {
+      return new Response(
+        JSON.stringify({ error: "Paid AI generation is temporarily unavailable." }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+    const supabaseAdmin = createClient(
+      supabaseUrl,
+      supabaseServiceRoleKey,
+      { auth: { persistSession: false, autoRefreshToken: false } },
+    );
 
     const [
       { data: profile, error: profileError },
