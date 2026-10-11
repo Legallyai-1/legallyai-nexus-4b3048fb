@@ -27,6 +27,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { streamLegalChat } from "@/lib/legalChat";
 
 const custodyOptions = [
   { value: "joint", label: "Joint Custody", desc: "Both parents share decision-making and time equally" },
@@ -125,16 +126,17 @@ Special Needs: ${formData.specialNeeds || "None"}
 
 Create detailed custody plan with: 1) Legal framework for ${formData.state}, 2) Parenting schedule, 3) Holiday/vacation schedule, 4) Decision-making authority, 5) Communication guidelines, 6) Transportation logistics, 7) Modification procedures.`;
 
-      const { data, error } = await supabase.functions.invoke('legal-chat', {
-        body: { messages: [
-          { role: "system", content: "You are CustodiAI, an expert in family law and child custody. Generate professional, legally-informed custody plans focused on children's best interests." },
-          { role: "user", content: prompt }
-        ], stream: false }
+      const { text, mode } = await streamLegalChat({
+        hubType: "custody",
+        sessionId: crypto.randomUUID(),
+        messages: [{ role: "user", content: prompt }],
+        onDelta: () => {},
       });
-      if (error) throw error;
-      setGeneratedPlan(data.response);
+      setGeneratedPlan(mode === "paid" ? text : `A personalized custody plan is unavailable in no-cost mode.\n\n${text}`);
       setActiveTab("document");
-      toast.success("Custody plan generated!");
+      toast[mode === "paid" ? "success" : "info"](
+        mode === "paid" ? "Custody plan generated." : "Showing general guidance; no personalized plan was generated.",
+      );
     } catch (error: any) {
       toast.error(error.message || "Failed to generate plan");
     } finally {

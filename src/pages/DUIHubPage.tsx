@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import AdBanner from "@/components/ads/AdBanner";
 import AdContainer from "@/components/ads/AdContainer";
@@ -33,7 +32,6 @@ const DUIHubPage = () => {
     county: "",
     breathalyzerData: "",
   });
-  const [prediction, setPrediction] = useState<any>(null);
   const { toast } = useToast();
 
   const startHearingSim = async () => {
@@ -66,34 +64,6 @@ const DUIHubPage = () => {
     }, 1500);
   };
 
-  const predictOutcome = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('predictive-ai', {
-        body: {
-          type: 'dui_outcome',
-          caseData: {
-            bac_level: parseFloat(caseData.bacLevel) || 0.08,
-            state: caseData.state,
-            prior_offenses: 0,
-            breathalyzer_issues: caseData.breathalyzerData.includes('calibration'),
-          }
-        }
-      });
-
-      if (error) throw error;
-      setPrediction(data);
-      toast({ title: "Prediction Generated", description: `${(data.confidence * 100).toFixed(0)}% confidence` });
-    } catch (error) {
-      console.error('Prediction error:', error);
-      toast({ 
-        title: "Prediction Failed", 
-        description: "Unable to generate prediction. Please try again.",
-        variant: "destructive"
-      });
-      setPrediction(null);
-    }
-  };
-
   return (
     <MainLayout>
       <div className="min-h-screen bg-background p-6">
@@ -109,7 +79,7 @@ const DUIHubPage = () => {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-foreground">DUI Defense Hub</h1>
-              <p className="text-muted-foreground">Complete DUI case management with AI-powered predictions</p>
+              <p className="text-muted-foreground">DUI case preparation and resource management</p>
             </div>
             <div className="ml-auto">
               <AnimatedAIHead variant="orange" size="sm" />
@@ -321,93 +291,18 @@ const DUIHubPage = () => {
               </Card>
             </TabsContent>
 
-            <TabsContent value="predictor" className="space-y-6">
+            <TabsContent value="predictor">
               <Card className="bg-card/50 border-orange-500/20">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Target className="h-5 w-5 text-orange-400" />
-                    Plea Outcome Predictor (95% Accuracy)
+                    Plea Outcome Predictions Unavailable
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>State</Label>
-                      <Select value={caseData.state} onValueChange={(v) => setCaseData({...caseData, state: v})}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="CA">California</SelectItem>
-                          <SelectItem value="TX">Texas</SelectItem>
-                          <SelectItem value="FL">Florida</SelectItem>
-                          <SelectItem value="NY">New York</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>County</Label>
-                      <Input 
-                        placeholder="Los Angeles"
-                        value={caseData.county}
-                        onChange={(e) => setCaseData({...caseData, county: e.target.value})}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>BAC Level</Label>
-                      <Input 
-                        placeholder="0.12"
-                        value={caseData.bacLevel}
-                        onChange={(e) => setCaseData({...caseData, bacLevel: e.target.value})}
-                      />
-                    </div>
-                  </div>
-
-                  <Button onClick={predictOutcome} className="w-full bg-gradient-to-r from-orange-500 to-red-500">
-                    <Brain className="mr-2 h-4 w-4" />
-                    Generate Prediction
-                  </Button>
-
-                  {prediction && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="p-4 bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-lg border border-orange-500/20"
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="font-semibold text-lg">{prediction.outcome}</h4>
-                        <Badge variant="outline" className="text-orange-400 border-orange-400">
-                          {(prediction.confidence * 100).toFixed(0)}% Confidence
-                        </Badge>
-                      </div>
-                      <Progress value={prediction.confidence * 100} className="mb-4" />
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <h5 className="text-sm font-medium mb-2">Key Factors</h5>
-                          <ul className="text-sm space-y-1">
-                            {prediction.factors?.map((f: string, i: number) => (
-                              <li key={i} className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-orange-400" />
-                                {f}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div>
-                          <h5 className="text-sm font-medium mb-2">Recommendations</h5>
-                          <ul className="text-sm space-y-1">
-                            {prediction.recommendations?.map((r: string, i: number) => (
-                              <li key={i} className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-                                {r}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    No validated legal-outcome model is configured. Speak with a licensed attorney about case-specific outcomes.
+                  </p>
                 </CardContent>
               </Card>
             </TabsContent>

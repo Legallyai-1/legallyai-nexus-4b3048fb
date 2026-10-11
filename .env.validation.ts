@@ -17,7 +17,7 @@ export const clientEnvSchema = z.object({
   VITE_SUPABASE_PROJECT_ID: nonEmptyString,
   VITE_ADSENSE_CLIENT_ID: nonEmptyString.optional(),
   VITE_ENABLE_ADSENSE: booleanFlag.default('true'),
-  VITE_ENABLE_PAYMENTS: booleanFlag.default('true'),
+  VITE_ENABLE_PAYMENTS: booleanFlag.default('false'),
 }).superRefine((env, ctx) => {
   if (!env.VITE_SUPABASE_ANON_KEY && !env.VITE_SUPABASE_PUBLISHABLE_KEY) {
     ctx.addIssue({

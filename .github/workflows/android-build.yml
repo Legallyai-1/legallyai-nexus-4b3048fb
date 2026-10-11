@@ -30,7 +30,7 @@ jobs:
           VITE_SUPABASE_PROJECT_ID: ${{ vars.VITE_SUPABASE_PROJECT_ID || secrets.VITE_SUPABASE_PROJECT_ID }}
           VITE_ADSENSE_CLIENT_ID: ${{ vars.VITE_ADSENSE_CLIENT_ID || secrets.VITE_ADSENSE_CLIENT_ID }}
           VITE_ENABLE_ADSENSE: ${{ vars.VITE_ENABLE_ADSENSE || secrets.VITE_ENABLE_ADSENSE || 'false' }}
-          VITE_ENABLE_PAYMENTS: ${{ vars.VITE_ENABLE_PAYMENTS || secrets.VITE_ENABLE_PAYMENTS || 'true' }}
+          VITE_ENABLE_PAYMENTS: ${{ vars.VITE_ENABLE_PAYMENTS || secrets.VITE_ENABLE_PAYMENTS || 'false' }}
         run: npm run build
 
       - name: Setup Java

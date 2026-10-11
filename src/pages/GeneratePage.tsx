@@ -13,6 +13,7 @@ import { ensureUserProfile } from '@/lib/ai-credits';
 import AdBanner from "@/components/ads/AdBanner";
 import AdContainer from "@/components/ads/AdContainer";
 import AdMobBanner, { ADMOB_AD_UNITS } from "@/components/ads/AdMobBanner";
+import { arePaymentsEnabled } from "@/lib/env";
 
 const documentTypes = [
   "NDA (Non-Disclosure Agreement)",
@@ -210,6 +211,11 @@ export default function GeneratePage() {
   };
 
   const handleUnlock = async () => {
+    if (!arePaymentsEnabled()) {
+      toast.error("Payments are currently disabled.");
+      return;
+    }
+
     if (!user) {
       toast.error("Please sign in first");
       navigate("/auth");
@@ -425,7 +431,7 @@ export default function GeneratePage() {
                 )}
               </div>
 
-              {generatedDoc && !isPaid && (
+              {generatedDoc && arePaymentsEnabled() && !isPaid && (
                 <div className="p-6 rounded-2xl bg-gradient-to-br from-legal-gold/10 to-amber-500/10 border border-legal-gold/30">
                   <div className="flex items-start gap-4">
                     <div className="p-2 rounded-lg bg-legal-gold/20">
@@ -446,7 +452,7 @@ export default function GeneratePage() {
                 </div>
               )}
 
-              {generatedDoc && isPaid && (
+              {generatedDoc && (isPaid || !arePaymentsEnabled()) && (
                 <div className="flex gap-3">
                   <Button onClick={handleDownload} variant="gold" className="flex-1">
                     <Download className="h-4 w-4" />

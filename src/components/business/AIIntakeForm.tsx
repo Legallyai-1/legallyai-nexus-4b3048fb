@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { streamLegalChat } from "@/lib/legalChat";
 
 interface IntakeQuestion {
   id: string;
@@ -66,20 +67,17 @@ export function AIIntakeForm() {
     setIsGenerating(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke("legal-chat", {
-        body: {
-          messages: [
-            { role: "system", content: "You are a legal intake specialist. Generate 5 relevant intake questions for the specified practice area. Return ONLY a JSON array with objects containing 'question', 'type' (text/textarea/select/date), and 'options' (for select type). No other text." },
-            { role: "user", content: `Generate intake questions for ${practiceArea} cases.` }
-          ],
-          stream: false
-        }
+      const { text: responseText, mode } = await streamLegalChat({
+        hubType: "general",
+        sessionId: crypto.randomUUID(),
+        messages: [{
+          role: "user",
+          content: `Create five general intake questions for ${practiceArea} cases. Return only a JSON array with objects containing "question", "type" (text/textarea/select/date), and "options" for select questions.`,
+        }],
+        onDelta: () => {},
       });
 
-      if (error) throw error;
-
       // Parse AI response
-      const responseText = data.response;
       try {
         const parsed = JSON.parse(responseText);
         const questions: IntakeQuestion[] = parsed.map((q: any, i: number) => ({
@@ -91,7 +89,7 @@ export function AIIntakeForm() {
           aiGenerated: true
         }));
         setAIQuestions(questions);
-        toast.success("AI-generated questions added!");
+        toast.success(mode === "paid" ? "AI-generated questions added!" : "Intake questions are ready.");
       } catch {
         // Fallback questions if parsing fails
         setAIQuestions([

@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 import { getAnthropicKey } from "../_shared/anthropic-key.ts";
+import { resolveSubscriptionAccess } from "../_shared/subscription-access.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -52,6 +53,9 @@ const HUB_PROMPTS: Record<string, string> = {
     "for account-specific help. Never request passwords, payment-card data, or confidential legal matter details. " +
     "Do not provide legal advice; direct legal questions to the legal-information assistant and link the user to /disclaimer. " +
     "If you are unsure, say so and give the support email rather than inventing product behavior.",
+  marriage:
+    "You are MaryAI, a general legal-information assistant for marriage and divorce topics. Explain common concepts, " +
+    "help users prepare questions for an attorney, and avoid inventing jurisdiction-specific requirements or calculations.",
 };
 
 const SAFETY_SUFFIX =
@@ -85,7 +89,16 @@ function needsReview(draft: string): boolean {
   return draft.length > 400 || REVIEW_TRIGGER.test(draft);
 }
 
-function buildNoCostGuidance(): string {
+function buildNoCostGuidance(hubType: string): string {
+  if (hubType === "support") {
+    return [
+      "No-cost customer-support mode is active; no paid AI model was called.",
+      "For sign-in help, use the sign-in page at /auth. For subscription settings, open Settings or visit /pricing.",
+      "I can’t access accounts, reset passwords, process refunds, or change billing. For account-specific help, email support@legallyai.ai.",
+      "Please don’t share passwords, payment-card details, or confidential legal matter information here.",
+    ].join("\n\n");
+  }
+
   return [
     "No-cost legal-information mode is active; no paid AI model was called. I can’t research or answer case-specific legal questions, predict an outcome, or confirm a deadline.",
     "For useful next steps, identify the state or country involved, write down important dates, and collect relevant documents without sharing confidential details here.",
@@ -272,8 +285,6 @@ serve(async (req) => {
     });
   }
 
-  const provider = Deno.env.get("ENABLE_PAID_AI") === "true" ? getProvider() : null;
-
   const requestedHub = typeof payload.hub_type === "string" ? payload.hub_type : undefined;
   const lastUserMessage = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
   const hubType = routeHub(requestedHub, lastUserMessage);
@@ -283,14 +294,13 @@ serve(async (req) => {
   // Resolve the caller (optional - chat still works signed-out, we just skip history persistence).
   let userId: string | null = null;
   const authHeader = req.headers.get("Authorization");
-  if (authHeader) {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (supabaseUrl && serviceKey) {
-      const authClient = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
-      const { data } = await authClient.auth.getUser(authHeader.replace("Bearer ", ""));
-      userId = data?.user?.id ?? null;
-    }
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const authToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  if (authToken && supabaseUrl && serviceKey) {
+    const authClient = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+    const { data } = await authClient.auth.getUser(authToken);
+    userId = data?.user?.id ?? null;
   }
 
   if (hubType === "support" && !userId) {
@@ -300,33 +310,79 @@ serve(async (req) => {
     });
   }
 
+  let provider: ModelProvider | null = null;
+  if (Deno.env.get("ENABLE_PAID_AI") === "true" && userId && supabaseUrl && serviceKey) {
+    const configuredProvider = getProvider();
+    if (configuredProvider) {
+      const adminClient = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+      const [
+        { data: profile, error: profileError },
+        { data: subscription, error: subscriptionError },
+        { data: paymentRecords, error: paymentError },
+      ] = await Promise.all([
+        adminClient.from("profiles").select("credits, subscription_tier").eq("id", userId).maybeSingle(),
+        adminClient.from("subscriptions").select("status, tier, current_period_end, cancel_at_period_end").eq("user_id", userId).maybeSingle(),
+        adminClient.from("payment_records").select("tier, payment_method, expires_at, status, metadata").eq("user_id", userId),
+      ]);
+
+      if (!profileError && !subscriptionError && !paymentError && profile) {
+        const access = resolveSubscriptionAccess(profile.subscription_tier || "free", subscription, paymentRecords);
+        const hasPaidPlan = access.entitled && access.plan !== "document";
+        if (hasPaidPlan) {
+          provider = configuredProvider;
+        } else if (Number(profile.credits ?? 0) > 0 && authHeader) {
+          const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+          if (anonKey) {
+            const userClient = createClient(supabaseUrl, anonKey, {
+              auth: { persistSession: false },
+              global: { headers: { Authorization: authHeader } },
+            });
+            const { data: deduction, error: deductionError } = await userClient.rpc("deduct_ai_credits", {
+              p_user_id: userId,
+              p_cost: 1,
+              p_reason: "legal_chat",
+            });
+            const result = Array.isArray(deduction) ? deduction[0] : deduction;
+            if (!deductionError && result?.success) provider = configuredProvider;
+          }
+        }
+      }
+    }
+  }
+
   const stream = new ReadableStream({
     async start(controller) {
       let fullText = "";
+      let reviewed = false;
       try {
         if (provider) {
           fullText = await streamCompletion(provider, system, messages, (chunk) => {
             controller.enqueue(sseEvent({ delta: chunk }));
           });
         } else {
-          fullText = buildNoCostGuidance();
+          fullText = buildNoCostGuidance(hubType);
           controller.enqueue(sseEvent({ delta: fullText }));
         }
 
-        let reviewed = false;
         if (provider && fullText.trim() && needsReview(fullText)) {
           const reviewerSystem =
             "You are a legal-accuracy reviewer. Given a draft answer from another AI assistant, reply with exactly " +
             "'OK' if it is accurate and appropriately hedged, or otherwise a corrective note under 60 words " +
             "flagging overconfident claims, missing disclaimers, or inaccuracies. Do not repeat the whole answer.";
           const note = await callOnce(provider, reviewerSystem, fullText);
-          reviewed = true;
+          reviewed = Boolean(note);
           if (note && !/^ok\.?$/i.test(note.trim())) {
             controller.enqueue(sseEvent({ reviewer_note: note }));
           }
         }
 
-        controller.enqueue(sseEvent({ done: true, hub_type: hubType, session_id: sessionId, reviewed }));
+        controller.enqueue(sseEvent({
+          done: true,
+          hub_type: hubType,
+          session_id: sessionId,
+          reviewed,
+          mode: provider ? "paid" : "no-cost",
+        }));
       } catch (error) {
         console.error("legal-chat pipeline failed", error);
         controller.enqueue(sseEvent({ error: "The AI service could not complete this request. Please try again later." }));
@@ -334,7 +390,7 @@ serve(async (req) => {
         if (userId && fullText.trim()) {
           const finalMessages: ChatMessage[] = [...messages, { role: "assistant", content: fullText }];
           try {
-            await persistHistory(userId, hubType, sessionId, finalMessages, needsReview(fullText));
+            await persistHistory(userId, hubType, sessionId, finalMessages, reviewed);
           } catch (error) {
             console.error("legal-chat history persistence failed", error);
           }
