@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 import { getAnthropicKey } from "../_shared/anthropic-key.ts";
+import { consumePaidAIQuota } from "../_shared/paid-ai-access.ts";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const TABLE = Deno.env.get("SUPABASE_TABLE_CASES") ?? "cases_imported";
@@ -120,6 +121,21 @@ serve(async (req) => {
 
     const caseText = JSON.stringify(data.raw || {}).slice(0, 10000);
     const caseTitle = data.title || "Unknown Case";
+    const hasAIQuota = await consumePaidAIQuota({
+      userId: auth.userId,
+      authorization: req.headers.get("Authorization") ?? "",
+      supabaseUrl: SUPABASE_URL,
+      serviceRoleKey: SUPABASE_KEY,
+      anonKey: Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      cost: 3,
+      reason: "case_analysis",
+    });
+    if (!hasAIQuota) {
+      return new Response(JSON.stringify({ error: "Paid AI analysis is unavailable for this account or deployment." }), {
+        status: 402,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // DEFENDR: Defense strategy
     console.log("Running Defendr analysis...");

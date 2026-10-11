@@ -40,6 +40,14 @@ const practiceAreas = [
   "Bankruptcy",
 ];
 
+const standardIntakeQuestions: IntakeQuestion[] = [
+  { id: "ai_1", question: "Please describe your legal issue in detail", type: "textarea", required: true },
+  { id: "ai_2", question: "When did this issue first occur?", type: "date", required: true },
+  { id: "ai_3", question: "Have you consulted with any other attorneys about this matter?", type: "select", options: ["Yes", "No"], required: true },
+  { id: "ai_4", question: "What is your primary goal in pursuing this matter?", type: "textarea", required: true },
+  { id: "ai_5", question: "Are there any upcoming deadlines we should be aware of?", type: "text", required: false },
+];
+
 export function AIIntakeForm() {
   const [step, setStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -77,6 +85,12 @@ export function AIIntakeForm() {
         onDelta: () => {},
       });
 
+      if (mode === "no-cost") {
+        setAIQuestions(standardIntakeQuestions);
+        toast.info("AI is disabled; standard intake questions are ready.");
+        return;
+      }
+
       // Parse AI response
       try {
         const parsed = JSON.parse(responseText);
@@ -92,13 +106,8 @@ export function AIIntakeForm() {
         toast.success(mode === "paid" ? "AI-generated questions added!" : "Intake questions are ready.");
       } catch {
         // Fallback questions if parsing fails
-        setAIQuestions([
-          { id: "ai_1", question: "Please describe your legal issue in detail", type: "textarea", required: true, aiGenerated: true },
-          { id: "ai_2", question: "When did this issue first occur?", type: "date", required: true, aiGenerated: true },
-          { id: "ai_3", question: "Have you consulted with any other attorneys about this matter?", type: "select", options: ["Yes", "No"], required: true, aiGenerated: true },
-          { id: "ai_4", question: "What is your primary goal in pursuing this matter?", type: "textarea", required: true, aiGenerated: true },
-          { id: "ai_5", question: "Are there any upcoming deadlines we should be aware of?", type: "text", required: false, aiGenerated: true },
-        ]);
+        setAIQuestions(standardIntakeQuestions);
+        toast.info("Standard intake questions are available; the AI response could not be parsed.");
       }
     } catch (error) {
       console.error("Error generating questions:", error);
@@ -338,7 +347,7 @@ export function AIIntakeForm() {
             <CardTitle className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5 text-primary" />
               Case Details
-              {aiQuestions.length > 0 && (
+              {aiQuestions.some((question) => question.aiGenerated) && (
                 <Badge className="bg-purple-500/20 text-purple-400">AI-Generated</Badge>
               )}
             </CardTitle>
