@@ -87,8 +87,8 @@ function needsReview(draft: string): boolean {
 
 function buildNoCostGuidance(): string {
   return [
-    "No-cost guidance mode is active; no paid AI model was called.",
-    "I can’t research current law, predict an outcome, or confirm a deadline. To prepare for help, write down the jurisdiction, important dates, and the questions you need answered.",
+    "No-cost legal-information mode is active; no paid AI model was called. I can’t research or answer case-specific legal questions, predict an outcome, or confirm a deadline.",
+    "For useful next steps, identify the state or country involved, write down important dates, and collect relevant documents without sharing confidential details here.",
     "Verify procedures and deadlines with the relevant court or government agency. In the U.S., you can find free legal-aid organizations at https://www.lsc.gov/find-legal-aid.",
     "Please avoid sharing names, case numbers, or confidential documents here. For advice about your situation, consult a licensed attorney.",
   ].join("\n\n");

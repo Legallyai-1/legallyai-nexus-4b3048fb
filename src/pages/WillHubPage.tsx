@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,14 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  FileText, Brain, Users, Building, DollarSign, 
-  Shield, Globe, Calculator, Download, Upload,
-  Plus, Trash2, Edit, Eye, GitBranch
+import {
+  FileText, Brain, Users, Building, DollarSign,
+  Globe, Calculator, Download, Plus, Trash2, GitBranch
 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import AdBanner from "@/components/ads/AdBanner";
 import AdContainer from "@/components/ads/AdContainer";
@@ -43,6 +41,13 @@ const WillHubPage = () => {
   const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([]);
   const [selectedClauses, setSelectedClauses] = useState<string[]>([]);
   const [simResult, setSimResult] = useState<any>(null);
+  const [selectedState, setSelectedState] = useState("CA");
+  const [documentType, setDocumentType] = useState("simple");
+  const [estateWorksheet, setEstateWorksheet] = useState<string | null>(null);
+  const [assetDraft, setAssetDraft] = useState({ name: "", type: "", value: "", state: "" });
+  const [beneficiaryDraft, setBeneficiaryDraft] = useState({ name: "", relationship: "", percentage: "" });
+  const [assetGrowthRate, setAssetGrowthRate] = useState(5);
+  const [projectionYears, setProjectionYears] = useState(10);
   const { toast } = useToast();
 
   const clauseLibrary = [
@@ -56,33 +61,86 @@ const WillHubPage = () => {
     { id: "pet", name: "Pet Trust", category: "Special" },
   ];
 
-  const runInheritanceSim = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('predictive-ai', {
-        body: {
-          type: 'inheritance_sim',
-          assets,
-          beneficiaries,
-          scenario: 'standard_distribution'
-        }
-      });
-
-      if (error) throw error;
-      setSimResult(data);
-    } catch (error) {
-      console.error('Simulation error:', error);
-      toast({
-        title: 'Simulation failed',
-        description: 'Failed to generate estate simulation. Please try again.',
-        variant: 'destructive',
-      });
-      setSimResult(null);
-    }
+  const runInheritanceSim = () => {
+    const totalEstate = assets.reduce((sum, asset) => sum + Math.max(0, Number(asset.value) || 0), 0);
+    const projectedEstate = totalEstate * (1 + assetGrowthRate / 100) ** projectionYears;
+    const distributions = beneficiaries.map((beneficiary) => ({
+      name: beneficiary.name,
+      amount: projectedEstate * Math.max(0, Number(beneficiary.percentage) || 0) / 100,
+    }));
+    setSimResult({ totalEstate, projectedEstate, distributions });
   };
 
-  const generateWill = async () => {
-    toast({ title: "Generating Will", description: "WillAI is drafting your document..." });
-    // Implementation would call edge function
+  const addAsset = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const value = Number(assetDraft.value);
+    if (!assetDraft.name.trim() || !assetDraft.type.trim() || !assetDraft.state.trim() || !Number.isFinite(value) || value < 0) {
+      toast({ title: "Check asset details", description: "Enter an asset name, type, location, and non-negative value.", variant: "destructive" });
+      return;
+    }
+    setAssets((current) => [...current, { id: crypto.randomUUID(), ...assetDraft, value }]);
+    setAssetDraft({ name: "", type: "", value: "", state: "" });
+  };
+
+  const addBeneficiary = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const percentage = Number(beneficiaryDraft.percentage);
+    const allocatedPercentage = beneficiaries.reduce((sum, beneficiary) => sum + beneficiary.percentage, 0);
+    if (!beneficiaryDraft.name.trim() || !beneficiaryDraft.relationship.trim() || !Number.isFinite(percentage) || percentage < 0 || percentage + allocatedPercentage > 100) {
+      toast({ title: "Check beneficiary details", description: "Enter a name, relationship, and share that keeps the total allocation at or below 100%.", variant: "destructive" });
+      return;
+    }
+    setBeneficiaries((current) => [...current, { id: crypto.randomUUID(), ...beneficiaryDraft, percentage }]);
+    setBeneficiaryDraft({ name: "", relationship: "", percentage: "" });
+  };
+
+  const generateWill = () => {
+    const selectedClauseNames = clauseLibrary
+      .filter((clause) => selectedClauses.includes(clause.id))
+      .map((clause) => `- ${clause.name}`)
+      .join("\n") || "- No topics selected";
+    const assetList = assets.map((asset) =>
+      `- ${asset.name} (${asset.type}), ${asset.state}: $${asset.value.toLocaleString()}`
+    ).join("\n") || "- No assets listed";
+    const beneficiaryList = beneficiaries.map((beneficiary) =>
+      `- ${beneficiary.name} (${beneficiary.relationship}): ${beneficiary.percentage}%`
+    ).join("\n") || "- No beneficiaries listed";
+
+    setEstateWorksheet([
+      "ESTATE PLANNING WORKSHEET — NOT A LEGAL INSTRUMENT",
+      `Document to discuss: ${documentType.replace("_", " ")} will`,
+      `Jurisdiction selected: ${selectedState}`,
+      `Prepared: ${new Date().toLocaleDateString()}`,
+      "",
+      "This worksheet is not a will, trust, or power of attorney; it is not state-specific legal drafting and must not be signed or relied on as a legal document.",
+      "Review all decisions, ownership, tax implications, and signing requirements with a licensed estate-planning attorney.",
+      "",
+      "Assets listed",
+      assetList,
+      "",
+      "Beneficiary intentions",
+      beneficiaryList,
+      "",
+      "Topics to discuss with an attorney",
+      selectedClauseNames,
+      "",
+      "Open questions",
+      "- Who should manage the estate and serve as a backup?",
+      "- Are any beneficiaries minors or otherwise in need of a trust?",
+      "- Do assets have joint owners or existing beneficiary designations?",
+      "- What signing, witness, or notarization rules apply in the relevant jurisdiction?",
+    ].join("\n"));
+    toast({ title: "Worksheet prepared", description: "This is a planning aid, not a will or legal advice." });
+  };
+
+  const downloadWorksheet = () => {
+    if (!estateWorksheet) return;
+    const url = URL.createObjectURL(new Blob([estateWorksheet], { type: "text/plain" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "estate-planning-worksheet.txt";
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -210,13 +268,17 @@ const WillHubPage = () => {
                       <Building className="h-5 w-5" />
                       Asset Inventory
                     </span>
-                    <Button size="sm">
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add Asset
-                    </Button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <p className="text-xs text-muted-foreground">This worksheet data is held in this browser tab only and is not saved to an account.</p>
+                  <form onSubmit={addAsset} className="grid grid-cols-1 md:grid-cols-5 gap-2">
+                    <Input aria-label="Asset name" placeholder="Asset name" value={assetDraft.name} onChange={(event) => setAssetDraft({ ...assetDraft, name: event.target.value })} />
+                    <Input aria-label="Asset type" placeholder="Type" value={assetDraft.type} onChange={(event) => setAssetDraft({ ...assetDraft, type: event.target.value })} />
+                    <Input aria-label="Asset location" placeholder="State or location" value={assetDraft.state} onChange={(event) => setAssetDraft({ ...assetDraft, state: event.target.value })} />
+                    <Input aria-label="Asset value" type="number" min="0" step="0.01" placeholder="Value" value={assetDraft.value} onChange={(event) => setAssetDraft({ ...assetDraft, value: event.target.value })} />
+                    <Button type="submit"><Plus className="h-4 w-4 mr-1" />Add Asset</Button>
+                  </form>
                   {assets.map((asset) => (
                     <div key={asset.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
                       <div className="flex items-center gap-4">
@@ -231,10 +293,7 @@ const WillHubPage = () => {
                       <div className="flex items-center gap-4">
                         <Badge variant="outline">{asset.state}</Badge>
                         <p className="font-bold">${asset.value.toLocaleString()}</p>
-                        <Button variant="ghost" size="icon">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" aria-label={`Remove ${asset.name}`} onClick={() => setAssets((current) => current.filter((item) => item.id !== asset.id))}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
@@ -252,13 +311,16 @@ const WillHubPage = () => {
                       <Users className="h-5 w-5" />
                       Beneficiaries
                     </span>
-                    <Button size="sm">
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add Beneficiary
-                    </Button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <p className="text-xs text-muted-foreground">This worksheet data is held in this browser tab only and is not saved to an account.</p>
+                  <form onSubmit={addBeneficiary} className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                    <Input aria-label="Beneficiary name" placeholder="Name" value={beneficiaryDraft.name} onChange={(event) => setBeneficiaryDraft({ ...beneficiaryDraft, name: event.target.value })} />
+                    <Input aria-label="Beneficiary relationship" placeholder="Relationship" value={beneficiaryDraft.relationship} onChange={(event) => setBeneficiaryDraft({ ...beneficiaryDraft, relationship: event.target.value })} />
+                    <Input aria-label="Beneficiary percentage" type="number" min="0" max="100" step="0.01" placeholder="Share (%)" value={beneficiaryDraft.percentage} onChange={(event) => setBeneficiaryDraft({ ...beneficiaryDraft, percentage: event.target.value })} />
+                    <Button type="submit"><Plus className="h-4 w-4 mr-1" />Add Beneficiary</Button>
+                  </form>
                   {beneficiaries.map((b) => (
                     <div key={b.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
                       <div className="flex items-center gap-4">
@@ -275,8 +337,8 @@ const WillHubPage = () => {
                           <Progress value={b.percentage} />
                           <p className="text-xs text-center mt-1">{b.percentage}%</p>
                         </div>
-                        <Button variant="ghost" size="icon">
-                          <Edit className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" aria-label={`Remove ${b.name}`} onClick={() => setBeneficiaries((current) => current.filter((item) => item.id !== b.id))}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
                     </div>
@@ -337,22 +399,10 @@ const WillHubPage = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>Scenario</Label>
-                      <Select defaultValue="standard">
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="standard">Standard Distribution</SelectItem>
-                          <SelectItem value="spouse_first">Spouse First Scenario</SelectItem>
-                          <SelectItem value="trust">Dynasty Trust</SelectItem>
-                          <SelectItem value="charity">Charitable Remainder</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Asset Growth Rate</Label>
-                      <Select defaultValue="5">
+                      <Select value={String(assetGrowthRate)} onValueChange={(value) => setAssetGrowthRate(Number(value))}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="0">0%</SelectItem>
@@ -364,7 +414,7 @@ const WillHubPage = () => {
                     </div>
                     <div className="space-y-2">
                       <Label>Years to Project</Label>
-                      <Select defaultValue="10">
+                      <Select value={String(projectionYears)} onValueChange={(value) => setProjectionYears(Number(value))}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="5">5 years</SelectItem>
@@ -388,20 +438,15 @@ const WillHubPage = () => {
                     >
                       <div className="grid grid-cols-3 gap-4 mb-4">
                         <div>
-                          <p className="text-sm text-muted-foreground">Total Estate</p>
-                          <p className="text-xl font-bold">${simResult.totalEstate?.toLocaleString()}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Federal Tax</p>
-                          <p className="text-xl font-bold text-red-400">${simResult.federalTax?.toLocaleString()}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">State Tax</p>
-                          <p className="text-xl font-bold text-orange-400">${simResult.stateTax?.toLocaleString()}</p>
+                          <p className="text-sm text-muted-foreground">Illustrative projected estate</p>
+                          <p className="text-xl font-bold">${simResult.projectedEstate?.toLocaleString()}</p>
                         </div>
                       </div>
 
-                      <h4 className="font-semibold mb-2">Distribution Preview</h4>
+                      <p className="text-xs text-muted-foreground mb-4">
+                        Illustrative compound-growth arithmetic only, assuming {assetGrowthRate}% annual growth over {projectionYears} years and ignoring debt, tax, fees, inflation, and legal ownership. Not financial or legal advice.
+                      </p>
+                      <h4 className="font-semibold mb-2">Illustrative Distribution</h4>
                       <div className="space-y-2">
                         {simResult.distributions?.map((d: any, i: number) => (
                           <div key={i} className="flex justify-between p-2 bg-muted/30 rounded">
@@ -413,16 +458,6 @@ const WillHubPage = () => {
                         ))}
                       </div>
 
-                      {simResult.multiStateIssues?.length > 0 && (
-                        <div className="mt-4 p-3 bg-yellow-500/10 rounded border border-yellow-500/30">
-                          <p className="text-sm font-medium text-yellow-400">Multi-State Compliance Alert</p>
-                          <ul className="text-sm mt-1">
-                            {simResult.multiStateIssues.map((issue: string, i: number) => (
-                              <li key={i}>• {issue}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
                     </motion.div>
                   )}
                 </CardContent>
@@ -443,7 +478,7 @@ const WillHubPage = () => {
                     <div>
                       <p className="font-medium">WillAI Document Generator</p>
                       <p className="text-sm text-muted-foreground">
-                        AI-powered will drafting with state-specific compliance
+                        A locally prepared planning worksheet; it is not a will and does not use paid AI credits
                       </p>
                     </div>
                   </div>
@@ -451,7 +486,7 @@ const WillHubPage = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Document Type</Label>
-                      <Select defaultValue="simple">
+                      <Select value={documentType} onValueChange={setDocumentType}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="simple">Simple Will</SelectItem>
@@ -463,7 +498,7 @@ const WillHubPage = () => {
                     </div>
                     <div className="space-y-2">
                       <Label>State</Label>
-                      <Select defaultValue="CA">
+                      <Select value={selectedState} onValueChange={setSelectedState}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="CA">California</SelectItem>
@@ -476,33 +511,31 @@ const WillHubPage = () => {
                   </div>
 
                   <div className="flex gap-2">
-                    <Button variant="outline" className="flex-1">
-                      <Upload className="mr-2 h-4 w-4" />
-                      Upload Existing Will
-                    </Button>
                     <Button onClick={generateWill} className="flex-1 bg-gradient-to-r from-purple-500 to-blue-500">
-                      <Brain className="mr-2 h-4 w-4" />
-                      Generate with AI
+                      <FileText className="mr-2 h-4 w-4" />
+                      Build Review Worksheet
                     </Button>
                   </div>
 
                   <div className="p-4 bg-muted/30 rounded-lg">
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-semibold">Document Preview</h4>
+                      <h4 className="font-semibold">Worksheet Preview</h4>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Eye className="mr-1 h-4 w-4" />
-                          Preview
-                        </Button>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" onClick={downloadWorksheet} disabled={!estateWorksheet}>
                           <Download className="mr-1 h-4 w-4" />
-                          Export PDF
+                          Download Worksheet
                         </Button>
                       </div>
                     </div>
-                    <div className="h-48 bg-background rounded border border-border flex items-center justify-center">
-                      <p className="text-muted-foreground">Generate a will to see preview</p>
-                    </div>
+                    {estateWorksheet ? (
+                      <pre className="max-h-96 overflow-y-auto whitespace-pre-wrap bg-background rounded border border-border p-4 text-sm">
+                        {estateWorksheet}
+                      </pre>
+                    ) : (
+                      <div className="h-48 bg-background rounded border border-border flex items-center justify-center">
+                        <p className="text-muted-foreground">Build a worksheet to see a preview</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

@@ -7,10 +7,10 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { 
+import {
   DollarSign, Clock, FileText, Send, Download, Search,
-  Plus, Sparkles, CheckCircle, AlertCircle, RefreshCw,
-  CreditCard, TrendingUp, Calendar, Zap, ArrowRight
+  Plus, Sparkles, AlertCircle, RefreshCw,
+  CreditCard, TrendingUp, Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,31 +37,17 @@ interface Invoice {
   createdAt: string;
 }
 
-const mockTimeEntries: TimeEntry[] = [
-  { id: "1", date: "2024-01-12", attorney: "Sarah Johnson", matter: "ABC Corp Merger", description: "Document review and analysis", hours: 3.5, rate: 350, status: "unbilled" },
-  { id: "2", date: "2024-01-12", attorney: "Michael Chen", matter: "ABC Corp Merger", description: "Client call regarding due diligence", hours: 1.0, rate: 275, status: "unbilled" },
-  { id: "3", date: "2024-01-11", attorney: "Sarah Johnson", matter: "TechCo Patent", description: "Prior art research", hours: 4.0, rate: 350, status: "unbilled" },
-  { id: "4", date: "2024-01-11", attorney: "Emily Davis", matter: "Williams Divorce", description: "Draft settlement proposal", hours: 2.5, rate: 225, status: "unbilled" },
-  { id: "5", date: "2024-01-10", attorney: "James Wilson", matter: "Real Estate 500 Main", description: "Contract negotiation", hours: 2.0, rate: 400, status: "unbilled" },
-];
-
-const mockInvoices: Invoice[] = [
-  { id: "1", number: "INV-2024-001", client: "ABC Corporation", amount: 15750, status: "sent", dueDate: "2024-02-12", createdAt: "2024-01-12" },
-  { id: "2", number: "INV-2024-002", client: "TechCo Industries", amount: 8400, status: "paid", dueDate: "2024-01-25", createdAt: "2024-01-10" },
-  { id: "3", number: "INV-2024-003", client: "Williams Family", amount: 4500, status: "overdue", dueDate: "2024-01-05", createdAt: "2023-12-20" },
-  { id: "4", number: "INV-2024-004", client: "Johnson Properties", amount: 12000, status: "draft", dueDate: "2024-02-15", createdAt: "2024-01-11" },
-];
-
 const billingStats = [
-  { label: "Unbilled Time", value: "$47,250", icon: Clock, color: "text-yellow-400" },
-  { label: "Outstanding", value: "$32,150", icon: AlertCircle, color: "text-orange-400" },
-  { label: "Collected MTD", value: "$89,500", icon: DollarSign, color: "text-green-400" },
-  { label: "Realization Rate", value: "92%", icon: TrendingUp, color: "text-primary" },
+  { label: "Unbilled Time", value: "—", icon: Clock, color: "text-yellow-400" },
+  { label: "Outstanding", value: "—", icon: AlertCircle, color: "text-orange-400" },
+  { label: "Collected MTD", value: "—", icon: DollarSign, color: "text-green-400" },
+  { label: "Realization Rate", value: "—", icon: TrendingUp, color: "text-primary" },
 ];
+const invoices: Invoice[] = [];
 
 export function BillingAutomation() {
   const [activeTab, setActiveTab] = useState("time");
-  const [timeEntries, setTimeEntries] = useState(mockTimeEntries);
+  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -172,10 +158,10 @@ export function BillingAutomation() {
             <div className="flex-1">
               <h2 className="text-2xl font-bold flex items-center gap-2">
                 Billing Automation
-                <Badge className="bg-green-500/20 text-green-400">Smart Invoicing</Badge>
+                <Badge className="bg-amber-500/20 text-amber-500">Not connected</Badge>
               </h2>
               <p className="text-muted-foreground">
-                AI-powered time capture, automatic invoice generation, and payment tracking
+                Billing records are not connected. No sample entries or payment records are shown.
               </p>
             </div>
             <Button variant="gold" onClick={generateInvoices} disabled={selectedEntries.length === 0 || isGenerating}>
@@ -196,6 +182,9 @@ export function BillingAutomation() {
       </Card>
 
       {/* Stats */}
+      <p className="text-sm text-muted-foreground">
+        Connect billing data before using invoicing or payment reporting. No sample data will be written to your account.
+      </p>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {billingStats.map((stat, i) => (
           <Card key={i}>
@@ -268,6 +257,13 @@ export function BillingAutomation() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
+                  {timeEntries.filter(e => e.status === "unbilled").length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center text-muted-foreground">
+                        No connected time entries.
+                      </TableCell>
+                    </TableRow>
+                  )}
                   {timeEntries.filter(e => e.status === "unbilled").map((entry) => (
                     <TableRow key={entry.id} className={entry.selected ? "bg-primary/5" : ""}>
                       <TableCell>
@@ -299,10 +295,7 @@ export function BillingAutomation() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Invoices</CardTitle>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Invoice
-                </Button>
+                <Badge variant="outline">Unavailable until billing is connected</Badge>
               </div>
             </CardHeader>
             <CardContent>
@@ -319,7 +312,14 @@ export function BillingAutomation() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockInvoices.map((invoice) => (
+                  {invoices.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground">
+                        No connected invoices.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {invoices.map((invoice) => (
                     <TableRow key={invoice.id}>
                       <TableCell className="font-mono">{invoice.number}</TableCell>
                       <TableCell className="font-medium">{invoice.client}</TableCell>
@@ -364,9 +364,9 @@ export function BillingAutomation() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
-                  { method: "Credit Card", provider: "Stripe", status: "active", icon: CreditCard },
-                  { method: "ACH Transfer", provider: "Bank", status: "active", icon: DollarSign },
-                  { method: "Check", provider: "Manual", status: "active", icon: FileText },
+                  { method: "Credit Card", provider: "Stripe", status: "not connected", icon: CreditCard },
+                  { method: "ACH Transfer", provider: "Bank", status: "not connected", icon: DollarSign },
+                  { method: "Check", provider: "Manual", status: "not connected", icon: FileText },
                 ].map((payment, i) => (
                   <Card key={i} className="border-2">
                     <CardContent className="p-4">
@@ -379,7 +379,7 @@ export function BillingAutomation() {
                           <p className="text-xs text-muted-foreground">{payment.provider}</p>
                         </div>
                       </div>
-                      <Badge className="bg-green-500/20 text-green-400">{payment.status}</Badge>
+                      <Badge variant="outline">{payment.status}</Badge>
                     </CardContent>
                   </Card>
                 ))}
@@ -388,22 +388,7 @@ export function BillingAutomation() {
               <div className="mt-6 p-4 border rounded-lg">
                 <h4 className="font-semibold mb-4">Recent Payments</h4>
                 <div className="space-y-3">
-                  {[
-                    { client: "TechCo Industries", amount: 8400, method: "Credit Card", date: "2024-01-12" },
-                    { client: "Johnson Properties", amount: 5000, method: "ACH", date: "2024-01-10" },
-                    { client: "ABC Corporation", amount: 15000, method: "Check", date: "2024-01-08" },
-                  ].map((payment, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                      <div>
-                        <p className="font-medium">{payment.client}</p>
-                        <p className="text-sm text-muted-foreground">{payment.method} • {payment.date}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-green-400">${payment.amount.toLocaleString()}</span>
-                        <CheckCircle className="h-4 w-4 text-green-400" />
-                      </div>
-                    </div>
-                  ))}
+                  <p className="text-sm text-muted-foreground">No payment records are connected.</p>
                 </div>
               </div>
             </CardContent>
@@ -415,7 +400,7 @@ export function BillingAutomation() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Zap className="h-5 w-5 text-yellow-400" />
-                Billing Automation Rules
+                Billing Automation Rule Preview
               </CardTitle>
               <CardDescription>Configure automatic billing workflows</CardDescription>
             </CardHeader>
@@ -433,8 +418,8 @@ export function BillingAutomation() {
                     <h4 className="font-medium">{rule.name}</h4>
                     <p className="text-sm text-muted-foreground">{rule.desc}</p>
                   </div>
-                  <Badge className={rule.enabled ? "bg-green-500/20 text-green-400" : "bg-gray-500/20 text-gray-400"}>
-                    {rule.enabled ? "Active" : "Inactive"}
+                  <Badge variant="outline">
+                    {rule.enabled ? "Sample enabled" : "Sample disabled"}
                   </Badge>
                 </div>
               ))}

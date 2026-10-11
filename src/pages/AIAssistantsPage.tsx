@@ -117,7 +117,7 @@ const assistants = [
   {
     id: "academy",
     name: "ScholarAI - Legal Academy",
-    description: "Comprehensive legal education: Micro-certifications, AI tutors, live simulations, bar exam prep, ABA-approved paths.",
+    description: "Comprehensive legal education: micro-certifications, AI tutors, live simulations, and bar exam preparation resources.",
     icon: GraduationCap,
     variant: "blue" as const,
     path: "/legal-academy",
