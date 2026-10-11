@@ -125,9 +125,9 @@ export default function Index() {
                 </Badge>
                 
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-6 animate-fade-in" style={{ animationDelay: "100ms" }}>
-                  <span className="text-foreground">Your AI </span>
+                  <span className="text-foreground">Legal Information </span>
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-cyan via-neon-blue to-neon-purple">
-                    Legal Assistant
+                    Assistant
                   </span>
                 </h1>
                 
@@ -172,9 +172,9 @@ export default function Index() {
                       <div>
                         <h3 className="font-display text-xl font-bold text-foreground flex items-center gap-2">
                           Ask Lee
-                          <Badge className="bg-neon-green/20 text-neon-green text-xs">Free</Badge>
+                          <Badge className="bg-neon-green/20 text-neon-green text-xs">No-cost</Badge>
                         </h3>
-                        <p className="text-xs text-muted-foreground">Your AI Legal Assistant • Ask anything</p>
+                        <p className="text-xs text-muted-foreground">General information • no paid AI by default</p>
                       </div>
                     </div>
                   </div>
@@ -185,10 +185,10 @@ export default function Index() {
                       <div className="text-center py-8">
                         <Brain className="h-12 w-12 text-neon-cyan/50 mx-auto mb-3" />
                         <p className="text-foreground text-sm mb-2">
-                          Hi! I'm Lee, your AI legal assistant.
+                          Hi! I can help you find general legal-information resources.
                         </p>
                         <p className="text-xs text-muted-foreground mb-4">
-                          Ask me about legal documents, rights, or any legal question.
+                          No-cost mode cannot answer case-specific questions or verify current law.
                         </p>
                         <div className="flex flex-wrap gap-2 justify-center">
                           {["Draft an NDA", "Custody rights", "Tenant rights"].map((suggestion) => (

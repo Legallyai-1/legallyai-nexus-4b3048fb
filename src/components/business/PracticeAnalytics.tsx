@@ -68,10 +68,10 @@ export function PracticeAnalytics() {
               <div>
                 <h2 className="text-2xl font-bold flex items-center gap-2">
                   Practice Analytics
-                  <Badge className="bg-primary/20 text-primary">AI-Powered</Badge>
+                  <Badge className="bg-amber-500/20 text-amber-500">Sample Data</Badge>
                 </h2>
                 <p className="text-muted-foreground">
-                  Real-time insights and predictive analytics for your practice
+                  Illustrative figures only; this demo is not connected to your firm records.
                 </p>
               </div>
             </div>

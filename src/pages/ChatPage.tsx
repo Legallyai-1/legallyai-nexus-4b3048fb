@@ -37,7 +37,7 @@ export default function ChatPage() {
     {
       id: "welcome",
       role: "assistant",
-      content: "Hello! I'm your AI legal assistant. I can help you understand legal concepts, answer questions about US law, and guide you through legal processes. How can I assist you today?",
+      content: "Hello! I can point you toward general legal-information resources. No-cost mode cannot answer case-specific questions or verify current law. What would you like help finding?",
       timestamp: new Date(),
     },
   ]);
@@ -73,9 +73,6 @@ export default function ChatPage() {
   const handleSend = async () => {
     if (!input.trim() || isTyping) return;
 
-    // Allow chat for all users (free tier includes AI chat)
-    // Authentication only required for document generation
-
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
@@ -89,12 +86,6 @@ export default function ChatPage() {
     setIsTyping(true);
 
     try {
-      if (!user) {
-        toast.error("Please sign in to use AI chat.");
-        navigate("/login", { state: { from: "/chat" } });
-        return;
-      }
-
       const apiMessages = messages
         .filter(m => m.id !== "welcome")
         .map(m => ({ role: m.role, content: m.content }));
@@ -171,7 +162,7 @@ export default function ChatPage() {
           <div className="bg-gradient-to-r from-neon-cyan/10 to-neon-purple/10 border-b border-neon-cyan/30 px-4 py-3">
             <div className="container mx-auto flex items-center justify-center gap-2 text-foreground">
               <Sparkles className="h-4 w-4 text-neon-cyan" />
-              <span className="text-sm"><button onClick={() => navigate("/auth")} className="underline font-medium text-neon-cyan hover:text-neon-purple transition-colors">Create an account</button> or sign in to use AI chat.</span>
+              <span className="text-sm"><button onClick={() => navigate("/auth")} className="underline font-medium text-neon-cyan hover:text-neon-purple transition-colors">Sign in</button> to save your chat history. No-cost guidance is available without an account.</span>
             </div>
           </div>
         )}
@@ -182,15 +173,15 @@ export default function ChatPage() {
             <AnimatedAIHead variant="cyan" size="sm" />
             <div>
               <h1 className="font-display text-lg font-semibold text-foreground">
-                AI Legal Assistant
+                Legal Information Assistant
               </h1>
               <p className="text-sm text-muted-foreground">
-                Ask questions about US law
+                Find general information and resources
               </p>
             </div>
             <div className="ml-auto flex items-center gap-2 text-sm">
               <Sparkles className="h-4 w-4 text-neon-cyan animate-pulse" />
-              <span className="text-muted-foreground">Powered by AI</span>
+              <span className="text-muted-foreground">No-cost guidance by default</span>
             </div>
           </div>
         </div>
