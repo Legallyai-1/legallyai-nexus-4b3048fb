@@ -105,6 +105,7 @@ jobs:
           if [ "$IS_PRODUCTION" = "true" ]; then
             vercel_args+=(--prod)
           fi
+          vercel_args+=(--build-env "VITE_ENABLE_PAYMENTS=$VITE_ENABLE_PAYMENTS")
           set +e
           deploy_output=$(npx --yes vercel@62.2.0 deploy --cwd "$GITHUB_WORKSPACE" "${vercel_args[@]}" 2>&1)
           deploy_status=$?

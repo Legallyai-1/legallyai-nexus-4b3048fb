@@ -68,7 +68,7 @@ const WillHubPage = () => {
       name: beneficiary.name,
       amount: projectedEstate * Math.max(0, Number(beneficiary.percentage) || 0) / 100,
     }));
-    setSimResult({ totalEstate, projectedEstate, distributions });
+    setSimResult({ totalEstate, projectedEstate, distributions, assetGrowthRate, projectionYears });
   };
 
   const addAsset = (event: FormEvent<HTMLFormElement>) => {
@@ -444,7 +444,7 @@ const WillHubPage = () => {
                       </div>
 
                       <p className="text-xs text-muted-foreground mb-4">
-                        Illustrative compound-growth arithmetic only, assuming {assetGrowthRate}% annual growth over {projectionYears} years and ignoring debt, tax, fees, inflation, and legal ownership. Not financial or legal advice.
+                        Illustrative compound-growth arithmetic only, assuming {simResult.assetGrowthRate}% annual growth over {simResult.projectionYears} years and ignoring debt, tax, fees, inflation, and legal ownership. Not financial or legal advice.
                       </p>
                       <h4 className="font-semibold mb-2">Illustrative Distribution</h4>
                       <div className="space-y-2">
