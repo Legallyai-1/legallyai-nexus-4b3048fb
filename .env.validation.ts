@@ -80,8 +80,8 @@ export const stripeWebhookEnvSchema = z.object({
 
 export const deploymentEnvSchema = clientEnvSchema.and(z.object({
   SUPABASE_URL: urlString,
-  STRIPE_SECRET_KEY: nonEmptyString,
-  STRIPE_WEBHOOK_SECRET: nonEmptyString,
+  STRIPE_SECRET_KEY: nonEmptyString.optional(),
+  STRIPE_WEBHOOK_SECRET: nonEmptyString.optional(),
   VERCEL_TOKEN: nonEmptyString,
   VERCEL_ORG_ID: nonEmptyString,
   VERCEL_PROJECT_ID: nonEmptyString,
@@ -89,6 +89,23 @@ export const deploymentEnvSchema = clientEnvSchema.and(z.object({
   SUPABASE_SECRET_KEY: nonEmptyString.optional(),
   SUPABASE_SERVICE_ROLE_KEY: nonEmptyString.optional(),
 })).superRefine((env, ctx) => {
+  if (env.VITE_ENABLE_PAYMENTS === 'true') {
+    if (!env.STRIPE_SECRET_KEY) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'STRIPE_SECRET_KEY is required when VITE_ENABLE_PAYMENTS=true.',
+        path: ['STRIPE_SECRET_KEY'],
+      });
+    }
+    if (!env.STRIPE_WEBHOOK_SECRET) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'STRIPE_WEBHOOK_SECRET is required when VITE_ENABLE_PAYMENTS=true.',
+        path: ['STRIPE_WEBHOOK_SECRET'],
+      });
+    }
+  }
+
   if (!env.SUPABASE_SECRET_KEY && !env.SUPABASE_SERVICE_ROLE_KEY) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -114,8 +131,6 @@ export const requiredGitHubVariables = [
 
 export const requiredGitHubSecrets = [
   'VERCEL_TOKEN',
-  'STRIPE_SECRET_KEY',
-  'STRIPE_WEBHOOK_SECRET',
   'SUPABASE_URL',
 ] as const;
 

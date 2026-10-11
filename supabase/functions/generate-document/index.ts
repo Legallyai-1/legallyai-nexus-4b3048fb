@@ -58,7 +58,7 @@ function buildNoCostTemplate(prompt: string): string {
       sections: ["Parties and scope", "Deliverables and schedule", "Fees and expenses", "Confidentiality and ownership", "Warranties and limitations", "Changes and termination", "Governing law and review"],
     },
     {
-      keywords: ["testament", "power of attorney", "trust", "estate plan"],
+      keywords: ["testament", "power of attorney", "trust", "estate plan", "draft a will", "create a will", "write a will", "simple will", "last will", "my will"],
       title: "Estate Planning Review Worksheet",
       sections: ["People and roles to discuss", "Assets and ownership", "Intended beneficiaries", "Decision-making and care preferences", "Questions about signing and witnesses", "Questions for a licensed estate-planning attorney"],
       worksheetOnly: true,

@@ -25,6 +25,7 @@ import AdContainer from "@/components/ads/AdContainer";
 const STATES = ["California", "Texas", "Florida", "New York", "Illinois", "Arizona", "Nevada", "Washington", "Colorado", "Georgia"];
 
 export default function MarriageDivorcePage() {
+  const [chatSessionId] = useState(() => crypto.randomUUID());
   const [activeTab, setActiveTab] = useState("start");
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<{role: "user" | "assistant"; content: string}[]>([]);
@@ -67,7 +68,7 @@ export default function MarriageDivorcePage() {
     try {
       const { text } = await streamLegalChat({
         hubType: "marriage",
-        sessionId: crypto.randomUUID(),
+        sessionId: chatSessionId,
         messages: [...chatMessages, userMessage],
         onDelta: () => {},
       });

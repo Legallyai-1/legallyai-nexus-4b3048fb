@@ -4,15 +4,19 @@ import {
 } from '../.env.validation.ts';
 
 const missingSecrets = requiredGitHubSecrets.filter((name) => !process.env[name]);
+const missingPaymentSecrets = process.env.VITE_ENABLE_PAYMENTS === 'true'
+  ? ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET'].filter((name) => !process.env[name])
+  : [];
 const missingVariables = requiredGitHubVariables.filter((name) => !process.env[name]);
 const missingPublicKey = !process.env.VITE_SUPABASE_ANON_KEY && !process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const missingServerKey = !process.env.SUPABASE_SECRET_KEY && !process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (missingSecrets.length > 0 || missingVariables.length > 0 || missingPublicKey || missingServerKey) {
+if (missingSecrets.length > 0 || missingPaymentSecrets.length > 0 || missingVariables.length > 0 || missingPublicKey || missingServerKey) {
   console.error('Required deployment configuration is missing.');
 
-  if (missingSecrets.length > 0) {
-    console.error(`Missing secrets: ${missingSecrets.join(', ')}`);
+  const allMissingSecrets = [...missingSecrets, ...missingPaymentSecrets];
+  if (allMissingSecrets.length > 0) {
+    console.error(`Missing secrets: ${allMissingSecrets.join(', ')}`);
   }
 
   if (missingVariables.length > 0) {
