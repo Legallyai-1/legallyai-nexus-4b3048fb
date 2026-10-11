@@ -11,7 +11,7 @@ import {
   CheckCircle, AlertCircle, Briefcase, Star
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { streamLegalChat } from "@/lib/legalChat";
 
 interface MatchResult {
   jobId: string;
@@ -52,12 +52,12 @@ export function AIJobMatcher({ jobs, onMatchComplete }: AIJobMatcherProps) {
     setIsAnalyzing(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('legal-chat', {
-        body: {
-          messages: [
-            {
-              role: "system",
-              content: `You are CareerAI, a legal career matching AI. Analyze the resume and extract:
+      const { text: responseText, mode } = await streamLegalChat({
+        hubType: "general",
+        sessionId: crypto.randomUUID(),
+        messages: [{
+          role: "user",
+          content: `You are a legal career matching assistant. Analyze the resume and extract:
 1. Legal skills and practice areas
 2. Years of experience
 3. Bar admissions
@@ -81,42 +81,23 @@ Respond in JSON format:
       "recommendation": "Strong match because..."
     }
   ]
-}`
-            },
-            {
-              role: "user",
-              content: `Analyze this resume and match to jobs. Target salary: ${targetSalary || "flexible"}\n\nResume:\n${resume}`
-            }
-          ],
-          stream: false
-        }
+}
+
+Analyze this resume and match to these jobs. Target salary: ${targetSalary || "flexible"}
+Resume:
+${resume}`,
+        }],
+        onDelta: () => {},
       });
 
-      if (error) throw error;
+      if (mode === "no-cost") throw new Error("AI job matching is unavailable in no-cost mode.");
 
       // Parse AI response
-      const responseText = data.response || data.content || "";
       let parsed;
       
-      try {
-        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          parsed = JSON.parse(jsonMatch[0]);
-        }
-      } catch {
-        // Fallback mock results
-        parsed = {
-          extractedSkills: ["Contract Law", "Litigation", "Research", "Client Relations"],
-          matches: jobs.slice(0, 5).map((job, i) => ({
-            jobId: job.id,
-            matchScore: Math.floor(Math.random() * 30) + 70,
-            matchedSkills: job.requirements.slice(0, 2),
-            missingSkills: job.requirements.slice(2, 3),
-            salaryFit: "within" as const,
-            recommendation: `Good match for your background in ${job.practiceArea}.`
-          }))
-        };
-      }
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) parsed = JSON.parse(jsonMatch[0]);
+      if (!parsed) throw new Error("No usable match data was returned.");
 
       setExtractedSkills(parsed.extractedSkills || []);
       
@@ -135,7 +116,7 @@ Respond in JSON format:
 
     } catch (err: any) {
       console.error("Matching error:", err);
-      toast.error("Analysis failed. Please try again.");
+      toast.error(err instanceof Error ? err.message : "Analysis failed. Please try again.");
     } finally {
       setIsAnalyzing(false);
     }

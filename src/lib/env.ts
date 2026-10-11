@@ -28,5 +28,5 @@ export function getAdsenseClientId() {
 }
 
 export function arePaymentsEnabled() {
-  return import.meta.env.VITE_ENABLE_PAYMENTS !== 'false';
+  return import.meta.env.VITE_ENABLE_PAYMENTS === 'true';
 }

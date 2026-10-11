@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { streamLegalChat } from "@/lib/legalChat";
 import { DocumentGenerator } from "@/components/hub/DocumentGenerator";
 import AdBanner from "@/components/ads/AdBanner";
 import AdContainer from "@/components/ads/AdContainer";
@@ -26,7 +27,7 @@ const STATES = ["California", "Texas", "Florida", "New York", "Illinois", "Arizo
 export default function MarriageDivorcePage() {
   const [activeTab, setActiveTab] = useState("start");
   const [chatInput, setChatInput] = useState("");
-  const [chatMessages, setChatMessages] = useState<{role: string; content: string}[]>([]);
+  const [chatMessages, setChatMessages] = useState<{role: "user" | "assistant"; content: string}[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // Alimony calculator state
@@ -58,34 +59,20 @@ export default function MarriageDivorcePage() {
   const handleSendMessage = async () => {
     if (!chatInput.trim() || isLoading) return;
     
-    const userMessage = { role: "user", content: chatInput };
+    const userMessage = { role: "user" as const, content: chatInput };
     setChatMessages(prev => [...prev, userMessage]);
     setChatInput("");
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("legal-chat", {
-        body: {
-          messages: [
-            { role: "system", content: `You are MaryAI, a specialized AI assistant for marriage and divorce law. Help users with:
-- Marriage licenses and requirements
-- Wedding planning legal aspects
-- Name change procedures
-- Prenuptial agreements
-- Divorce filings and procedures
-- Alimony/spousal support calculations
-- Property division guidance
-- Mediation preparation
-Always be compassionate and thorough. Provide state-specific guidance when possible.` },
-            ...chatMessages,
-            userMessage
-          ],
-          stream: false
-        }
+      const { text } = await streamLegalChat({
+        hubType: "marriage",
+        sessionId: crypto.randomUUID(),
+        messages: [...chatMessages, userMessage],
+        onDelta: () => {},
       });
 
-      if (error) throw error;
-      setChatMessages(prev => [...prev, { role: "assistant", content: data.response }]);
+      setChatMessages(prev => [...prev, { role: "assistant", content: text }]);
     } catch (error: any) {
       toast.error("Failed to get response. Please try again.");
     } finally {

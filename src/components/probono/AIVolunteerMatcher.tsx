@@ -12,7 +12,7 @@ import {
   CheckCircle, FileText, Send, Star, Brain
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { streamLegalChat } from "@/lib/legalChat";
 
 interface VolunteerProfile {
   name: string;
@@ -86,12 +86,12 @@ export function AIVolunteerMatcher() {
     setIsMatching(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('legal-chat', {
-        body: {
-          messages: [
-            {
-              role: "system",
-              content: `You are ProBonoMatchAI. Match volunteer attorneys with pro bono cases.
+      const { text: responseText, mode } = await streamLegalChat({
+        hubType: "probono",
+        sessionId: crypto.randomUUID(),
+        messages: [{
+          role: "user",
+          content: `Match volunteer attorneys with currently available pro bono cases.
               
 Given this volunteer profile, generate 5 matching pro bono opportunities:
 
@@ -116,60 +116,20 @@ Generate realistic pro bono case matches. Respond in JSON:
       "estimatedHours": "10-15 hours"
     }
   ]
-}`
-            },
-            { role: "user", content: "Find pro bono matches for this volunteer." }
-          ],
-          stream: false
-        }
+}
+
+Find pro bono matches for this volunteer.`,
+        }],
+        onDelta: () => {},
       });
 
-      if (error) throw error;
+      if (mode === "no-cost") throw new Error("AI volunteer matching is unavailable in no-cost mode.");
 
-      const responseText = data.response || "";
       let parsed;
       
-      try {
-        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          parsed = JSON.parse(jsonMatch[0]);
-        }
-      } catch {
-        parsed = {
-          matches: [
-            {
-              id: "pb1",
-              title: "Family Court Representation",
-              organization: "Legal Aid Society",
-              urgency: "high" as const,
-              matchScore: 94,
-              description: "Represent low-income parent in custody modification hearing",
-              requiredSkills: ["Family Law", "Court Appearances"],
-              estimatedHours: "15-20 hours"
-            },
-            {
-              id: "pb2",
-              title: "Immigration Asylum Case",
-              organization: "Immigrant Defense Project",
-              urgency: "high" as const,
-              matchScore: 88,
-              description: "Assist asylum seeker with application and interview prep",
-              requiredSkills: ["Immigration", "Spanish"],
-              estimatedHours: "20-30 hours"
-            },
-            {
-              id: "pb3",
-              title: "Tenant Eviction Defense",
-              organization: "Housing Rights Center",
-              urgency: "medium" as const,
-              matchScore: 82,
-              description: "Defend tenant against wrongful eviction",
-              requiredSkills: ["Housing Law", "Negotiation"],
-              estimatedHours: "10-15 hours"
-            }
-          ]
-        };
-      }
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) parsed = JSON.parse(jsonMatch[0]);
+      if (!parsed || !Array.isArray(parsed.matches)) throw new Error("No verified match data was returned.");
 
       setMatches(parsed.matches || []);
       setStep(3);
@@ -177,7 +137,7 @@ Generate realistic pro bono case matches. Respond in JSON:
 
     } catch (err) {
       console.error("Matching error:", err);
-      toast.error("Matching failed. Please try again.");
+      toast.error(err instanceof Error ? err.message : "Matching failed. Please try again.");
     } finally {
       setIsMatching(false);
     }

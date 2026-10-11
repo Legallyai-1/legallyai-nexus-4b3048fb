@@ -11,12 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
-// Check if payments are enabled via environment variable
-// Accepts 'true', '1', 'yes' as truthy values
-const PAYMENTS_ENABLED = ['true', '1', 'yes'].includes(
-  import.meta.env.VITE_ENABLE_PAYMENTS?.toLowerCase()
-);
+import { arePaymentsEnabled } from "@/lib/env";
 
 // Stripe price IDs (only used if payments are enabled)
 const STRIPE_PRICES = {
@@ -175,7 +170,7 @@ export default function PricingPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       // Check if payments are enabled
-      if (!PAYMENTS_ENABLED) {
+      if (!arePaymentsEnabled()) {
         toast({
           title: "Payments Disabled",
           description: "Automated payments are currently disabled. Please contact the administrator to upgrade your subscription manually.",
@@ -258,7 +253,7 @@ export default function PricingPage() {
             </p>
 
             {/* Payments Disabled Notice */}
-            {!PAYMENTS_ENABLED && (
+            {!arePaymentsEnabled() && (
               <div className="max-w-2xl mx-auto mt-6">
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
@@ -340,7 +335,7 @@ export default function PricingPage() {
                         {loading === plan.name ? (
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         ) : null}
-                        {!PAYMENTS_ENABLED ? "Contact Admin" : plan.cta}
+                        {!arePaymentsEnabled() ? "Contact Admin" : plan.cta}
                         {loading !== plan.name && <ArrowRight className="h-4 w-4 ml-2" />}
                       </Button>
                     ) : (

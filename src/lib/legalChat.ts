@@ -1,7 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export const HUB_TYPES = ["general", "custody", "parole", "defense", "workplace", "probono", "support"] as const;
+export const HUB_TYPES = ["general", "custody", "parole", "defense", "workplace", "probono", "support", "marriage"] as const;
 export type HubType = typeof HUB_TYPES[number];
+export type ChatMode = "paid" | "no-cost";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -28,7 +29,7 @@ export async function streamLegalChat({
   onDelta,
   onReviewerNote,
   signal,
-}: StreamLegalChatOptions): Promise<{ text: string; reviewed: boolean }> {
+}: StreamLegalChatOptions): Promise<{ text: string; reviewed: boolean; mode: ChatMode }> {
   const { data: { session } } = await supabase.auth.getSession();
 
   const response = await fetch(`${SUPABASE_URL}/functions/v1/legal-chat`, {
@@ -52,6 +53,7 @@ export async function streamLegalChat({
   let buffer = "";
   let fullText = "";
   let reviewed = false;
+  let mode: ChatMode = "no-cost";
 
   while (true) {
     const { done, value } = await reader.read();
@@ -80,11 +82,12 @@ export async function streamLegalChat({
         onReviewerNote?.(payload.reviewer_note);
       } else if (payload.done) {
         reviewed = Boolean(payload.reviewed);
+        if (payload.mode === "paid" || payload.mode === "no-cost") mode = payload.mode;
       } else if (typeof payload.error === "string") {
         throw new Error(payload.error);
       }
     }
   }
 
-  return { text: fullText, reviewed };
+  return { text: fullText, reviewed, mode };
 }
