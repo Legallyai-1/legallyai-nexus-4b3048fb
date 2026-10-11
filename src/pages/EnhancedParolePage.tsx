@@ -21,7 +21,6 @@ import { useToast } from "@/hooks/use-toast";
 const EnhancedParolePage = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [complianceScore, setComplianceScore] = useState(87);
-  const [recidivismRisk, setRecidivismRisk] = useState(12);
   const { toast } = useToast();
 
   const checkIns = [
@@ -67,7 +66,7 @@ const EnhancedParolePage = () => {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-foreground">Parole & Probation Hub</h1>
-              <p className="text-muted-foreground">RehabilitAI - Complete supervision management with ML predictions</p>
+              <p className="text-muted-foreground">RehabilitAI - Supervision management and resource coordination</p>
             </div>
             <div className="ml-auto">
               <AnimatedAIHead variant="green" size="sm" />
@@ -100,12 +99,12 @@ const EnhancedParolePage = () => {
 
                 <Card className="bg-card/50 border-blue-500/20">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium">Recidivism Risk</CardTitle>
+                    <CardTitle className="text-sm font-medium">Recidivism Risk Prediction</CardTitle>
                     <Brain className="h-4 w-4 text-blue-400" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-blue-400">{recidivismRisk}%</div>
-                    <p className="text-xs text-muted-foreground">95% ML accuracy</p>
+                    <div className="text-sm font-medium">Unavailable</div>
+                    <p className="text-xs text-muted-foreground">No validated recidivism model is configured.</p>
                   </CardContent>
                 </Card>
 
