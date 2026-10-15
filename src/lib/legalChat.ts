@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const HUB_TYPES = ["general", "custody", "parole", "defense", "workplace", "probono", "support", "marriage"] as const;
 export type HubType = typeof HUB_TYPES[number];
-export type ChatMode = "paid" | "no-cost";
+export type ChatMode = "paid" | "no-cost" | "in-house";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -21,7 +21,10 @@ interface StreamLegalChatOptions {
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-// Streams a legal-chat reply via SSE. Returns the full assistant text once the stream ends.
+export function isFreeAiMode(mode: ChatMode): boolean {
+  return mode === "no-cost" || mode === "in-house";
+}
+
 export async function streamLegalChat({
   hubType,
   sessionId,
@@ -30,6 +33,13 @@ export async function streamLegalChat({
   onReviewerNote,
   signal,
 }: StreamLegalChatOptions): Promise<{ text: string; reviewed: boolean; mode: ChatMode }> {
+  if (!SUPABASE_URL) {
+    throw new Error("AI chat is not configured: missing VITE_SUPABASE_URL.");
+  }
+  if (!SUPABASE_ANON_KEY) {
+    throw new Error("AI chat is not configured: missing Supabase publishable key.");
+  }
+
   const { data: { session } } = await supabase.auth.getSession();
 
   const response = await fetch(`${SUPABASE_URL}/functions/v1/legal-chat`, {
@@ -53,7 +63,35 @@ export async function streamLegalChat({
   let buffer = "";
   let fullText = "";
   let reviewed = false;
-  let mode: ChatMode = "no-cost";
+  let mode: ChatMode = "in-house";
+
+  const processEvent = (event: string) => {
+    const line = event.split("\n").find((l) => l.startsWith("data:"));
+    if (!line) return;
+    const jsonStr = line.slice(5).trim();
+    if (!jsonStr) return;
+
+    let payload: Record<string, unknown>;
+    try {
+      payload = JSON.parse(jsonStr);
+    } catch {
+      return;
+    }
+
+    if (typeof payload.delta === "string") {
+      fullText += payload.delta;
+      onDelta(payload.delta);
+    } else if (typeof payload.reviewer_note === "string") {
+      onReviewerNote?.(payload.reviewer_note);
+    } else if (payload.done) {
+      reviewed = Boolean(payload.reviewed);
+      if (payload.mode === "paid" || payload.mode === "no-cost" || payload.mode === "in-house") {
+        mode = payload.mode;
+      }
+    } else if (typeof payload.error === "string") {
+      throw new Error(payload.error);
+    }
+  };
 
   while (true) {
     const { done, value } = await reader.read();
@@ -61,33 +99,11 @@ export async function streamLegalChat({
     buffer += decoder.decode(value, { stream: true });
     const events = buffer.split("\n\n");
     buffer = events.pop() ?? "";
-
-    for (const event of events) {
-      const line = event.split("\n").find((l) => l.startsWith("data:"));
-      if (!line) continue;
-      const jsonStr = line.slice(5).trim();
-      if (!jsonStr) continue;
-
-      let payload: Record<string, unknown>;
-      try {
-        payload = JSON.parse(jsonStr);
-      } catch {
-        continue; // ignore malformed/partial chunk
-      }
-
-      if (typeof payload.delta === "string") {
-        fullText += payload.delta;
-        onDelta(payload.delta);
-      } else if (typeof payload.reviewer_note === "string") {
-        onReviewerNote?.(payload.reviewer_note);
-      } else if (payload.done) {
-        reviewed = Boolean(payload.reviewed);
-        if (payload.mode === "paid" || payload.mode === "no-cost") mode = payload.mode;
-      } else if (typeof payload.error === "string") {
-        throw new Error(payload.error);
-      }
-    }
+    for (const event of events) processEvent(event);
   }
+
+  buffer += decoder.decode();
+  if (buffer.trim()) processEvent(buffer);
 
   return { text: fullText, reviewed, mode };
 }
