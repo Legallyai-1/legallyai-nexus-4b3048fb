@@ -1,6 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { getAnthropicKey } from "./anthropic-key.ts";
-import { resolveSubscriptionAccess } from "./subscription-access.ts";
 
 interface PaidAIAccessOptions {
   userId: string;
@@ -35,22 +34,18 @@ async function getPaidAIAccess({
   const adminClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const [
-    { data: profile, error: profileError },
-    { data: subscription, error: subscriptionError },
-    { data: paymentRecords, error: paymentError },
-  ] = await Promise.all([
-    adminClient.from("profiles").select("credits, subscription_tier").eq("id", userId).maybeSingle(),
-    adminClient.from("subscriptions").select("status, tier, current_period_end, cancel_at_period_end").eq("user_id", userId).maybeSingle(),
-    adminClient.from("payment_records").select("tier, payment_method, expires_at, status, metadata").eq("user_id", userId),
-  ]);
 
-  if (profileError || subscriptionError || paymentError || !profile) return "unavailable";
+  const { data: profile, error: profileError } = await adminClient
+    .from("profiles")
+    .select("id")
+    .eq("id", userId)
+    .maybeSingle();
 
-  const access = resolveSubscriptionAccess(profile.subscription_tier || "free", subscription, paymentRecords);
-  if (access.entitled && access.plan !== "document") return "included";
-  if (Number(profile.credits ?? 0) < cost) return "unavailable";
-  return "credits";
+  if (profileError || !profile) return "unavailable";
+
+  // Free AI access for every signed-in user with a profile.
+  // ENABLE_PAID_AI and the Anthropic key remain master safety switches.
+  return "included";
 }
 
 export async function hasPaidAIQuota(options: PaidAIAccessOptions): Promise<boolean> {
@@ -58,20 +53,6 @@ export async function hasPaidAIQuota(options: PaidAIAccessOptions): Promise<bool
 }
 
 export async function consumePaidAIQuota(options: PaidAIAccessOptions): Promise<boolean> {
-  const { userId, authorization, supabaseUrl, anonKey, cost = 1, reason } = options;
   const access = await getPaidAIAccess(options);
-  if (access === "included") return true;
-  if (access !== "credits") return false;
-
-  const userClient = createClient(supabaseUrl, anonKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: { headers: { Authorization: authorization } },
-  });
-  const { data: deduction, error: deductionError } = await userClient.rpc("deduct_ai_credits", {
-    p_user_id: userId,
-    p_cost: cost,
-    p_reason: reason,
-  });
-  const result = Array.isArray(deduction) ? deduction[0] : deduction;
-  return !deductionError && result?.success === true;
+  return access === "included";
 }
