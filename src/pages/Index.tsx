@@ -30,7 +30,7 @@ const hubs = [
 ];
 
 const features = [
-  { title: "AI Document Generation", description: "Create legal documents instantly with AI", icon: FileText },
+  { title: "AI Document Generation", description: "Create legal document drafts with AI", icon: FileText },
   { title: "Legal Chat Assistant", description: "Get answers to your legal questions 24/7", icon: MessageSquare },
   { title: "Court Prep Tools", description: "Prepare for hearings with simulations", icon: Gavel },
   { title: "Law Firm Management", description: "Complete practice management suite", icon: Briefcase },
@@ -41,28 +41,51 @@ const pricingTiers = [
     name: "Free", 
     price: "$0", 
     period: "forever",
-    features: ["Unlimited AI Chat", "1 Document/Day", "Email Support"],
+    features: ["All AI Hubs", "10 AI messages/day", "2 document drafts/month", "Ad-supported"],
     cta: "Get Started",
     path: "/signup",
-    popular: false
+    popular: false,
+    trial: null
   },
   { 
     name: "Premium", 
     price: "$9.99", 
     period: "/month",
-    features: ["Unlimited Documents", "All AI Hubs", "Priority Support", "Document Templates"],
-    cta: "Upgrade Now",
+    features: ["7-day free trial", "Ad-free experience", "Unlimited AI chat", "25 document drafts/month", "Priority support"],
+    cta: "Start 7-Day Free Trial",
     path: "/pricing",
-    popular: true
+    popular: true,
+    trial: "7-day free trial"
   },
   { 
-    name: "Pro (Lawyers)", 
-    price: "$99", 
+    name: "Solo Lawyer", 
+    price: "$29", 
     period: "/month",
-    features: ["Everything in Premium", "Firm Management", "Client Portal", "Team Access"],
-    cta: "Start Trial",
+    features: ["7-day free trial", "1 attorney/paralegal seat", "Full case workspace", "Client portal", "AI document drafts", "Hearing prep"],
+    cta: "Start 7-Day Free Trial",
     path: "/pricing",
-    popular: false
+    popular: false,
+    trial: "7-day free trial"
+  },
+  { 
+    name: "Firm", 
+    price: "$99", 
+    period: "/month + $25/extra seat",
+    features: ["7-day free trial", "3 seats included", "Full case management", "Client communication", "Team roles & access"],
+    cta: "Start 7-Day Free Trial",
+    path: "/pricing",
+    popular: false,
+    trial: "7-day free trial"
+  },
+  { 
+    name: "Large Firm", 
+    price: "$149", 
+    period: "/user/month · 10-seat minimum",
+    features: ["7-day free trial", "10+ seats", "Highest AI limits", "Premium support", "Advanced firm tools"],
+    cta: "Start 7-Day Free Trial",
+    path: "/pricing",
+    popular: false,
+    trial: "7-day free trial"
   },
 ];
 
@@ -118,7 +141,6 @@ export default function Index() {
         <section className="relative min-h-[90vh] flex items-center justify-center px-4 py-12">
           <div className="container mx-auto max-w-6xl">
             <div className="grid lg:grid-cols-2 gap-8 items-center">
-              {/* Left - Hero Content */}
               <div className="text-center lg:text-left">
                 <Badge className="bg-neon-cyan/20 text-neon-cyan border-neon-cyan/30 mb-6 animate-fade-in">
                   <Sparkles className="w-3 h-3 mr-1" /> AI-Powered Legal Intelligence
@@ -132,10 +154,9 @@ export default function Index() {
                 </h1>
                 
                 <p className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0 mb-8 animate-fade-in" style={{ animationDelay: "200ms" }}>
-                  Explore legal information and draft documents for attorney review. AI responses are educational and are not legal advice.
+                  Explore legal information, draft documents for attorney review, and manage cases. AI responses are educational and are not legal advice.
                 </p>
                 
-                {/* CTAs */}
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-fade-in" style={{ animationDelay: "300ms" }}>
                   <Link to="/generate">
                     <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-neon-gold/50 text-neon-gold hover:bg-neon-gold/10">
@@ -151,7 +172,6 @@ export default function Index() {
                   </Link>
                 </div>
                 
-                {/* Product disclosures */}
                 <div className="flex flex-wrap justify-center lg:justify-start gap-4 mt-8 animate-fade-in" style={{ animationDelay: "400ms" }}>
                   <Badge variant="outline" className="text-muted-foreground">
                     <Check className="w-3 h-3 mr-1 text-neon-green" /> Review generated documents before use
@@ -162,33 +182,30 @@ export default function Index() {
                 </div>
               </div>
 
-              {/* Right - Ask Lee Chat Panel */}
               <div className="animate-fade-in" style={{ animationDelay: "200ms" }}>
                 <div className="glass-card rounded-2xl border-2 border-neon-cyan/40 shadow-[0_0_40px_hsl(var(--neon-cyan)/0.3)] overflow-hidden">
-                  {/* Chat Header */}
                   <div className="bg-gradient-to-r from-neon-cyan/20 via-neon-purple/20 to-neon-pink/20 p-4 border-b border-border/30">
                     <div className="flex items-center gap-3">
                       <AnimatedAIHead variant="cyan" size="md" />
                       <div>
                         <h3 className="font-display text-xl font-bold text-foreground flex items-center gap-2">
                           Ask Lee
-                          <Badge className="bg-neon-green/20 text-neon-green text-xs">No-cost</Badge>
+                          <Badge className="bg-neon-green/20 text-neon-green text-xs">Free AI</Badge>
                         </h3>
-                        <p className="text-xs text-muted-foreground">General information • no paid AI by default</p>
+                        <p className="text-xs text-muted-foreground">Legal information • Sign in for full AI answers</p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Chat Messages */}
                   <ScrollArea className="h-[280px] p-4" ref={scrollRef}>
                     {chatMessages.length === 0 ? (
                       <div className="text-center py-8">
                         <Brain className="h-12 w-12 text-neon-cyan/50 mx-auto mb-3" />
                         <p className="text-foreground text-sm mb-2">
-                          Hi! I can help you find general legal-information resources.
+                          Hi! I can help you understand legal topics and prepare for next steps.
                         </p>
                         <p className="text-xs text-muted-foreground mb-4">
-                          No-cost mode cannot answer case-specific questions or verify current law.
+                          I provide legal information, not legal advice. Verify deadlines and court rules.
                         </p>
                         <div className="flex flex-wrap gap-2 justify-center">
                           {["Draft an NDA", "Custody rights", "Tenant rights"].map((suggestion) => (
@@ -233,7 +250,6 @@ export default function Index() {
                     )}
                   </ScrollArea>
 
-                  {/* Chat Input */}
                   <div className="p-4 border-t border-border/30 bg-background/50">
                     <div className="flex gap-2">
                       <Input
@@ -258,7 +274,7 @@ export default function Index() {
                     </div>
                     <div className="flex items-center justify-between mt-2">
                       <p className="text-xs text-muted-foreground">
-                        Free unlimited chat • No signup required
+                        Free legal AI • No credit card required
                       </p>
                       <Link to="/chat" className="text-xs text-neon-cyan hover:underline">
                         Full Chat →
@@ -271,13 +287,11 @@ export default function Index() {
           </div>
         </section>
 
-        {/* Ad Banner */}
         <AdContainer position="inline" className="container mx-auto px-4 mb-8">
           <AdBanner slot="9777464779" format="horizontal" />
         </AdContainer>
         <AdMobBanner adUnitId={ADMOB_AD_UNITS.HOME_BANNER} size="banner" className="mb-4" />
 
-        {/* AI Hubs Section */}
         <section className="py-20 px-4">
           <div className="container mx-auto max-w-6xl">
             <div className="text-center mb-12">
@@ -288,8 +302,7 @@ export default function Index() {
                 AI Hubs for Every Legal Need
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Industry-leading AI assistants for specialized legal needs. Choose your assistant.
-                Industry-leading AI assistants for all your legal needs. Choose your specialized assistant.
+                Specialized AI assistants for custody, defense, employment, estate planning, and more. Start free and upgrade when you need more.
               </p>
             </div>
             
@@ -313,7 +326,6 @@ export default function Index() {
                   <div className="flex items-center justify-between">
                     <Badge className="bg-neon-green/20 text-neon-green border-neon-green/30 text-xs">
                       <Sparkles className="w-2 h-2 mr-1" /> AI Powered
-                      <Star className="w-2 h-2 mr-1" /> Premium
                     </Badge>
                     <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-neon-cyan group-hover:translate-x-1 transition-all" />
                   </div>
@@ -331,7 +343,6 @@ export default function Index() {
           </div>
         </section>
 
-        {/* Features Section */}
         <section className="py-20 px-4 bg-background/50">
           <div className="container mx-auto max-w-6xl">
             <div className="text-center mb-12">
@@ -361,9 +372,8 @@ export default function Index() {
           </div>
         </section>
 
-        {/* Pricing Section */}
         <section className="py-20 px-4">
-          <div className="container mx-auto max-w-5xl">
+          <div className="container mx-auto max-w-6xl">
             <div className="text-center mb-12">
               <Badge className="bg-neon-gold/20 text-neon-gold border-neon-gold/30 mb-4">
                 Simple Pricing
@@ -371,9 +381,12 @@ export default function Index() {
               <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
                 Start Free, Upgrade When Ready
               </h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Every paid plan includes a 7-day free trial. Free remains ad-supported so we can keep core AI tools accessible.
+              </p>
             </div>
             
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {pricingTiers.map((tier, i) => (
                 <div 
                   key={tier.name}
@@ -394,7 +407,7 @@ export default function Index() {
                   </div>
                   <ul className="space-y-2 mb-6">
                     {tier.features.map((feature) => (
-                      <li key={feature} className="space-y-2 mb-6">
+                      <li key={feature} className="flex items-center gap-2">
                         <Check className="h-4 w-4 text-neon-green" />
                         {feature}
                       </li>
@@ -414,7 +427,6 @@ export default function Index() {
           </div>
         </section>
 
-        {/* CTA Section */}
         <section className="py-20 px-4">
           <div className="container mx-auto max-w-3xl text-center">
             <div className="glass-card p-12 rounded-3xl border border-neon-cyan/30">
@@ -432,9 +444,9 @@ export default function Index() {
                     Start Free Chat
                   </Button>
                 </Link>
-                <Link to="/ai-assistants">
+                <Link to="/pricing">
                   <Button size="lg" variant="outline">
-                    Explore AI Hubs
+                    View Plans & Trials
                   </Button>
                 </Link>
               </div>
@@ -442,7 +454,6 @@ export default function Index() {
           </div>
         </section>
 
-        {/* Bottom Ad */}
         <AdContainer position="bottom" className="container mx-auto px-4 mb-8">
           <AdBanner slot="3466389052" format="horizontal" />
         </AdContainer>
