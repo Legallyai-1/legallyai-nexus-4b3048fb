@@ -250,7 +250,7 @@ export default function Index() {
                         disabled={isLoading || !chatInput.trim()}
                       >
                         {isLoading ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className="h-4 w-4 animate-spin text-neon-cyan" />
                         ) : (
                           <Send className="h-4 w-4" />
                         )}
@@ -273,7 +273,7 @@ export default function Index() {
 
         {/* Ad Banner */}
         <AdContainer position="inline" className="container mx-auto px-4 mb-8">
-          <AdBanner slot="1234567890" format="horizontal" />
+          <AdBanner slot="9777464779" format="horizontal" />
         </AdContainer>
         <AdMobBanner adUnitId={ADMOB_AD_UNITS.HOME_BANNER} size="banner" className="mb-4" />
 
@@ -394,7 +394,7 @@ export default function Index() {
                   </div>
                   <ul className="space-y-2 mb-6">
                     {tier.features.map((feature) => (
-                      <li key={feature} className="flex items-center gap-2 text-sm">
+                      <li key={feature} className="space-y-2 mb-6">
                         <Check className="h-4 w-4 text-neon-green" />
                         {feature}
                       </li>
@@ -444,7 +444,7 @@ export default function Index() {
 
         {/* Bottom Ad */}
         <AdContainer position="bottom" className="container mx-auto px-4 mb-8">
-          <AdBanner slot="0987654321" format="horizontal" />
+          <AdBanner slot="3466389052" format="horizontal" />
         </AdContainer>
       </FuturisticBackground>
     </Layout>
