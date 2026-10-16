@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { resolveSubscriptionAccess } from "../_shared/subscription-access.ts";
 
 import { getAnthropicKey } from "../_shared/anthropic-key.ts";
 const corsHeaders = {
@@ -103,11 +102,9 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  let usageCharged = false;
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
-    const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!supabaseUrl || !supabaseAnonKey) {
       return new Response(
         JSON.stringify({ error: "Document generation is temporarily unavailable." }),
@@ -138,17 +135,11 @@ serve(async (req) => {
       );
     }
 
-    const user = userData.user;
-    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
-
     const { prompt } = await req.json();
     if (typeof prompt !== "string" || !prompt.trim() || prompt.length > 12000) {
       return new Response(
         JSON.stringify({ error: "Enter a document request under 12,000 characters." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -157,7 +148,7 @@ serve(async (req) => {
     if (!validation.valid) {
       return new Response(
         JSON.stringify({ error: validation.reason }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -170,79 +161,7 @@ serve(async (req) => {
       );
     }
 
-    if (!supabaseServiceRoleKey) {
-      return new Response(
-        JSON.stringify({ error: "Paid AI generation is temporarily unavailable." }),
-        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-    const supabaseAdmin = createClient(
-      supabaseUrl,
-      supabaseServiceRoleKey,
-      { auth: { persistSession: false, autoRefreshToken: false } },
-    );
-
-    const [
-      { data: profile, error: profileError },
-      { data: subscription, error: subscriptionError },
-      { data: paymentRecords, error: paymentError },
-    ] = await Promise.all([
-      supabaseAdmin.from("profiles").select("credits, subscription_tier").eq("id", user.id).maybeSingle(),
-      supabaseAdmin.from("subscriptions").select("status, tier, current_period_end, cancel_at_period_end").eq("user_id", user.id).maybeSingle(),
-      supabaseAdmin.from("payment_records").select("tier, payment_method, expires_at, status, metadata, verified_at").eq("user_id", user.id).order("verified_at", { ascending: false }),
-    ]);
-
-    if (profileError || subscriptionError || paymentError) {
-      console.error("Failed to verify document access", { userId: user.id });
-      return new Response(
-        JSON.stringify({ error: "Unable to verify your account. Please try again." }),
-        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    if (!profile) {
-      return new Response(
-        JSON.stringify({ error: "Your account is still being set up. Please try again." }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    const access = resolveSubscriptionAccess(profile.subscription_tier || "free", subscription, paymentRecords);
-    const hasPaidPlan = access.entitled && access.plan !== "document";
-    const hasDocumentEntitlement = access.activePaymentRecord?.tier === "document";
-    if (!hasPaidPlan && Number(profile.credits ?? 0) < 1 && !hasDocumentEntitlement) {
-      return new Response(
-        JSON.stringify({ error: "Your AI credits are exhausted. Upgrade to continue." }),
-        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    if (!hasPaidPlan) {
-      const { data: deduction, error: deductionError } = await supabaseUser.rpc("deduct_ai_credits", {
-        p_user_id: user.id,
-        p_cost: 1,
-        p_reason: "document_generation",
-      });
-      const result = Array.isArray(deduction) ? deduction[0] : deduction;
-
-      if (deductionError) {
-        console.error("Document credit deduction failed", { userId: user.id });
-        return new Response(
-          JSON.stringify({ error: "Unable to confirm your document credit. Please try again." }),
-          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
-
-      if (!result?.success) {
-        return new Response(
-          JSON.stringify({ error: "Your AI credits are exhausted. Upgrade to continue." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
-      usageCharged = true;
-    }
-
-    const systemPrompt = `You draft legal document templates; you are not a lawyer and do not provide legal advice. Prepare a clear first draft based only on the user's facts. Do not claim that a document is complete, legally accurate, or enforceable. Never invent statutes or citations. If jurisdiction or key facts are missing, clearly mark assumptions and identify what needs confirmation. Flag jurisdiction-specific or high-risk provisions for review by a licensed attorney. Include appropriate signature blocks and a concise review disclaimer.`;
+    const systemPrompt = `You draft legal document templates for LegallyAI; you are not a lawyer and do not provide legal advice.\n\nBefore drafting, identify what is known and what is missing. If the request lacks jurisdiction, parties, purpose, key dates, payment terms, or required provisions, clearly mark those items as assumptions or bracketed placeholders rather than inventing them.\n\nProduce a structured, review-ready draft with:\n1. A clear title.\n2. A short "Information needed" list for missing facts.\n3. Numbered headings and complete clauses using bracketed placeholders such as [PARTY NAME], [STATE], and [DATE].\n4. Jurisdiction-specific or high-risk provisions flagged for attorney review.\n5. Signature blocks where appropriate.\n6. A final "Attorney review required" checklist covering jurisdiction, parties, dates, payment terms, termination, dispute resolution, and signing requirements.\n\nNever invent statutes, citations, filing requirements, or case-specific legal conclusions. Make clear that the draft is a template for review by a licensed attorney, not legal advice or an enforceable agreement.`;
 
     let response: Response | undefined;
     try {
@@ -266,7 +185,7 @@ serve(async (req) => {
 
     if (!response || !response.ok) {
       return new Response(
-        JSON.stringify({ error: usageCharged ? "Document generation failed after your document allowance was used. Check your balance before retrying." : "Document generation failed. Please try again." }),
+        JSON.stringify({ error: "Document generation failed. Please try again." }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -275,7 +194,7 @@ serve(async (req) => {
     const document = data.content?.find((b: { type?: string }) => b.type === "text")?.text?.trim();
     if (!document) {
       return new Response(
-        JSON.stringify({ error: usageCharged ? "No document was returned after your document allowance was used. Check your balance before retrying." : "No document was returned. Please try again." }),
+        JSON.stringify({ error: "No document was returned. Please try again." }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -288,7 +207,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Document generation failed:", error);
     return new Response(
-      JSON.stringify({ error: usageCharged ? "Document generation failed after your document allowance was used. Check your balance before retrying." : "Document generation failed. Please try again." }),
+      JSON.stringify({ error: "Document generation failed. Please try again." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
