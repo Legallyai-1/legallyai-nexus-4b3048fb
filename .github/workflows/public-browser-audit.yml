@@ -1,0 +1,33 @@
+name: Public browser audit (no Copilot)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: public-browser-audit
+  cancel-in-progress: false
+jobs:
+  public-browser-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated browser testing dependency
+        run: npm install --prefix "$RUNNER_TEMP/legallyai-browser-qa" --ignore-scripts --no-audit --no-fund playwright@1.56.1
+      - name: Install Chromium
+        run: node "$RUNNER_TEMP/legallyai-browser-qa/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Audit rendered public site
+        env:
+          QA_BASE_URL: https://www.legallyai.ai/
+        run: QA_PLAYWRIGHT_PATH="$RUNNER_TEMP/legallyai-browser-qa/node_modules/playwright/index.mjs" node scripts/public-browser-audit.mjs
+      - name: Save screenshots and diagnostic report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-browser-audit-${{ github.run_id }}
+          path: browser-audit-results/
+          retention-days: 7
+          if-no-files-found: warn
