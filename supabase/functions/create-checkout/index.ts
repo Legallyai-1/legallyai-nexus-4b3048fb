@@ -2,162 +2,94 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
+const origins = new Set(["https://legallyai.ai", "https://www.legallyai.ai"]);
+const prices: Record<string, { tier: string; amount: number; mode: "subscription" | "payment" }> = {
+  price_1Sdfqp0QhWGUtGKvcQuWONuB: { tier: "premium", amount: 999, mode: "subscription" },
+  price_1SckV70QhWGUtGKvvg1tH7lu: { tier: "pro", amount: 9900, mode: "subscription" },
+  price_1SckVt0QhWGUtGKvl9YdmQqk: { tier: "document", amount: 500, mode: "payment" },
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  if (Deno.env.get("ENABLE_PAYMENTS") !== "true") {
-    return new Response(JSON.stringify({ error: "Payments are currently disabled.", paymentsDisabled: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 503,
-    });
-  }
-
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-  );
-
-  // Valid price IDs allowlist
-  const VALID_PRICES = [
-    'price_1Sdfqp0QhWGUtGKvcQuWONuB', // Premium subscription ($9.99/month for normal users)
-    'price_1SckV70QhWGUtGKvvg1tH7lu', // Pro subscription ($99/month for lawyers)
-    'price_1SckVt0QhWGUtGKvl9YdmQqk'  // Document generation ($5 one-time)
-  ];
-
-  const VALID_MODES = ['subscription', 'payment'];
-  const PRICE_TIERS: Record<string, string> = {
-    'price_1Sdfqp0QhWGUtGKvcQuWONuB': 'premium',
-    'price_1SckV70QhWGUtGKvvg1tH7lu': 'pro',
-    'price_1SckVt0QhWGUtGKvl9YdmQqk': 'document',
+  const origin = req.headers.get("origin");
+  const headers = {
+    "Access-Control-Allow-Origin": origin && origins.has(origin) ? origin : "https://www.legallyai.ai",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Content-Type": "application/json",
+    "Cache-Control": "no-store",
+    "Vary": "Origin",
   };
-
+  const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body), { headers, status });
+  if (origin && !origins.has(origin)) return reply({ error: "Origin not allowed." }, 403);
+  if (req.method === "OPTIONS") return new Response(null, { headers, status: 204 });
+  if (req.method !== "POST") return reply({ error: "Method not allowed." }, 405);
+  if (Deno.env.get("ENABLE_PAYMENTS") !== "true") {
+    return reply({ error: "Payments are currently disabled.", paymentsDisabled: true }, 503);
+  }
+  const key = Deno.env.get("STRIPE_SECRET_KEY");
+  const url = Deno.env.get("SUPABASE_URL");
+  const anon = Deno.env.get("SUPABASE_ANON_KEY");
+  if (!key || !url || !anon) return reply({ error: "Checkout is temporarily unavailable." }, 503);
+  const auth = req.headers.get("authorization") || "";
+  const token = /^Bearer\s+(.+)$/i.exec(auth)?.[1]?.trim();
+  if (!token) return reply({ error: "Sign in to continue." }, 401);
   try {
-    logStep("Function started");
-
-    // Check if Stripe is configured
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) {
-      logStep("Stripe not configured");
-      return new Response(
-        JSON.stringify({ 
-          error: 'Payments are currently disabled. Please contact the administrator for subscription access.',
-          paymentsDisabled: true
-        }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
-          status: 400 
-        }
-      );
+    const client = createClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false } });
+    const { data: { user }, error: authError } = await client.auth.getUser(token);
+    if (authError || !user?.email || !user.email_confirmed_at) {
+      return reply({ error: "A confirmed account is required." }, 401);
     }
-
-    const { priceId, mode: requestedMode } = await req.json();
-    logStep("Request params", { priceId, mode: requestedMode });
-
-    // Validate priceId against allowlist
-    if (!priceId || !VALID_PRICES.includes(priceId)) {
-      logStep("Invalid price ID", { priceId });
-      return new Response(
-        JSON.stringify({ error: 'Invalid price ID' }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
-    }
-
-    // Validate mode
-    if (requestedMode && !VALID_MODES.includes(requestedMode)) {
-      logStep("Invalid mode", { mode: requestedMode });
-      return new Response(
-        JSON.stringify({ error: 'Invalid payment mode' }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
-    }
-
-    const authHeader = req.headers.get("Authorization")!;
-    const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
-    const user = data.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { email: user.email });
-
-    const stripe = new Stripe(stripeKey, {
-      apiVersion: "2025-08-27.basil",
-    });
-
+    let input: { priceId?: unknown; mode?: unknown; trial?: unknown };
+    try { input = await req.json(); } catch { return reply({ error: "Invalid JSON body." }, 400); }
+    if (!input || typeof input !== "object") return reply({ error: "Invalid request." }, 400);
+    const priceId = typeof input.priceId === "string" ? input.priceId : "";
+    const selected = Object.prototype.hasOwnProperty.call(prices, priceId) ? prices[priceId] : undefined;
+    if (!selected) return reply({ error: "Invalid price ID." }, 400);
+    if (input.mode !== undefined && input.mode !== selected.mode) return reply({ error: "Payment mode does not match this price." }, 400);
+    if (input.trial !== undefined && typeof input.trial !== "boolean") return reply({ error: "Invalid trial request." }, 400);
+    const trial = input.trial === true;
+    if (trial && selected.mode !== "subscription") return reply({ error: "Trials require a subscription." }, 400);
+    const stripe = new Stripe(key, { apiVersion: "2025-08-27.basil" });
     const price = await stripe.prices.retrieve(priceId);
-    const checkoutMode = price.recurring ? "subscription" : "payment";
-    if (requestedMode && requestedMode !== checkoutMode) {
-      return new Response(
-        JSON.stringify({ error: "Payment mode does not match the selected price." }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 },
-      );
+    if (!price.active || price.currency !== "usd" || price.unit_amount !== selected.amount ||
+      (selected.mode === "subscription" && (!price.recurring || price.recurring.interval !== "month" || price.recurring.interval_count !== 1)) ||
+      (selected.mode === "payment" && price.recurring)) {
+      return reply({ error: "The configured price requires administrator review." }, 503);
     }
-
-    const productId = typeof price.product === "string" ? price.product : price.product?.id;
-
-    // Check if customer exists
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    let customerId;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-      logStep("Found existing customer", { customerId });
+    const customers = await stripe.customers.list({ email: user.email, limit: 100 });
+    if (customers.has_more) return reply({ error: "Please contact support to review your billing account." }, 409);
+    let customerId: string | undefined;
+    for (const customer of customers.data) {
+      const belongsToUser = customer.metadata?.user_id === user.id;
+      if (belongsToUser && !customerId) customerId = customer.id;
+      if (selected.mode !== "subscription") continue;
+      const history = await stripe.subscriptions.list({ customer: customer.id, status: "all", limit: 100 });
+      if (trial && history.data.length) return reply({ error: "A free trial is available only before your first subscription. No charge was created.", trialUnavailable: true }, 409);
+      if (history.has_more || history.data.some(sub => !["canceled", "incomplete_expired"].includes(sub.status))) {
+        return reply({ error: "Review your existing subscription in billing settings before starting another." }, 409);
+      }
     }
-
-    const origin = req.headers.get("origin") || "https://legallyai.ai";
-    
+    const productId = typeof price.product === "string" ? price.product : price.product.id;
+    const metadata = { user_id: user.id, tier: selected.tier, price_id: priceId, product_id: productId };
+    const returnOrigin = origin && origins.has(origin) ? origin : "https://www.legallyai.ai";
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       client_reference_id: user.id,
-      metadata: {
-        user_id: user.id,
-        tier: PRICE_TIERS[priceId],
-        price_id: priceId,
-        product_id: productId || "",
-      },
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      mode: checkoutMode,
-      ...(checkoutMode === "subscription" && {
-        subscription_data: {
-          metadata: {
-            user_id: user.id,
-            tier: PRICE_TIERS[priceId],
-            price_id: priceId,
-            product_id: productId || "",
-          },
-        },
-      }),
-      success_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/pricing`,
-    });
-
-    logStep("Checkout session created", { sessionId: session.id, url: session.url });
-
-    return new Response(JSON.stringify({ url: session.url }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+      metadata,
+      line_items: [{ price: priceId, quantity: 1 }],
+      mode: selected.mode,
+      ...(selected.mode === "subscription" ? {
+        subscription_data: { metadata, ...(trial ? { trial_period_days: 7 } : {}) },
+        payment_method_collection: "always" as const,
+      } : {}),
+      success_url: `${returnOrigin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${returnOrigin}/pricing`,
+    }, { idempotencyKey: `checkout:${user.id}:${priceId}:${trial ? "trial" : "paid"}:${Math.floor(Date.now() / 1800000)}` });
+    if (!session.url) return reply({ error: "Checkout did not return a URL." }, 502);
+    return reply({ url: session.url, trialDays: trial ? 7 : 0 });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    console.error("Checkout failed", { name: error instanceof Error ? error.name : "UnknownError" });
+    return reply({ error: "Checkout could not be started. Please try again or contact support." }, 502);
   }
 });
