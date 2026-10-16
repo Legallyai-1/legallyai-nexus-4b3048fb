@@ -1,69 +1,62 @@
-// Zero-credit autonomous release: audit, validate, sync Supabase, deploy to Vercel, smoke test, commit and push the current branch.
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-const run = (cmd, { optional = false } = {}) => {
-  console.log(`\n> ${cmd}`);
-  try {
-    execSync(cmd, { stdio: "inherit" });
-    return true;
-  } catch {
-    console.error(`FAILED: ${cmd}`);
-    if (!optional) process.exit(1);
-    return false;
+
+const stop = (message) => { console.error(message); process.exit(1); };
+const output = (command, args) => execFileSync(command, args, { encoding: "utf-8" }).trim();
+const run = (command, args) => {
+  console.log(`\n> ${command} ${args.join(" ")}`);
+  execFileSync(command, args, { stdio: "inherit" });
+};
+const assertClean = () => {
+  if (output("git", ["status", "--porcelain", "--untracked-files=normal"])) {
+    stop("Release blocked: commit approved changes and resolve untracked files before releasing. No files are staged automatically.");
   }
 };
-const out = (cmd) => execSync(cmd, { encoding: "utf-8" }).trim();
-const tokenFlag = process.env.VERCEL_TOKEN ? ' --token "$VERCEL_TOKEN"' : "";
 
-console.log("[1/7] Audit (legal disclaimers, AdSense, placeholders)");
-const failures = [];
-if (!readFileSync("src/components/layout/Footer.tsx", "utf-8").toLowerCase().includes("legal advice")) {
-  failures.push("Footer is missing the 'not legal advice' disclaimer");
-}
-const adsTxt = readFileSync("public/ads.txt", "utf-8");
-const clientId = readFileSync("src/lib/env.ts", "utf-8").match(/ca-pub-\d+/)?.[0];
-if (!clientId || !adsTxt.includes(clientId.replace("ca-", ""))) {
-  failures.push("public/ads.txt does not match the AdSense client ID in src/lib/env.ts");
-}
-if (/ca-pub-X{6,}/.test(execSync("git grep -I -h 'ca-pub-' -- src index.html || true", { encoding: "utf-8" }))) {
-  failures.push("Placeholder AdSense client ID found in source");
-}
-if (failures.length) {
-  failures.forEach((f) => console.error(`AUDIT FAIL: ${f}`));
+try {
+  if (!process.argv.includes("--production")) {
+    stop("Production release is opt-in. After reviewing the exact commit, run: npm run deploy:local -- --production. This script does not start autonomous coding agents.");
+  }
+  if (output("git", ["branch", "--show-current"]) !== "main") stop("Release blocked: checkout main first.");
+  const remote = output("git", ["remote", "get-url", "origin"]);
+  if (!/^(https:\/\/github\.com\/|git@github\.com:)Legallyai-1\/legallyai-nexus-4b3048fb(?:\.git)?\/?$/.test(remote)) {
+    stop("Release blocked: origin is not the approved LegallyAI GitHub repository.");
+  }
+  assertClean();
+  const commit = output("git", ["rev-parse", "HEAD"]);
+  console.log(`Releasing committed source: ${commit}`);
+
+  const footer = readFileSync("src/components/layout/Footer.tsx", "utf-8");
+  if (!footer.toLowerCase().includes("legal advice")) stop("Audit failed: footer disclaimer is missing.");
+  const adsTxt = readFileSync("public/ads.txt", "utf-8");
+  const clientId = readFileSync("src/lib/env.ts", "utf-8").match(/ca-pub-\d+/)?.[0];
+  if (!clientId || !adsTxt.includes(clientId.replace("ca-", ""))) stop("Audit failed: AdSense publisher IDs do not match.");
+  const source = output("git", ["grep", "-I", "-h", "ca-pub-", "--", "src", "index.html"]);
+  if (/ca-pub-X{6,}/.test(source)) stop("Audit failed: placeholder AdSense publisher ID found.");
+
+  run("npm", ["run", "validate:supabase-production"]);
+  run("npx", ["tsc", "-p", "tsconfig.app.json", "--noEmit"]);
+  run("npm", ["run", "lint"]);
+  run("npx", ["--yes", "vercel@latest", "pull", "--yes", "--environment=production"]);
+  const project = JSON.parse(readFileSync(".vercel/project.json", "utf-8"));
+  if (project.projectId !== "prj_KSzIDIhU2EzZo8Fr24KQOMogqEmZ" || project.orgId !== "team_ACIjhOlfoTDfEvu93dbW4ThU") {
+    stop("Release blocked: Vercel is linked to a different project or team.");
+  }
+  run("npx", ["--yes", "vercel@latest", "build", "--prod"]);
+  assertClean();
+  if (output("git", ["rev-parse", "HEAD"]) !== commit) stop("Release blocked: HEAD changed during validation.");
+
+  run("git", ["push", "origin", "HEAD:refs/heads/main"]);
+  const published = output("git", ["ls-remote", "origin", "refs/heads/main"]).split(/\s+/)[0];
+  if (published !== commit) stop("Release blocked: GitHub main does not match the validated commit.");
+  assertClean();
+  if (output("git", ["rev-parse", "HEAD"]) !== commit) stop("Release blocked: HEAD changed before deployment.");
+  run("npx", ["--yes", "vercel@latest", "deploy", "--prebuilt", "--prod"]);
+  run("npm", ["run", "smoke:live"]);
+  console.log(`Frontend release and configured smoke checks completed for ${commit}.`);
+  console.log("Supabase migrations and Edge Functions were not deployed. Review and deploy those separately. This is not proof that all application features or mobile builds work.");
+} catch (error) {
+  console.error("Release failed; do not treat it as complete.");
+  console.error(error instanceof Error ? error.message : String(error));
   process.exit(1);
 }
-console.log("Audit passed.");
-
-console.log("[2/7] Validate");
-run("npm run validate:supabase-production");
-run("npx tsc -p tsconfig.app.json --noEmit");
-run("npm run lint", { optional: true });
-
-console.log("[3/7] Supabase migrations");
-if (process.env.SUPABASE_ACCESS_TOKEN) {
-  run("node scripts/sync-supabase-migrations.mjs");
-} else {
-  console.log("No SUPABASE_ACCESS_TOKEN; skipping migrations.");
-}
-
-console.log("[4/7] Vercel build");
-run(`npx --yes vercel@latest pull --yes --environment=production${tokenFlag}`);
-run(`npx --yes vercel@latest build --prod${tokenFlag}`);
-
-console.log("[5/7] Vercel deploy");
-run(`npx --yes vercel@latest deploy --prebuilt --prod${tokenFlag}`);
-
-console.log("[6/7] Live smoke test");
-run("npm run smoke:live");
-
-console.log("[7/7] Git");
-// Tracked files only, on the current branch, so untracked secrets and .env files are never swept in.
-run("git add -u");
-if (out("git status --porcelain --untracked-files=no")) {
-  run(`git commit -m "auto: release ${new Date().toISOString()}"`);
-  run("git push", { optional: true });
-} else {
-  console.log("No tracked changes to commit.");
-}
-
-console.log("\nDone.");
