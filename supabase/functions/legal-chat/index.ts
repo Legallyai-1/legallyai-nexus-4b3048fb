@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 import { getAnthropicKey } from "../_shared/anthropic-key.ts";
 import { consumePaidAIQuota, hasPaidAIQuota } from "../_shared/paid-ai-access.ts";
+import { answerFromKnowledge } from "../_shared/legal-knowledge.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -347,8 +348,11 @@ serve(async (req) => {
             fullText = "";
             throw new Error("Paid AI access was unavailable after the response completed.");
           }
-        } else {
+        } else if (hubType === "support") {
           fullText = buildNoCostGuidance(hubType);
+        } else {
+          // In-house legal guide: free, deterministic, no external AI call.
+          fullText = answerFromKnowledge(messages, hubType).text;
         }
 
         controller.enqueue(sseEvent({ delta: fullText }));
@@ -371,7 +375,7 @@ serve(async (req) => {
           hub_type: hubType,
           session_id: sessionId,
           reviewed,
-          mode: provider ? "paid" : "no-cost",
+          mode: provider ? "paid" : hubType === "support" ? "no-cost" : "in-house",
         }));
       } catch (error) {
         console.error("legal-chat pipeline failed", error);
