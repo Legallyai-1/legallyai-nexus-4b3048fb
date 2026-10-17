@@ -1,90 +1,109 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect, type SetStateAction } from "react";
 import { toast } from "sonner";
 import { streamLegalChat, type HubType, type ChatMessage as LegalChatMessage } from "@/lib/legalChat";
 
 export interface Message {
+  id?: string;
   role: "user" | "assistant" | "system";
   content: string;
   reviewed?: boolean;
 }
-
 interface UseAIChatOptions {
   hubType: HubType;
   onError?: (error: Error) => void;
 }
 
 export function useAIChat({ hubType, onError }: UseAIChatOptions) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessagesState] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const messagesRef = useRef<Message[]>([]);
   const sessionIdRef = useRef<string>(crypto.randomUUID());
+  const requestRef = useRef(0);
+  const busyRef = useRef(false);
+  const controllerRef = useRef<AbortController | null>(null);
+  const mountedRef = useRef(true);
+
+  const setMessages = useCallback((update: SetStateAction<Message[]>) => {
+    const next = typeof update === "function" ? update(messagesRef.current) : update;
+    messagesRef.current = next;
+    if (mountedRef.current) setMessagesState(next);
+  }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      requestRef.current += 1;
+      controllerRef.current?.abort();
+      controllerRef.current = null;
+      busyRef.current = false;
+    };
+  }, []);
 
   const sendMessage = useCallback(async (userMessage: string) => {
-    if (!userMessage.trim() || isLoading) return;
-
-    const userMsg: Message = { role: "user", content: userMessage.trim() };
-    const history: LegalChatMessage[] = [...messages, userMsg]
-      .filter((m): m is Message & { role: "user" | "assistant" } => m.role !== "system")
-      .map((m) => ({ role: m.role, content: m.content }));
-
-    setMessages(prev => [...prev, userMsg, { role: "assistant", content: "" }]);
+    const content = userMessage.trim();
+    if (!content || busyRef.current || !mountedRef.current) return;
+    busyRef.current = true;
+    const request = ++requestRef.current;
+    const controller = new AbortController();
+    controllerRef.current = controller;
+    const userMsg: Message = { id: crypto.randomUUID(), role: "user", content };
+    const assistantId = crypto.randomUUID();
+    const history: LegalChatMessage[] = [...messagesRef.current, userMsg]
+      .filter((message): message is Message & { role: "user" | "assistant" } => message.role !== "system" && Boolean(message.content.trim()))
+      .map(message => ({ role: message.role, content: message.content }));
+    const isCurrent = () => mountedRef.current && requestRef.current === request && !controller.signal.aborted;
+    setMessages(previous => [...previous, userMsg, { id: assistantId, role: "assistant", content: "" }]);
     setIsLoading(true);
-
     try {
       let reviewerNote = "";
       const { text, reviewed } = await streamLegalChat({
         hubType,
         sessionId: sessionIdRef.current,
         messages: history,
-        onDelta: (chunk) => {
-          setMessages(prev => {
-            const next = [...prev];
-            next[next.length - 1] = { ...next[next.length - 1], content: next[next.length - 1].content + chunk };
-            return next;
-          });
+        signal: controller.signal,
+        onDelta: chunk => {
+          if (!isCurrent()) return;
+          setMessages(previous => previous.map(message => message.id === assistantId ? { ...message, content: message.content + chunk } : message));
         },
-        onReviewerNote: (note) => {
-          reviewerNote = note;
-        },
+        onReviewerNote: note => { if (isCurrent()) reviewerNote = note; },
       });
-
-      setMessages(prev => {
-        const next = [...prev];
-        next[next.length - 1] = {
-          role: "assistant",
-          content: reviewerNote ? `${text}\n\n---\n⚠️ ${reviewerNote}` : text,
-          reviewed,
-        };
-        return next;
-      });
-
+      if (!isCurrent()) return;
+      setMessages(previous => previous.map(message => message.id === assistantId ? {
+        ...message,
+        content: reviewerNote ? `${text}\n\n---\n⚠️ ${reviewerNote}` : text,
+        reviewed,
+      } : message));
       return text;
-    } catch (error: any) {
-      setMessages(prev => prev.slice(0, -2));
-      const err = new Error(error.message || "Failed to get AI response");
-      toast.error(err.message);
-      onError?.(err);
-      throw err;
+    } catch (error: unknown) {
+      if (!isCurrent()) return;
+      setMessages(previous => previous.filter(message => message.id !== assistantId));
+      const failure = error instanceof Error ? error : new Error("Failed to get AI response");
+      toast.error(failure.message);
+      onError?.(failure);
+      throw failure;
     } finally {
-      setIsLoading(false);
+      if (mountedRef.current && requestRef.current === request) {
+        busyRef.current = false;
+        controllerRef.current = null;
+        setIsLoading(false);
+      }
     }
-  }, [messages, hubType, isLoading, onError]);
+  }, [hubType, onError, setMessages]);
 
   const clearMessages = useCallback(() => {
+    requestRef.current += 1;
+    controllerRef.current?.abort();
+    controllerRef.current = null;
+    busyRef.current = false;
     setMessages([]);
     sessionIdRef.current = crypto.randomUUID();
-  }, []);
+    if (mountedRef.current) setIsLoading(false);
+  }, [setMessages]);
 
   const addSystemMessage = useCallback((content: string) => {
-    setMessages(prev => [...prev, { role: "system", content }]);
-  }, []);
+    setMessages(previous => [...previous, { id: crypto.randomUUID(), role: "system", content }]);
+  }, [setMessages]);
 
-  return {
-    messages,
-    isLoading,
-    sendMessage,
-    clearMessages,
-    addSystemMessage,
-    setMessages
-  };
+  return { messages, isLoading, sendMessage, clearMessages, addSystemMessage, setMessages };
 }
-
