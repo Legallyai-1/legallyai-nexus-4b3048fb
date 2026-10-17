@@ -1,0 +1,70 @@
+name: Chat repair validation (no deployment)
+
+on:
+  push:
+    branches:
+      - repair/chat-and-validation-20261017
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chat-repair-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VITE_SUPABASE_URL: https://build-only.invalid
+      VITE_SUPABASE_PROJECT_ID: build-only
+      VITE_SUPABASE_PUBLISHABLE_KEY: build-only-not-a-real-key
+      VITE_ENABLE_ADSENSE: 'false'
+      VITE_ENABLE_PAYMENTS: 'false'
+    steps:
+      - name: Check out exact workflow commit without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Chat protocol regression tests
+        id: chat
+        run: node --test scripts/legal-chat-protocol.test.mjs
+      - name: TypeScript check
+        id: types
+        if: ${{ !cancelled() && steps.chat.outcome != 'skipped' }}
+        run: npm exec -- tsc -p tsconfig.app.json --noEmit
+      - name: ESLint
+        id: lint
+        if: ${{ !cancelled() && steps.chat.outcome != 'skipped' }}
+        run: npm run lint
+      - name: Build with dummy configuration
+        id: build
+        if: ${{ !cancelled() && steps.chat.outcome != 'skipped' }}
+        run: npm run build
+      - name: Report actual outcomes
+        if: always()
+        env:
+          CHAT_OUTCOME: ${{ steps.chat.outcome }}
+          TYPES_OUTCOME: ${{ steps.types.outcome }}
+          LINT_OUTCOME: ${{ steps.lint.outcome }}
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+        run: |
+          {
+            echo '## Isolated frontend validation'
+            printf -- '- Commit: %s\n' "$GITHUB_SHA"
+            printf -- '- Chat protocol tests: %s\n' "$CHAT_OUTCOME"
+            printf -- '- TypeScript: %s\n' "$TYPES_OUTCOME"
+            printf -- '- ESLint: %s\n' "$LINT_OUTCOME"
+            printf -- '- Build: %s\n' "$BUILD_OUTCOME"
+            echo '- Dummy configuration only. No live AI, authentication, payment, or browser integration test was performed.'
+            echo '- No merge or deployment was performed by this workflow.'
+          } >> "$GITHUB_STEP_SUMMARY"
