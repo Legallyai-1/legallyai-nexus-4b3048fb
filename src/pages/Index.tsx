@@ -17,6 +17,7 @@ import {
   Briefcase, GraduationCap, Users, Gavel, Car, Building2,
   Home, Zap, Star, ArrowRight, Check, Send, Loader2, Mic, Brain
 } from "lucide-react";
+import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
 
 const hubs = [
   { id: "chat", name: "Lee Legal AI", icon: MessageSquare, color: "cyan", path: "/chat", description: "General legal assistant" },
@@ -235,7 +236,7 @@ export default function Index() {
                                   : "bg-muted/50 text-foreground"
                               }`}
                             >
-                              <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                              <ChatMarkdown content={msg.content} />
                             </div>
                           </div>
                         ))}

@@ -66,6 +66,14 @@ test("'will' only matches estate context", () => {
   assert.equal(ask("I need to write my will").topics[0], "estate");
 });
 
+test("site suggested questions all match a topic", () => {
+  assert.equal(ask("What are my rights as a tenant in California?").topics[0], "eviction");
+  assert.equal(ask("How do I form an LLC in Texas?").topics[0], "business-formation");
+  assert.equal(ask("What should be included in a freelance contract?").topics[0], "contracts");
+  assert.equal(ask("How does child custody work in New York?").topics[0], "custody");
+  assert.equal(ask("What is the difference between a will and a trust?").topics[0], "estate");
+});
+
 test("every topic has steps, resources with https links, and attorney guidance", () => {
   for (const t of kb.LEGAL_TOPICS) {
     assert.ok(t.steps.length >= 3, t.id);
