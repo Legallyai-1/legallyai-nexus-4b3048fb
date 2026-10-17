@@ -467,6 +467,7 @@ function formatTopic(topic: LegalTopic, state: { name: string; code: string } | 
     // Hide California-specific links when the user named another state.
     return !/california|\.ca\.gov/i.test(r.label + r.url);
   });
+  if (resources.length === 0) resources.push({ label: "Find free legal aid (LSC)", url: "https://www.lsc.gov/find-legal-aid" });
   const lines = [
     `## ${topic.title}`,
     topic.overview,

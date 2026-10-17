@@ -24,6 +24,7 @@ test("non-California state hides California-only links", () => {
   assert.equal(a.state, "TX");
   assert.doesNotMatch(a.text, /courts\.ca\.gov/);
   assert.match(a.text, /Texas courts self-help/);
+  assert.match(a.text, /lsc\.gov\/find-legal-aid/);
 });
 
 test("lowercase ambiguous words are not treated as state codes", () => {
