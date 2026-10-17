@@ -1,25 +1,17 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, User, Sparkles, AlertCircle, Loader2 } from "lucide-react";
+import { Send, User, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { streamLegalChat } from "@/lib/legalChat";
+import { useAIChat } from "@/hooks/useAIChat";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import AdBanner from "@/components/ads/AdBanner";
 import AdContainer from "@/components/ads/AdContainer";
 import AdMobBanner, { ADMOB_AD_UNITS } from "@/components/ads/AdMobBanner";
-
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-  reviewed?: boolean;
-}
 
 const suggestedQuestions = [
   "What are my rights as a tenant in California?",
@@ -30,286 +22,96 @@ const suggestedQuestions = [
 ];
 
 export default function ChatPage() {
-  const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content: "Hello! I can point you toward general legal-information resources. No-cost mode cannot answer case-specific questions or verify current law. What would you like help finding?",
-      timestamp: new Date(),
-    },
-  ]);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [authError, setAuthError] = useState(false);
   const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
+  const { messages, isLoading, sendMessage, clearMessages } = useAIChat({ hubType: "general" });
+  const accountRef = useRef<string | null | undefined>(undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const sessionIdRef = useRef<string>(crypto.randomUUID());
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      setIsCheckingAuth(false);
+    let disposed = false;
+    let revision = 0;
+    const apply = (nextUser: SupabaseUser | null, failed = false) => {
+      if (disposed) return;
+      const account = nextUser?.id ?? null;
+      if (accountRef.current !== account) {
+        clearMessages();
+        setInput("");
+        accountRef.current = account;
+      }
+      setUser(nextUser);
+      setAuthError(failed);
+      setCheckingAuth(false);
     };
-
-    checkAuth();
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      revision += 1;
+      apply(session?.user ?? null);
     });
+    const initialRevision = revision;
+    void supabase.auth.getSession().then(({ data, error }) => {
+      if (!disposed && revision === initialRevision) apply(data.session?.user ?? null, Boolean(error));
+    }).catch(() => {
+      if (!disposed && revision === initialRevision) apply(null, true);
+    });
+    return () => { disposed = true; subscription.unsubscribe(); };
+  }, [clearMessages]);
 
-    return () => subscription.unsubscribe();
-  }, []);
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "auto" }); }, [messages]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const handleSend = async () => {
-    if (!input.trim() || isTyping) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: input.trim(),
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    const currentInput = input;
+  async function submit() {
+    const text = input.trim();
+    if (!text || isLoading || checkingAuth) return;
     setInput("");
-    setIsTyping(true);
-
-    try {
-      const apiMessages = messages
-        .filter(m => m.id !== "welcome")
-        .map(m => ({ role: m.role, content: m.content }));
-      apiMessages.push({ role: "user", content: currentInput });
-
-      const assistantMessageId = (Date.now() + 1).toString();
-      setMessages(prev => [...prev, {
-        id: assistantMessageId,
-        role: "assistant",
-        content: "",
-        timestamp: new Date(),
-      }]);
-
-      let reviewerNote = "";
-      const { text, reviewed } = await streamLegalChat({
-        hubType: "general",
-        sessionId: sessionIdRef.current,
-        messages: apiMessages,
-        onDelta: (chunk) => {
-          setMessages(prev => {
-            const next = [...prev];
-            next[next.length - 1] = { ...next[next.length - 1], content: next[next.length - 1].content + chunk };
-            return next;
-          });
-        },
-        onReviewerNote: (note) => {
-          reviewerNote = note;
-        },
-      });
-
-      if (!text.trim()) throw new Error("The AI service returned an empty response.");
-
-      setMessages(prev => {
-        const next = [...prev];
-        next[next.length - 1] = {
-          ...next[next.length - 1],
-          content: reviewerNote ? `${text}\n\n---\n⚠️ ${reviewerNote}` : text,
-          reviewed,
-        };
-        return next;
-      });
-
-    } catch (error) {
-      console.error("Chat error:", error);
-      setMessages(prev => prev.filter(m => m.content !== "" || m.role !== "assistant"));
-      toast.error(error instanceof Error ? error.message : "Failed to get response");
-    } finally {
-      setIsTyping(false);
-    }
-  };
-
-  const handleSuggestedQuestion = (question: string) => {
-    setInput(question);
-  };
-
-  if (isCheckingAuth) {
-    return (
-      <Layout showFooter={false}>
-        <div className="flex items-center justify-center min-h-screen bg-background">
-          <div className="flex flex-col items-center gap-4">
-            <AnimatedAIHead variant="cyan" size="lg" />
-            <Loader2 className="h-6 w-6 animate-spin text-neon-cyan" />
-          </div>
-        </div>
-      </Layout>
-    );
+    try { await sendMessage(text); }
+    catch { /* The shared hook displays the error and keeps the user's message. */ }
   }
 
   return (
     <Layout showFooter={false}>
-      <div className="flex flex-col h-[calc(100vh-4rem)] bg-background">
-        {/* Authentication banner */}
-        {!user && (
-          <div className="bg-gradient-to-r from-neon-cyan/10 to-neon-purple/10 border-b border-neon-cyan/30 px-4 py-3">
-            <div className="container mx-auto flex items-center justify-center gap-2 text-foreground">
-              <Sparkles className="h-4 w-4 text-neon-cyan" />
-              <span className="text-sm"><button onClick={() => navigate("/auth")} className="underline font-medium text-neon-cyan hover:text-neon-purple transition-colors">Sign in</button> to save your chat history. No-cost guidance is available without an account.</span>
-            </div>
-          </div>
-        )}
-        
-        {/* Header */}
-        <div className="border-b border-border glass-card px-4 py-3">
-          <div className="container mx-auto flex items-center gap-3">
+      <div className="flex flex-col min-h-[calc(100dvh-4rem)] bg-background">
+        <header className="border-b border-border glass-card px-4 py-4">
+          <div className="container mx-auto max-w-4xl flex flex-wrap items-center gap-3">
             <AnimatedAIHead variant="cyan" size="sm" />
-            <div>
-              <h1 className="font-display text-lg font-semibold text-foreground">
-                Legal Information Assistant
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Find general information and resources
-              </p>
+            <div className="flex-1 min-w-0">
+              <h1 className="font-display text-lg font-semibold">Legal Information Assistant</h1>
+              <p className="text-sm text-muted-foreground">Model access depends on your account, available quota, and service configuration.</p>
             </div>
-            <div className="ml-auto flex items-center gap-2 text-sm">
-              <Sparkles className="h-4 w-4 text-neon-cyan animate-pulse" />
-              <span className="text-muted-foreground">No-cost guidance by default</span>
-            </div>
+            <Button variant="outline" onClick={() => { clearMessages(); setInput(""); }} disabled={checkingAuth}>New conversation</Button>
           </div>
+        </header>
+        <div className="container mx-auto max-w-4xl px-4 pt-4">
+          {checkingAuth ? <p role="status" className="text-sm text-muted-foreground">Checking your session…</p> : authError ? (
+            <p role="alert" className="text-sm">Your session could not be checked. <Link to="/login" className="underline">Sign in again</Link>.</p>
+          ) : !user ? <p className="text-sm text-muted-foreground"><Link to="/login" className="underline">Sign in</Link> for account-linked chat. Anonymous access, if available, may provide limited no-cost guidance rather than a model-generated answer.</p> : null}
         </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-6">
-          <div className="container mx-auto max-w-3xl space-y-6">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={cn(
-                  "flex gap-3",
-                  message.role === "user" ? "justify-end" : "justify-start"
-                )}
-              >
-                {message.role === "assistant" && (
-                  <div className="shrink-0">
-                    <AnimatedAIHead variant="cyan" size="sm" isActive={isTyping && message.content === ""} />
-                  </div>
-                )}
-                <div
-                  className={cn(
-                    "max-w-[80%] rounded-2xl px-4 py-3",
-                    message.role === "user"
-                      ? "bg-gradient-to-r from-neon-cyan to-neon-blue text-background"
-                      : "glass-card border-neon-cyan/20"
-                  )}
-                >
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                    {message.content || (isTyping && message.role === "assistant" ? "..." : "")}
-                  </p>
-                  {message.reviewed && (
-                    <span className="mt-1 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide opacity-60">
-                      ✓ Reviewed by AI fact-checker
-                    </span>
-                  )}
-                  <span className="text-xs opacity-60 mt-2 block">
-                    {message.timestamp.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
-                {message.role === "user" && (
-                  <div className="shrink-0 p-2 rounded-xl bg-gradient-to-r from-neon-purple to-neon-pink h-fit">
-                    <User className="h-5 w-5 text-white" />
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {isTyping && messages[messages.length - 1]?.role !== "assistant" && (
-              <div className="flex gap-3 justify-start">
-                <div className="shrink-0">
-                  <AnimatedAIHead variant="cyan" size="sm" isActive={true} />
-                </div>
-                <div className="glass-card border-neon-cyan/20 rounded-2xl px-4 py-3">
-                  <div className="flex gap-1">
-                    <span className="w-2 h-2 rounded-full bg-neon-cyan animate-bounce" />
-                    <span className="w-2 h-2 rounded-full bg-neon-cyan animate-bounce" style={{ animationDelay: "0.1s" }} />
-                    <span className="w-2 h-2 rounded-full bg-neon-cyan animate-bounce" style={{ animationDelay: "0.2s" }} />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
-
-        {/* Suggested Questions */}
-        {messages.length === 1 && (
-          <div className="border-t border-border glass-card px-4 py-4">
-            <div className="container mx-auto max-w-3xl">
-              <p className="text-sm text-muted-foreground mb-3 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-neon-purple" />
-                Suggested questions:
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {suggestedQuestions.map((question, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleSuggestedQuestion(question)}
-                    className="px-3 py-2 text-sm rounded-xl glass-card border-neon-cyan/20 hover:border-neon-cyan/50 hover:shadow-glow-sm transition-all text-left"
-                  >
-                    {question}
-                  </button>
-                ))}
-              </div>
+        <section aria-label="Conversation" aria-busy={isLoading} className="flex-1 container mx-auto max-w-4xl px-4 py-6 space-y-5">
+          {messages.length === 0 && <div className="glass-card rounded-2xl p-5 space-y-3">
+            <p>Ask a legal-information question and include your state or country when relevant. Avoid names, case numbers, and confidential documents. Verify important answers with official sources or a licensed attorney.</p>
+            <p className="text-sm text-muted-foreground">If a generative model is unavailable, the service may return fixed no-cost guidance. That is not a researched answer to your specific question.</p>
+            <div className="flex flex-wrap gap-2">{suggestedQuestions.map(question => <button key={question} type="button" onClick={() => setInput(question)} className="rounded-xl border border-border px-3 py-2 text-left text-sm focus-visible:outline focus-visible:outline-2">{question}</button>)}</div>
+          </div>}
+          {messages.map((message, index) => <div key={message.id ?? index} className={cn("flex gap-3", message.role === "user" ? "justify-end" : "justify-start")}>
+            {message.role !== "user" && <AnimatedAIHead variant="cyan" size="sm" isActive={isLoading && !message.content} />}
+            <div className={cn("min-w-0 max-w-[85%] rounded-2xl px-4 py-3 break-words", message.role === "user" ? "bg-neon-cyan/20" : "glass-card border border-border")}>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content || (isLoading ? "Preparing response…" : "")}</p>
+              {message.reviewed && <p className="mt-2 text-xs text-muted-foreground">Secondary AI review performed; accuracy is not independently verified.</p>}
             </div>
-          </div>
-        )}
-
-        {/* Input */}
-        <div className="border-t border-border glass-card px-4 py-4">
-          <div className="container mx-auto max-w-3xl">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSend();
-              }}
-              className="flex gap-3"
-            >
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask me anything about legal matters..."
-                className="flex-1 h-12 text-base bg-muted/50 border-border/50 focus:border-neon-cyan/50 focus:shadow-glow-sm transition-all rounded-xl"
-                disabled={isTyping}
-              />
-              <Button
-                type="submit"
-                variant="neon"
-                size="lg"
-                disabled={!input.trim() || isTyping}
-                className="rounded-xl"
-              >
-                <Send className="h-5 w-5" />
-              </Button>
+            {message.role === "user" && <User aria-hidden="true" className="h-5 w-5 shrink-0" />}
+          </div>)}
+          <div ref={messagesEndRef} />
+        </section>
+        <div className="border-t border-border px-4 py-4">
+          <div className="container mx-auto max-w-4xl">
+            <form className="flex gap-3" onSubmit={event => { event.preventDefault(); void submit(); }}>
+              <label htmlFor="legal-chat-input" className="sr-only">Your legal-information question</label>
+              <Input id="legal-chat-input" value={input} onChange={event => setInput(event.target.value)} maxLength={6000} placeholder="Ask a legal-information question…" className="flex-1 min-w-0 h-12" disabled={checkingAuth || isLoading} />
+              <Button type="submit" variant="neon" disabled={checkingAuth || isLoading || !input.trim()} aria-label="Send question">{isLoading ? <Loader2 aria-hidden="true" className="h-5 w-5 animate-spin" /> : <Send aria-hidden="true" className="h-5 w-5" />}</Button>
             </form>
-            <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
-              <AlertCircle className="h-3 w-3 text-neon-purple" />
-              This is AI-generated information, not legal advice. Consult a licensed attorney.
-            </p>
-            
-            <AdContainer position="bottom" className="mt-4">
-              <AdBanner slot="7335134262" format="horizontal" />
-            </AdContainer>
+            <p role="status" className="mt-2 text-sm text-muted-foreground">{isLoading ? "Waiting for a response. New conversation cancels this request and clears the chat." : ""}</p>
+            <p className="mt-3 text-xs text-muted-foreground"><AlertCircle aria-hidden="true" className="inline h-3 w-3 mr-1" />AI-generated information is not legal advice. Review important information with a licensed attorney.</p>
+            <AdContainer position="bottom" className="mt-4"><AdBanner slot="7335134262" format="horizontal" /></AdContainer>
             <AdMobBanner adUnitId={ADMOB_AD_UNITS.CHAT_BANNER} size="banner" className="mt-2" />
           </div>
         </div>
