@@ -6,6 +6,7 @@ import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { Send, Upload, FileText, Mic, MicOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { streamLegalChat, type HubType } from "@/lib/legalChat";
+import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
 
 interface Message {
   role: "user" | "assistant";
@@ -202,7 +203,7 @@ export function HubAssistant({
                   ))}
                 </div>
               )}
-              <p className="text-foreground whitespace-pre-wrap">{msg.content}</p>
+              <ChatMarkdown content={msg.content} className="text-foreground text-base" />
               {msg.reviewed && (
                 <span className="mt-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
                   ✓ Reviewed by AI fact-checker

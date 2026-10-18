@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { streamLegalChat, type HubType } from "@/lib/legalChat";
+import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
 
 interface Message {
   role: "user" | "assistant";
@@ -337,7 +338,7 @@ export function FloatingLeeAssistant() {
                               : "bg-muted/50 text-foreground"
                           }`}
                         >
-                          <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                          <ChatMarkdown content={msg.content} />
                           {msg.action && (
                             <Button
                               variant="neon"

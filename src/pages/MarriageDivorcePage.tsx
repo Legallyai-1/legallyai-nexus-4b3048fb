@@ -21,6 +21,7 @@ import { streamLegalChat } from "@/lib/legalChat";
 import { DocumentGenerator } from "@/components/hub/DocumentGenerator";
 import AdBanner from "@/components/ads/AdBanner";
 import AdContainer from "@/components/ads/AdContainer";
+import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
 
 const STATES = ["California", "Texas", "Florida", "New York", "Illinois", "Arizona", "Nevada", "Washington", "Colorado", "Georgia"];
 
@@ -229,7 +230,7 @@ export default function MarriageDivorcePage() {
                               ? "bg-neon-pink/20 text-foreground" 
                               : "bg-muted/50"
                           }`}>
-                            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                            <ChatMarkdown content={msg.content} />
                           </div>
                         </div>
                       ))

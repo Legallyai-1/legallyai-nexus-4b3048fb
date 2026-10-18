@@ -375,6 +375,52 @@ export const LEGAL_TOPICS: LegalTopic[] = [
     attorneyWhen: "There is real estate, a business, a blended family, or a dispute among heirs.",
   },
   {
+    id: "business-formation",
+    title: "Starting a business and forming an LLC",
+    hubs: ["general", "business"],
+    keywords: ["llc", "form a business", "start a business", "starting a business", "incorporat", "corporation", "sole proprietor", "partnership", "business structure", "ein", "register my business", "dba", "business license"],
+    overview:
+      "Common structures are sole proprietorships, partnerships, LLCs, and corporations. An LLC is formed by filing articles of organization with your state's business filing office, usually the Secretary of State, and generally separates business liabilities from personal assets when formalities are followed.",
+    steps: [
+      "Choose a structure based on liability protection, taxes, and paperwork; SBA's comparison guide is a good starting point.",
+      "Check that your business name is available in your state's business-entity search.",
+      "File formation documents with your state and appoint a registered agent.",
+      "Get a free Employer Identification Number (EIN) from the IRS if you will have employees or a multi-member LLC, or if your bank requires one.",
+      "Write an operating agreement, open a separate business bank account, and check state annual report and fee requirements.",
+      "Ask your city or county about local business licenses and permits.",
+    ],
+    documents: ["Proposed business name and address", "Registered agent information", "Owner names and ownership percentages", "Operating agreement"],
+    resources: [
+      { label: "SBA: choose a business structure", url: "https://www.sba.gov/business-guide/launch-your-business/choose-business-structure" },
+      { label: "SBA: register your business", url: "https://www.sba.gov/business-guide/launch-your-business/register-your-business" },
+      { label: "IRS: get an EIN (free)", url: "https://www.irs.gov/businesses/small-businesses-self-employed/get-an-employer-identification-number" },
+    ],
+    attorneyWhen: "There are multiple owners, outside investors, a regulated industry, or significant liability risk.",
+  },
+  {
+    id: "contracts",
+    title: "Contracts and freelance agreements",
+    hubs: ["general", "business"],
+    keywords: ["contract", "freelance", "independent contractor agreement", "statement of work", "scope of work", "breach", "agreement", "nda", "non-disclosure", "terms of service", "invoice not paid", "client won't pay"],
+    overview:
+      "A contract is an enforceable agreement. Written contracts reduce disputes by clearly stating who does what, by when, and for how much. Some contracts must be in writing to be enforceable under state law.",
+    steps: [
+      "Name the parties and describe the scope of work or deliverables precisely.",
+      "State the price, payment schedule, late fees, and how expenses are handled.",
+      "Set deadlines, how changes to the scope are approved, and what counts as acceptance.",
+      "Cover ownership of work product and intellectual property, confidentiality, and termination rights.",
+      "Include how disputes are resolved, which state's law applies, and any liability limits.",
+      "Get signatures from both parties and keep a copy; confirm changes in writing.",
+    ],
+    documents: ["Signed contract and any amendments", "Invoices and payment records", "Emails confirming scope or changes", "Proof of delivered work"],
+    resources: [
+      { label: "IRS: self-employed tax center", url: "https://www.irs.gov/businesses/small-businesses-self-employed/self-employed-individuals-tax-center" },
+      { label: "SBA: local business assistance", url: "https://www.sba.gov/local-assistance" },
+      { label: "California Courts: small claims", url: "https://selfhelp.courts.ca.gov/small-claims-california" },
+    ],
+    attorneyWhen: "The contract is high-value, involves intellectual property or non-competes, or the other side has breached and you are considering a lawsuit.",
+  },
+  {
     id: "pro-bono",
     title: "Finding free or low-cost legal help",
     hubs: ["probono", "general"],

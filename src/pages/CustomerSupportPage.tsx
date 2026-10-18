@@ -21,6 +21,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { streamLegalChat, type ChatMessage } from "@/lib/legalChat";
+import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
 
 const quickActions = [
   { id: "billing", name: "Billing & Payments", icon: CreditCard, desc: "Subscriptions, refunds, payment issues" },
@@ -173,7 +174,7 @@ export default function CustomerSupportPage() {
                             <span className="text-sm font-medium text-neon-cyan">ServeAI</span>
                           </div>
                         )}
-                        <p className="text-foreground whitespace-pre-wrap">{msg.content}</p>
+                        <ChatMarkdown content={msg.content} className="text-foreground text-base" />
                       </div>
                     </div>
                   ))

@@ -12,6 +12,7 @@ import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import AdBanner from "@/components/ads/AdBanner";
 import AdContainer from "@/components/ads/AdContainer";
 import AdMobBanner, { ADMOB_AD_UNITS } from "@/components/ads/AdMobBanner";
+import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
 
 const suggestedQuestions = [
   "What are my rights as a tenant in California?",
@@ -95,7 +96,7 @@ export default function ChatPage() {
           {messages.map((message, index) => <div key={message.id ?? index} className={cn("flex gap-3", message.role === "user" ? "justify-end" : "justify-start")}>
             {message.role !== "user" && <AnimatedAIHead variant="cyan" size="sm" isActive={isLoading && !message.content} />}
             <div className={cn("min-w-0 max-w-[85%] rounded-2xl px-4 py-3 break-words", message.role === "user" ? "bg-neon-cyan/20" : "glass-card border border-border")}>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content || (isLoading ? "Preparing response…" : "")}</p>
+              {message.role === "user" || !message.content ? <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content || (isLoading ? "Preparing response…" : "")}</p> : <ChatMarkdown content={message.content} />}
               {message.reviewed && <p className="mt-2 text-xs text-muted-foreground">Secondary AI review performed; accuracy is not independently verified.</p>}
             </div>
             {message.role === "user" && <User aria-hidden="true" className="h-5 w-5 shrink-0" />}
