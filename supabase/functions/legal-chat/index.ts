@@ -3,7 +3,26 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 import { getAnthropicKey } from "../_shared/anthropic-key.ts";
 import { consumePaidAIQuota, hasPaidAIQuota } from "../_shared/paid-ai-access.ts";
-import { answerFromKnowledge } from "../_shared/legal-knowledge.ts";
+import { answerFromKnowledge, groundingNotes, needsSemanticMatch, detectState, isEmergency } from "../_shared/legal-knowledge.ts";
+import { TOPIC_EMBEDDINGS } from "../_shared/legal-topic-embeddings.ts";
+import { buildGroundedSystem, callFreeModel, FREE_AI_FOOTER, getFreeProviders } from "../_shared/free-ai.ts";
+
+// Supabase Edge Runtime built-in AI (free, no API key). Undefined outside Supabase.
+// deno-lint-ignore no-explicit-any
+declare const Supabase: any;
+// deno-lint-ignore no-explicit-any
+let embeddingSession: any = null;
+async function embedText(text: string): Promise<number[] | null> {
+  try {
+    if (typeof Supabase === "undefined" || !Supabase?.ai?.Session) return null;
+    embeddingSession ??= new Supabase.ai.Session("gte-small");
+    const output = await embeddingSession.run(text.slice(0, 2000), { mean_pool: true, normalize: true });
+    return Array.from(output as ArrayLike<number>);
+  } catch (error) {
+    console.warn("built-in embedding unavailable", error instanceof Error ? error.message : error);
+    return null;
+  }
+}
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -341,6 +360,7 @@ serve(async (req) => {
       let fullText = "";
       let reviewed = false;
       let completed = false;
+      let engine = "paid";
       try {
         if (provider) {
           fullText = await streamCompletion(provider, system, messages, () => {});
@@ -351,8 +371,22 @@ serve(async (req) => {
         } else if (hubType === "support") {
           fullText = buildNoCostGuidance(hubType);
         } else {
-          // In-house legal guide: free, deterministic, no external AI call.
-          fullText = answerFromKnowledge(messages, hubType).text;
+          // Free path. 1) Built-in Supabase AI understands everyday wording.
+          const queryEmbedding = needsSemanticMatch(messages, hubType) ? await embedText(lastUserMessage) : null;
+          const guide = answerFromKnowledge(messages, hubType, { queryEmbedding, topicEmbeddings: TOPIC_EMBEDDINGS });
+          fullText = guide.text;
+          engine = queryEmbedding ? "guide+embeddings" : "guide";
+          // 2) Optional free generative model, grounded in the verified guide notes.
+          const freeProviders = getFreeProviders(Deno.env);
+          if (freeProviders.length && !guide.emergency && !isEmergency(lastUserMessage)) {
+            const stateName = detectState(messages.filter((m) => m.role === "user").map((m) => m.content).join("\n"))?.name ?? null;
+            const freeSystem = buildGroundedSystem(system, groundingNotes(guide.topics), stateName);
+            const result = await callFreeModel(freeProviders, freeSystem, messages);
+            if (result) {
+              fullText = `${result.text}\n\n---\n\n${FREE_AI_FOOTER}`;
+              engine = `free-model:${result.provider}`;
+            }
+          }
         }
 
         controller.enqueue(sseEvent({ delta: fullText }));
@@ -376,6 +410,7 @@ serve(async (req) => {
           session_id: sessionId,
           reviewed,
           mode: provider ? "paid" : hubType === "support" ? "no-cost" : "in-house",
+          engine: provider ? "paid" : hubType === "support" ? "no-cost" : engine,
         }));
       } catch (error) {
         console.error("legal-chat pipeline failed", error);

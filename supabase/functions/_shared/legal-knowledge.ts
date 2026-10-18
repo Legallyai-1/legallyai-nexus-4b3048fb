@@ -541,7 +541,52 @@ export interface KnowledgeAnswer {
   emergency: boolean;
 }
 
-export function answerFromKnowledge(messages: { role: string; content: string }[], hubType: string): KnowledgeAnswer {
+export interface TopicEmbedding { id: string; vector: number[] }
+
+export interface KnowledgeOptions {
+  // Embedding of the latest user message (gte-small, mean-pooled, normalized).
+  queryEmbedding?: number[] | null;
+  // Precomputed topic embeddings from the same model.
+  topicEmbeddings?: TopicEmbedding[];
+}
+
+// Minimum cosine similarity for a meaning-based match when no keyword matched.
+export const SEMANTIC_THRESHOLD = 0.8;
+
+export function semanticRank(queryEmbedding: number[], topicEmbeddings: TopicEmbedding[]): { topic: LegalTopic; score: number }[] {
+  const byId = new Map(LEGAL_TOPICS.map((t) => [t.id, t]));
+  const best = new Map<string, number>();
+  for (const entry of topicEmbeddings) {
+    if (entry.vector.length !== queryEmbedding.length) continue;
+    let dot = 0;
+    for (let i = 0; i < entry.vector.length; i++) dot += entry.vector[i] * queryEmbedding[i];
+    if (dot > (best.get(entry.id) ?? -1)) best.set(entry.id, dot);
+  }
+  return [...best.entries()]
+    .map(([id, score]) => ({ topic: byId.get(id)!, score }))
+    .filter((e) => e.topic)
+    .sort((a, b) => b.score - a.score);
+}
+
+export function needsSemanticMatch(messages: { role: string; content: string }[], hubType: string): boolean {
+  const lastUser = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+  return !isEmergency(lastUser) && scoreTopics(lastUser, hubType).length === 0;
+}
+
+// Compact, verified notes for grounding a generative model.
+export function groundingNotes(topicIds: string[]): string {
+  return LEGAL_TOPICS.filter((t) => topicIds.includes(t.id))
+    .map((t) => [
+      `TOPIC: ${t.title}`,
+      `Overview: ${t.overview}`,
+      `Steps: ${t.steps.join(" | ")}`,
+      `Official resources: ${t.resources.map((r) => `${r.label} <${r.url}>`).join("; ")}`,
+      `See a lawyer when: ${t.attorneyWhen}`,
+    ].join("\n"))
+    .join("\n\n");
+}
+
+export function answerFromKnowledge(messages: { role: string; content: string }[], hubType: string, options: KnowledgeOptions = {}): KnowledgeAnswer {
   const userText = messages.filter((m) => m.role === "user").map((m) => m.content).join("\n");
   const lastUser = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
   const state = detectState(userText);
@@ -562,6 +607,11 @@ export function answerFromKnowledge(messages: { role: string; content: string }[
 
   // Score the latest message first; fall back to the whole conversation for follow-ups.
   let ranked = scoreTopics(lastUser, hubType);
+  if (ranked.length === 0 && options.queryEmbedding && options.topicEmbeddings?.length) {
+    // Meaning-based match from the free built-in embedding model.
+    const semantic = semanticRank(options.queryEmbedding, options.topicEmbeddings).filter((e) => e.score >= SEMANTIC_THRESHOLD);
+    ranked = semantic.map((e) => ({ topic: e.topic, score: Math.round(e.score * 100) }));
+  }
   if (ranked.length === 0) ranked = scoreTopics(userText, hubType);
   const chosen = ranked.slice(0, 2).filter((entry, index) => index === 0 || entry.score >= ranked[0].score - 1);
 
