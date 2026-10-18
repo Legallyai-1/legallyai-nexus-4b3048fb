@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { Layout } from "@/components/layout/Layout";
@@ -7,7 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Send, User, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { useAIChat } from "@/hooks/useAIChat";
+import { useAIChat, type AnswerEnhancer } from "@/hooks/useAIChat";
+import { PrivateAIToggle, type PrivateAIState } from "@/components/chat/PrivateAIToggle";
+import { generatePrivateAnswer } from "@/lib/privateAI";
+import type { MLCEngineInterface } from "@mlc-ai/web-llm";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import AdBanner from "@/components/ads/AdBanner";
 import AdContainer from "@/components/ads/AdContainer";
@@ -27,7 +30,13 @@ export default function ChatPage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [authError, setAuthError] = useState(false);
   const [input, setInput] = useState("");
-  const { messages, isLoading, sendMessage, clearMessages } = useAIChat({ hubType: "general" });
+  const [privateAI, setPrivateAI] = useState<PrivateAIState>({ status: "off" });
+  const [engine, setEngine] = useState<MLCEngineInterface | null>(null);
+  const enhancer = useMemo<AnswerEnhancer | null>(() => {
+    if (privateAI.status !== "ready" || !engine) return null;
+    return ({ question, guideText, onDelta, signal }) => generatePrivateAnswer(engine, question, guideText, onDelta, signal);
+  }, [privateAI.status, engine]);
+  const { messages, isLoading, sendMessage, clearMessages } = useAIChat({ hubType: "general", enhancer });
   const accountRef = useRef<string | null | undefined>(undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -77,12 +86,13 @@ export default function ChatPage() {
             <AnimatedAIHead variant="cyan" size="sm" />
             <div className="flex-1 min-w-0">
               <h1 className="font-display text-lg font-semibold">Legal Information Assistant</h1>
-              <p className="text-sm text-muted-foreground">Model access depends on your account, available quota, and service configuration.</p>
+              <p className="text-sm text-muted-foreground">Free answers from the LegallyAI legal guide. Turn on Private AI for answers written on your own device.</p>
             </div>
             <Button variant="outline" onClick={() => { clearMessages(); setInput(""); }} disabled={checkingAuth}>New conversation</Button>
           </div>
         </header>
         <div className="container mx-auto max-w-4xl px-4 pt-4">
+          <PrivateAIToggle state={privateAI} onStateChange={setPrivateAI} onEngine={setEngine} disabled={isLoading} />
           {checkingAuth ? <p role="status" className="text-sm text-muted-foreground">Checking your session…</p> : authError ? (
             <p role="alert" className="text-sm">Your session could not be checked. <Link to="/login" className="underline">Sign in again</Link>.</p>
           ) : !user ? <p className="text-sm text-muted-foreground"><Link to="/login" className="underline">Sign in</Link> for account-linked chat. Anonymous access, if available, may provide limited no-cost guidance rather than a model-generated answer.</p> : null}
@@ -90,7 +100,7 @@ export default function ChatPage() {
         <section aria-label="Conversation" aria-busy={isLoading} className="flex-1 container mx-auto max-w-4xl px-4 py-6 space-y-5">
           {messages.length === 0 && <div className="glass-card rounded-2xl p-5 space-y-3">
             <p>Ask a legal-information question and include your state or country when relevant. Avoid names, case numbers, and confidential documents. Verify important answers with official sources or a licensed attorney.</p>
-            <p className="text-sm text-muted-foreground">If a generative model is unavailable, the service may return fixed no-cost guidance. That is not a researched answer to your specific question.</p>
+            <p className="text-sm text-muted-foreground">Answers come from the LegallyAI legal guide with official resources. They are general information, not a researched answer to your specific situation.</p>
             <div className="flex flex-wrap gap-2">{suggestedQuestions.map(question => <button key={question} type="button" onClick={() => setInput(question)} className="rounded-xl border border-border px-3 py-2 text-left text-sm focus-visible:outline focus-visible:outline-2">{question}</button>)}</div>
           </div>}
           {messages.map((message, index) => <div key={message.id ?? index} className={cn("flex gap-3", message.role === "user" ? "justify-end" : "justify-start")}>

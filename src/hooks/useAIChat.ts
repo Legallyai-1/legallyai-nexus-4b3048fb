@@ -8,12 +8,23 @@ export interface Message {
   content: string;
   reviewed?: boolean;
 }
+export type AnswerEnhancer = (args: {
+  question: string;
+  guideText: string;
+  onDelta: (textSoFar: string) => void;
+  signal: AbortSignal;
+}) => Promise<string | null>;
+
 interface UseAIChatOptions {
   hubType: HubType;
   onError?: (error: Error) => void;
+  // Optional on-device rewrite of the server answer (for example Private AI).
+  enhancer?: AnswerEnhancer | null;
 }
 
-export function useAIChat({ hubType, onError }: UseAIChatOptions) {
+export function useAIChat({ hubType, onError, enhancer }: UseAIChatOptions) {
+  const enhancerRef = useRef<AnswerEnhancer | null | undefined>(enhancer);
+  enhancerRef.current = enhancer;
   const [messages, setMessagesState] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const messagesRef = useRef<Message[]>([]);
@@ -69,12 +80,31 @@ export function useAIChat({ hubType, onError }: UseAIChatOptions) {
         onReviewerNote: note => { if (isCurrent()) reviewerNote = note; },
       });
       if (!isCurrent()) return;
+      let finalText = reviewerNote ? `${text}\n\n---\n⚠️ ${reviewerNote}` : text;
+      const enhance = enhancerRef.current;
+      if (enhance && text.trim()) {
+        try {
+          const enhanced = await enhance({
+            question: content,
+            guideText: text,
+            signal: controller.signal,
+            onDelta: soFar => {
+              if (!isCurrent()) return;
+              setMessages(previous => previous.map(message => message.id === assistantId ? { ...message, content: soFar } : message));
+            },
+          });
+          if (enhanced && isCurrent()) finalText = enhanced;
+        } catch (error) {
+          console.warn("Private AI could not rewrite the answer; showing the guide answer.", error);
+        }
+      }
+      if (!isCurrent()) return;
       setMessages(previous => previous.map(message => message.id === assistantId ? {
         ...message,
-        content: reviewerNote ? `${text}\n\n---\n⚠️ ${reviewerNote}` : text,
+        content: finalText,
         reviewed,
       } : message));
-      return text;
+      return finalText;
     } catch (error: unknown) {
       if (!isCurrent()) return;
       setMessages(previous => previous.filter(message => message.id !== assistantId));
