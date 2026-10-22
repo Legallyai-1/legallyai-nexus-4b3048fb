@@ -6,6 +6,9 @@ import { consumePaidAIQuota, hasPaidAIQuota } from "../_shared/paid-ai-access.ts
 import { answerFromKnowledge, groundingNotes, needsSemanticMatch, detectState, isEmergency } from "../_shared/legal-knowledge.ts";
 import { TOPIC_EMBEDDINGS } from "../_shared/legal-topic-embeddings.ts";
 import { buildGroundedSystem, callFreeModel, FREE_AI_FOOTER, getFreeProviders } from "../_shared/free-ai.ts";
+import { callGemini, composeAnswer, getGeminiConfig } from "../_shared/gemini.ts";
+import { leeSystemPrompt, personaFor } from "../_shared/lee-personas.ts";
+import { checkFreeQuestion, freeQuestionLimit } from "../_shared/free-question-gate.ts";
 
 // Supabase Edge Runtime built-in AI (free, no API key). Undefined outside Supabase.
 // deno-lint-ignore no-explicit-any
@@ -337,6 +340,24 @@ serve(async (req) => {
     });
   }
 
+  // Free-question limit (default 5) before sign-up / free trial.
+  let gate: { used: number; limit: number; subscriber: boolean } | null = null;
+  if (hubType !== "support" && supabaseUrl && serviceKey) {
+    const result = await checkFreeQuestion({ req, userId, supabaseUrl, serviceKey, limit: freeQuestionLimit(Deno.env) });
+    if (!result.allowed) {
+      return new Response(JSON.stringify({
+        error: "free_limit_reached",
+        message: userId
+          ? `You've used your ${result.limit} free legal questions. Start your free trial to keep going.`
+          : `You've used your ${result.limit} free legal questions. Create a free account to start your free trial.`,
+        limit: result.limit,
+        used: result.used,
+        signed_in: !!userId,
+      }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    gate = result;
+  }
+
   const paidAIQuotaOptions = userId && authHeader && supabaseUrl && serviceKey
     ? {
         userId,
@@ -376,8 +397,21 @@ serve(async (req) => {
           const guide = answerFromKnowledge(messages, hubType, { queryEmbedding, topicEmbeddings: TOPIC_EMBEDDINGS });
           fullText = guide.text;
           engine = queryEmbedding ? "guide+embeddings" : "guide";
-          // 2) Optional free generative model, grounded in the verified guide notes.
-          const freeProviders = getFreeProviders(Deno.env);
+          const stateNameForAI = detectState(messages.filter((m) => m.role === "user").map((m) => m.content).join("\n"))?.name ?? null;
+          // 2) Gemini with Google Search (if GEMINI_API_KEY is set): web sources, documents, videos.
+          const gemini = getGeminiConfig(Deno.env);
+          let answered = false;
+          if (gemini && !guide.emergency && !isEmergency(lastUserMessage)) {
+            const result = await callGemini(gemini, leeSystemPrompt(hubType, stateNameForAI, groundingNotes(guide.topics)), messages);
+            if (result) {
+              const footer = `${personaFor(hubType).name} is LegallyAI's legal-information AI. This is general information, not legal advice, and it may contain mistakes. Check sources and deadlines with the court or agency.`;
+              fullText = composeAnswer(result.text, result.sources, lastUserMessage, footer);
+              engine = `gemini:${result.model}${result.searched ? "+search" : ""}`;
+              answered = true;
+            }
+          }
+          // 3) Optional other free generative model, grounded in the verified guide notes.
+          const freeProviders = answered ? [] : getFreeProviders(Deno.env);
           if (freeProviders.length && !guide.emergency && !isEmergency(lastUserMessage)) {
             const stateName = detectState(messages.filter((m) => m.role === "user").map((m) => m.content).join("\n"))?.name ?? null;
             const freeSystem = buildGroundedSystem(system, groundingNotes(guide.topics), stateName);
@@ -411,6 +445,8 @@ serve(async (req) => {
           reviewed,
           mode: provider ? "paid" : hubType === "support" ? "no-cost" : "in-house",
           engine: provider ? "paid" : hubType === "support" ? "no-cost" : engine,
+          persona: personaFor(hubType).name,
+          free_questions: gate && !gate.subscriber ? { used: gate.used, limit: gate.limit } : null,
         }));
       } catch (error) {
         console.error("legal-chat pipeline failed", error);

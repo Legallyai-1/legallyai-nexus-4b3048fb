@@ -46,6 +46,10 @@ export async function readLegalChatStream(
       if (!["paid", "no-cost", "in-house"].includes(String(payload.mode))) throw new Error("The AI response omitted its completion mode.");
       mode = payload.mode as ProtocolMode;
       reviewed = payload.reviewed === true;
+      const fq = payload.free_questions as { used?: unknown; limit?: unknown } | null | undefined;
+      if (fq && typeof fq.used === "number" && typeof fq.limit === "number" && typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("legallyai:free-usage", { detail: { used: fq.used, limit: fq.limit } }));
+      }
       completed = true;
     }
   };

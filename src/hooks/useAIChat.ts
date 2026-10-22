@@ -79,7 +79,8 @@ export function useAIChat({ hubType, onError }: UseAIChatOptions) {
       if (!isCurrent()) return;
       setMessages(previous => previous.filter(message => message.id !== assistantId));
       const failure = error instanceof Error ? error : new Error("Failed to get AI response");
-      toast.error(failure.message);
+      // The free-limit pop-up explains itself; other failures get a toast.
+      if (failure.name !== "FreeLimitError") toast.error(failure.message);
       onError?.(failure);
       throw failure;
     } finally {

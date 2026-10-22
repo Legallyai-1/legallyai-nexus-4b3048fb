@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { prepareChatMessages, readLegalChatStream } from "./legalChatProtocol";
+import { announceFreeLimit, FreeLimitError } from "@/lib/freeQuestions";
 
 export const HUB_TYPES = ["general", "custody", "parole", "defense", "workplace", "probono", "support", "marriage", "lawyer"] as const;
 export type HubType = typeof HUB_TYPES[number];
@@ -32,6 +33,11 @@ export async function streamLegalChat({ hubType, sessionId, messages, onDelta, o
   });
   if (!response.ok) {
     const errorBody = await response.json().catch(() => null);
+    if (response.status === 402 && errorBody?.error === "free_limit_reached") {
+      const detail = { limit: Number(errorBody.limit) || 5, used: Number(errorBody.used) || 0, signedIn: errorBody.signed_in === true };
+      announceFreeLimit(detail);
+      throw new FreeLimitError(detail, typeof errorBody.message === "string" ? errorBody.message : "You've used your free legal questions.");
+    }
     if (response.status === 401) throw new Error("Please sign in again to use this assistant.");
     if (response.status === 429) throw new Error("The assistant is temporarily rate-limited. Please wait and retry.");
     throw new Error(typeof errorBody?.error === "string" ? errorBody.error : "The AI service could not complete this request.");
