@@ -37,7 +37,7 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Chat protocol regression tests
         id: chat
-        run: node --test scripts/legal-chat-protocol.test.mjs scripts/legal-knowledge.test.mjs scripts/free-ai-engine.test.mjs
+        run: node --test scripts/legal-chat-protocol.test.mjs scripts/legal-knowledge.test.mjs scripts/free-ai-engine.test.mjs scripts/lee-gemini.test.mjs
       - name: TypeScript check
         id: types
         if: ${{ !cancelled() && steps.chat.outcome != 'skipped' }}
