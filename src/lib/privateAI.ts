@@ -66,27 +66,41 @@ export function isNoMatchAnswer(guideText: string): boolean {
 export function buildPrivatePrompt(question: string, guideText: string): { system: string; user: string } {
   const notes = guideText.split(FOOTER_START)[0].trim();
   const system = [
-    "You are LegallyAI's private legal-information assistant. You are not a lawyer and do not give legal advice.",
-    "Answer the user's question directly in plain English, in under 220 words, using short Markdown headings or numbered steps.",
-    "Use ONLY facts from the VERIFIED GUIDE below. Do not invent laws, statute numbers, case names, fees, or deadlines.",
-    "If the guide does not answer part of the question, say so and suggest the official resources or a licensed attorney.",
-    "Do not include links; official links are added after your answer.",
+    "You are LegallyAI's legal-information assistant. You are not a lawyer.",
+    "Write a SHORT ANSWER of 2 to 4 plain-English sentences that speaks directly to the user's situation, using ONLY facts stated in the GUIDE.",
+    "Never mention statute numbers, code sections, case names, dollar amounts, or day counts. Never include links or URLs.",
+    "If the GUIDE does not answer the question, say that the rules depend on the state and the details, and recommend the resources below or a licensed attorney.",
+    "Output only the short answer, with no headings and no lists.",
     "",
-    "VERIFIED GUIDE:",
+    "GUIDE:",
     notes,
   ].join("\n");
   return { system, user: question };
 }
 
+// Removes sentences containing likely-invented legal specifics that the guide does not contain.
+const RISKY = /(\bsection\b|§|\bcode\b|\bstatute\b|\bu\.s\.c\b|\bv\.\s|https?:\/\/|www\.|\$\s?\d|\b\d+\b)/i;
+export function filterUnverified(modelText: string, guideText: string): string {
+  const guideLower = guideText.toLowerCase();
+  const sentences = modelText.replace(/\s+/g, " ").trim().split(/(?<=[.!?])\s+/).filter(Boolean);
+  const kept = sentences.filter((sentence) => {
+    const match = sentence.match(RISKY);
+    if (!match) return true;
+    return guideLower.includes(sentence.trim().toLowerCase());
+  });
+  return kept.join(" ").replace(/\s+/g, " ").trim();
+}
+
 export function finalizePrivateAnswer(modelText: string, guideText: string): string {
-  const links = extractLinks(guideText);
-  const parts = [modelText.trim()];
-  if (links.length) parts.push("### Official resources", links.map((l) => `- [${l.label}](${l.url})`).join("\n"));
-  parts.push(
+  const shortAnswer = filterUnverified(modelText, guideText);
+  if (!shortAnswer) return guideText;
+  return [
+    "### Short answer",
+    shortAnswer,
+    `This short answer was written on your device by ${PRIVATE_AI_LABEL} and may contain mistakes. The details below are from LegallyAI's verified legal guide.`,
     "---",
-    `Written on your device by ${PRIVATE_AI_LABEL} from LegallyAI's verified legal guide. General legal information only, not legal advice, and it may contain mistakes. Verify deadlines with the court or agency.`,
-  );
-  return parts.join("\n\n");
+    guideText,
+  ].join("\n\n");
 }
 
 export async function generatePrivateAnswer(
@@ -101,9 +115,11 @@ export async function generatePrivateAnswer(
   const chunks = await engine.chat.completions.create({
     messages: [{ role: "system", content: system }, { role: "user", content: user }],
     temperature: 0.2,
-    max_tokens: 450,
+    max_tokens: 180,
     stream: true,
   });
+  // Show the verified guide right away; never stream unfiltered model text.
+  onDelta(`Writing a short answer on your device…\n\n---\n\n${guideText}`);
   let text = "";
   for await (const chunk of chunks) {
     if (signal?.aborted) {
@@ -111,7 +127,6 @@ export async function generatePrivateAnswer(
       return null;
     }
     text += chunk.choices[0]?.delta?.content ?? "";
-    onDelta(text);
   }
   return text.trim() ? finalizePrivateAnswer(text, guideText) : null;
 }
