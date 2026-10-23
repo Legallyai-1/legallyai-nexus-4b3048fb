@@ -26,7 +26,7 @@ verify everything against production, and never leave the site broken.
   `FreeLimitDialog`). Developer API: `x-api-key` header, keys from `create_api_key` (requires subscription/trial).
 - Data: `cases` (user_id, organization_id, next_deadline), `appointments`, `ai_chat_history` (one row per chat session,
   RLS: owner only), `api_keys`, `subscriptions` (tiers: free, premium, pro, enterprise, document).
-- Deploy: Vercel project `legallyai-nexus-4b3048fb` (`vercel deploy --prod --yes --build-env VITE_ENABLE_PAYMENTS=false`).
+- Deploy: Vercel project `legallyai-nexus-4b3048fb` (`vercel deploy --prod --yes --build-env VITE_ENABLE_PAYMENTS=true`).
   Edge function deploy: Supabase MCP `deploy_edge_function` with files `legal-chat/index.ts` + all `_shared/*`.
   GitHub Actions are locked (billing) → deploy manually after each merge.
 
