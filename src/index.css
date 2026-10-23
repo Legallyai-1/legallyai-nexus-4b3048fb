@@ -131,6 +131,36 @@
   }
 
   /* Glassmorphism Card */
+  /* Enterprise dashboard theme (from the LegallyAI dashboard mockup): deep navy to royal blue, frosted silver panels, gold accents. */
+  .dash-bg {
+    background:
+      radial-gradient(ellipse 60% 50% at 85% 10%, hsl(45 90% 60% / 0.14) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 60% at 10% 90%, hsl(210 90% 55% / 0.18) 0%, transparent 60%),
+      linear-gradient(135deg, hsl(222 60% 10%) 0%, hsl(218 65% 18%) 45%, hsl(214 70% 24%) 100%);
+  }
+  .glass-panel {
+    background: linear-gradient(160deg, hsl(0 0% 100% / 0.10), hsl(0 0% 100% / 0.04));
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid hsl(0 0% 100% / 0.16);
+    box-shadow: 0 10px 40px hsl(222 60% 5% / 0.35), inset 0 1px 0 hsl(0 0% 100% / 0.12);
+  }
+  .silver-tile {
+    background: linear-gradient(160deg, hsl(210 30% 96%) 0%, hsl(214 25% 82%) 55%, hsl(216 22% 70%) 100%);
+    color: hsl(222 47% 12%);
+    box-shadow: 0 8px 30px hsl(222 60% 5% / 0.35), inset 0 1px 0 hsl(0 0% 100% / 0.8);
+  }
+  .gold-tile {
+    background: linear-gradient(160deg, hsl(46 95% 78%) 0%, hsl(42 88% 58%) 55%, hsl(36 80% 42%) 100%);
+    color: hsl(222 47% 12%);
+    box-shadow: 0 8px 30px hsl(40 90% 40% / 0.35), inset 0 1px 0 hsl(50 100% 92% / 0.9);
+  }
+  .gold-text {
+    background: linear-gradient(90deg, hsl(46 95% 72%), hsl(40 90% 52%));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
   .glass-card {
     background: hsl(var(--glass-bg));
     backdrop-filter: blur(20px);

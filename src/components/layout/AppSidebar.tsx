@@ -30,10 +30,13 @@ const navigationSections: NavSection[] = [
   {
     title: "Main",
     items: [
-      { title: "Dashboard", href: "/dashboard", icon: Home, roles: ["owner", "admin", "manager", "lawyer", "paralegal"] },
-      { title: "AI Assistants", href: "/ai-assistants", icon: MessageSquare },
-      { title: "Generate Docs", href: "/generate", icon: FileText },
-      { title: "Legal Chat", href: "/chat", icon: MessageSquare },
+      { title: "AI Workspace", href: "/dashboard", icon: Home, roles: ["owner", "admin", "manager", "lawyer", "paralegal"] },
+      { title: "Firm Overview", href: "/clients", icon: BarChart3, roles: ["owner", "admin", "manager", "lawyer"] },
+      { title: "Case Files & AI Analysis", href: "/cases", icon: Briefcase, roles: ["owner", "admin", "manager", "lawyer", "paralegal"] },
+      { title: "Contract Lifecycle", href: "/generate", icon: FileText },
+      { title: "Jurisdiction & Statutory Research", href: "/court-records", icon: Search },
+      { title: "Enterprise Integration", href: "/settings", icon: Settings },
+      { title: "Ask Lee", href: "/chat", icon: MessageSquare },
     ]
   },
   {

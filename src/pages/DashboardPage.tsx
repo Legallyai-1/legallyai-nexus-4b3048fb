@@ -1,12 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { 
-  Users, FileText, Calendar, MessageSquare, Clock, 
-  DollarSign, ChevronRight, Loader2
+import {
+  Users, FileText, Calendar, Clock, DollarSign, ChevronRight, Loader2,
+  Upload, Search, PenLine, TrendingUp, BadgeCheck, MoreVertical, Plus, Briefcase, Sparkles,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -141,12 +139,6 @@ export default function DashboardPage() {
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast.success("Logged out successfully");
-    navigate("/");
-  };
-
   if (loading) {
     return (
       <MainLayout>
@@ -157,175 +149,149 @@ export default function DashboardPage() {
     );
   }
 
-  const quickActions = [
-    { icon: FileText, label: "Cases", href: "/cases", color: "text-legal-gold" },
-    { icon: Users, label: "Clients", href: "/clients", color: "text-legal-cyan" },
-    { icon: Calendar, label: "Appointments", href: "/appointments", color: "text-green-400" },
-    { icon: MessageSquare, label: "Messages", href: "/messages", color: "text-purple-400" },
-    { icon: Clock, label: "Time Clock", href: "/timeclock", color: "text-orange-400" },
-    { icon: DollarSign, label: "Invoices", href: "/invoices", color: "text-emerald-400" },
+  const firstName = user?.user_metadata?.full_name?.split(" ")[0];
+  const casesTotal = recentActivity.length;
+  const indexedPct = casesTotal === 0 ? 0 : Math.round((recentActivity.filter((a) => a.action.includes("active")).length / casesTotal) * 100);
+
+  const workflows = [
+    { title: "AI Document Drafting", icon: PenLine, tile: "gold-tile", to: "/generate", hint: "Letters, motions, agreements" },
+    { title: "Document Forensic & OCR Upload", icon: Upload, tile: "silver-tile", to: "/custody", hint: "Drop a file for Lee to read" },
+    { title: "Multijurisdictional Research", icon: Search, tile: "silver-tile", to: "/court-records", hint: "Official sources, every state" },
   ];
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-  };
+  const metrics = [
+    { label: "Active Cases", value: statsLoading ? "…" : String(stats.activeCases), sub: "Case Files & AI Analysis", icon: Briefcase, to: "/cases" },
+    { label: "Upcoming Appointments", value: statsLoading ? "…" : String(stats.upcomingAppointments), sub: "Deadlines & hearings", icon: Calendar, to: "/appointments" },
+    { label: "Pending Invoices", value: statsLoading ? "…" : `$${stats.pendingInvoices.toLocaleString()}`, sub: "Outstanding", icon: DollarSign, to: "/invoices" },
+    { label: "Clients", value: statsLoading ? "…" : String(stats.clients), sub: "Firm Overview", icon: Users, to: "/clients" },
+  ];
 
   return (
     <MainLayout>
-      <div className="p-6">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-display font-bold mb-2">
-            Welcome back, {user?.user_metadata?.full_name || "User"}
-          </h1>
-          <p className="text-muted-foreground">Here's what's happening with your law practice today.</p>
-        </div>
-
-        {/* Ask Lee · AI Partner */}
-        <div className="mb-8">
-          <AskLeePanel userType="lawyer" userName={user?.user_metadata?.full_name?.split(' ')[0] || "there"} />
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-card hover:shadow-card transition-shadow">
-            <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground mb-1">Active Cases</p>
-              {statsLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <>
-                  <p className="text-2xl font-bold mb-1">{stats.activeCases}</p>
-                  <p className="text-xs text-legal-cyan">Total active</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-          <Card className="bg-card hover:shadow-card transition-shadow">
-            <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground mb-1">Clients</p>
-              {statsLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <>
-                  <p className="text-2xl font-bold mb-1">{stats.clients}</p>
-                  <p className="text-xs text-legal-cyan">Total clients</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-          <Card className="bg-card hover:shadow-card transition-shadow">
-            <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground mb-1">Upcoming Appointments</p>
-              {statsLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <>
-                  <p className="text-2xl font-bold mb-1">{stats.upcomingAppointments}</p>
-                  <p className="text-xs text-legal-cyan">Scheduled</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-          <Card className="bg-card hover:shadow-card transition-shadow">
-            <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground mb-1">Pending Invoices</p>
-              {statsLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <>
-                  <p className="text-2xl font-bold mb-1">{formatCurrency(stats.pendingInvoices)}</p>
-                  <p className="text-xs text-legal-cyan">Outstanding</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {quickActions.map((action, i) => (
-              <Card 
-                key={i} 
-                className="bg-card hover:bg-muted/50 transition-colors cursor-pointer group"
-                onClick={() => navigate(action.href)}
-              >
-                <CardContent className="p-6 flex flex-col items-center text-center">
-                  <action.icon className={`h-8 w-8 ${action.color} mb-3 group-hover:scale-110 transition-transform`} />
-                  <span className="text-sm font-medium">{action.label}</span>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Recent Activity */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>Latest updates from your practice</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                </div>
-              ) : recentActivity.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No recent activity</p>
-              ) : (
-                <div className="space-y-4">
-                  {recentActivity.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                      <div>
-                        <p className="font-medium text-sm">{item.action}</p>
-                        <p className="text-xs text-muted-foreground">{item.case_title}</p>
-                      </div>
-                      <span className="text-xs text-muted-foreground">{item.time}</span>
+      <div className="dash-bg min-h-full p-4 md:p-6 text-white">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+          {/* ===== Main column ===== */}
+          <div className="min-w-0 space-y-8">
+            {/* Live AI Processing */}
+            <section aria-labelledby="live-ai">
+              <div className="flex items-center justify-between gap-3">
+                <h2 id="live-ai" className="font-display text-xl font-semibold">Live AI Processing</h2>
+                <Button size="sm" className="gold-tile border-0 font-semibold hover:brightness-105" onClick={() => navigate("/chat")}><Plus className="h-4 w-4 mr-1" /> New AI Progress</Button>
+              </div>
+              <p className="mt-1 text-sm text-white/60">Welcome back{firstName ? `, ${firstName}` : ""}. Here is what Lee is tracking for your practice.</p>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div className="glass-panel rounded-2xl p-5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="font-semibold">{recentActivity[0] ? `Analyzing ${recentActivity[0].case_title}` : "Case file analysis"}</h3>
+                      <p className="text-xs text-white/60">{recentActivity[0] ? `Updated ${recentActivity[0].time}` : "Save a Lee answer to a case to start tracking"}</p>
                     </div>
-                  ))}
+                    <MoreVertical className="h-4 w-4 text-white/50" aria-hidden="true" />
+                  </div>
+                  <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-white/10">
+                    <div className="h-full rounded-full bg-gradient-to-r from-[hsl(46_95%_78%)] to-[hsl(40_90%_52%)] transition-all" style={{ width: `${Math.max(indexedPct, casesTotal ? 8 : 0)}%` }} />
+                  </div>
+                  <p className="mt-2 text-xs text-white/60">{casesTotal ? `${indexedPct}% of recent matters active` : "No matters yet"} · {stats.activeCases} active</p>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                <div className="glass-panel rounded-2xl p-5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="font-semibold">Deadlines on calendar</h3>
+                      <p className="text-xs text-white/60">Lee keeps hearings and filing dates in one place</p>
+                    </div>
+                    <MoreVertical className="h-4 w-4 text-white/50" aria-hidden="true" />
+                  </div>
+                  <div className="mt-4 flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10"><BadgeCheck className="h-5 w-5 text-emerald-300" aria-hidden="true" /></span>
+                    <div>
+                      <p className="text-sm font-medium">{appointments.length ? `Next: ${appointments[0].type} at ${appointments[0].time}` : "Nothing scheduled"}</p>
+                      <p className="text-xs text-white/60">{stats.upcomingAppointments} upcoming</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
 
-          {/* Upcoming Appointments */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Today's Schedule</CardTitle>
-              <CardDescription>Your upcoming appointments</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin" />
+            {/* Enterprise AI Workflows */}
+            <section aria-labelledby="workflows">
+              <h2 id="workflows" className="font-display text-xl font-semibold">Enterprise AI Workflows</h2>
+              <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                {workflows.map((w) => (
+                  <button key={w.title} type="button" onClick={() => navigate(w.to)} className={`${w.tile} group relative flex min-h-[150px] flex-col justify-between rounded-2xl p-4 text-left transition-transform hover:-translate-y-0.5`}>
+                    <span className="font-display text-base font-bold leading-tight">{w.title}</span>
+                    <span className="flex items-end justify-between">
+                      <span className="text-xs opacity-70">{w.hint}</span>
+                      <span className="rounded-xl bg-white/40 p-2"><w.icon className="h-6 w-6" aria-hidden="true" /></span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            {/* Firm Insights & Metrics */}
+            <section aria-labelledby="insights">
+              <h2 id="insights" className="font-display text-xl font-semibold">Firm Insights & Metrics</h2>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {metrics.map((m) => (
+                  <button key={m.label} type="button" onClick={() => navigate(m.to)} className="silver-tile flex flex-col rounded-2xl p-4 text-left transition-transform hover:-translate-y-0.5">
+                    <span className="text-sm font-semibold">{m.label}</span>
+                    <span className="mt-2 flex items-end justify-between">
+                      <span className="font-display text-3xl font-bold">{m.value}</span>
+                      <m.icon className="h-7 w-7 opacity-70" aria-hidden="true" />
+                    </span>
+                    <span className="mt-1 text-xs opacity-70">{m.sub}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            {/* Document Workspace */}
+            <section aria-labelledby="docs" className="glass-panel rounded-2xl p-5">
+              <div className="flex items-center justify-between gap-3">
+                <h2 id="docs" className="font-display text-xl font-semibold">Document Workspace</h2>
+                <Button size="sm" variant="outline" className="border-white/20 bg-white/5 text-white hover:bg-white/15" onClick={() => navigate("/generate")}><Sparkles className="h-4 w-4 mr-1" /> Draft with Lee</Button>
+              </div>
+              <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_280px]">
+                <div className="rounded-xl bg-white p-5 text-slate-800 shadow-inner">
+                  <p className="text-center text-xs font-semibold tracking-wide text-slate-500">DOCUMENT REVIEW</p>
+                  <p className="mt-1 text-center text-[11px] text-slate-400">Drafted & Reviewed by Lee</p>
+                  {recentActivity.length === 0 ? (
+                    <div className="mt-4 space-y-2">
+                      <p className="text-sm">No documents yet. Ask Lee to draft a letter, motion or agreement and it will appear here for review.</p>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800"><Sparkles className="h-3 w-3" /> Suggested edits by Lee</span>
+                    </div>
+                  ) : (
+                    <ul className="mt-4 space-y-2">
+                      {recentActivity.map((a) => (
+                        <li key={a.id} className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm">
+                          <span className="truncate"><FileText className="mr-2 inline h-4 w-4 text-slate-400" aria-hidden="true" />{a.case_title}</span>
+                          <span className="shrink-0 text-xs text-slate-500">{a.time}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-              ) : appointments.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No upcoming appointments</p>
-              ) : (
                 <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-white/80">Upcoming</h3>
+                  {appointments.length === 0 && <p className="text-sm text-white/60">No appointments scheduled.</p>}
                   {appointments.map((apt) => (
-                    <div key={apt.id} className="flex items-center gap-3 p-3 rounded-lg border border-border/50">
-                      <div className="text-center min-w-[60px]">
-                        <span className="text-sm font-semibold text-legal-gold">{apt.time}</span>
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{apt.client}</p>
-                        <p className="text-xs text-muted-foreground">{apt.type}</p>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    </div>
+                    <button key={apt.id} type="button" onClick={() => navigate("/appointments")} className="flex w-full items-center gap-3 rounded-xl bg-white/5 p-3 text-left hover:bg-white/10">
+                      <Clock className="h-4 w-4 text-[hsl(46_95%_72%)]" aria-hidden="true" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm">{apt.type}</span>
+                        <span className="block text-xs text-white/60">{apt.time} · {apt.client}</span>
+                      </span>
+                      <ChevronRight className="h-4 w-4 text-white/40" aria-hidden="true" />
+                    </button>
                   ))}
+                  <Button variant="ghost" className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10" onClick={() => navigate("/appointments")}><TrendingUp className="h-4 w-4 mr-2" /> View all activity</Button>
                 </div>
-              )}
-              <Button variant="outline" className="w-full mt-4" onClick={() => navigate("/appointments")}>
-                View All Appointments
-              </Button>
-            </CardContent>
-          </Card>
+              </div>
+            </section>
+          </div>
+
+          {/* ===== Ask Lee partner panel ===== */}
+          <AskLeePanel userType="lawyer" className="xl:sticky xl:top-20 xl:h-[calc(100dvh-6rem)]" />
         </div>
       </div>
     </MainLayout>
