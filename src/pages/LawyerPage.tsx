@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { GlowScales } from "@/components/brand/GlowScales";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -146,7 +147,7 @@ export default function LawyerPage() {
               </div>
 
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neon-green/10 border border-neon-green/30 mb-6">
-                <Scale className="h-4 w-4 text-neon-green" />
+                <GlowScales className="h-4 w-4 text-neon-green" />
                 <span className="text-sm font-medium text-neon-green">For Legal Professionals</span>
               </div>
               <h1 className="font-display text-4xl md:text-5xl font-bold mb-6 text-foreground">

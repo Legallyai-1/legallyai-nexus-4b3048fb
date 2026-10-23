@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { GlowScales } from "@/components/brand/GlowScales";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -93,7 +94,7 @@ export default function OnboardingPage() {
             {/* Header */}
             <div className="text-center mb-12">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neon-green/10 border border-neon-green/30 mb-4">
-                <Scale className="h-4 w-4 text-neon-green" />
+                <GlowScales className="h-4 w-4 text-neon-green" />
                 <span className="text-sm font-medium text-neon-green">Law Firm Onboarding</span>
               </div>
               <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-2">

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { GlowScales } from "@/components/brand/GlowScales";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
@@ -165,7 +166,7 @@ export default function ProbationParolePage() {
                   <FolderOpen className="w-4 h-4" /> Documents
                 </TabsTrigger>
                 <TabsTrigger value="court" className="data-[state=active]:bg-neon-orange/20 data-[state=active]:text-neon-orange gap-2">
-                  <Scale className="w-4 h-4" /> Hearing Prep
+                  <GlowScales className="w-4 h-4" /> Hearing Prep
                 </TabsTrigger>
                 <TabsTrigger value="resources" className="data-[state=active]:bg-neon-pink/20 data-[state=active]:text-neon-pink gap-2">
                   <BookOpen className="w-4 h-4" /> Resources

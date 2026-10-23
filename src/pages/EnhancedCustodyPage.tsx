@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { GlowScales } from "@/components/brand/GlowScales";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -160,7 +161,7 @@ const EnhancedCustodyPage = () => {
                 fields={custodyMotionFields}
                 systemPrompt="You are CustodiAI, an expert in custody law. Generate a formal court motion with proper formatting, legal citations where appropriate, statement of facts, legal arguments, and prayer for relief. Follow the format required by the specified state court."
                 colorVariant="purple"
-                icon={<Scale className="h-5 w-5 text-purple-400" />}
+                icon={<GlowScales className="h-5 w-5 text-purple-400" />}
               />
             </TabsContent>
 
@@ -565,14 +566,14 @@ const EnhancedCustodyPage = () => {
                       Generate Court Report
                     </Button>
                     <Button variant="outline">
-                      <Scale className="mr-2 h-4 w-4" />
+                      <GlowScales className="mr-2 h-4 w-4" />
                       File Modification Petition
                     </Button>
                   </div>
 
                   <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/30">
                     <div className="flex items-center gap-2 mb-2">
-                      <Scale className="h-4 w-4 text-blue-400" />
+                      <GlowScales className="h-4 w-4 text-blue-400" />
                       <span className="font-medium">Custody Outcome Predictions Unavailable</span>
                     </div>
                     <p className="text-sm">

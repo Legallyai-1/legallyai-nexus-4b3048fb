@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { GlowScales } from "@/components/brand/GlowScales";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -93,7 +94,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <Link to="/" className="inline-flex items-center gap-2 mb-6">
-              <Scale className="h-8 w-8 text-legal-gold" />
+              <GlowScales className="h-8 w-8 text-legal-gold" />
               <span className="font-display text-2xl font-bold">
                 <span className="text-foreground">Legally</span>
                 <span className="text-legal-gold">AI</span>

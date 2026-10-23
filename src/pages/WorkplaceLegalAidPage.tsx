@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { GlowScales } from "@/components/brand/GlowScales";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -190,7 +191,7 @@ export default function WorkplaceLegalAidPage() {
                   <FolderOpen className="w-4 h-4" /> Documents
                 </TabsTrigger>
                 <TabsTrigger value="court" className="data-[state=active]:bg-neon-purple/20 data-[state=active]:text-neon-purple gap-2">
-                  <Scale className="w-4 h-4" /> Case Prep
+                  <GlowScales className="w-4 h-4" /> Case Prep
                 </TabsTrigger>
                 <TabsTrigger value="resources" className="data-[state=active]:bg-neon-pink/20 data-[state=active]:text-neon-pink gap-2">
                   <BookOpen className="w-4 h-4" /> Resources
@@ -249,7 +250,7 @@ export default function WorkplaceLegalAidPage() {
                     <div className="grid md:grid-cols-3 gap-6">
                       <div className="p-6 rounded-xl bg-background/30 border border-border/50 text-center">
                         <div className="w-12 h-12 rounded-xl bg-neon-green/10 flex items-center justify-center mx-auto mb-3">
-                          <Scale className="h-6 w-6 text-neon-green" />
+                          <GlowScales className="h-6 w-6 text-neon-green" />
                         </div>
                         <h4 className="font-semibold text-foreground mb-2">EEOC</h4>
                         <p className="text-sm text-muted-foreground mb-4">Equal Employment Opportunity Commission</p>

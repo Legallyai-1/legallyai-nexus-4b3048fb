@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { GlowScales } from "@/components/brand/GlowScales";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Scale, Sparkles, Zap, ChevronDown, ArrowLeft, ArrowRight } from "lucide-react";
@@ -60,7 +61,7 @@ export function Navbar() {
               {/* Glow ring */}
               <div className="absolute inset-0 bg-legal-gold/20 rounded-full blur-md group-hover:bg-legal-gold/40 transition-all duration-300" />
               <div className="relative bg-background/50 p-2 rounded-xl border border-legal-gold/30 group-hover:border-legal-gold/60 transition-all duration-300">
-                <Scale className="h-6 w-6 text-legal-gold transition-transform group-hover:scale-110" />
+                <GlowScales className="h-6 w-6 text-legal-gold transition-transform group-hover:scale-110" />
               </div>
               <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-legal-cyan animate-pulse" />
             </div>

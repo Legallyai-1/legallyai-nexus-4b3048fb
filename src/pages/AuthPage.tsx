@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { GlowScales } from "@/components/brand/GlowScales";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -185,7 +186,7 @@ export default function AuthPage() {
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <div className="p-3 bg-legal-gold/10 rounded-xl">
-              <Scale className="h-8 w-8 text-legal-gold" />
+              <GlowScales className="h-8 w-8 text-legal-gold" />
             </div>
           </div>
           <CardTitle className="text-2xl font-display">LegallyAI</CardTitle>

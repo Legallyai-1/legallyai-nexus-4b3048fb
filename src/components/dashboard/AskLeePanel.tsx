@@ -33,7 +33,7 @@ export function AskLeePanel({ userType = "lawyer", className = "" }: Props) {
 
       <div className="relative mt-4 flex flex-1 flex-col items-center justify-center rounded-2xl bg-gradient-to-b from-white/10 to-white/0 py-6">
         <div className="absolute inset-x-8 top-6 h-40 rounded-full bg-[hsl(45_90%_60%/0.18)] blur-3xl" aria-hidden="true" />
-        <img src="/lee-mascot.png" alt="Lee, the LegallyAI assistant" width={240} height={360} className="relative w-44 sm:w-52 drop-shadow-[0_20px_40px_hsl(222_60%_5%/0.6)]" />
+        <img src="/lee-mascot.png" alt="Lee, the LegallyAI assistant" width={240} height={200} className="relative animate-lee-alive w-44 sm:w-52 drop-shadow-[0_20px_40px_hsl(222_60%_5%/0.6)]" />
         <p className="relative mt-4 font-display text-xl font-semibold text-white">Ask Lee <span className="text-white/50">·</span> <span className="gold-text">AI Partner</span></p>
         <p className="relative text-sm text-white/70">Analyze case documents</p>
       </div>

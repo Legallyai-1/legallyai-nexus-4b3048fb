@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import { GlowScales } from "@/components/brand/GlowScales";
 import { 
   Home, MessageSquare, FileText, Users, Calendar, Clock, 
   DollarSign, Briefcase, Shield, GraduationCap, Phone, 
@@ -133,7 +134,7 @@ export function AppSidebar({ userRole = "client", notificationCount = 0 }: AppSi
       <div className="flex items-center justify-between p-4 border-b border-border">
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <Scale className="h-6 w-6 text-legal-gold" />
+            <GlowScales className="h-6 w-6 text-legal-gold" />
             <span className="font-display font-semibold text-lg">LegallyAI</span>
           </div>
         )}

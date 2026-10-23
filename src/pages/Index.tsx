@@ -143,7 +143,7 @@ export default function Index() {
           <div className="container mx-auto max-w-6xl">
             <div className="grid lg:grid-cols-2 gap-8 items-center">
               <div className="text-center lg:text-left">
-                <img src="/lee-mascot.png" alt="Lee, the LegallyAI assistant, waving" width={160} height={240} className="mx-auto lg:mx-0 mb-4 h-40 w-auto drop-shadow-[0_0_30px_hsl(45_90%_60%/0.45)] animate-fade-in" />
+                <img src="/lee-mascot.png" alt="Lee, the LegallyAI assistant, waving" width={160} height={240} className="mx-auto lg:mx-0 mb-4 h-40 w-auto animate-lee-alive drop-shadow-[0_0_30px_hsl(45_90%_60%/0.45)] animate-fade-in" />
                 <Badge className="bg-legal-gold/15 text-legal-gold border-legal-gold/40 mb-6 animate-fade-in">
                   <Sparkles className="w-3 h-3 mr-1" /> Meet Lee, your AI legal partner
                 </Badge>

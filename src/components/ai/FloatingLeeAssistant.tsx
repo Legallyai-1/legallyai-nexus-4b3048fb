@@ -211,7 +211,7 @@ export function FloatingLeeAssistant() {
         >
           {/* Lee mascot floating, with a speech bubble (new design) */}
           <div className="absolute inset-0 rounded-full bg-[hsl(45_90%_60%/0.35)] blur-2xl scale-125" aria-hidden="true" />
-          <img src="/lee-mascot-sm.png" alt="" aria-hidden="true" width={64} height={96} className="relative h-20 w-auto animate-float drop-shadow-[0_10px_20px_hsl(222_60%_5%/0.6)] transition-transform duration-300 group-hover:scale-110" draggable={false} />
+          <img src="/lee-mascot-sm.png" alt="" aria-hidden="true" width={64} height={96} className="relative h-20 w-auto animate-lee-alive drop-shadow-[0_10px_20px_hsl(222_60%_5%/0.6)] transition-transform duration-300 group-hover:scale-110" draggable={false} />
           <span className="absolute left-[85%] bottom-[70%] whitespace-nowrap rounded-2xl rounded-bl-sm border border-white/30 bg-white/95 px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-lg">
             How can I assist you today?
           </span>
