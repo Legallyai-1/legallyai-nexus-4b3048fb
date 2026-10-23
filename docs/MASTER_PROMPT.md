@@ -51,8 +51,8 @@ verify everything against production, and never leave the site broken.
 5. Update the checklist above and `docs/README` notes. Do not stop while unchecked items remain.
 
 ## Backlog (in priority order)
-1. Hub pages show their persona name + Lee mascot; one shared chat component across hubs.
-2. Cases page: next-deadline column and "from Lee chat" badge; Appointments: deadline reminders.
+1. ~~Hub pages show their persona name + Lee mascot~~ (done: `HubAssistant` uses `src/lib/leePersonas.ts`, mascot, Save to case file).
+2. ~~Cases page: next-deadline + "Saved from Lee chat" badge~~ (done). Appointments: email/SMS deadline reminders still open.
 3. Gemini Search grounding needs a billed Google AI project (free tier returns 429); until then Lee appends its own
    research links. When billing is enabled, grounding turns on automatically.
 4. Ezoic / alternative ad network fallback if AdSense is not approved (payouts go to bank, not Stripe).

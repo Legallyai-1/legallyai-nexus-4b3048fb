@@ -2,11 +2,12 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { Send, Upload, FileText, Mic, MicOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { streamLegalChat, type HubType } from "@/lib/legalChat";
 import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
+import { SaveToCaseFile } from "@/components/chat/SaveToCaseFile";
+import { personaFor } from "@/lib/leePersonas";
 
 interface Message {
   role: "user" | "assistant";
@@ -37,6 +38,9 @@ export function HubAssistant({
   welcomeMessage
 }: HubAssistantProps) {
   const actualVariant = variant || colorVariant || assistantVariant || "purple";
+  // Always use the canonical persona for this hub so the name matches what Lee says in its answers.
+  const persona = personaFor(hubType);
+  const displayName = persona.name || assistantName;
   const actualPlaceholder = placeholder || placeholderText || "Ask me anything about your case...";
   const [messages, setMessages] = useState<Message[]>(
     welcomeMessage ? [{ role: "assistant", content: welcomeMessage }] : []
@@ -172,10 +176,10 @@ export function HubAssistant({
   return (
     <Card className={`glass-card border-${colorClass}/30 p-4`}>
       <div className="flex items-center gap-3 mb-4 pb-3 border-b border-border/30">
-        <AnimatedAIHead variant={actualVariant} size="sm" isActive={isLoading} />
-        <div>
-          <h3 className={`font-display font-semibold text-${colorClass}`}>{assistantName}</h3>
-          <p className="text-xs text-muted-foreground">Your AI Legal Assistant</p>
+        <img src="/lee-mascot-sm.png" alt="" aria-hidden="true" width={44} height={66} className={`h-14 w-auto drop-shadow-[0_0_12px_hsl(var(--${colorClass})/0.5)] ${isLoading ? "animate-pulse" : ""}`} />
+        <div className="min-w-0">
+          <h3 className={`font-display font-semibold text-${colorClass}`}>{displayName}</h3>
+          <p className="text-xs text-muted-foreground truncate">Lee, focused on {persona.focus}</p>
         </div>
       </div>
 
@@ -204,6 +208,11 @@ export function HubAssistant({
                 </div>
               )}
               <ChatMarkdown content={msg.content} className="text-foreground text-base" />
+              {msg.role === "assistant" && msg.content && !(isLoading && idx === messages.length - 1) && (
+                <div className="mt-1 flex justify-end">
+                  <SaveToCaseFile question={[...messages].slice(0, idx).reverse().find(m => m.role === "user")?.content ?? "Legal question"} answer={msg.content} hubType={hubType} />
+                </div>
+              )}
               {msg.reviewed && (
                 <span className="mt-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
                   ✓ Reviewed by AI fact-checker
@@ -217,7 +226,7 @@ export function HubAssistant({
             <div className="bg-background/50 border border-border/50 p-3 rounded-xl">
               <div className="flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">{assistantName} is thinking...</span>
+                <span className="text-sm text-muted-foreground">{displayName} is thinking...</span>
               </div>
             </div>
           </div>

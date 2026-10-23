@@ -199,11 +199,11 @@ export default function WorkplaceLegalAidPage() {
 
               <TabsContent value="assistant">
                 <HubAssistant
-                  assistantName="WorkplaceAI"
+                  assistantName="WorkAI"
                   colorVariant="orange"
                   hubType="workplace"
                   placeholderText="Describe your workplace issue, upload documents, or ask about your rights..."
-                  welcomeMessage="I'm WorkplaceAI, your employment law assistant. I can help with discrimination, harassment, wage issues, wrongful termination, and more. Upload your employment documents and I'll analyze them."
+                  welcomeMessage="I'm WorkAI, your employment law assistant. I can help with discrimination, harassment, wage issues, wrongful termination, and more. Upload your employment documents and I'll analyze them."
                 />
               </TabsContent>
 

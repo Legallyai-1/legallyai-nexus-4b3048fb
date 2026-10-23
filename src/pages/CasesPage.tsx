@@ -30,6 +30,7 @@ interface Case {
   description: string | null;
   created_at: string;
   court_date: string | null;
+  next_deadline?: string | null;
   client_id: string;
   organization_id: string;
 }
@@ -375,6 +376,15 @@ export default function CasesPage() {
                               <Calendar className="h-4 w-4" />
                               Court: {new Date(caseItem.court_date).toLocaleDateString()}
                             </span>
+                          )}
+                          {caseItem.next_deadline && (
+                            <span className={`flex items-center gap-1 font-medium ${new Date(caseItem.next_deadline).getTime() - Date.now() < 7 * 864e5 ? "text-legal-gold" : ""}`}>
+                              <Calendar className="h-4 w-4" />
+                              Deadline: {new Date(caseItem.next_deadline).toLocaleDateString()}
+                            </span>
+                          )}
+                          {caseItem.description?.startsWith("Question:") && (
+                            <Badge variant="outline" className="text-xs">Saved from Lee chat</Badge>
                           )}
                         </div>
                         {caseItem.description && (
