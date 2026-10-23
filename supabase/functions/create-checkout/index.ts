@@ -23,7 +23,8 @@ serve(async (req) => {
   if (origin && !origins.has(origin)) return reply({ error: "Origin not allowed." }, 403);
   if (req.method === "OPTIONS") return new Response(null, { headers, status: 204 });
   if (req.method !== "POST") return reply({ error: "Method not allowed." }, 405);
-  if (Deno.env.get("ENABLE_PAYMENTS") !== "true") {
+  // Payments are ON unless ENABLE_PAYMENTS is explicitly "false" (owner enabled Stripe, Oct 2026).
+  if (Deno.env.get("ENABLE_PAYMENTS") === "false") {
     return reply({ error: "Payments are currently disabled.", paymentsDisabled: true }, 503);
   }
   const key = Deno.env.get("STRIPE_SECRET_KEY");
