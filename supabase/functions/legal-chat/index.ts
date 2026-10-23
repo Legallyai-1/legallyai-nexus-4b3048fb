@@ -29,7 +29,7 @@ async function embedText(text: string): Promise<number[] | null> {
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-api-key",
 };
 
 const MAX_MESSAGES = 20;
@@ -298,7 +298,7 @@ serve(async (req) => {
     });
   }
 
-  let payload: { messages?: unknown; hub_type?: unknown; session_id?: unknown };
+  let payload: { messages?: unknown; hub_type?: unknown; session_id?: unknown; stream?: unknown };
   try {
     payload = await req.json();
   } catch {
@@ -340,9 +340,27 @@ serve(async (req) => {
     });
   }
 
+  // Developer API: x-api-key header (subscription required; counted per key per day).
+  const apiKey = req.headers.get("x-api-key");
+  let apiUserId: string | null = null;
+  if (apiKey && supabaseUrl && serviceKey) {
+    const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+    const dailyLimit = Number(Deno.env.get("API_DAILY_LIMIT")) || 500;
+    const { data, error } = await admin.rpc("use_api_key", { p_key: apiKey, p_daily_limit: dailyLimit });
+    const row = Array.isArray(data) ? data[0] : data;
+    if (error || !row) {
+      return new Response(JSON.stringify({ error: "invalid_api_key", message: "API key is invalid or revoked." }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    if (!row.allowed) {
+      return new Response(JSON.stringify({ error: "api_limit_or_subscription", message: "Daily API limit reached or subscription inactive.", used_today: row.used_today, daily_limit: dailyLimit }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    apiUserId = row.user_id;
+    userId = userId ?? apiUserId;
+  }
+
   // Free-question limit (default 5) before sign-up / free trial.
   let gate: { used: number; limit: number; subscriber: boolean } | null = null;
-  if (hubType !== "support" && supabaseUrl && serviceKey) {
+  if (hubType !== "support" && supabaseUrl && serviceKey && !apiUserId) {
     const result = await checkFreeQuestion({ req, userId, supabaseUrl, serviceKey, limit: freeQuestionLimit(Deno.env) });
     if (!result.allowed) {
       return new Response(JSON.stringify({
@@ -464,6 +482,31 @@ serve(async (req) => {
       }
     },
   });
+
+  // Developer API and non-streaming clients: collect the stream into one JSON reply.
+  if (apiUserId || payload.stream === false) {
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let answer = "";
+    let done: Record<string, unknown> = {};
+    const reader = stream.getReader();
+    while (true) {
+      const { value, done: finished } = await reader.read();
+      if (finished) break;
+      buffer += decoder.decode(value, { stream: true });
+      for (const line of buffer.split("\n\n").slice(0, -1)) {
+        if (!line.startsWith("data: ")) continue;
+        const event = JSON.parse(line.slice(6));
+        if (typeof event.delta === "string") answer += event.delta;
+        if (event.done) done = event;
+        if (typeof event.error === "string") return new Response(JSON.stringify({ error: event.error }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      buffer = buffer.slice(buffer.lastIndexOf("\n\n") + 2);
+    }
+    return new Response(JSON.stringify({ answer, hub_type: hubType, session_id: sessionId, persona: done.persona ?? personaFor(hubType).name, mode: done.mode ?? null, engine: done.engine ?? null, free_questions: done.free_questions ?? null }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   return new Response(stream, {
     headers: {

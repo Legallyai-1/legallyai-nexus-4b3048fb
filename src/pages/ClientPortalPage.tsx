@@ -67,7 +67,7 @@ const ClientPortalPage = () => {
         .from("clients")
         .select("id, organization_id")
         .eq("user_id", userId)
-        .single();
+        .maybeSingle();
 
       if (clientData) {
         // Load cases for this client

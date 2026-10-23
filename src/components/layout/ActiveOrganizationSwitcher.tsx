@@ -23,6 +23,9 @@ export function ActiveOrganizationSwitcher({
     let active = true;
 
     const loadOrganizations = async () => {
+      // Organizations are only readable by signed-in members; skip the request for visitors.
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) return;
       const { data, error } = await supabase
         .from("organizations")
         .select("id, name")

@@ -13,6 +13,7 @@ import { Settings, User, Bell, Shield, Palette, ArrowLeft, Save, Moon, Sun, Load
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { Layout } from "@/components/layout/Layout";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { ApiKeysCard } from "@/components/settings/ApiKeysCard";
 
 interface Profile {
   id: string;
@@ -379,6 +380,8 @@ export default function SettingsPage() {
                   </Button>
                 </CardContent>
               </Card>
+
+              <ApiKeysCard />
 
               {/* Save Button */}
               <Button 
