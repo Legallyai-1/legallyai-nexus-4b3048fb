@@ -139,17 +139,18 @@ export default function Index() {
     <Layout>
       <FuturisticBackground>
         {/* Hero Section with Ask Lee */}
-        <section className="relative min-h-[90vh] flex items-center justify-center px-4 py-12 overflow-x-clip">
+        <section className="dash-bg relative min-h-[90vh] flex items-center justify-center px-4 py-12 overflow-x-clip">
           <div className="container mx-auto max-w-6xl">
             <div className="grid lg:grid-cols-2 gap-8 items-center">
               <div className="text-center lg:text-left">
-                <Badge className="bg-neon-cyan/20 text-neon-cyan border-neon-cyan/30 mb-6 animate-fade-in">
-                  <Sparkles className="w-3 h-3 mr-1" /> Meet Lee, your legal AI
+                <img src="/lee-mascot.png" alt="Lee, the LegallyAI assistant, waving" width={160} height={240} className="mx-auto lg:mx-0 mb-4 h-40 w-auto drop-shadow-[0_0_30px_hsl(45_90%_60%/0.45)] animate-fade-in" />
+                <Badge className="bg-legal-gold/15 text-legal-gold border-legal-gold/40 mb-6 animate-fade-in">
+                  <Sparkles className="w-3 h-3 mr-1" /> Meet Lee, your AI legal partner
                 </Badge>
                 
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-6 animate-fade-in" style={{ animationDelay: "100ms" }}>
                   <span className="text-foreground">Get clear answers about </span>
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-cyan via-neon-blue to-neon-purple">
+                  <span className="gold-text">
                     your legal situation
                   </span>
                 </h1>
@@ -159,7 +160,7 @@ export default function Index() {
                 </p>
                 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-fade-in" style={{ animationDelay: "300ms" }}>
-                  <Button size="lg" className="w-full sm:w-auto whitespace-normal text-base sm:text-lg px-6 sm:px-8 py-6 gradient-neon-cyan text-background font-semibold shadow-[0_0_30px_hsl(var(--neon-cyan)/0.4)]" onClick={() => document.getElementById("hero-chat-input")?.focus()}>
+                  <Button size="lg" className="w-full sm:w-auto whitespace-normal text-base sm:text-lg px-6 sm:px-8 py-6 gold-tile border-0 font-semibold hover:brightness-105" onClick={() => document.getElementById("hero-chat-input")?.focus()}>
                     <MessageSquare className="mr-2 h-5 w-5" />
                     Ask Lee free: 5 questions, no card
                   </Button>
