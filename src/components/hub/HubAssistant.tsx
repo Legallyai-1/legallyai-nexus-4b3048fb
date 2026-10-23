@@ -8,6 +8,7 @@ import { streamLegalChat, type HubType } from "@/lib/legalChat";
 import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
 import { SaveToCaseFile } from "@/components/chat/SaveToCaseFile";
 import { personaFor } from "@/lib/leePersonas";
+import { LeeGreeting } from "@/components/chat/LeeGreeting";
 
 interface Message {
   role: "user" | "assistant";
@@ -185,6 +186,7 @@ export function HubAssistant({
 
       {/* Messages */}
       <div className="min-h-[200px] max-h-[400px] overflow-y-auto space-y-3 mb-4">
+        {messages.length === 0 && <LeeGreeting name={displayName} />}
         {messages.map((msg, idx) => (
           <div
             key={idx}

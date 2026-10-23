@@ -7,43 +7,43 @@
 @layer base {
   :root {
     /* Futuristic Dark Theme */
-    --background: 222 47% 6%;
+    --background: 220 55% 9%;
     --foreground: 210 40% 98%;
 
-    --card: 222 47% 8%;
+    --card: 219 50% 13%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 47% 8%;
+    --popover: 219 50% 13%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 199 89% 48%;
+    --primary: 44 92% 58%;
     --primary-foreground: 222 47% 6%;
 
-    --secondary: 222 47% 15%;
+    --secondary: 218 40% 20%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 222 47% 12%;
-    --muted-foreground: 215 20% 55%;
+    --muted: 218 42% 16%;
+    --muted-foreground: 214 25% 72%;
 
-    --accent: 280 100% 70%;
+    --accent: 214 30% 82%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 222 47% 18%;
-    --input: 222 47% 15%;
-    --ring: 199 89% 48%;
+    --border: 214 35% 28%;
+    --input: 218 40% 20%;
+    --ring: 44 92% 58%;
 
     --radius: 1rem;
 
     /* Futuristic Neon Colors */
-    --neon-cyan: 187 100% 50%;
-    --neon-blue: 210 100% 60%;
-    --neon-purple: 280 100% 65%;
-    --neon-pink: 330 100% 65%;
+    --neon-cyan: 44 92% 60%;
+    --neon-blue: 212 85% 62%;
+    --neon-purple: 214 30% 80%;
+    --neon-pink: 36 85% 55%;
     --neon-green: 150 100% 50%;
-    --neon-orange: 25 100% 55%;
+    --neon-orange: 38 90% 55%;
     
     /* Section-specific accent colors */
     --section-home: 199 89% 48%;
@@ -63,8 +63,8 @@
     --legal-cream: 45 30% 96%;
 
     /* Glassmorphism */
-    --glass-bg: 222 47% 10% / 0.6;
-    --glass-border: 199 89% 48% / 0.2;
+    --glass-bg: 0 0% 100% / 0.07;
+    --glass-border: 0 0% 100% / 0.16;
     --glass-shadow: 0 8px 32px 0 hsl(222 47% 0% / 0.37);
     
     /* Glow Effects */
@@ -111,7 +111,11 @@
   body {
     @apply bg-background text-foreground font-body antialiased;
     font-family: var(--font-body);
-    background: radial-gradient(ellipse at top, hsl(222 47% 10%) 0%, hsl(222 47% 5%) 50%, hsl(222 47% 3%) 100%);
+    background:
+      radial-gradient(ellipse 60% 40% at 85% 0%, hsl(45 90% 60% / 0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 0% 100%, hsl(210 90% 55% / 0.16) 0%, transparent 60%),
+      linear-gradient(160deg, hsl(222 60% 10%) 0%, hsl(218 62% 16%) 50%, hsl(214 66% 21%) 100%);
+    background-attachment: fixed;
     min-height: 100vh;
   }
 
@@ -230,7 +234,8 @@
   }
 
   .gradient-neon-cyan {
-    background: linear-gradient(135deg, hsl(var(--neon-cyan)) 0%, hsl(var(--neon-blue)) 100%);
+    background: linear-gradient(160deg, hsl(46 95% 76%) 0%, hsl(42 88% 58%) 55%, hsl(36 80% 45%) 100%);
+    color: hsl(222 47% 12%);
   }
 
   .gradient-neon-purple {

@@ -301,13 +301,13 @@ export default function Index() {
           <div className="container mx-auto max-w-6xl">
             <div className="text-center mb-12">
               <Badge className="bg-neon-purple/20 text-neon-purple border-neon-purple/30 mb-4">
-                <Zap className="w-3 h-3 mr-1" /> 15+ Specialized AI Assistants
+                <Zap className="w-3 h-3 mr-1" /> One legal AI, a specialist for every need
               </Badge>
               <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-                AI Hubs for Every Legal Need
+                Lee&apos;s Legal Hubs
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Specialized AI assistants for custody, defense, employment, estate planning, and more. Start free and upgrade when you need more.
+                Every hub is Lee, focused on your situation: custody, defense, work, estate planning and more. Each one keeps your case file, deadlines and appointments together.
               </p>
             </div>
             
@@ -316,23 +316,19 @@ export default function Index() {
                 <Link
                   key={hub.id}
                   to={hub.path}
-                  className="group glass-card p-5 rounded-2xl border border-border/50 hover:border-neon-cyan/50 hover:shadow-glow-sm transition-all duration-300 animate-fade-in"
+                  className={`${i === 0 ? "gold-tile" : "silver-tile"} group relative flex min-h-[132px] flex-col justify-between overflow-hidden rounded-2xl p-5 transition-transform duration-300 hover:-translate-y-1 animate-fade-in`}
                   style={{ animationDelay: `${i * 50}ms` }}
                 >
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className={`p-2 rounded-xl bg-neon-${hub.color}/20`}>
-                      <hub.icon className={`h-5 w-5 text-neon-${hub.color}`} />
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="font-display text-lg font-bold leading-tight">{hub.name}</h3>
+                      <p className="mt-1 text-xs opacity-70">{hub.description}</p>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">{hub.name}</h3>
-                      <p className="text-xs text-muted-foreground">{hub.description}</p>
-                    </div>
+                    <span className="rounded-xl bg-white/45 p-2 shadow-sm"><hub.icon className="h-5 w-5" aria-hidden="true" /></span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <Badge className="bg-neon-green/20 text-neon-green border-neon-green/30 text-xs">
-                      <Sparkles className="w-2 h-2 mr-1" /> AI Powered
-                    </Badge>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-neon-cyan group-hover:translate-x-1 transition-all" />
+                  <div className="mt-4 flex items-center justify-between text-sm font-semibold">
+                    <span>Talk to {hub.name.replace(" Legal AI", "")}</span>
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
                   </div>
                 </Link>
               ))}
