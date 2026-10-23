@@ -460,6 +460,61 @@ const STATES: [string, string][] = [
 const AMBIGUOUS_CODES = new Set(["IN", "OR", "ME", "OK", "HI", "OH", "LA", "MA", "PA", "DE", "AL", "CO", "ID", "MD", "MI", "MO", "MS", "MT", "NE", "SC", "VA", "WA"]);
 const CALIFORNIA_CITIES = ["sacramento", "los angeles", "san diego", "san francisco", "san jose", "fresno", "oakland", "long beach", "bakersfield", "riverside", "stockton", "elk grove", "roseville", "modesto"];
 
+// Official state court self-help / legal-help sites (verified Oct 2026).
+export const STATE_COURT_HELP: Record<string, string> = {
+  AL: "https://judicial.alabama.gov/",
+  AK: "https://courts.alaska.gov/shc/index.htm",
+  AZ: "https://www.azcourts.gov/selfservicecenter",
+  AR: "https://www.arcourts.gov/forms-and-publications",
+  CA: "https://selfhelp.courts.ca.gov",
+  CO: "https://www.courts.state.co.us/Self_Help/",
+  CT: "https://www.jud.ct.gov/selfhelp.htm",
+  DE: "https://courts.delaware.gov/help/",
+  DC: "https://www.dccourts.gov/services/represent-yourself",
+  FL: "https://www.flcourts.gov/Resources-Services/Office-of-Family-Courts/Self-Help-Information",
+  GA: "https://georgiacourts.gov/self-help/",
+  HI: "https://www.courts.state.hi.us/self-help",
+  ID: "https://courtselfhelp.idaho.gov",
+  IL: "https://www.illinoiscourts.gov/self-help",
+  IN: "https://www.in.gov/courts/selfservice/",
+  IA: "https://www.iowacourts.gov/for-the-public/representing-yourself",
+  KS: "https://www.kscourts.gov/",
+  KY: "https://www.kycourts.gov/Legal-Help/Pages/default.aspx",
+  LA: "https://www.lasc.org/self_help",
+  ME: "https://www.courts.maine.gov/help/index.html",
+  MD: "https://www.mdcourts.gov/selfhelp",
+  MA: "https://www.mass.gov/representing-yourself-in-a-civil-case",
+  MI: "https://michiganlegalhelp.org",
+  MN: "https://www.mncourts.gov/Help-Topics.aspx",
+  MS: "https://courts.ms.gov/selfhelp/selfhelp.php",
+  MO: "https://www.courts.mo.gov/page.jsp?id=5240",
+  MT: "https://courts.mt.gov/selfhelp",
+  NE: "https://supremecourt.nebraska.gov/self-help",
+  NV: "https://selfhelp.nvcourts.gov",
+  NH: "https://www.courts.nh.gov/self-help",
+  NJ: "https://www.njcourts.gov/self-help",
+  NM: "https://www.nmcourts.gov/",
+  NY: "https://ww2.nycourts.gov/courthelp/",
+  NC: "https://www.nccourts.gov/help-topics",
+  ND: "https://www.ndcourts.gov/legal-self-help",
+  OH: "https://www.supremecourt.ohio.gov/JCS/CFC/resources/",
+  OK: "https://www.oscn.net/v4/",
+  OR: "https://www.courts.oregon.gov/help/Pages/default.aspx",
+  PA: "https://www.pacourts.us/learn/representing-yourself",
+  RI: "https://www.courts.ri.gov/",
+  SC: "https://www.sccourts.org/selfhelp/",
+  SD: "https://ujs.sd.gov/",
+  TN: "https://www.tncourts.gov/programs/self-help-center",
+  TX: "https://www.texaslawhelp.org",
+  UT: "https://www.utcourts.gov/en/self-help.html",
+  VT: "https://www.vermontjudiciary.org/self-help",
+  VA: "https://selfhelp.vacourts.gov",
+  WA: "https://www.courts.wa.gov/newsinfo/resources/",
+  WV: "https://www.courtswv.gov/",
+  WI: "https://www.wicourts.gov/services/public/selfhelp/",
+  WY: "https://www.courts.state.wy.us/",
+};
+
 export function detectState(text: string): { name: string; code: string } | null {
   const lower = ` ${text.toLowerCase().replace(/[^a-z]+/g, " ")} `;
   // Prefer longer names first so "west virginia" wins over "virginia".
@@ -528,7 +583,9 @@ function formatTopic(topic: LegalTopic, state: { name: string; code: string } | 
     ...resources.map((r) => `- [${r.label}](${r.url})`),
   ];
   if (state && state.code !== "CA") {
-    lines.push(`- Search for the ${state.name} courts self-help center for state-specific forms and rules.`);
+    const official = STATE_COURT_HELP[state.code];
+    if (official) lines.push(`- [${state.name} courts: self-help and forms](${official})`);
+    else lines.push(`- Search for the ${state.name} courts self-help center for state-specific forms and rules.`);
   }
   lines.push("", `### When to talk to a lawyer`, topic.attorneyWhen);
   return lines.join("\n");

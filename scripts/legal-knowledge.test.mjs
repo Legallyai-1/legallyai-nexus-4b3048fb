@@ -23,7 +23,7 @@ test("non-California state hides California-only links", () => {
   assert.equal(a.topics[0], "traffic");
   assert.equal(a.state, "TX");
   assert.doesNotMatch(a.text, /courts\.ca\.gov/);
-  assert.match(a.text, /Texas courts self-help/);
+  assert.match(a.text, /Texas courts: self-help and forms\]\(https:\/\/www\.texaslawhelp\.org\)/);
   assert.match(a.text, /lsc\.gov\/find-legal-aid/);
 });
 
@@ -72,6 +72,11 @@ test("site suggested questions all match a topic", () => {
   assert.equal(ask("What should be included in a freelance contract?").topics[0], "contracts");
   assert.equal(ask("How does child custody work in New York?").topics[0], "custody");
   assert.equal(ask("What is the difference between a will and a trust?").topics[0], "estate");
+});
+
+test("state directory covers all 50 states and DC with https links", () => {
+  assert.equal(Object.keys(kb.STATE_COURT_HELP).length, 51);
+  assert.ok(Object.values(kb.STATE_COURT_HELP).every((u) => u.startsWith("https://")));
 });
 
 test("every topic has steps, resources with https links, and attorney guidance", () => {
