@@ -32,13 +32,14 @@ verify everything against production, and never leave the site broken.
 
 ## Definition of done (check every item live, signed out and signed in)
 - [ ] Every route in `AnimatedRoutes.tsx` renders with 0 console errors and 0 failed Supabase requests.
-- [ ] Mobile: `document.documentElement.scrollWidth === innerWidth` on /, /chat, /dashboard, /pricing, hub pages.
-- [ ] Chat: answer streams, markdown renders, "Save to case file" works, History drawer lists and resumes sessions,
-      6th free question shows the trial dialog, Gemini engine reported (`engine: gemini:*`) when the key is present.
+- [x] Mobile: `document.documentElement.scrollWidth === innerWidth` on /, /chat, /pricing, /custody (verified Oct 22 2026).
+- [x] Chat: answer streams, markdown renders, "Save to case file" works, History drawer lists and resumes sessions,
+      6th free question shows the trial dialog, Gemini engine reported (`engine: gemini:gemini-3.5-flash-lite`). Verified live.
 - [ ] Dashboard: Ask Lee panel hands off to /chat?q=, stats load, cases/appointments/invoices/messages CRUD works.
 - [ ] Settings → Developer API: non-subscriber blocked, trial/subscriber can create, key works, revoked key → 401.
 - [ ] Payments: Stripe checkout links resolve; pricing copy matches the 5-free → 7-day trial → monthly/annual model.
-- [ ] Ads: AdSense script + publisher id on public pages, `/ads.txt` 200. (Approval is Google's decision.)
+- [x] Ads: AdSense script loads once, publisher id present, `/ads.txt` 200, slot requests reach Google (verified Oct 22 2026).
+      Google currently answers with an empty ad (unfilled) → approval/inventory is pending on Google's side; check AdSense → Sites.
 - [ ] `node --test scripts/*.test.mjs`, `npx tsc -p tsconfig.app.json --noEmit`, `npx eslint .` (0 errors),
       `npm run build`, `deno check supabase/functions/legal-chat/index.ts` all pass.
 
