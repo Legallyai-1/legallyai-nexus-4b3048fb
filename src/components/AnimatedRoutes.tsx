@@ -1,4 +1,5 @@
 import { lazy, Suspense } from "react";
+import { GlowScalesLoader } from "@/components/brand/GlowScales";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { PageTransition } from "@/components/ui/PageTransition";
@@ -60,11 +61,7 @@ const StoreAssetsPage = lazy(() => import("@/pages/StoreAssetsPage"));
 const NotificationsPage = lazy(() => import("@/pages/NotificationsPage"));
 
 // Loading fallback component
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-  </div>
-);
+const LoadingFallback = () => <GlowScalesLoader />;
 
 // Module-level so pages are not remounted on every router re-render (e.g. query-string changes).
 const LazyRoute = ({ children }: { children: React.ReactNode }) => (

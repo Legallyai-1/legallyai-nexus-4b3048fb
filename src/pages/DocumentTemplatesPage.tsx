@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { GlowScales } from "@/components/brand/GlowScales";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -335,7 +336,7 @@ export default function DocumentTemplatesPage() {
                 Our AI can generate custom legal documents tailored to your specific needs
               </p>
               <Button variant="neon" size="lg" onClick={() => navigate("/generate")} className="gap-2">
-                <Scale className="h-4 w-4" />
+                <GlowScales className="h-4 w-4" />
                 Generate Custom Document
               </Button>
             </div>

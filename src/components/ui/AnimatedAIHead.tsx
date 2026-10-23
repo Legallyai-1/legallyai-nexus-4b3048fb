@@ -22,7 +22,7 @@ export function AnimatedAIHead({ size = "md", className, isActive = true }: Anim
       <img
         src={size === "lg" ? "/lee-mascot.png" : "/lee-mascot-sm.png"}
         alt=""
-        className={cn("relative h-full w-auto object-contain drop-shadow-[0_6px_14px_hsl(222_60%_5%/0.55)]", isActive && "animate-float")}
+        className={cn("relative h-full w-full object-contain drop-shadow-[0_6px_14px_hsl(222_60%_5%/0.55)]", isActive && "animate-lee-alive")}
         loading="lazy"
         draggable={false}
       />

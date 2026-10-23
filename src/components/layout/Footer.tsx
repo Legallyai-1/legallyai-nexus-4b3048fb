@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { GlowScales } from "@/components/brand/GlowScales";
 import { Scale, Sparkles, Mail, MapPin, Phone } from "lucide-react";
 
 const footerLinks = {
@@ -32,7 +33,7 @@ export function Footer() {
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
               <div className="relative">
-                <Scale className="h-8 w-8 text-legal-gold" />
+                <GlowScales className="h-8 w-8 text-legal-gold" />
                 <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-legal-cyan" />
               </div>
               <span className="font-display text-2xl font-bold">

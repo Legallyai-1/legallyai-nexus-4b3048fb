@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { GlowScales } from "@/components/brand/GlowScales";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -478,7 +479,7 @@ export default function ProBonoPage() {
                     <Card className="glass-card-hover border-neon-pink/20">
                       <CardContent className="p-6 text-center">
                         <div className="w-12 h-12 rounded-xl bg-neon-pink/10 flex items-center justify-center mx-auto mb-4">
-                          <Scale className="h-6 w-6 text-neon-pink" />
+                          <GlowScales className="h-6 w-6 text-neon-pink" />
                         </div>
                         <h3 className="font-semibold text-foreground mb-2">Legal Aid Societies</h3>
                         <p className="text-sm text-muted-foreground mb-4">Free legal help for low-income individuals. Income limits apply.</p>

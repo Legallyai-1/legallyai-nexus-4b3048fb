@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { GlowScales } from "@/components/brand/GlowScales";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -198,7 +199,7 @@ export default function CasesPage() {
             <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
               <ChevronLeft className="h-5 w-5" />
             </Button>
-            <Scale className="h-6 w-6 text-neon-gold" />
+            <GlowScales className="h-6 w-6 text-neon-gold" />
             <h1 className="text-xl font-display font-semibold">Case Management</h1>
           </div>
         </header>

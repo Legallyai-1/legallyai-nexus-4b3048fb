@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { GlowScales } from "@/components/brand/GlowScales";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -101,7 +102,7 @@ const DUIHubPage = () => {
                 <Card className="bg-card/50 border-red-500/20">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium">Active Cases</CardTitle>
-                    <Scale className="h-4 w-4 text-red-400" />
+                    <GlowScales className="h-4 w-4 text-red-400" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">12</div>

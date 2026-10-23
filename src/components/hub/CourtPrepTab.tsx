@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { GlowScales } from "@/components/brand/GlowScales";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -200,7 +201,7 @@ export function CourtPrepTab({ caseType, colorVariant = "purple" }: CourtPrepTab
       <Card className={`glass-card border-${colorClass}/30 p-4`}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Scale className={`w-5 h-5 text-${colorClass}`} />
+            <GlowScales className={`w-5 h-5 text-${colorClass}`} />
             <h3 className="font-display font-semibold text-foreground">Court Preparation</h3>
           </div>
           <Badge className={`bg-${colorClass}/20 text-${colorClass} border-${colorClass}/30`}>

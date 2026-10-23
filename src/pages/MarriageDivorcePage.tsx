@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { GlowScales } from "@/components/brand/GlowScales";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { Layout } from "@/components/layout/Layout";
@@ -173,7 +174,7 @@ export default function MarriageDivorcePage() {
                   Prenup
                 </TabsTrigger>
                 <TabsTrigger value="divorce" className="data-[state=active]:bg-neon-pink/20 data-[state=active]:text-neon-pink">
-                  <Scale className="w-4 h-4 mr-2" />
+                  <GlowScales className="w-4 h-4 mr-2" />
                   Divorce
                 </TabsTrigger>
                 <TabsTrigger value="calculator" className="data-[state=active]:bg-neon-pink/20 data-[state=active]:text-neon-pink">
@@ -307,7 +308,7 @@ export default function MarriageDivorcePage() {
                   
                   <Card className="glass-card p-6 border-neon-cyan/30">
                     <h3 className="font-display font-semibold text-xl text-foreground mb-4 flex items-center gap-2">
-                      <Scale className="w-5 h-5 text-neon-cyan" />
+                      <GlowScales className="w-5 h-5 text-neon-cyan" />
                       Prenup Requirements by State
                     </h3>
                     <div className="grid md:grid-cols-3 gap-4">
@@ -353,7 +354,7 @@ export default function MarriageDivorcePage() {
                     fields={divorceFields}
                     systemPrompt="You are MaryAI, an expert in divorce law. Generate a comprehensive divorce petition based on the provided information. Include all required sections: parties' information, grounds for divorce, property and debt descriptions, child custody requests if applicable, and relief requested. Follow the format required by the user's state court."
                     colorVariant="purple"
-                    icon={<Scale className="h-5 w-5 text-neon-purple" />}
+                    icon={<GlowScales className="h-5 w-5 text-neon-purple" />}
                   />
                   
                   <DocumentGenerator

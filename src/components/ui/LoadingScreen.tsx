@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { GlowScales } from "@/components/brand/GlowScales";
 import { Scale, Sparkles } from "lucide-react";
 
 export function LoadingScreen() {
@@ -67,7 +68,7 @@ export function LoadingScreen() {
               animate={{ rotateY: 360 }}
               transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
             >
-              <Scale className="h-16 w-16 text-legal-gold drop-shadow-[0_0_20px_hsl(var(--legal-gold)/0.5)]" />
+              <GlowScales className="h-16 w-16 text-legal-gold drop-shadow-[0_0_20px_hsl(var(--legal-gold)/0.5)]" />
             </motion.div>
             
             {/* Sparkles */}
