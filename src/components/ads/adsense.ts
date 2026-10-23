@@ -35,22 +35,18 @@ function ensureAdsenseScriptLoaded() {
     return;
   }
 
-  const scriptSrc = `${ADSENSE_SCRIPT_BASE_URL}?client=${encodeURIComponent(getAdsenseClientId())}`;
-  const existingScript = document.getElementById(ADSENSE_SCRIPT_ID);
-
-  if (existingScript instanceof HTMLScriptElement) {
-    if (existingScript.src === scriptSrc) {
-      return;
-    }
-
-    existingScript.remove();
+  // index.html already loads adsbygoogle.js. Google only allows ONE copy per page; a second tag makes the
+  // loader bail out and queued slots stay "pending" forever. Reuse any existing tag, whatever its id.
+  const existing = document.querySelector<HTMLScriptElement>(`script[src^="${ADSENSE_SCRIPT_BASE_URL}"]`);
+  if (existing) {
+    return;
   }
 
   const script = document.createElement('script');
   script.id = ADSENSE_SCRIPT_ID;
   script.async = true;
   script.crossOrigin = 'anonymous';
-  script.src = scriptSrc;
+  script.src = `${ADSENSE_SCRIPT_BASE_URL}?client=${encodeURIComponent(getAdsenseClientId())}`;
   document.head.appendChild(script);
 }
 
@@ -60,12 +56,8 @@ export function queueAdsenseSlot() {
   }
 
   ensureAdsenseScriptLoaded();
+  // Never replace window.adsbygoogle once Google's loader owns it; just queue onto whatever is there.
   window.adsbygoogle = window.adsbygoogle || [];
-
-  if (!Array.isArray(window.adsbygoogle)) {
-    window.adsbygoogle = [];
-  }
-
   window.adsbygoogle.push({});
   return true;
 }
