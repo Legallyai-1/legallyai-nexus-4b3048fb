@@ -209,28 +209,12 @@ export function FloatingLeeAssistant() {
           className="relative group"
           aria-label="Ask Lee AI Assistant"
         >
-          {/* Glow effects */}
-          <div className="absolute inset-0 bg-neon-cyan/30 rounded-full blur-xl animate-pulse scale-150" />
-          <div className="absolute inset-0 bg-neon-purple/20 rounded-full blur-md scale-125 group-hover:scale-150 transition-transform duration-500" />
-          
-          {/* Orbiting particles */}
-          <div className="absolute inset-0 animate-spin" style={{ animationDuration: "4s" }}>
-            <div className="absolute -top-1 left-1/2 w-2 h-2 bg-neon-cyan rounded-full shadow-[0_0_8px_hsl(var(--neon-cyan))]" />
-          </div>
-          
-          {/* Main button */}
-          <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-neon-cyan via-neon-purple to-neon-pink shadow-[0_0_30px_hsl(var(--neon-cyan)/0.5)] flex items-center justify-center transition-all duration-300 group-hover:scale-110">
-            <Brain className="h-6 w-6 text-white" />
-            <Sparkles className="absolute -top-1 -right-1 h-4 w-4 text-neon-green animate-pulse" />
-          </div>
-
-          {/* Label */}
-          <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
-            <div className="bg-background/90 backdrop-blur-sm border border-neon-cyan/30 rounded-lg px-3 py-2 whitespace-nowrap">
-              <span className="text-sm font-medium text-foreground">Ask Lee</span>
-              <Badge className="ml-2 bg-neon-green/20 text-neon-green text-xs">Premium</Badge>
-            </div>
-          </div>
+          {/* Lee mascot floating, with a speech bubble (new design) */}
+          <div className="absolute inset-0 rounded-full bg-[hsl(45_90%_60%/0.35)] blur-2xl scale-125" aria-hidden="true" />
+          <img src="/lee-mascot-sm.png" alt="" aria-hidden="true" width={64} height={96} className="relative h-20 w-auto animate-float drop-shadow-[0_10px_20px_hsl(222_60%_5%/0.6)] transition-transform duration-300 group-hover:scale-110" draggable={false} />
+          <span className="absolute left-[85%] bottom-[70%] whitespace-nowrap rounded-2xl rounded-bl-sm border border-white/30 bg-white/95 px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-lg">
+            How can I assist you today?
+          </span>
         </button>
       </motion.div>
 

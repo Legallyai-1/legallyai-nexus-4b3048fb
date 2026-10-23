@@ -15,6 +15,7 @@ import AdMobBanner, { ADMOB_AD_UNITS } from "@/components/ads/AdMobBanner";
 import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
 import { SaveToCaseFile } from "@/components/chat/SaveToCaseFile";
 import { ChatHistoryDrawer } from "@/components/chat/ChatHistoryDrawer";
+import { LeeGreeting } from "@/components/chat/LeeGreeting";
 
 const suggestedQuestions = [
   "What are my rights as a tenant in California?",
@@ -88,9 +89,9 @@ export default function ChatPage() {
         <header className="border-b border-border glass-card px-4 py-4">
           <div className="container mx-auto max-w-4xl flex flex-wrap items-center gap-3">
             <AnimatedAIHead variant="cyan" size="sm" />
-            <div className="flex-1 min-w-0">
-              <h1 className="font-display text-lg font-semibold">Legal Information Assistant</h1>
-              <p className="text-sm text-muted-foreground">Model access depends on your account, available quota, and service configuration.</p>
+            <div className="flex-1 min-w-[12rem]">
+              <h1 className="font-display text-lg font-semibold">Ask Lee <span className="text-white/50">·</span> <span className="gold-text">AI Partner</span></h1>
+              <p className="text-sm text-muted-foreground">Legal research with official sources for your state.</p>
             </div>
             <ChatHistoryDrawer userId={user?.id ?? null} refreshKey={historyKey} onSelect={(sid, saved) => { loadConversation(sid, saved); setInput(""); }} />
             <Button variant="outline" onClick={() => { clearMessages(); setInput(""); }} disabled={checkingAuth}>New conversation</Button>
@@ -103,6 +104,7 @@ export default function ChatPage() {
         </div>
         <section aria-label="Conversation" aria-busy={isLoading} className="flex-1 container mx-auto max-w-4xl px-4 py-6 space-y-5">
           {messages.length === 0 && <div className="glass-card rounded-2xl p-5 space-y-3">
+            <LeeGreeting />
             <p>Ask a legal-information question and include your state or country when relevant. Avoid names, case numbers, and confidential documents. Verify important answers with official sources or a licensed attorney.</p>
             <p className="text-sm text-muted-foreground">Answers come from Lee, the LegallyAI legal AI, with official links for your state. Save any answer to your case file to track deadlines and appointments.</p>
             <div className="flex flex-wrap gap-2">{suggestedQuestions.map(question => <button key={question} type="button" onClick={() => setInput(question)} className="rounded-xl border border-border px-3 py-2 text-left text-sm focus-visible:outline focus-visible:outline-2">{question}</button>)}</div>
