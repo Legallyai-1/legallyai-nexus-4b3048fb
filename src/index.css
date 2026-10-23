@@ -102,6 +102,12 @@
     scroll-behavior: smooth;
   }
 
+  html, body {
+    /* Mobile: never let decorative or wide elements create horizontal scroll or trigger zoom-out. */
+    overflow-x: clip;
+    max-width: 100vw;
+  }
+
   body {
     @apply bg-background text-foreground font-body antialiased;
     font-family: var(--font-body);

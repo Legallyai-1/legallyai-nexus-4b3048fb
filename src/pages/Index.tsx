@@ -139,7 +139,7 @@ export default function Index() {
     <Layout>
       <FuturisticBackground>
         {/* Hero Section with Ask Lee */}
-        <section className="relative min-h-[90vh] flex items-center justify-center px-4 py-12">
+        <section className="relative min-h-[90vh] flex items-center justify-center px-4 py-12 overflow-x-clip">
           <div className="container mx-auto max-w-6xl">
             <div className="grid lg:grid-cols-2 gap-8 items-center">
               <div className="text-center lg:text-left">
@@ -159,12 +159,12 @@ export default function Index() {
                 </p>
                 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-fade-in" style={{ animationDelay: "300ms" }}>
-                  <Button size="lg" className="text-lg px-8 py-6 gradient-neon-cyan text-background font-semibold shadow-[0_0_30px_hsl(var(--neon-cyan)/0.4)]" onClick={() => document.getElementById("hero-chat-input")?.focus()}>
+                  <Button size="lg" className="w-full sm:w-auto whitespace-normal text-base sm:text-lg px-6 sm:px-8 py-6 gradient-neon-cyan text-background font-semibold shadow-[0_0_30px_hsl(var(--neon-cyan)/0.4)]" onClick={() => document.getElementById("hero-chat-input")?.focus()}>
                     <MessageSquare className="mr-2 h-5 w-5" />
                     Ask Lee free: 5 questions, no card
                   </Button>
-                  <Link to="/pricing">
-                    <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-neon-gold/50 text-neon-gold hover:bg-neon-gold/10">
+                  <Link to="/pricing" className="w-full sm:w-auto">
+                    <Button size="lg" variant="outline" className="w-full sm:w-auto text-base sm:text-lg px-6 sm:px-8 py-6 border-neon-gold/50 text-neon-gold hover:bg-neon-gold/10">
                       <Briefcase className="mr-2 h-5 w-5" />
                       For law firms
                     </Button>

@@ -14,6 +14,7 @@ import AdContainer from "@/components/ads/AdContainer";
 import AdMobBanner, { ADMOB_AD_UNITS } from "@/components/ads/AdMobBanner";
 import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
 import { SaveToCaseFile } from "@/components/chat/SaveToCaseFile";
+import { ChatHistoryDrawer } from "@/components/chat/ChatHistoryDrawer";
 
 const suggestedQuestions = [
   "What are my rights as a tenant in California?",
@@ -29,7 +30,9 @@ export default function ChatPage() {
   const [authError, setAuthError] = useState(false);
   const [input, setInput] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
-  const { messages, isLoading, sendMessage, clearMessages } = useAIChat({ hubType: "general" });
+  const { messages, isLoading, sendMessage, clearMessages, loadConversation } = useAIChat({ hubType: "general" });
+  const [historyKey, setHistoryKey] = useState(0);
+  useEffect(() => { if (!isLoading) setHistoryKey((k) => k + 1); }, [isLoading]);
   const accountRef = useRef<string | null | undefined>(undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -89,6 +92,7 @@ export default function ChatPage() {
               <h1 className="font-display text-lg font-semibold">Legal Information Assistant</h1>
               <p className="text-sm text-muted-foreground">Model access depends on your account, available quota, and service configuration.</p>
             </div>
+            <ChatHistoryDrawer userId={user?.id ?? null} refreshKey={historyKey} onSelect={(sid, saved) => { loadConversation(sid, saved); setInput(""); }} />
             <Button variant="outline" onClick={() => { clearMessages(); setInput(""); }} disabled={checkingAuth}>New conversation</Button>
           </div>
         </header>
