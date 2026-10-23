@@ -106,5 +106,16 @@ export function useAIChat({ hubType, onError }: UseAIChatOptions) {
     setMessages(previous => [...previous, { id: crypto.randomUUID(), role: "system", content }]);
   }, [setMessages]);
 
-  return { messages, isLoading, sendMessage, clearMessages, addSystemMessage, setMessages };
+  // Resume a saved conversation: later replies are appended to the same server-side session.
+  const loadConversation = useCallback((sessionId: string, saved: Message[]) => {
+    requestRef.current += 1;
+    controllerRef.current?.abort();
+    controllerRef.current = null;
+    busyRef.current = false;
+    sessionIdRef.current = sessionId;
+    setMessages(saved.map((m) => ({ ...m, id: m.id ?? crypto.randomUUID() })));
+    if (mountedRef.current) setIsLoading(false);
+  }, [setMessages]);
+
+  return { messages, isLoading, sendMessage, clearMessages, addSystemMessage, setMessages, loadConversation, sessionId: sessionIdRef.current };
 }

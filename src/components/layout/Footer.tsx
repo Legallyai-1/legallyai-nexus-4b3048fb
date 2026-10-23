@@ -25,7 +25,7 @@ const footerLinks = {
 
 export function Footer() {
   return (
-    <footer className="bg-primary text-primary-foreground">
+    <footer className="border-t border-border bg-card text-foreground">
       <div className="container mx-auto px-4 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
           {/* Brand */}
@@ -36,15 +36,15 @@ export function Footer() {
                 <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-legal-cyan" />
               </div>
               <span className="font-display text-2xl font-bold">
-                <span className="text-primary-foreground">Legally</span>
+                <span className="text-foreground">Legally</span>
                 <span className="text-legal-gold">AI</span>
               </span>
             </Link>
-            <p className="text-primary-foreground/70 mb-6 max-w-sm">
+            <p className="text-muted-foreground mb-6 max-w-sm">
               AI-powered legal document generation and assistance. Get professional legal 
               documents in seconds, not hours.
             </p>
-            <div className="space-y-2 text-sm text-primary-foreground/60">
+            <div className="space-y-2 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
                 <span>support@legallyai.ai</span>
@@ -62,7 +62,7 @@ export function Footer() {
                 <li key={link.path}>
                   <Link
                     to={link.path}
-                    className="text-primary-foreground/70 hover:text-legal-gold transition-colors"
+                    className="text-muted-foreground hover:text-legal-gold transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -81,7 +81,7 @@ export function Footer() {
                 <li key={link.path}>
                   <Link
                     to={link.path}
-                    className="text-primary-foreground/70 hover:text-legal-gold transition-colors"
+                    className="text-muted-foreground hover:text-legal-gold transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -100,7 +100,7 @@ export function Footer() {
                 <li key={link.path}>
                   <Link
                     to={link.path}
-                    className="text-primary-foreground/70 hover:text-legal-gold transition-colors"
+                    className="text-muted-foreground hover:text-legal-gold transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -111,11 +111,11 @@ export function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-12 pt-8 border-t border-primary-foreground/10 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-primary-foreground/60">
+        <div className="mt-12 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} LegallyAI. All rights reserved.
           </p>
-          <p className="text-xs text-primary-foreground/40 max-w-md text-center md:text-right">
+          <p className="text-xs text-foreground/40 max-w-md text-center md:text-right">
             LegallyAI provides AI-generated legal templates for informational purposes only. 
             This is not legal advice. Consult a licensed attorney for legal matters.
           </p>

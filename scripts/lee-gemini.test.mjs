@@ -14,7 +14,11 @@ const env = (o) => ({ get: (k) => o[k] });
 test("no Gemini key means Gemini is skipped", () => assert.equal(g.getGeminiConfig(env({})), null));
 
 test("models: preferred first, no duplicates", () => {
-  assert.deepEqual(g.getGeminiConfig(env({ GEMINI_API_KEY: "k", GEMINI_MODEL: "gemini-2.5-flash" })).models, ["gemini-2.5-flash", "gemini-flash-latest"]);
+  assert.deepEqual(g.getGeminiConfig(env({ GEMINI_API_KEY: "a-key-long-enough", GEMINI_MODEL: "gemini-3.8-flash" })).models, ["gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-flash-lite-latest"]);
+});
+
+test("accepts a key saved under the dashboard spelling 'Gemini API Key'", () => {
+  assert.equal(g.getGeminiConfig(env({ "Gemini API Key": "a-key-long-enough" }))?.models[0], "gemini-3.5-flash-lite");
 });
 
 test("parses text and unique https grounding sources", () => {
