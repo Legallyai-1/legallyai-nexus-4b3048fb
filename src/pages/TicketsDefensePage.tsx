@@ -168,7 +168,7 @@ export default function TicketsDefensePage() {
 
               <TabsContent value="assistant">
                 <HubAssistant
-                  assistantName="Defendr"
+                  assistantName="DefendrAI"
                   colorVariant="pink"
                   hubType="defense"
                   placeholderText="Describe your case, upload your ticket, or ask about your defense options..."

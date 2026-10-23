@@ -117,7 +117,7 @@ export default function ProbationParolePage() {
                 <AnimatedAIHead variant="green" size="lg" />
               </div>
               <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-2">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-green to-neon-cyan">RehabilitAI</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-green to-neon-cyan">Freedom AI</span>
               </h1>
               <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
                 Complete support hub for probation, parole, and reentry. You deserve a second chance.
@@ -174,11 +174,11 @@ export default function ProbationParolePage() {
 
               <TabsContent value="assistant">
                 <HubAssistant
-                  assistantName="RehabilitAI"
+                  assistantName="Freedom AI"
                   colorVariant="green"
                   hubType="parole"
                   placeholderText="Share what you need help with or upload your probation/parole documents..."
-                  welcomeMessage="I'm RehabilitAI, here to support you through probation, parole, or reentry. Upload your documents and I'll help you understand your conditions, rights, and next steps. You're not alone in this journey."
+                  welcomeMessage="I'm Freedom AI, here to support you through probation, parole, or reentry. Upload your documents and I'll help you understand your conditions, rights, and next steps. You're not alone in this journey."
                 />
               </TabsContent>
 
@@ -257,7 +257,7 @@ export default function ProbationParolePage() {
             {/* Support Notice */}
             <div className="mt-8 glass-card rounded-xl p-4 border-neon-green/30">
               <p className="text-sm text-muted-foreground text-center">
-                💚 <strong>You're not alone.</strong> RehabilitAI is here to help you navigate your journey. 
+                💚 <strong>You're not alone.</strong> Freedom AI is here to help you navigate your journey. 
                 Remember to always verify information with your probation/parole officer or attorney.
               </p>
             </div>

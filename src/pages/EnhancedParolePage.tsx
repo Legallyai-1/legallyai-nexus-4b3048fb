@@ -66,7 +66,7 @@ const EnhancedParolePage = () => {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-foreground">Parole & Probation Hub</h1>
-              <p className="text-muted-foreground">RehabilitAI - Supervision management and resource coordination</p>
+              <p className="text-muted-foreground">Freedom AI - Supervision management and resource coordination</p>
             </div>
             <div className="ml-auto">
               <AnimatedAIHead variant="green" size="sm" />

@@ -12,7 +12,7 @@ import { useLocation } from 'react-router-dom';
 
 const HUBS = [
   'Lee Legal AI', 'CustodiAI', 'DefendrAI', 'DriveSafeAI', 'MaryAI',
-  'LegacyAI', 'Freedom AI', 'WorkplaceAI', 'PraxisAI', 'ScholarAI',
+  'LegacyAI', 'Freedom AI', 'WorkAI', 'PraxisAI', 'ScholarAI',
   'JobBoardAI', 'ProBonoAI', 'LoanAI', 'General/Other'
 ];
 
