@@ -66,7 +66,7 @@ export function MainLayout({ children, showSidebar = true, showHeader = true }: 
               <div className="relative max-w-md w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
-                  placeholder="Search cases, clients, documents..." 
+                  placeholder="Enterprise search across legal archives, cases, and active drafts..." 
                   className="pl-10 h-9"
                 />
               </div>
