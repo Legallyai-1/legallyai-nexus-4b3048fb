@@ -66,14 +66,15 @@ const LoadingFallback = () => (
   </div>
 );
 
+// Module-level so pages are not remounted on every router re-render (e.g. query-string changes).
+const LazyRoute = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<LoadingFallback />}>{children}</Suspense>
+);
+
 export function AnimatedRoutes() {
   const location = useLocation();
 
   // Helper to wrap lazy-loaded components
-  const LazyRoute = ({ children }: { children: React.ReactNode }) => (
-    <Suspense fallback={<LoadingFallback />}>{children}</Suspense>
-  );
-
   return (
     <AnimatePresence mode="sync">
       <Routes location={location} key={location.pathname}>
