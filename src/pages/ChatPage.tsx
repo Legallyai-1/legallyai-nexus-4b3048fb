@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import AdBanner from "@/components/ads/AdBanner";
 import AdContainer from "@/components/ads/AdContainer";
 import AdMobBanner, { ADMOB_AD_UNITS } from "@/components/ads/AdMobBanner";
 import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
+import { SaveToCaseFile } from "@/components/chat/SaveToCaseFile";
 
 const suggestedQuestions = [
   "What are my rights as a tenant in California?",
@@ -27,6 +28,7 @@ export default function ChatPage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [authError, setAuthError] = useState(false);
   const [input, setInput] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
   const { messages, isLoading, sendMessage, clearMessages } = useAIChat({ hubType: "general" });
   const accountRef = useRef<string | null | undefined>(undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -61,6 +63,14 @@ export default function ChatPage() {
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "auto" }); }, [messages]);
 
+  // Questions handed off from the dashboard ("Ask Lee") arrive as ?q= and are sent once ready.
+  useEffect(() => {
+    const q = searchParams.get("q")?.trim();
+    if (!q || checkingAuth || isLoading) return;
+    setSearchParams({}, { replace: true });
+    void sendMessage(q.slice(0, 2000)).catch(() => { /* error shown by the hook */ });
+  }, [searchParams, checkingAuth, isLoading, sendMessage, setSearchParams]);
+
   async function submit() {
     const text = input.trim();
     if (!text || isLoading || checkingAuth) return;
@@ -90,7 +100,7 @@ export default function ChatPage() {
         <section aria-label="Conversation" aria-busy={isLoading} className="flex-1 container mx-auto max-w-4xl px-4 py-6 space-y-5">
           {messages.length === 0 && <div className="glass-card rounded-2xl p-5 space-y-3">
             <p>Ask a legal-information question and include your state or country when relevant. Avoid names, case numbers, and confidential documents. Verify important answers with official sources or a licensed attorney.</p>
-            <p className="text-sm text-muted-foreground">If a generative model is unavailable, the service may return fixed no-cost guidance. That is not a researched answer to your specific question.</p>
+            <p className="text-sm text-muted-foreground">Answers come from Lee, the LegallyAI legal AI, with official links for your state. Save any answer to your case file to track deadlines and appointments.</p>
             <div className="flex flex-wrap gap-2">{suggestedQuestions.map(question => <button key={question} type="button" onClick={() => setInput(question)} className="rounded-xl border border-border px-3 py-2 text-left text-sm focus-visible:outline focus-visible:outline-2">{question}</button>)}</div>
           </div>}
           {messages.map((message, index) => <div key={message.id ?? index} className={cn("flex gap-3", message.role === "user" ? "justify-end" : "justify-start")}>
@@ -98,6 +108,11 @@ export default function ChatPage() {
             <div className={cn("min-w-0 max-w-[85%] rounded-2xl px-4 py-3 break-words", message.role === "user" ? "bg-neon-cyan/20" : "glass-card border border-border")}>
               {message.role === "user" || !message.content ? <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content || (isLoading ? "Preparing response…" : "")}</p> : <ChatMarkdown content={message.content} />}
               {message.reviewed && <p className="mt-2 text-xs text-muted-foreground">Secondary AI review performed; accuracy is not independently verified.</p>}
+              {message.role === "assistant" && message.content && !(isLoading && index === messages.length - 1) && (
+                <div className="mt-2 flex justify-end">
+                  <SaveToCaseFile question={[...messages].slice(0, index).reverse().find(m => m.role === "user")?.content ?? "Legal question"} answer={message.content} hubType="general" />
+                </div>
+              )}
             </div>
             {message.role === "user" && <User aria-hidden="true" className="h-5 w-5 shrink-0" />}
           </div>)}

@@ -144,41 +144,42 @@ export default function Index() {
             <div className="grid lg:grid-cols-2 gap-8 items-center">
               <div className="text-center lg:text-left">
                 <Badge className="bg-neon-cyan/20 text-neon-cyan border-neon-cyan/30 mb-6 animate-fade-in">
-                  <Sparkles className="w-3 h-3 mr-1" /> AI-Powered Legal Intelligence
+                  <Sparkles className="w-3 h-3 mr-1" /> Meet Lee, your legal AI
                 </Badge>
                 
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-6 animate-fade-in" style={{ animationDelay: "100ms" }}>
-                  <span className="text-foreground">Legal Information </span>
+                  <span className="text-foreground">Get clear answers about </span>
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-cyan via-neon-blue to-neon-purple">
-                    Assistant
+                    your legal situation
                   </span>
                 </h1>
                 
                 <p className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0 mb-8 animate-fade-in" style={{ animationDelay: "200ms" }}>
-                  Explore legal information, draft documents for attorney review, and manage cases. AI responses are educational and are not legal advice.
+                  Ask Lee about custody, criminal defense, work, housing, estate planning and more. Lee explains your options in plain English, links you to the official court resources for your state, and keeps your case file, deadlines and appointments together.
                 </p>
                 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-fade-in" style={{ animationDelay: "300ms" }}>
-                  <Link to="/generate">
+                  <Button size="lg" className="text-lg px-8 py-6 gradient-neon-cyan text-background font-semibold shadow-[0_0_30px_hsl(var(--neon-cyan)/0.4)]" onClick={() => document.getElementById("hero-chat-input")?.focus()}>
+                    <MessageSquare className="mr-2 h-5 w-5" />
+                    Ask Lee free: 5 questions, no card
+                  </Button>
+                  <Link to="/pricing">
                     <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-neon-gold/50 text-neon-gold hover:bg-neon-gold/10">
-                      <FileText className="mr-2 h-5 w-5" />
-                      Generate Document
-                    </Button>
-                  </Link>
-                  <Link to="/ai-assistants">
-                    <Button size="lg" variant="outline" className="text-lg px-8 py-6">
-                      <Brain className="mr-2 h-5 w-5" />
-                      All AI Hubs
+                      <Briefcase className="mr-2 h-5 w-5" />
+                      For law firms
                     </Button>
                   </Link>
                 </div>
                 
                 <div className="flex flex-wrap justify-center lg:justify-start gap-4 mt-8 animate-fade-in" style={{ animationDelay: "400ms" }}>
                   <Badge variant="outline" className="text-muted-foreground">
-                    <Check className="w-3 h-3 mr-1 text-neon-green" /> Review generated documents before use
+                    <Check className="w-3 h-3 mr-1 text-neon-green" /> Official state court links in every answer
                   </Badge>
                   <Badge variant="outline" className="text-muted-foreground">
-                    <Star className="w-3 h-3 mr-1 text-neon-gold" /> Not legal advice · Review before use
+                    <Check className="w-3 h-3 mr-1 text-neon-green" /> Private: no names or case numbers needed
+                  </Badge>
+                  <Badge variant="outline" className="text-muted-foreground">
+                    <Star className="w-3 h-3 mr-1 text-neon-gold" /> Legal information, not legal advice
                   </Badge>
                 </div>
               </div>
@@ -254,6 +255,8 @@ export default function Index() {
                   <div className="p-4 border-t border-border/30 bg-background/50">
                     <div className="flex gap-2">
                       <Input
+                        id="hero-chat-input"
+                        aria-label="Ask Lee a legal question"
                         value={chatInput}
                         onChange={(e) => setChatInput(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}

@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { LexiAssistant } from "@/components/dashboard/LexiAssistant";
+import { AskLeePanel } from "@/components/dashboard/AskLeePanel";
 import { formatDistanceToNow } from "date-fns";
 
 interface DashboardStats {
@@ -181,12 +181,9 @@ export default function DashboardPage() {
           <p className="text-muted-foreground">Here's what's happening with your law practice today.</p>
         </div>
 
-        {/* Lexi Assistant */}
+        {/* Ask Lee · AI Partner */}
         <div className="mb-8">
-          <LexiAssistant 
-            userType="lawyer" 
-            userName={user?.user_metadata?.full_name?.split(' ')[0] || "there"} 
-          />
+          <AskLeePanel userType="lawyer" userName={user?.user_metadata?.full_name?.split(' ')[0] || "there"} />
         </div>
 
         {/* Stats Grid */}
