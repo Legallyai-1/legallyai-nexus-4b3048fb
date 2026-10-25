@@ -18,6 +18,10 @@ import {
   Home, Zap, Star, ArrowRight, Check, Send, Loader2, Mic, Brain
 } from "lucide-react";
 import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
+import { PerplexityLegalSearch } from "@/components/legal/PerplexityLegalSearch";
+import { ContractRedlineStudio } from "@/components/legal/ContractRedlineStudio";
+import { SettlementEstimator } from "@/components/legal/SettlementEstimator";
+import { CompetitorVersusTable } from "@/components/legal/CompetitorVersusTable";
 
 const hubs = [
   { id: "chat", name: "Lee Legal AI", icon: MessageSquare, color: "cyan", path: "/chat", description: "General legal assistant" },
@@ -292,6 +296,11 @@ export default function Index() {
           </div>
         </section>
 
+        {/* Perplexity-Style Legal Answer Engine with Grounded Citations & Dynamic Hub Teleport */}
+        <section className="py-8 px-4 container mx-auto max-w-6xl">
+          <PerplexityLegalSearch />
+        </section>
+
         <AdContainer position="inline" className="container mx-auto px-4 mb-8">
           <AdBanner slot="9777464779" format="horizontal" />
         </AdContainer>
@@ -342,6 +351,21 @@ export default function Index() {
               </Link>
             </div>
           </div>
+        </section>
+
+        {/* Spellbook-Grade Contract Redline & Risk Analyzer Section */}
+        <section className="py-12 px-4 container mx-auto max-w-6xl">
+          <ContractRedlineStudio />
+        </section>
+
+        {/* EvenUp-Grade Settlement & Damages Claim Estimator Section */}
+        <section className="py-12 px-4 container mx-auto max-w-6xl">
+          <SettlementEstimator />
+        </section>
+
+        {/* Market Dominance: Head-to-Head Competitor Comparison Table */}
+        <section className="py-12 px-4 container mx-auto max-w-6xl">
+          <CompetitorVersusTable />
         </section>
 
         <section className="py-20 px-4 bg-background/50">
