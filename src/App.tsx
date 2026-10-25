@@ -7,7 +7,7 @@ import { getSupabaseBrowserConfig } from '@/lib/env';
 import { supabase } from '@/integrations/supabase/client';
 import { getSupabaseSessionSafely, subscribeToSupabaseAuthState } from '@/integrations/supabase/helpers';
 import { PRIVATE_APP_MODE, PRIVATE_APP_MESSAGE, PRIVATE_APP_CONFIG_ERROR } from '@/config/privateApp';
-import { SpeedInsights } from '@vercel/speed-insights/react';
+const SpeedInsights = () => null;
 import { FreeLimitDialog } from '@/components/paywall/FreeLimitDialog';
 
 function App() {
