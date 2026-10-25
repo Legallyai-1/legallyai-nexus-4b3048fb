@@ -6,7 +6,7 @@
   "devCommand": "npm run dev",
   "outputDirectory": "dist",
   "github": {
-    "enabled": false
+    "enabled": true
   },
   "regions": [
     "iad1"
