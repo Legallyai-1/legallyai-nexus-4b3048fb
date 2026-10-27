@@ -32,7 +32,7 @@ export default function PricingPage() {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) {
-        navigate("/login");
+        navigate("/login?returnTo=%2Fpricing");
         return;
       }
       const { data, error } = await supabase.functions.invoke("create-checkout", {
@@ -82,7 +82,7 @@ export default function PricingPage() {
                 <p className="text-sm text-muted-foreground mb-5">{offer.period}</p>
                 <p className="text-sm mb-5 flex-1">{offer.description}</p>
                 {offer.trial && <p className="text-sm text-muted-foreground mb-5">If eligible, seven days free, then $9.99/month plus applicable taxes until canceled. A payment method is required. Cancel before the trial ends to avoid the first subscription charge. Eligibility is checked by the server; an ineligible trial request will not silently become a paid checkout.</p>}
-                {offer.name === "Free" ? <Button asChild variant="outline"><Link to="/signup">Create a free account</Link></Button> : (
+                {offer.name === "Free" ? <Button asChild variant="outline"><Link to="/signup?returnTo=%2Fpricing">Create a free account</Link></Button> : (
                   <Button variant="outline" disabled={offer.planned || !enabled || loading !== null} onClick={() => void checkout(offer)} aria-busy={loading === offer.name}>
                     {loading === offer.name && <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />}
                     {offer.planned ? "Enrollment not available" : !enabled ? "Checkout currently disabled" : loading === offer.name ? "Opening checkout…" : offer.trial ? "Start eligible 7-day trial" : "Buy one allowance"}
