@@ -1,23 +1,12 @@
-name: Auth regression checks (no Copilot)
+name: Auth and billing regression checks (no Copilot)
 on:
   pull_request:
     paths:
       - 'src/lib/validations/**'
       - 'src/lib/invite.ts'
-      - 'supabase/functions/_shared/billing-ownership.ts'
-      - 'supabase/functions/customer-portal/**'
-      - 'scripts/*test.ts'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/auth-regression.yml'
-  push:
-    branches:
-      - 'copilot/fix-248600760-1118435113-22e2f5ad-5994-4f84-b86c-6fa9264f088c'
-    paths:
-      - 'src/lib/validations/**'
-      - 'src/lib/invite.ts'
-      - 'supabase/functions/_shared/billing-ownership.ts'
-      - 'supabase/functions/customer-portal/**'
+      - 'api/webhooks/**'
+      - 'supabase/functions/**'
+      - 'supabase/migrations/**'
       - 'scripts/*test.ts'
       - 'package.json'
       - 'package-lock.json'
@@ -38,5 +27,18 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Run validation, redirect and billing ownership unit tests without live service calls
-        run: node --experimental-strip-types --test scripts/auth-validation.test.ts scripts/auth-redirect.test.ts scripts/billing-ownership.test.ts
+      - run: node --experimental-strip-types --test scripts/auth-validation.test.ts scripts/auth-redirect.test.ts scripts/billing-ownership.test.ts
+  webhook-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Run mocked webhook tests without credentials or live service calls
+        run: node --experimental-strip-types --test scripts/stripe-webhook.test.ts
