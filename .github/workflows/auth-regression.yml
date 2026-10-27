@@ -4,8 +4,9 @@ on:
     paths:
       - 'src/lib/validations/**'
       - 'src/lib/invite.ts'
-      - 'scripts/auth-validation.test.ts'
-      - 'scripts/auth-redirect.test.ts'
+      - 'supabase/functions/_shared/billing-ownership.ts'
+      - 'supabase/functions/customer-portal/**'
+      - 'scripts/*test.ts'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/auth-regression.yml'
@@ -15,8 +16,9 @@ on:
     paths:
       - 'src/lib/validations/**'
       - 'src/lib/invite.ts'
-      - 'scripts/auth-validation.test.ts'
-      - 'scripts/auth-redirect.test.ts'
+      - 'supabase/functions/_shared/billing-ownership.ts'
+      - 'supabase/functions/customer-portal/**'
+      - 'scripts/*test.ts'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/auth-regression.yml'
@@ -36,5 +38,5 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Run validation and redirect tests without live service calls
-        run: node --experimental-strip-types --test scripts/auth-validation.test.ts scripts/auth-redirect.test.ts
+      - name: Run validation, redirect and billing ownership unit tests without live service calls
+        run: node --experimental-strip-types --test scripts/auth-validation.test.ts scripts/auth-redirect.test.ts scripts/billing-ownership.test.ts
