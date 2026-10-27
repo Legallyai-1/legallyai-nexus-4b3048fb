@@ -41,7 +41,7 @@ async function resolveOwner(stripe: Stripe, db: Db, customerId: string, candidat
   const { data: mapping } = await db.from('subscriptions').select('user_id')
     .eq('stripe_customer_id', customerId).maybeSingle().throwOnError();
   const customer = await stripe.customers.retrieve(customerId);
-  if (customer.deleted) throw new Error('Deleted billing customer');
+  if (!('metadata' in customer)) throw new Error('Deleted billing customer');
   const owners = new Set([...candidates, mapping?.user_id, customer.metadata?.user_id].filter(Boolean));
   if (owners.size !== 1) throw new Error('Missing or conflicting billing ownership');
   const userId = [...owners][0] as string;
@@ -75,7 +75,9 @@ async function syncSubscription(stripe: Stripe, db: Db, event: Stripe.Event, id:
 }
 
 async function fulfillCheckout(stripe: Stripe, db: Db, event: Stripe.Event) {
-  const session = await stripe.checkout.sessions.retrieve(event.data.object.id);
+  const sessionId = idOf(event.data.object);
+  if (!sessionId) throw new Error('Checkout session ID missing');
+  const session = await stripe.checkout.sessions.retrieve(sessionId);
   if (!['paid', 'no_payment_required'].includes(session.payment_status)) return;
   if (session.mode === 'subscription' && session.subscription) {
     if (session.client_reference_id && session.metadata?.user_id && session.client_reference_id !== session.metadata.user_id) throw new Error('Conflicting checkout owner');
@@ -118,7 +120,9 @@ export async function processVerifiedEvent(event: Stripe.Event, stripe: Stripe, 
     if (event.type.startsWith('checkout.session.') && event.type !== 'checkout.session.async_payment_failed') {
       await fulfillCheckout(stripe, db, event);
     } else if (event.type.startsWith('customer.subscription.')) {
-      await syncSubscription(stripe, db, event, event.data.object.id);
+      const subscriptionId = idOf(event.data.object);
+      if (!subscriptionId) throw new Error('Subscription ID missing');
+      await syncSubscription(stripe, db, event, subscriptionId);
     } else if (event.type.startsWith('invoice.')) {
       const subscriptionId = invoiceSubscription(event.data.object as Stripe.Invoice);
       if (subscriptionId) await syncSubscription(stripe, db, event, subscriptionId);

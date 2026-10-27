@@ -40,5 +40,7 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Strict webhook API typecheck
+        run: npx tsc --noEmit --strict --skipLibCheck --esModuleInterop --target ES2022 --module NodeNext --moduleResolution NodeNext --types node api/webhooks/stripe.ts
       - name: Run mocked webhook tests without credentials or live service calls
-        run: node --experimental-strip-types --test scripts/stripe-webhook.test.ts
+        run: node --experimental-strip-types --test scripts/stripe-webhook*.test.ts
