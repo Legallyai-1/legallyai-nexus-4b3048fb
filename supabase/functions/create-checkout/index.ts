@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { getCheckoutCustomerOptions } from "../_shared/checkout-customer.ts";
 
 const origins = new Set(["https://legallyai.ai", "https://www.legallyai.ai"]);
 const prices: Record<string, { tier: string; amount: number; mode: "subscription" | "payment" }> = {
@@ -71,8 +72,7 @@ serve(async (req) => {
     const metadata = { user_id: user.id, tier: selected.tier, price_id: priceId, product_id: productId };
     const returnOrigin = origin && origins.has(origin) ? origin : "https://www.legallyai.ai";
     const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      customer_email: customerId ? undefined : user.email,
+      ...getCheckoutCustomerOptions(selected.mode, customerId, user.email),
       client_reference_id: user.id,
       metadata,
       line_items: [{ price: priceId, quantity: 1 }],

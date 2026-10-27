@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getBillingReturnOrigin, getMappedBillingCustomerId, isBillingCustomerConsistent } from '../supabase/functions/_shared/billing-ownership.ts';
+import { getCheckoutCustomerOptions } from '../supabase/functions/_shared/checkout-customer.ts';
 
 test('billing return allows only production origins', () => {
   assert.equal(getBillingReturnOrigin('https://legallyai.ai'), 'https://legallyai.ai');
@@ -38,4 +39,18 @@ test('deleted, mismatched and conflicting customers are rejected', () => {
   assert.equal(isBillingCustomerConsistent('user-a', 'cus_A123', { id: 'cus_A123', deleted: true }), false);
   assert.equal(isBillingCustomerConsistent('user-a', 'cus_A123', { id: 'cus_B123' }), false);
   assert.equal(isBillingCustomerConsistent('user-a', 'cus_A123', { id: 'cus_A123', metadata: { user_id: 'user-b' } }), false);
+});
+
+test('new one-time buyers request a customer for webhook fulfillment', () => {
+  assert.deepEqual(getCheckoutCustomerOptions('payment', undefined, 'buyer@example.com'), { customer_email: 'buyer@example.com', customer_creation: 'always' });
+});
+
+test('existing customers are reused without customer creation flags', () => {
+  for (const mode of ['payment', 'subscription'] as const) {
+    assert.deepEqual(getCheckoutCustomerOptions(mode, 'cus_A123', 'buyer@example.com'), { customer: 'cus_A123' });
+  }
+});
+
+test('subscription checkout does not receive payment-only customer creation settings', () => {
+  assert.deepEqual(getCheckoutCustomerOptions('subscription', undefined, 'buyer@example.com'), { customer_email: 'buyer@example.com' });
 });
