@@ -1,0 +1,129 @@
+{
+  "generatedAt": "2026-10-28T20:14:29.587Z",
+  "testedCommit": "272cc7fbfc94195d7f2ab16262d36d1decab147e",
+  "baseUrl": "https://www.legallyai.ai",
+  "scope": "Live rendered login interactions. All authentication token responses are mocked; all other non-read requests are blocked.",
+  "realAuthenticationVerified": false,
+  "successfulLoginVerified": false,
+  "sessionPersistenceVerified": false,
+  "logoutVerified": false,
+  "protectedRoutesVerified": false,
+  "results": [
+    {
+      "scenario": "empty-validation",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "passed",
+      "failures": [],
+      "interceptedTokenRequests": 0,
+      "otherWritesBlocked": 1
+    },
+    {
+      "scenario": "malformed-email",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "passed",
+      "failures": [],
+      "interceptedTokenRequests": 0,
+      "otherWritesBlocked": 0
+    },
+    {
+      "scenario": "mocked-rejected-login",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "passed",
+      "failures": [],
+      "interceptedTokenRequests": 1,
+      "otherWritesBlocked": 0
+    },
+    {
+      "scenario": "external-return",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "passed",
+      "failures": [],
+      "interceptedTokenRequests": 0,
+      "otherWritesBlocked": 0
+    },
+    {
+      "scenario": "pricing-return",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "passed",
+      "failures": [],
+      "interceptedTokenRequests": 0,
+      "otherWritesBlocked": 0
+    },
+    {
+      "scenario": "empty-validation",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "status": "failed",
+      "failures": [
+        "Browser interaction failed; inspect the job step and screenshot"
+      ],
+      "interceptedTokenRequests": 0,
+      "otherWritesBlocked": 0
+    },
+    {
+      "scenario": "malformed-email",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "status": "failed",
+      "failures": [
+        "Browser interaction failed; inspect the job step and screenshot"
+      ],
+      "interceptedTokenRequests": 0,
+      "otherWritesBlocked": 0
+    },
+    {
+      "scenario": "mocked-rejected-login",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "status": "failed",
+      "failures": [
+        "Browser interaction failed; inspect the job step and screenshot"
+      ],
+      "interceptedTokenRequests": 0,
+      "otherWritesBlocked": 0
+    },
+    {
+      "scenario": "external-return",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "status": "passed",
+      "failures": [],
+      "interceptedTokenRequests": 0,
+      "otherWritesBlocked": 0
+    },
+    {
+      "scenario": "pricing-return",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "status": "passed",
+      "failures": [],
+      "interceptedTokenRequests": 0,
+      "otherWritesBlocked": 0
+    }
+  ]
+}
