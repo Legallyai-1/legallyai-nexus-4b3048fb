@@ -1,0 +1,49 @@
+name: Interactive live login audit (no Copilot)
+on:
+  push:
+    branches: [copilot/fix-248600760-1118435113-22e2f5ad-5994-4f84-b86c-6fa9264f088c]
+    paths: [scripts/interactive-login-audit.mjs, .github/workflows/interactive-login-audit.yml]
+permissions:
+  contents: write
+concurrency:
+  group: interactive-login-audit
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install isolated Playwright
+        run: npm install --prefix "$RUNNER_TEMP/login-qa" --ignore-scripts --no-audit --no-fund playwright@1.56.1
+      - name: Install Chromium
+        run: node "$RUNNER_TEMP/login-qa/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Run interactive login checks with authentication writes intercepted
+        run: QA_PLAYWRIGHT_PATH="$RUNNER_TEMP/login-qa/node_modules/playwright/index.mjs" node scripts/interactive-login-audit.mjs
+      - name: Save screenshots and sanitized report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: interactive-login-${{ github.run_id }}
+          path: interactive-login-results/
+          retention-days: 3
+          if-no-files-found: warn
+      - name: Publish actual result report to repair branch
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f interactive-login-results/report.json ]; then echo 'No browser report produced'; exit 1; fi
+          mkdir -p reports/qa
+          cp interactive-login-results/report.json reports/qa/interactive-login.json
+          git add -- reports/qa/interactive-login.json
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'test: record interactive login browser results'
+          git push origin HEAD:copilot/fix-248600760-1118435113-22e2f5ad-5994-4f84-b86c-6fa9264f088c
