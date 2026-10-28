@@ -1,0 +1,46 @@
+name: Auth and billing regression checks (no Copilot)
+on:
+  pull_request:
+    paths:
+      - 'src/lib/validations/**'
+      - 'src/lib/invite.ts'
+      - 'api/webhooks/**'
+      - 'supabase/functions/**'
+      - 'supabase/migrations/**'
+      - 'scripts/*test.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/auth-regression.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  auth-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: node --experimental-strip-types --test scripts/auth-validation.test.ts scripts/auth-redirect.test.ts scripts/billing-ownership.test.ts
+  webhook-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Strict webhook API typecheck
+        run: npx tsc --noEmit --strict --skipLibCheck --esModuleInterop --target ES2022 --module NodeNext --moduleResolution NodeNext --types node api/webhooks/stripe.ts
+      - name: Run mocked webhook tests without credentials or live service calls
+        run: node --experimental-strip-types --test scripts/stripe-webhook*.test.ts

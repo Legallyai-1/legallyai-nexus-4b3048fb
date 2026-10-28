@@ -1,0 +1,54 @@
+name: Reconcile verified migration timestamps
+on:
+  push:
+    branches: [copilot/fix-248600760-1118435113-22e2f5ad-5994-4f84-b86c-6fa9264f088c]
+    paths: [.github/workflows/reconcile-migration-timestamps.yml]
+permissions:
+  contents: write
+concurrency:
+  group: reconcile-migration-timestamps
+  cancel-in-progress: false
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - name: Verify originals and rename migrations without running SQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib, subprocess
+          root = pathlib.Path('supabase/migrations')
+          entries = [
+              ('20261022120000', '20261022230448', 'free_question_gate', '316a1cf372fcde3a5907ae18fdba3a0bf2974d44'),
+              ('20261022200000', '20261022232114', 'align_firm_tables', '73e699b39df8b3aea1843086b14f12230700c6e5'),
+              ('20261022210000', '20261023002601', 'api_keys', 'a702fee9e59814759b306377b5e9406aaa639094'),
+              ('20261022213000', '20261023003357', 'api_keys_pgcrypto_fix', 'fb19797b0f6875260e606066f518ad570803f8ce'),
+              ('20261027190000', '20261027190854', 'atomic_stripe_subscription_sync', '3c5bcfef3c5d4defac658750b472ee0dee9e9e5a'),
+          ]
+          pending = []
+          for old, new, name, expected in entries:
+              src, dst = root / f'{old}_{name}.sql', root / f'{new}_{name}.sql'
+              if dst.is_file() and not src.exists():
+                  assert subprocess.check_output(['git', 'hash-object', str(dst)], text=True).strip() == expected, f'Unexpected destination content: {dst}'
+                  continue
+              assert src.is_file() and not dst.exists(), f'Unexpected migration paths: {src}, {dst}'
+              actual = subprocess.check_output(['git', 'hash-object', str(src)], text=True).strip()
+              assert actual == expected, f'Original migration changed: {src}'
+              pending.append((src, dst))
+          for src, dst in pending:
+              subprocess.run(['git', 'mv', str(src), str(dst)], check=True)
+          PY
+          if git diff --cached --quiet; then
+            echo 'Migration filenames are already reconciled.'
+            exit 0
+          fi
+          git diff --cached --summary
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore: align five migration filenames with applied production versions'
+          git push origin HEAD:"${GITHUB_REF_NAME}"
