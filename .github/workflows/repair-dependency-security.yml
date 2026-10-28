@@ -15,61 +15,71 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref_name }}
+          ref: ${{ github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: npm
-      - name: Install existing lockfile
-        run: npm ci
-      - name: Apply non-forced dependency security fixes
+      - name: Inspect and patch compatible transitive dependencies
         shell: bash
         run: |
           set -euo pipefail
-          status=0
-          npm audit fix --ignore-scripts --json > audit-fix.json || status=$?
           node --input-type=module - <<'JS'
           import fs from 'node:fs';
-          const report = JSON.parse(fs.readFileSync('audit-fix.json', 'utf8'));
-          if (report.error) {
-            console.error(JSON.stringify(report.error));
-            process.exit(1);
+          const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const patches = [
+            ['serve', 'compression', '1', '^1.8.2'],
+            ['@vercel/static-config', 'ajv', '8', '^8.18.0'],
+            ['@tailwindcss/typography', 'postcss-selector-parser', '6', '^6.1.5'],
+          ];
+          for (const [parent, child, major, version] of patches) {
+            const entries = Object.entries(lock.packages).filter(([path]) => path.endsWith('/node_modules/' + child) || path === 'node_modules/' + child);
+            if (!entries.length) throw new Error('Missing locked dependency: ' + child);
+            console.log(JSON.stringify({parent, child, locked: entries.map(([path, entry]) => ({path, version: entry.version})), patch: version}));
+            const parentEntries = Object.entries(lock.packages).filter(([path]) => path === 'node_modules/' + parent || path.endsWith('/node_modules/' + parent));
+            if (!parentEntries.some(([, entry]) => entry.dependencies?.[child])) throw new Error('Dependency chain changed: ' + parent);
+            const scoped = lock.packages['node_modules/' + parent + '/node_modules/' + child] ?? lock.packages['node_modules/' + child];
+            if (!scoped || scoped.version.split('.')[0] !== major) throw new Error('Unexpected major for ' + parent + ' -> ' + child);
+            pkg.overrides ??= {};
+            if (typeof pkg.overrides[parent] === 'string') throw new Error('Existing parent override requires review');
+            pkg.overrides[parent] ??= {};
+            if (pkg.overrides[parent][child] && pkg.overrides[parent][child] !== version) throw new Error('Existing child override requires review');
+            pkg.overrides[parent][child] = version;
           }
-          console.log(JSON.stringify(report.audit?.metadata?.vulnerabilities ?? report.metadata?.vulnerabilities ?? {}, null, 2));
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
           JS
-          if [ "$status" -gt 1 ]; then exit "$status"; fi
-      - name: Verify repaired lockfile installation
+          npm install --package-lock-only --ignore-scripts
+      - name: Verify clean installation
         run: npm ci
       - name: Check Stripe webhook types
         run: npx --no-install tsc --project tsconfig.stripe-webhook.json
-      - name: Build repaired application
+      - name: Build application
         run: npm run build
-      - name: Report remaining vulnerabilities
+      - name: Capture fresh audit and require targeted findings resolved
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p reports/security
           status=0
-          npm audit --json > audit-after.json || status=$?
+          npm audit --json > reports/security/npm-audit.json || status=$?
+          if [ "$status" -gt 1 ]; then exit "$status"; fi
           node --input-type=module - <<'JS'
           import fs from 'node:fs';
-          const report = JSON.parse(fs.readFileSync('audit-after.json', 'utf8'));
-          if (report.error) {
-            console.error(JSON.stringify(report.error));
-            process.exit(1);
+          const report = JSON.parse(fs.readFileSync('reports/security/npm-audit.json', 'utf8'));
+          if (report.error || !report.metadata) throw new Error('Audit unavailable');
+          for (const name of ['compression', 'ajv', 'postcss-selector-parser']) {
+            if (report.vulnerabilities?.[name]) throw new Error('Targeted finding remains: ' + name);
           }
-          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, '## Dependency repair audit\n\n```json\n' + JSON.stringify(report.metadata?.vulnerabilities ?? {}, null, 2) + '\n```\n\nWebhook typecheck and application build passed. Remaining advisories, if any, are not fixed by this job. No deployment or payment operations were performed.\n');
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, '## Targeted dependency repair\n\n```json\n' + JSON.stringify(report.metadata.vulnerabilities, null, 2) + '\n```\n\nClean install, webhook typecheck, and Vite build passed. This is not authenticated or payment end-to-end verification. No deployment or financial operations performed.\n');
           JS
-          if [ "$status" -gt 1 ]; then exit "$status"; fi
-      - name: Commit build-validated package repairs
+      - name: Commit validated dependency changes and audit
         shell: bash
         run: |
           set -euo pipefail
-          git add -- package.json package-lock.json
-          if git diff --cached --quiet; then
-            echo 'No non-forced package repair was available.' >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
+          git add -- package.json package-lock.json reports/security/npm-audit.json
+          if git diff --cached --quiet; then exit 0; fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'fix: apply non-forced dependency security updates after build validation'
-          git push origin HEAD:"${GITHUB_REF_NAME}"
+          git commit -m 'fix: patch compatible transitive dependencies and refresh security audit'
+          git push origin HEAD:copilot/fix-248600760-1118435113-22e2f5ad-5994-4f84-b86c-6fa9264f088c
