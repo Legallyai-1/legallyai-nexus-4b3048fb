@@ -1,0 +1,75 @@
+name: Repair dependency security
+on:
+  push:
+    branches: [copilot/fix-248600760-1118435113-22e2f5ad-5994-4f84-b86c-6fa9264f088c]
+    paths: [.github/workflows/repair-dependency-security.yml]
+permissions:
+  contents: write
+concurrency:
+  group: repair-dependency-security
+  cancel-in-progress: false
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install existing lockfile
+        run: npm ci
+      - name: Apply non-forced dependency security fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          status=0
+          npm audit fix --ignore-scripts --json > audit-fix.json || status=$?
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          const report = JSON.parse(fs.readFileSync('audit-fix.json', 'utf8'));
+          if (report.error) {
+            console.error(JSON.stringify(report.error));
+            process.exit(1);
+          }
+          console.log(JSON.stringify(report.audit?.metadata?.vulnerabilities ?? report.metadata?.vulnerabilities ?? {}, null, 2));
+          JS
+          if [ "$status" -gt 1 ]; then exit "$status"; fi
+      - name: Verify repaired lockfile installation
+        run: npm ci
+      - name: Check Stripe webhook types
+        run: npx --no-install tsc --project tsconfig.stripe-webhook.json
+      - name: Build repaired application
+        run: npm run build
+      - name: Report remaining vulnerabilities
+        shell: bash
+        run: |
+          set -euo pipefail
+          status=0
+          npm audit --json > audit-after.json || status=$?
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          const report = JSON.parse(fs.readFileSync('audit-after.json', 'utf8'));
+          if (report.error) {
+            console.error(JSON.stringify(report.error));
+            process.exit(1);
+          }
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, '## Dependency repair audit\n\n```json\n' + JSON.stringify(report.metadata?.vulnerabilities ?? {}, null, 2) + '\n```\n\nWebhook typecheck and application build passed. Remaining advisories, if any, are not fixed by this job. No deployment or payment operations were performed.\n');
+          JS
+          if [ "$status" -gt 1 ]; then exit "$status"; fi
+      - name: Commit build-validated package repairs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -- package.json package-lock.json
+          if git diff --cached --quiet; then
+            echo 'No non-forced package repair was available.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix: apply non-forced dependency security updates after build validation'
+          git push origin HEAD:"${GITHUB_REF_NAME}"
