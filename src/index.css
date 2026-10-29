@@ -1168,6 +1168,7 @@ a:focus-visible > .launcher-icon {
   color: #334155;
   transition: border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
+@media (max-width: 767px) { .hub-chip { min-height: 44px; } }
 .hub-chip:hover:not(:disabled), .hub-chip:focus-visible {
   outline: none;
   border-color: #D4AF37;
