@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { arePaymentsEnabled } from "@/lib/env";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { parseStripeCheckoutUrl, readCheckoutError } from "@/lib/checkout";
 
 type Offer = {
   key: string; name: string; price: string; period: string; description: string; audience: "individual" | "firm";
@@ -25,6 +26,8 @@ const offers: Offer[] = [
 export default function PricingPage() {
   const [loading, setLoading] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  // Plans whose free trial the server refused (account already had a subscription): offer paid signup instead.
+  const [noTrial, setNoTrial] = useState<Set<string>>(() => new Set());
   const busy = useRef(false);
   const navigate = useNavigate();
   const enabled = arePaymentsEnabled();
@@ -41,6 +44,7 @@ export default function PricingPage() {
     busy.current = true;
     setLoading(offer.key);
     setErrorMessage("");
+    const useTrial = offer.trial === true && !noTrial.has(offer.key);
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) {
@@ -48,22 +52,19 @@ export default function PricingPage() {
         return;
       }
       const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { priceId: offer.priceId, mode: offer.mode, trial: offer.trial === true },
+        body: { priceId: offer.priceId, mode: offer.mode, trial: useTrial },
       });
-      if (error) {
-        let message = "Checkout could not be started. No checkout redirect occurred. Please try again or contact support.";
-        if (error.context instanceof Response) {
-          const body = await error.context.clone().json().catch(() => null);
-          if (typeof body?.error === "string") message = body.error;
+      if (error || typeof data?.error === "string") {
+        const failure = await readCheckoutError(error, data);
+        if (failure.trialUnavailable && useTrial) {
+          setNoTrial((current) => new Set(current).add(offer.key));
+          throw new Error(`${failure.message} You can still subscribe to ${offer.name} at ${offer.trialTerms ?? offer.price} using the updated button.`);
         }
-        throw new Error(message);
+        throw new Error(failure.message);
       }
-      if (typeof data?.error === "string") throw new Error(data.error);
       if (typeof data?.url !== "string") throw new Error("Checkout did not return a payment URL.");
-      const destination = new URL(data.url);
-      if (destination.protocol !== "https:" || destination.hostname !== "checkout.stripe.com") {
-        throw new Error("The payment redirect could not be verified. Contact support.");
-      }
+      const destination = parseStripeCheckoutUrl(data.url);
+      if (!destination) throw new Error("The payment redirect could not be verified. Contact support.");
       window.location.assign(destination.href);
     } catch (error: unknown) {
       setErrorMessage(error instanceof Error ? error.message : "Checkout is unavailable. Please try again.");
@@ -83,7 +84,7 @@ export default function PricingPage() {
       <h3 className="font-display text-2xl font-bold">{offer.name}</h3>
       <p className="mt-3"><span className="text-4xl font-bold">{offer.price}</span> <span className="text-sm text-[hsl(218_22%_30%)]">{offer.period}</span></p>
       <p className="mt-4 text-sm flex-1">{offer.description}</p>
-      {offer.trial && offer.trialTerms && (
+      {offer.trial && offer.trialTerms && !noTrial.has(offer.key) && (
         <p className="mt-4 text-xs text-[hsl(218_22%_30%)]">First subscription only: 7 days free, then {offer.trialTerms} plus applicable taxes until canceled. A payment method is required; cancel before the trial ends to avoid the first charge.</p>
       )}
       <div className="mt-5">
@@ -100,7 +101,7 @@ export default function PricingPage() {
             aria-busy={loading === offer.key}
           >
             {loading === offer.key && <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />}
-            {!enabled ? "Checkout currently unavailable" : loading === offer.key ? "Opening checkout…" : offer.trial ? "Start 7-day free trial" : "Buy one document"}
+            {!enabled ? "Checkout currently unavailable" : loading === offer.key ? "Opening checkout…" : offer.trial && noTrial.has(offer.key) ? `Subscribe for ${offer.trialTerms ?? offer.price}` : offer.trial ? "Start 7-day free trial" : "Buy one document"}
           </Button>
         )}
       </div>

@@ -1,8 +1,9 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { arePaymentsEnabled } from "@/lib/env";
+import { openCheckoutInNewTab, readCheckoutError } from "@/lib/checkout";
 import {
   DOCUMENT_EXPORT_CHECKOUT_MODE,
   DOCUMENT_EXPORT_PRICE_ID,
@@ -61,30 +62,34 @@ export async function requestHubDocument(body: Record<string, unknown>): Promise
 /** Same checkout as GeneratePage's "Buy this document – $5" (one-time Per Document price). */
 export function useDocumentCheckout() {
   const navigate = useNavigate();
+  // Track sign-in synchronously so the checkout tab can open inside the click (popup blockers).
+  const signedIn = useRef<boolean | null>(null);
+  useEffect(() => {
+    let active = true;
+    void supabase.auth.getSession().then(({ data: { session } }) => { if (active) signedIn.current = Boolean(session?.user); });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => { signedIn.current = Boolean(session?.user); });
+    return () => { active = false; subscription.unsubscribe(); };
+  }, []);
   return useCallback(async () => {
     if (!arePaymentsEnabled()) {
       toast.error("Payments are currently disabled.");
       return;
     }
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
+    if (signedIn.current === false) {
       toast.error("Please sign in first");
       navigate("/auth");
       return;
     }
     try {
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { priceId: DOCUMENT_EXPORT_PRICE_ID, mode: DOCUMENT_EXPORT_CHECKOUT_MODE },
+      await openCheckoutInNewTab(async () => {
+        const { data, error } = await supabase.functions.invoke("create-checkout", {
+          body: { priceId: DOCUMENT_EXPORT_PRICE_ID, mode: DOCUMENT_EXPORT_CHECKOUT_MODE },
+        });
+        if (error || typeof data?.error === "string") throw new Error((await readCheckoutError(error, data)).message);
+        return data?.url;
       });
-      if (error) {
-        console.error("Checkout error:", error);
-        toast.error("Failed to start checkout. Please try again.");
-        return;
-      }
-      if (data?.url) window.open(data.url, "_blank");
     } catch (error) {
-      console.error("Error:", error);
-      toast.error("An error occurred. Please try again.");
+      toast.error(error instanceof Error ? error.message : "Checkout could not be started. Please try again.");
     }
   }, [navigate]);
 }
