@@ -13,7 +13,7 @@ interface FeatureRow {
 const COMPARISONS: FeatureRow[] = [
   {
     feature: "Free Daily Tier (No Credit Card)",
-    legallyAi: "5 Daily Queries + Rewarded Video",
+    legallyAi: "5 free questions a day, no sign-up",
     aiLawyer: "Hard Paywall ($9.99/wk)",
     coCounsel: false,
     spellbook: false

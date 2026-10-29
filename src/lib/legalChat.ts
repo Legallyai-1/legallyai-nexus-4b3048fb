@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { prepareChatMessages, readLegalChatStream } from "./legalChatProtocol";
-import { announceFreeLimit, FreeLimitError } from "@/lib/freeQuestions";
+import { announceFreeLimit, FreeLimitError, getDeviceId } from "@/lib/freeQuestions";
 
 export const HUB_TYPES = ["general", "custody", "parole", "defense", "workplace", "probono", "support", "marriage", "lawyer"] as const;
 export type HubType = typeof HUB_TYPES[number];
@@ -28,7 +28,7 @@ export async function streamLegalChat({ hubType, sessionId, messages, onDelta, o
   const response = await fetch(`${SUPABASE_URL}/functions/v1/legal-chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session?.access_token ?? SUPABASE_ANON_KEY}` },
-    body: JSON.stringify({ hub_type: hubType, session_id: sessionId, messages: requestMessages }),
+    body: JSON.stringify({ hub_type: hubType, session_id: sessionId, messages: requestMessages, device_id: getDeviceId() }),
     signal,
   });
   if (!response.ok) {

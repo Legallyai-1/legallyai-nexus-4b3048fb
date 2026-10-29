@@ -22,7 +22,6 @@ const dollars = (cents: number) => `$${(cents / 100).toLocaleString("en-US", { m
 const monthlyTerms = (monthlyCents: number, extraSeats: number) => `${dollars(monthlyCents + extraSeats * EXTRA_SEAT_CENTS)}/month`;
 // Only offers with a priceId are sold online; the server re-checks every price before checkout.
 const offers: Offer[] = [
-  { key: "free", audience: "individual", name: "Free", price: "$0", period: "no subscription", description: "5 free Ask Lee questions to try it out, no card needed. After that, start a Premium trial to keep asking." },
   { key: "premium", audience: "individual", name: "Premium", price: "$9.99", period: "per month", description: "For people handling their own legal matter: more Ask Lee answers, document drafting and every self-help hub.", priceId: "price_1Sdfqp0QhWGUtGKvcQuWONuB", mode: "subscription", trial: true, trialTerms: "$9.99/month" },
   { key: "document", audience: "individual", name: "Per Document", price: "$5", period: "one-time", description: "One document-generation allowance. Not a subscription and no free trial.", priceId: "price_1SckVt0QhWGUtGKvl9YdmQqk", mode: "payment" },
   { key: "solo", audience: "firm", name: "Solo", price: "$29", period: "per month", description: "The firm workspace for one attorney or paralegal: case files, client portal, AI drafting, billing and trust accounting. 1 seat; staff access needs Firm or Enterprise.", priceId: "price_1UVwxE0QhWGUtGKv3tjz0A3I", mode: "subscription", trial: true, trialTerms: "$29/month" },
@@ -117,9 +116,7 @@ export default function PricingPage() {
         <p className="mt-4 text-xs text-[hsl(218_22%_30%)]">First subscription only: 7 days free, then {termsFor(offer)} plus applicable taxes until canceled. A payment method is required; cancel before the trial ends to avoid the first charge.</p>
       )}
       <div className="mt-5">
-        {offer.key === "free" ? (
-          <Button asChild variant="outline" className="w-full bg-white/70"><Link to="/signup">Create a free account</Link></Button>
-        ) : offer.contact ? (
+        {offer.contact ? (
           <Button asChild variant="outline" className="w-full bg-white/70"><a href={SALES_MAILTO}>Join the waitlist</a></Button>
         ) : (
           <Button
@@ -146,8 +143,9 @@ export default function PricingPage() {
             <p className="text-muted-foreground">Start free with Lee. Upgrade when you need more, or set up your firm.</p>
           </header>
           {errorMessage && <div role="alert" className="rounded-xl border border-destructive bg-white/80 p-4 mb-6 text-sm">{errorMessage} <a href="mailto:support@legallyai.ai" className="underline">Contact support</a></div>}
-          <h2 className="font-display text-2xl font-bold mb-4">For individuals</h2>
-          <div className="grid gap-5 md:grid-cols-3">{offers.filter((o) => o.audience === "individual").map(renderOffer)}</div>
+          <h2 className="font-display text-2xl font-bold mb-2">For individuals</h2>
+          <p className="mb-4 text-sm text-muted-foreground">Free for everyone, no sign-up needed: <Link to="/" className="underline">ask Lee</Link> 5 free questions a day and browse every hub. Subscribe when you need more.</p>
+          <div className="grid gap-5 md:grid-cols-2">{offers.filter((o) => o.audience === "individual").map(renderOffer)}</div>
           <h2 id="firm-plans" className="font-display text-2xl font-bold mt-12 mb-4">For law firms</h2>
           <div className="grid gap-5 md:grid-cols-3">{offers.filter((o) => o.audience === "firm").map(renderOffer)}</div>
           <footer className="mt-10 max-w-3xl mx-auto space-y-4 text-sm text-muted-foreground">

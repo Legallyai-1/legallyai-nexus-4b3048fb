@@ -8,7 +8,7 @@ import { TOPIC_EMBEDDINGS } from "../_shared/legal-topic-embeddings.ts";
 import { buildGroundedSystem, callFreeModel, FREE_AI_FOOTER, getFreeProviders } from "../_shared/free-ai.ts";
 import { callGemini, composeAnswer, getGeminiConfig } from "../_shared/gemini.ts";
 import { leeSystemPrompt, personaFor } from "../_shared/lee-personas.ts";
-import { checkFreeQuestion, freeQuestionLimit } from "../_shared/free-question-gate.ts";
+import { checkFreeQuestion, freeQuestionLimit, normalizeDeviceId } from "../_shared/free-question-gate.ts";
 
 // Supabase Edge Runtime built-in AI (free, no API key). Undefined outside Supabase.
 // deno-lint-ignore no-explicit-any
@@ -298,7 +298,7 @@ serve(async (req) => {
     });
   }
 
-  let payload: { messages?: unknown; hub_type?: unknown; session_id?: unknown; stream?: unknown };
+  let payload: { messages?: unknown; hub_type?: unknown; session_id?: unknown; stream?: unknown; device_id?: unknown };
   try {
     payload = await req.json();
   } catch {
@@ -358,16 +358,23 @@ serve(async (req) => {
     userId = userId ?? apiUserId;
   }
 
-  // Free-question limit (default 5) before sign-up / free trial.
+  // Free-question limit (default 5 per day) for anonymous visitors and non-subscribers.
   let gate: { used: number; limit: number; subscriber: boolean } | null = null;
   if (hubType !== "support" && supabaseUrl && serviceKey && !apiUserId) {
-    const result = await checkFreeQuestion({ req, userId, supabaseUrl, serviceKey, limit: freeQuestionLimit(Deno.env) });
+    const result = await checkFreeQuestion({
+      admin: createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } }),
+      req,
+      userId,
+      deviceId: normalizeDeviceId(payload.device_id),
+      salt: serviceKey.slice(-16),
+      limit: freeQuestionLimit(Deno.env),
+    });
     if (!result.allowed) {
       return new Response(JSON.stringify({
         error: "free_limit_reached",
         message: userId
-          ? `You've used your ${result.limit} free legal questions. Start your free trial to keep going.`
-          : `You've used your ${result.limit} free legal questions. Create a free account to start your free trial.`,
+          ? `You've used today's ${result.limit} free legal questions. Subscribe to Premium to keep going, or come back tomorrow.`
+          : `You've used today's ${result.limit} free legal questions. Subscribe to Premium or sign in to keep going, or come back tomorrow.`,
         limit: result.limit,
         used: result.used,
         signed_in: !!userId,
