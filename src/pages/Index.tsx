@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import AdContainer from "@/components/ads/AdContainer";
+import { AD_SLOTS } from "@/lib/adSlots";
 import { streamLegalChat } from "@/lib/legalChat";
 import { toast } from "sonner";
 import {
@@ -268,7 +269,7 @@ export default function Index() {
           </div>
         </section>
 
-        <AdContainer slot="9777464779" className="my-8" />
+        <AdContainer slot={AD_SLOTS.HOME_MID} className="my-8" />
 
         {/* Topic hubs: every hub is Lee focused on one area of law. */}
         <section className="py-12 sm:py-16 px-4" aria-labelledby="hubs-heading">
@@ -296,7 +297,7 @@ export default function Index() {
         </section>
 
         {/* Law firms: short pitch, primary CTA goes to the firm landing page. */}
-        <AdContainer slot="3466389052" size="rectangle" className="my-8" />
+        <AdContainer slot={AD_SLOTS.HOME_LOWER} size="rectangle" className="my-8" />
 
         <section className="py-12 sm:py-16 px-4" aria-labelledby="firms-heading">
           <div className="container mx-auto max-w-6xl">
