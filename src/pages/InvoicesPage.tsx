@@ -13,7 +13,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { supabase } from "@/integrations/supabase/client";
 import { DollarSign, Plus, Send, Download, FileText, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import SidebarAd from "@/components/ads/SidebarAd";
 import { ensureUserOrganization } from "@/lib/organizations";
 
 interface InvoiceItem {
@@ -437,11 +436,6 @@ const InvoicesPage = () => {
             </Card>
           </div>
         </div>
-        <aside className="hidden xl:block w-[160px] shrink-0 p-4 border-l border-border bg-card/50">
-          <div className="sticky top-4">
-            <SidebarAd slot="INVOICES_SIDEBAR_SLOT" />
-          </div>
-        </aside>
       </div>
     </Layout>
   );

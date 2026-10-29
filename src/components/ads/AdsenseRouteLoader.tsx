@@ -1,15 +1,16 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { areAdsAllowedOnPath } from "@/lib/adRoutes";
-import { shouldShowAds } from "@/lib/subscription";
+import { useAdEligibility } from "@/hooks/useAdEligibility";
+import { canShowAdOn } from "@/lib/adRoutes";
 import { canRenderAds, ensureAdsenseScriptLoaded } from "./adsense";
 
-// Loads AdSense only once a visitor reaches an ad-eligible page, so chat, hubs, pricing,
-// sign-in and legal pages never load it on a direct visit.
+// Loads AdSense only for free-plan visitors on ad-eligible pages, so paying users, chat, hubs,
+// pricing, sign-in and legal pages never download it.
 export function AdsenseRouteLoader() {
   const { pathname } = useLocation();
+  const eligibility = useAdEligibility();
   useEffect(() => {
-    if (areAdsAllowedOnPath(pathname) && canRenderAds() && shouldShowAds()) ensureAdsenseScriptLoaded();
-  }, [pathname]);
+    if (canShowAdOn(pathname, eligibility) && canRenderAds()) ensureAdsenseScriptLoaded();
+  }, [pathname, eligibility]);
   return null;
 }

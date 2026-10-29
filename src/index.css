@@ -699,3 +699,47 @@ a:focus-visible > .launcher-icon {
   border-color: hsl(43 95% 52%);
   box-shadow: 0 0 0 1px hsl(45 95% 62% / 0.5), 0 0 16px hsl(43 95% 55% / 0.5);
 }
+
+/* ===========================================================================
+   Ad frame: quiet frosted silver panel with a thin gold edge. Flatter than .metal-card
+   (no hover, no glow) so ads never look like a tool. Reserved height prevents layout shift.
+   =========================================================================== */
+.ad-frame {
+  display: block;
+  margin-inline: auto;
+  width: 100%;
+  max-width: 760px;
+  padding: 0.5rem 0.75rem 0.75rem;
+  border-radius: 1.25rem;
+  color: hsl(222 52% 14%);
+  background: linear-gradient(160deg, hsl(0 0% 100% / 0.78), hsl(210 40% 97% / 0.6));
+  backdrop-filter: blur(16px) saturate(1.15);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  border: 1px solid hsl(40 75% 52% / 0.45);
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.9), 0 10px 26px -18px hsl(218 45% 25% / 0.4);
+  contain: layout paint;
+}
+.ad-frame__label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: hsl(218 22% 34%);
+  text-align: left;
+}
+.ad-frame--leaderboard { min-height: 130px; }
+@media (max-width: 767px) {
+  .ad-frame { width: calc(100% - 2rem); max-width: 100%; border-radius: 1rem; }
+  .ad-frame--leaderboard { min-height: 140px; }
+  .ad-frame--rectangle { min-height: 290px; max-width: 336px; }
+}
+@media (min-width: 768px) {
+  .ad-frame--rectangle { min-height: 130px; }
+}
+.ad-frame ins.adsbygoogle { display: block; }
+.ad-frame[data-collapsed="true"] { min-height: 0; padding: 0; border: 0; box-shadow: none; background: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .ad-frame { transition: min-height .25s ease, padding .25s ease; }
+}

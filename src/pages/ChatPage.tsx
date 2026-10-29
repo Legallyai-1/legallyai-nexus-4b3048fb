@@ -9,9 +9,6 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAIChat } from "@/hooks/useAIChat";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
-import AdBanner from "@/components/ads/AdBanner";
-import AdContainer from "@/components/ads/AdContainer";
-import AdMobBanner, { ADMOB_AD_UNITS } from "@/components/ads/AdMobBanner";
 import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
 import { SaveToCaseFile } from "@/components/chat/SaveToCaseFile";
 import { ChatHistoryDrawer } from "@/components/chat/ChatHistoryDrawer";
@@ -133,8 +130,6 @@ export default function ChatPage() {
             </form>
             <p role="status" className="mt-2 text-sm text-muted-foreground">{isLoading ? "Waiting for a response. New conversation cancels this request and clears the chat." : ""}</p>
             <p className="mt-3 text-xs text-muted-foreground"><AlertCircle aria-hidden="true" className="inline h-3 w-3 mr-1" />AI-generated information is not legal advice. Review important information with a licensed attorney.</p>
-            <AdContainer position="bottom" className="mt-4"><AdBanner slot="7335134262" format="horizontal" /></AdContainer>
-            <AdMobBanner adUnitId={ADMOB_AD_UNITS.CHAT_BANNER} size="banner" className="mt-2" />
           </div>
         </div>
       </div>

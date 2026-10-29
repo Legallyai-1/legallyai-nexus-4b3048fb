@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { AnimatedRoutes } from '@/components/AnimatedRoutes';
-import { setStoredSubscriptionTier, isPaidSubscriptionTier } from '@/lib/subscription';
+import { resolveAdEligibility, setAdEligibility, setStoredSubscriptionTier } from '@/lib/subscription';
 import { supabase } from '@/integrations/supabase/client';
 import { getSupabaseSessionSafely, subscribeToSupabaseAuthState } from '@/integrations/supabase/helpers';
 const SpeedInsights = () => null;
@@ -20,21 +20,26 @@ function App() {
     let disposed = false;
     let revision = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    const allowed = new Set(['free', 'premium', 'pro', 'enterprise', 'document']);
     // Display cache only: server-side authorization must independently check access.
-    const apply = (value: unknown) => {
-      const normalized = typeof value === 'string' ? value.toLowerCase() : 'free';
-      const tier = allowed.has(normalized) ? normalized : 'free';
+    const applyTier = (value: unknown) => {
+      const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
+      const tier = /^[a-z_]{1,32}$/.test(normalized) ? normalized : 'free';
       setStoredSubscriptionTier(tier);
       document.body.dataset.subscriptionTier = tier;
-      document.body.dataset.adsEnabled = String(!isPaidSubscriptionTier(tier));
+      setAdEligibility(resolveAdEligibility({ signedIn: true, tier }));
     };
     const schedule = (session: Awaited<ReturnType<typeof getSupabaseSessionSafely>>) => {
       if (disposed) return;
       const request = ++revision;
       if (timer !== undefined) clearTimeout(timer);
-      apply('free');
-      if (!session?.user) return;
+      if (!session?.user) {
+        setStoredSubscriptionTier('free');
+        document.body.dataset.subscriptionTier = 'free';
+        setAdEligibility(resolveAdEligibility({ signedIn: false }));
+        return;
+      }
+      // Signed in: show no ads until the plan is known, so paying users never see one.
+      setAdEligibility('unknown');
       const userId = session.user.id;
       // Defer Supabase queries until outside the synchronous auth callback.
       timer = setTimeout(() => {
@@ -44,14 +49,15 @@ function App() {
             const { data, error } = await supabase.from('profiles')
               .select('subscription_tier').eq('id', userId).maybeSingle();
             if (disposed || request !== revision) return;
-            apply(error ? 'free' : data?.subscription_tier);
+            if (error) setAdEligibility(resolveAdEligibility({ signedIn: true, failed: true }));
+            else applyTier(data?.subscription_tier);
           } catch {
-            if (!disposed && request === revision) apply('free');
+            if (!disposed && request === revision) setAdEligibility(resolveAdEligibility({ signedIn: true, failed: true }));
           }
         })();
       }, 0);
     };
-    apply('free');
+    setAdEligibility('unknown');
     const { data: { subscription } } = subscribeToSupabaseAuthState((_event, session) => schedule(session));
     const initialRevision = revision;
     void getSupabaseSessionSafely().then(session => {

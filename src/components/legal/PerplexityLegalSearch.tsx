@@ -12,8 +12,6 @@ import {
 import { toast } from "sonner";
 import { streamLegalChat } from "@/lib/legalChat";
 import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
-import AdBanner from "@/components/ads/AdBanner";
-import AdContainer from "@/components/ads/AdContainer";
 
 interface LegalSource {
   id: number;
@@ -366,9 +364,6 @@ export function PerplexityLegalSearch() {
       )}
 
       {/* Ad placement for free traffic monetization */}
-      <AdContainer position="inline" className="my-6">
-        <AdBanner slot="9777464779" format="horizontal" />
-      </AdContainer>
     </div>
   );
 }

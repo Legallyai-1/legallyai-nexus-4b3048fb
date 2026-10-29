@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { shouldShowAds } from '@/lib/subscription';
-import { areAdsAllowedOnPath } from '@/lib/adRoutes';
+import { useAdEligibility } from '@/hooks/useAdEligibility';
+import { canShowAdOn } from '@/lib/adRoutes';
 import { canRenderAds, getAdClient, isValidAdSlot, queueAdsenseSlot, trackAdPerformance } from './adsense';
 
 interface AdBannerProps {
   slot: string;
   format?: 'auto' | 'horizontal' | 'vertical' | 'rectangle';
   className?: string;
+  /** Called when no ad fills, so the frame can collapse instead of showing an empty box. */
+  onUnfilled?: () => void;
 }
 
 declare global {
@@ -16,12 +18,18 @@ declare global {
   }
 }
 
-export default function AdBanner({ slot, format = 'auto', className = '' }: AdBannerProps) {
+export default function AdBanner({ slot, format = 'auto', className = '', onUnfilled }: AdBannerProps) {
   const adRef = useRef<HTMLDivElement>(null);
   const isAdLoaded = useRef(false);
   const [loadFailed, setLoadFailed] = useState(false);
   const { pathname } = useLocation();
-  const adsenseEnabled = areAdsAllowedOnPath(pathname) && canRenderAds() && shouldShowAds() && isValidAdSlot(slot);
+  const eligibility = useAdEligibility();
+  // Second safety net; AdContainer applies the same gate before rendering this.
+  const adsenseEnabled = canShowAdOn(pathname, eligibility) && canRenderAds() && isValidAdSlot(slot);
+
+  useEffect(() => {
+    if (loadFailed) onUnfilled?.();
+  }, [loadFailed, onUnfilled]);
 
   useEffect(() => {
     if (!adsenseEnabled || isAdLoaded.current || loadFailed) return;
@@ -119,16 +127,7 @@ export default function AdBanner({ slot, format = 'auto', className = '' }: AdBa
     return null;
   }
 
-  if (loadFailed) {
-    return (
-      <div
-        className={`ad-container flex min-h-24 items-center justify-center rounded-md border border-dashed border-border/50 text-xs text-muted-foreground/70 ${className}`}
-        data-ad-slot={slot}
-      >
-        Sponsored
-      </div>
-    );
-  }
+  if (loadFailed) return null;
 
   return (
     <div ref={adRef} className={`ad-container ${className}`} data-ad-slot={slot}>

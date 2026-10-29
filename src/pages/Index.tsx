@@ -6,9 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import AdBanner from "@/components/ads/AdBanner";
 import AdContainer from "@/components/ads/AdContainer";
-import AdMobBanner, { ADMOB_AD_UNITS } from "@/components/ads/AdMobBanner";
 import { streamLegalChat } from "@/lib/legalChat";
 import { toast } from "sonner";
 import {
@@ -270,10 +268,7 @@ export default function Index() {
           </div>
         </section>
 
-        <AdContainer position="inline" className="container mx-auto px-4 mb-8">
-          <AdBanner slot="9777464779" format="horizontal" />
-        </AdContainer>
-        <AdMobBanner adUnitId={ADMOB_AD_UNITS.HOME_BANNER} size="banner" className="mb-4" />
+        <AdContainer slot="9777464779" className="my-8" />
 
         {/* Specialist hubs: every hub is Lee focused on one area of law. */}
         <section className="py-12 sm:py-16 px-4" aria-labelledby="hubs-heading">
@@ -301,6 +296,8 @@ export default function Index() {
         </section>
 
         {/* Law firms: short pitch, primary CTA goes to the firm landing page. */}
+        <AdContainer slot="3466389052" size="rectangle" className="my-8" />
+
         <section className="py-12 sm:py-16 px-4" aria-labelledby="firms-heading">
           <div className="container mx-auto max-w-6xl">
             <div className="glass-card rounded-3xl p-6 sm:p-10 border border-legal-gold/30">
@@ -384,9 +381,6 @@ export default function Index() {
           </div>
         </section>
 
-        <AdContainer position="bottom" className="container mx-auto px-4 mb-8">
-          <AdBanner slot="3466389052" format="horizontal" />
-        </AdContainer>
       </FuturisticBackground>
     </Layout>
   );
