@@ -33,7 +33,7 @@ export function AskLeePanel({ userType = "lawyer", className = "" }: Props) {
       </div>
 
       <div className="relative mt-3 flex flex-1 flex-col items-center justify-center py-4">
-        <LeeAvatar heightClass="h-44 sm:h-52" alt="Lee, the LegallyAI assistant, holding the scales of justice" burst />
+        <LeeAvatar heightClass="h-44 sm:h-52" alt="Lee, the LegallyAI assistant, holding the scales of justice" />
         <p className="relative mt-3 font-display text-lg font-bold">Ask Lee <span className="text-muted-foreground">·</span> <span className="lee-partner-title-accent">AI Partner</span></p>
         <p className="relative text-sm text-muted-foreground">How can I assist you today?</p>
       </div>

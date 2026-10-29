@@ -7,7 +7,7 @@ interface AnimatedAIHeadProps {
   isActive?: boolean;
 }
 
-// Lee's face everywhere on the site: the LegallyAI mascot, gently floating, with a gold glow while working.
+// Lee's face everywhere on the site: the LegallyAI mascot, gently floating (no glow or halo behind him).
 // (Kept the original name and props so all existing pages pick up the new design automatically.)
 const sizeClasses = {
   sm: "w-12 h-12",
@@ -18,7 +18,6 @@ const sizeClasses = {
 export function AnimatedAIHead({ size = "md", className, isActive = true }: AnimatedAIHeadProps) {
   return (
     <div className={cn("relative shrink-0 flex items-center justify-center", sizeClasses[size], className)} aria-hidden="true">
-      <div className={cn("absolute inset-0 rounded-full bg-[hsl(45_90%_60%/0.25)] blur-md", isActive ? "animate-pulse" : "opacity-60")} />
       <img
         src={size === "lg" ? "/lee-mascot.png" : "/lee-mascot-sm.png"}
         alt=""
