@@ -28,7 +28,13 @@ function useNotFoundMeta() {
     };
     set("robots", "noindex, follow");
     set("description", NOT_FOUND_SEO.description);
-    document.head.querySelector('link[rel="canonical"]')?.remove();
+    // Detach the canonical while the 404 is shown and put it back on leave, so the next page
+    // keeps a canonical even if it renders before RouteSeo runs again.
+    const canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    canonical?.remove();
+    return () => {
+      if (canonical && !document.head.querySelector('link[rel="canonical"]')) document.head.appendChild(canonical);
+    };
   }, [pathname]);
 }
 
