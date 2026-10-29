@@ -165,7 +165,7 @@ export function CaseWorkflowManager({ caseId: caseIdProp, organizationId: organi
       return;
     }
     const targetCaseId = caseIdProp || dialogCaseId;
-    if (!targetCaseId || !organizationId) {
+    if (!targetCaseId) {
       toast.error('Select a case before adding a task');
       return;
     }
@@ -178,9 +178,25 @@ export function CaseWorkflowManager({ caseId: caseIdProp, organizationId: organi
         is_auto_generated: false
       };
 
+      // Always take the org from the case row; never fall back to the user's org.
+      const { data: caseRow, error: caseError } = await supabase
+        .from('cases')
+        .select('organization_id')
+        .eq('id', targetCaseId)
+        .maybeSingle();
+      if (caseError) throw caseError;
+      if (!caseRow) {
+        toast.error('Case not found or not accessible');
+        return;
+      }
+      if (!caseRow.organization_id) {
+        toast.error("This case isn't linked to a firm, so tasks can't be added to it");
+        return;
+      }
+
       const { error } = await supabase.from('case_tasks').insert({
         case_id: targetCaseId,
-        organization_id: organizationId,
+        organization_id: caseRow.organization_id,
         ...task,
         due_date: task.due_date || null
       });
@@ -349,7 +365,7 @@ export function CaseWorkflowManager({ caseId: caseIdProp, organizationId: organi
                         onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
                       />
                     </div>
-                    <Button onClick={addTask} className="w-full" disabled={!(caseIdProp || dialogCaseId) || !organizationId || !newTask.title.trim()}>Create Task</Button>
+                    <Button onClick={addTask} className="w-full" disabled={!(caseIdProp || dialogCaseId) || !newTask.title.trim()}>Create Task</Button>
                   </div>
                 </DialogContent>
               </Dialog>
