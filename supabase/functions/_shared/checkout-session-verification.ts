@@ -18,7 +18,9 @@ export interface CheckoutSessionRetriever {
 
 export type CheckoutVerification =
   | { verified: true; paid: boolean; sessionId: string; amountTotal: number | null; currency: string | null }
-  | { verified: false; reason: "invalid_session_id" | "not_found" | "not_owner" | "customer_mismatch" | "incomplete" };
+  | { verified: false; reason: "invalid_session_id" | "not_found" | "not_owner" | "customer_mismatch" | "incomplete" }
+  // Stripe outage, rate limit, network or key problem: retryable, not proof the reference is invalid.
+  | { verified: false; reason: "stripe_unavailable" };
 
 const SESSION_ID = /^cs_(live|test)_[A-Za-z0-9]{10,}$/;
 
@@ -60,8 +62,11 @@ export async function verifyCheckoutSession(
   let session: CheckoutSessionLike | null = null;
   try {
     session = await stripe.checkout.sessions.retrieve(sessionId);
-  } catch {
-    return { verified: false, reason: "not_found" };
+  } catch (error) {
+    const code = (error as { code?: unknown; statusCode?: unknown } | null);
+    if (code?.code === "resource_missing" || code?.statusCode === 404) return { verified: false, reason: "not_found" };
+    console.error("[VERIFY-PAYMENT] Stripe session lookup failed", error instanceof Error ? error.message : String(error));
+    return { verified: false, reason: "stripe_unavailable" };
   }
   return evaluateCheckoutSession(sessionId, userId, mappedCustomerId, session);
 }

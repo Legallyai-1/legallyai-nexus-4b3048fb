@@ -72,9 +72,15 @@ serve(async (req) => {
       checkout = await verifyCheckoutSession(stripe, requestedSessionId, userId, getMappedBillingCustomerId(userId, mapping));
       if (!checkout.verified) {
         logStep("Checkout session rejected", { userId, reason: checkout.reason });
-        return new Response(JSON.stringify({ error: "This checkout reference could not be verified for your account.", reason: checkout.reason }), {
+        const retryable = checkout.reason === "stripe_unavailable";
+        return new Response(JSON.stringify({
+          error: retryable
+            ? "Billing is temporarily unavailable. Please check again in a moment."
+            : "This checkout reference could not be verified for your account.",
+          reason: checkout.reason,
+        }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 403,
+          status: retryable ? 503 : 403,
         });
       }
     }

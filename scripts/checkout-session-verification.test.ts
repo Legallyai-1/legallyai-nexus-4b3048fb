@@ -14,7 +14,7 @@ const mockStripe = (sessions: Record<string, CheckoutSessionLike>) => {
     calls,
     checkout: { sessions: { retrieve: async (id: string) => {
       calls.push(id);
-      if (!sessions[id]) throw new Error('No such checkout.session');
+      if (!sessions[id]) throw Object.assign(new Error('No such checkout.session'), { code: 'resource_missing', statusCode: 404 });
       return sessions[id];
     } } },
   };
@@ -37,6 +37,13 @@ test('malformed session ids are rejected without calling Stripe', async () => {
 test('forged session id unknown to Stripe is rejected', async () => {
   const r = await verifyCheckoutSession(mockStripe({}), 'cs_live_ForgedForgedForged', 'user-a', null);
   assert.deepEqual(r, { verified: false, reason: 'not_found' });
+});
+
+test('Stripe outages are retryable, not reported as an invalid reference', async () => {
+  const failing = { checkout: { sessions: { retrieve: async () => { throw Object.assign(new Error('rate limited'), { statusCode: 429 }); } } } };
+  assert.deepEqual(await verifyCheckoutSession(failing, SID, 'user-a', null), { verified: false, reason: 'stripe_unavailable' });
+  const missing = { checkout: { sessions: { retrieve: async () => { throw Object.assign(new Error('No such'), { code: 'resource_missing', statusCode: 404 }); } } } };
+  assert.deepEqual(await verifyCheckoutSession(missing, SID, 'user-a', null), { verified: false, reason: 'not_found' });
 });
 
 test("another user's real session is rejected", async () => {
@@ -70,6 +77,13 @@ test('purchase conversion fires only for a verified, paid, matching session', ()
   assert.equal(getPurchaseConversion(null, ok), null);
   assert.equal(getPurchaseConversion(SID, { ...ok, verified: 'true' }), null);
   assert.equal(getPurchaseConversion(SID, { ...ok, paid: false }), null);
+});
+
+test('conversion value respects zero- and three-decimal currencies', () => {
+  const base = { verified: true, paid: true, session_id: SID };
+  assert.equal(getPurchaseConversion(SID, { ...base, amount_total: 1000, currency: 'JPY' })?.value, 1000);
+  assert.equal(getPurchaseConversion(SID, { ...base, amount_total: 1500, currency: 'kwd' })?.value, 1.5);
+  assert.equal(getPurchaseConversion(SID, { ...base, amount_total: 999, currency: 'usd' })?.currency, 'USD');
 });
 
 test('forged session end-to-end: rejected server-side, so no conversion', async () => {
