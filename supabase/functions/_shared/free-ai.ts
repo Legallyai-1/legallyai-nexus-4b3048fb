@@ -65,10 +65,19 @@ export async function callFreeModel(
   messages: { role: "user" | "assistant"; content: string }[],
   fetchImpl: typeof fetch = fetch,
   timeoutMs = 25000,
+  totalBudgetMs = 45000,
 ): Promise<FreeChatResult | null> {
+  // Overall budget so a chain of slow providers cannot hold the request open for minutes;
+  // the caller then falls back to the in-house guide answer.
+  const deadline = Date.now() + totalBudgetMs;
   for (const provider of providers) {
+    const remaining = deadline - Date.now();
+    if (remaining < 1000) {
+      console.warn(`free-ai budget exhausted before ${provider.name}`);
+      break;
+    }
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const timer = setTimeout(() => controller.abort(), Math.min(timeoutMs, remaining));
     try {
       const response = await fetchImpl(`${provider.baseUrl}/chat/completions`, {
         method: "POST",
@@ -89,7 +98,7 @@ export async function callFreeModel(
         console.warn(`free-ai ${provider.name} returned ${response.status}`);
         continue;
       }
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
       const text = data?.choices?.[0]?.message?.content;
       if (typeof text === "string" && text.trim()) return { text: text.trim(), provider: provider.name };
     } catch (error) {

@@ -400,13 +400,25 @@ serve(async (req) => {
       let reviewed = false;
       let completed = false;
       let engine = "paid";
+      let paidUsed = false;
       try {
         if (provider) {
-          fullText = await streamCompletion(provider, system, messages, () => {});
-          if (!fullText.trim() || !paidAIQuotaOptions || !await consumePaidAIQuota(paidAIQuotaOptions)) {
-            fullText = "";
-            throw new Error("Paid AI access was unavailable after the response completed.");
+          // Paid model first; if it fails or quota cannot be recorded, fall back to the free path below
+          // instead of failing the whole request.
+          try {
+            const paidText = await streamCompletion(provider, system, messages, () => {});
+            if (paidText.trim() && paidAIQuotaOptions && await consumePaidAIQuota(paidAIQuotaOptions)) {
+              fullText = paidText;
+              paidUsed = true;
+            } else {
+              console.warn("legal-chat paid AI unavailable after completion; using free path");
+            }
+          } catch (error) {
+            console.warn("legal-chat paid AI failed; using free path", error instanceof Error ? error.message : error);
           }
+        }
+        if (paidUsed) {
+          // answered by the paid model
         } else if (hubType === "support") {
           fullText = buildNoCostGuidance(hubType);
         } else {
@@ -420,7 +432,8 @@ serve(async (req) => {
           const gemini = getGeminiConfig(Deno.env);
           let answered = false;
           if (gemini && !guide.emergency && !isEmergency(lastUserMessage)) {
-            const result = await callGemini(gemini, leeSystemPrompt(hubType, stateNameForAI, groundingNotes(guide.topics)), messages);
+            const result = await callGemini(gemini, leeSystemPrompt(hubType, stateNameForAI, groundingNotes(guide.topics)), messages)
+              .catch((error) => { console.warn("legal-chat gemini failed", error instanceof Error ? error.message : error); return null; });
             if (result) {
               const footer = `${personaFor(hubType).name} is LegallyAI's legal-information AI. This is general information, not legal advice, and it may contain mistakes. Check sources and deadlines with the court or agency.`;
               fullText = composeAnswer(result.text, result.sources, lastUserMessage, footer);
@@ -433,7 +446,8 @@ serve(async (req) => {
           if (freeProviders.length && !guide.emergency && !isEmergency(lastUserMessage)) {
             const stateName = detectState(messages.filter((m) => m.role === "user").map((m) => m.content).join("\n"))?.name ?? null;
             const freeSystem = buildGroundedSystem(system, groundingNotes(guide.topics), stateName);
-            const result = await callFreeModel(freeProviders, freeSystem, messages);
+            const result = await callFreeModel(freeProviders, freeSystem, messages)
+              .catch((error) => { console.warn("legal-chat free model failed", error instanceof Error ? error.message : error); return null; });
             if (result) {
               fullText = `${result.text}\n\n---\n\n${FREE_AI_FOOTER}`;
               engine = `free-model:${result.provider}`;
@@ -441,10 +455,15 @@ serve(async (req) => {
           }
         }
 
+        if (!fullText.trim()) {
+          fullText = "I couldn't put together an answer just now. Please rephrase your question or try again in a minute. " +
+            "For anything urgent or with a deadline, contact the court clerk, a local legal aid office, or a licensed attorney.";
+          engine = "fallback";
+        }
         controller.enqueue(sseEvent({ delta: fullText }));
         completed = true;
 
-        if (provider && fullText.trim() && needsReview(fullText)) {
+        if (paidUsed && provider && fullText.trim() && needsReview(fullText)) {
           const reviewerSystem =
             "You are a legal-accuracy reviewer. Given a draft answer from another AI assistant, reply with exactly " +
             "'OK' if it is accurate and appropriately hedged, or otherwise a corrective note under 60 words " +
@@ -461,8 +480,8 @@ serve(async (req) => {
           hub_type: hubType,
           session_id: sessionId,
           reviewed,
-          mode: provider ? "paid" : hubType === "support" ? "no-cost" : "in-house",
-          engine: provider ? "paid" : hubType === "support" ? "no-cost" : engine,
+          mode: paidUsed ? "paid" : hubType === "support" ? "no-cost" : "in-house",
+          engine: paidUsed ? "paid" : hubType === "support" ? "no-cost" : engine,
           persona: personaFor(hubType).name,
           free_questions: gate && !gate.subscriber ? { used: gate.used, limit: gate.limit } : null,
         }));
@@ -496,12 +515,15 @@ serve(async (req) => {
       buffer += decoder.decode(value, { stream: true });
       for (const line of buffer.split("\n\n").slice(0, -1)) {
         if (!line.startsWith("data: ")) continue;
-        const event = JSON.parse(line.slice(6));
+        let event: Record<string, unknown>;
+        try { event = JSON.parse(line.slice(6)); } catch { continue; }
         if (typeof event.delta === "string") answer += event.delta;
         if (event.done) done = event;
-        if (typeof event.error === "string") return new Response(JSON.stringify({ error: event.error }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (typeof event.error === "string") return new Response(JSON.stringify({ error: event.error }), { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-      buffer = buffer.slice(buffer.lastIndexOf("\n\n") + 2);
+      // Keep any partial event; lastIndexOf returns -1 when no complete event arrived yet.
+      const cut = buffer.lastIndexOf("\n\n");
+      if (cut >= 0) buffer = buffer.slice(cut + 2);
     }
     return new Response(JSON.stringify({ answer, hub_type: hubType, session_id: sessionId, persona: done.persona ?? personaFor(hubType).name, mode: done.mode ?? null, engine: done.engine ?? null, free_questions: done.free_questions ?? null }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
