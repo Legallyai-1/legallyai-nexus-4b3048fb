@@ -236,4 +236,5 @@ test('with paid AI disabled everyone gets the worksheet and no purchase is offer
   assert.equal(h.aiCalls.length, 0);
   assert.equal(body.mode, 'template');
   assert.equal(body.purchaseRequired, false);
+  assert.equal(body.paidAiAvailable, false);
 });

@@ -182,6 +182,7 @@ export async function handleGenerateDocument(req: Request, deps: GenerateDocumen
         mode: "template",
         exportUnlocked: false,
         purchaseRequired: false,
+        paidAiAvailable: false,
       });
     }
 
