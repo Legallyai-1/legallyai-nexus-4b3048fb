@@ -32,7 +32,7 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
   "/settlement-estimator": pub("Settlement estimator | LegallyAI", "Get a rough settlement range for your claim from the details you enter, with the factors that move the number."),
   "/research": pub("AI legal research with sources | LegallyAI", "Search laws and court rules in plain English and get answers with links to the official sources."),
   "/templates": pub("Legal document templates | LegallyAI", "Browse ready-to-edit legal templates for common situations and fill them in with help from Lee."),
-  "/ai-assistants": pub("AI legal assistants for every situation | LegallyAI", "Specialist Lee assistants for custody, divorce, traffic tickets, DUI, probation, wills and workplace issues."),
+  "/ai-assistants": pub("AI legal assistants for every situation | LegallyAI", "AI assistants for custody, divorce, traffic tickets, DUI, probation, wills and workplace issues."),
   "/custody": pub("Child custody help | LegallyAI", "Understand custody options, prepare parenting plans and get ready for hearings with step-by-step help from Lee."),
   "/tickets-defense": pub("Traffic ticket defense help | LegallyAI", "Learn your options for a traffic ticket, prepare your defense and get ready for court with Lee."),
   "/dui-hub": pub("DUI help and court prep | LegallyAI", "Understand DUI charges, deadlines and court steps, and prepare questions for your attorney with Lee."),

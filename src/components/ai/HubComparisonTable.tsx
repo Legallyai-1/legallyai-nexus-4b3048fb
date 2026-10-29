@@ -157,7 +157,7 @@ export function HubComparisonTable() {
         </h2>
         <p className="text-muted-foreground">
           LegallyAI vs. Industry Leaders • Advanced AI Technology
-          LegallyAI - Industry-leading capabilities across all specialized hubs
+          LegallyAI capabilities across every hub
         </p>
       </div>
 

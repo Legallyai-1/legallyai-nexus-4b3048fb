@@ -17,7 +17,7 @@ export interface ToolEntry {
 
 export const TOOL_CATALOG: ToolEntry[] = [
   { title: "Ask Lee", path: "/chat", icon: "chat", description: "Chat with your AI legal partner", group: "Ask Lee", featured: true },
-  { title: "AI Assistants", path: "/ai-assistants", icon: "assistants", description: "A specialist for every need", group: "Ask Lee" },
+  { title: "AI Assistants", path: "/ai-assistants", icon: "assistants", description: "An AI assistant for each topic", group: "Ask Lee" },
   { title: "Document Generator", path: "/generate", icon: "generate", description: "Letters, motions, agreements", group: "Documents & analysis", featured: true },
   { title: "Contract Redline", path: "/contract-review", icon: "redline", description: "Spot risky clauses and get redlines", group: "Documents & analysis", featured: true },
   { title: "Settlement Estimator", path: "/settlement-estimator", icon: "settlement", description: "Estimate damages and claim value", group: "Documents & analysis", featured: true },

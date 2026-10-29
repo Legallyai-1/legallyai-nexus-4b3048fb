@@ -65,7 +65,7 @@ const assistants = [
   {
     id: "dui",
     name: "DriveSafeAI - DUI Defense",
-    description: "DUI specialists: Breathalyzer data parsers, hearing simulations, lead matching, contingency billing.",
+    description: "AI assistant for DUI cases: breathalyzer data parsers, hearing simulations, lead matching, contingency billing.",
     icon: Car,
     variant: "orange" as const,
     path: "/dui-hub",
@@ -227,7 +227,7 @@ export default function AIAssistantsPage() {
               AI Legal <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-cyan to-neon-blue">Assistants</span>
             </h1>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Choose your specialized AI assistant. Industry-leading legal AI technology.
+              Choose your specialized AI assistant. Each one is Lee, focused on a single area of law.
             </p>
             <div className="flex justify-center gap-2 mt-4">
               <Badge className="bg-neon-cyan/20 text-neon-cyan border-neon-cyan/30">

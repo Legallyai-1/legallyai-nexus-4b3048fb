@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { GlowScalesLoader } from "@/components/brand/GlowScales";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { RouteSeo } from "@/components/seo/RouteSeo";
+import { AdsenseRouteLoader } from "@/components/ads/AdsenseRouteLoader";
 import { AnimatePresence } from "framer-motion";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { Loader2 } from "lucide-react";
@@ -79,6 +80,7 @@ export function AnimatedRoutes() {
   return (
     <>
     <RouteSeo />
+    <AdsenseRouteLoader />
     <AnimatePresence mode="sync">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<PageTransition><Index /></PageTransition>} />

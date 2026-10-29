@@ -26,10 +26,11 @@ const features = [
 ];
 
 // Plans by firm size. Prices match the published pricing; checkout lives on /pricing.
+const SALES_MAILTO = "mailto:support@legallyai.ai?subject=LegallyAI%20firm%20plan%20waitlist";
 const plans = [
-  { name: "Solo", price: "$29", period: "/month", seats: "1 attorney or paralegal seat", points: ["Full case workspace", "Client portal", "AI drafting & hearing prep"], cta: "Start 7-day trial", to: "/pricing" },
-  { name: "Firm", price: "$99", period: "/month + $25 per extra seat", seats: "3 seats included", points: ["Everything in Solo", "Team roles & access", "Client communication"], cta: "Start 7-day trial", to: "/pricing", highlight: true },
-  { name: "Enterprise", price: "$149", period: "/user/month · 10-seat minimum", seats: "10+ seats", points: ["Highest AI limits", "Premium support", "Advanced firm tools"], cta: "Contact us", href: "mailto:support@legallyai.ai?subject=LegallyAI%20Enterprise" },
+  { name: "Solo", price: "Early access", period: "", seats: "Single seat, coming soon", points: ["Case workspace", "Client portal", "AI drafting & hearing prep"], cta: "Join the waitlist", href: SALES_MAILTO },
+  { name: "Firm", price: "$99", period: "/month", seats: "Your firm's shared workspace", points: ["Case files & client portal", "AI drafting, redlines & research", "Billing & trust accounting"], cta: "Start 7-day free trial", to: "/pricing?plan=firm", highlight: true },
+  { name: "Enterprise", price: "Early access", period: "", seats: "Larger firms, coming soon", points: ["More seats", "Higher AI limits", "Onboarding help"], cta: "Join the waitlist", href: SALES_MAILTO },
 ];
 
 // Factual statements about how the app handles data today. No certifications are claimed.
@@ -151,7 +152,7 @@ export default function LawyerPage() {
                 Draft faster, review contracts, research with sources, and run cases, clients, billing and trust accounting in one place, with Lee as your AI partner.
               </p>
               <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                <Button size="lg" onClick={startTrial} className="gold-tile border-0 font-semibold">Start free trial <ArrowRight className="ml-1.5 h-4 w-4" /></Button>
+                <Button size="lg" onClick={startTrial} className="gold-tile border-0 font-semibold">Create firm account <ArrowRight className="ml-1.5 h-4 w-4" /></Button>
                 <Button asChild size="lg" variant="outline" className="bg-white/70"><a href={DEMO_MAILTO}><Mail className="mr-1.5 h-4 w-4" />Book a demo</a></Button>
               </div>
             </div>
@@ -177,7 +178,7 @@ export default function LawyerPage() {
         <section id="plans" className="px-4 py-10 scroll-mt-20" aria-labelledby="plans-heading">
           <div className="container mx-auto max-w-6xl">
             <h2 id="plans-heading" className="font-display text-2xl sm:text-3xl font-bold">Plans by firm size</h2>
-            <p className="mt-1 text-muted-foreground">Paid plans include a 7-day free trial where eligible. Prices before tax.</p>
+            <p className="mt-1 text-muted-foreground">Firm includes a 7-day free trial if eligible. Prices in USD before tax.</p>
             <div className="mt-6 grid md:grid-cols-3 gap-4">
               {plans.map((plan) => (
                 <div key={plan.name} className="metal-card rounded-3xl p-6 flex flex-col" data-active={plan.highlight ? "true" : undefined}>

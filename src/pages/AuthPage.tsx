@@ -158,39 +158,16 @@ export default function AuthPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-legal-navy flex items-center justify-center p-4">
-      {/* Animated Particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(40)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute rounded-full animate-float"
-            style={{
-              width: `${Math.random() * 6 + 2}px`,
-              height: `${Math.random() * 6 + 2}px`,
-              backgroundColor: i % 3 === 0 
-                ? 'hsl(45 93% 58% / 0.6)' 
-                : i % 3 === 1 
-                  ? 'hsl(187 100% 42% / 0.5)' 
-                  : 'hsl(0 0% 100% / 0.3)',
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 6}s`,
-              animationDuration: `${Math.random() * 4 + 4}s`,
-            }}
-          />
-        ))}
-      </div>
-
-      <Card className="w-full max-w-md relative z-10 bg-card/95 backdrop-blur-xl border-border/50">
+    <div className="hub-theme hub-bg min-h-screen flex items-center justify-center p-4 text-foreground">
+      <Card className="metal-card w-full max-w-md relative z-10 rounded-3xl border-0">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="p-3 bg-legal-gold/10 rounded-xl">
-              <GlowScales className="h-8 w-8 text-legal-gold" />
+            <div className="metal-icon-well p-3 rounded-xl">
+              <GlowScales className="h-8 w-8 text-legal-gold" aria-hidden="true" />
             </div>
           </div>
           <CardTitle className="text-2xl font-display">LegallyAI</CardTitle>
-          <CardDescription>Access your law firm management portal</CardDescription>
+          <CardDescription>Sign in to your LegallyAI workspace</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
@@ -346,29 +323,6 @@ export default function AuthPage() {
             </TabsContent>
           </Tabs>
 
-          <div className="mt-6 pt-6 border-t border-border/50">
-            <p className="text-sm text-muted-foreground text-center mb-4">
-              Each account type has a dedicated portal:
-            </p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
-                <User className="h-3 w-3 text-legal-cyan" />
-                <span>AI Assistants Hub</span>
-              </div>
-              <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
-                <Briefcase className="h-3 w-3 text-legal-gold" />
-                <span>Lawyer Dashboard</span>
-              </div>
-              <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
-                <Building2 className="h-3 w-3 text-purple-400" />
-                <span>Admin Panel</span>
-              </div>
-              <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
-                <Users className="h-3 w-3 text-green-400" />
-                <span>Employee Portal</span>
-              </div>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>

@@ -23,10 +23,10 @@ import { featuredTools } from "@/lib/toolCatalog";
 
 const hubs = [
   { id: "chat", name: "Lee Legal AI", icon: MessageSquare, color: "cyan", path: "/chat", description: "General legal assistant" },
-  { id: "custody", name: "CustodiAI", icon: Heart, color: "purple", path: "/custody", description: "Child custody specialist" },
-  { id: "marriage", name: "MaryAI", icon: Heart, color: "pink", path: "/marriage-divorce", description: "Marriage & divorce expert" },
+  { id: "custody", name: "CustodiAI", icon: Heart, color: "purple", path: "/custody", description: "AI assistant for child custody" },
+  { id: "marriage", name: "MaryAI", icon: Heart, color: "pink", path: "/marriage-divorce", description: "AI assistant for marriage & divorce" },
   { id: "defense", name: "DefendrAI", icon: Gavel, color: "rose", path: "/tickets-defense", description: "Criminal defense" },
-  { id: "dui", name: "DriveSafeAI", icon: Car, color: "orange", path: "/dui-hub", description: "DUI defense specialist" },
+  { id: "dui", name: "DriveSafeAI", icon: Car, color: "orange", path: "/dui-hub", description: "AI assistant for DUI cases" },
   { id: "probation", name: "Freedom AI", icon: Users, color: "green", path: "/probation-parole", description: "Probation & parole guide" },
   { id: "will", name: "LegacyAI", icon: Home, color: "blue", path: "/will-hub", description: "Wills & estate planning" },
   { id: "workplace", name: "WorkAI", icon: Building2, color: "orange", path: "/workplace-legal-aid", description: "Employment rights" },
@@ -41,57 +41,13 @@ const myCases = [
   { title: "Court prep", description: "Find your court and its official forms", icon: Landmark, path: "/court-records" },
 ];
 
+// Plans match /pricing and /lawyers. Only Premium, Per Document and Firm are sold online today.
 const pricingTiers = [
-  { 
-    name: "Free", 
-    price: "$0", 
-    period: "forever",
-    features: ["All AI Hubs", "10 AI messages/day", "2 document drafts/month", "Ad-supported"],
-    cta: "Get Started",
-    path: "/signup",
-    popular: false,
-    trial: null
-  },
-  { 
-    name: "Premium", 
-    price: "$9.99", 
-    period: "/month",
-    features: ["7-day free trial", "Ad-free experience", "Unlimited AI chat", "25 document drafts/month", "Priority support"],
-    cta: "Start 7-Day Free Trial",
-    path: "/pricing",
-    popular: true,
-    trial: "7-day free trial"
-  },
-  { 
-    name: "Solo Lawyer", 
-    price: "$29", 
-    period: "/month",
-    features: ["7-day free trial", "1 attorney/paralegal seat", "Full case workspace", "Client portal", "AI document drafts", "Hearing prep"],
-    cta: "Start 7-Day Free Trial",
-    path: "/pricing",
-    popular: false,
-    trial: "7-day free trial"
-  },
-  { 
-    name: "Firm", 
-    price: "$99", 
-    period: "/month + $25/extra seat",
-    features: ["7-day free trial", "3 seats included", "Full case management", "Client communication", "Team roles & access"],
-    cta: "Start 7-Day Free Trial",
-    path: "/pricing",
-    popular: false,
-    trial: "7-day free trial"
-  },
-  { 
-    name: "Large Firm", 
-    price: "$149", 
-    period: "/user/month · 10-seat minimum",
-    features: ["7-day free trial", "10+ seats", "Highest AI limits", "Premium support", "Advanced firm tools"],
-    cta: "Start 7-Day Free Trial",
-    path: "/pricing",
-    popular: false,
-    trial: "7-day free trial"
-  },
+  { name: "Free", price: "$0", period: "", features: ["5 free Ask Lee questions", "Try the self-help hubs", "No card needed", "Ad-supported"], cta: "Get started", path: "/signup", popular: false, audience: "individual" },
+  { name: "Premium", price: "$9.99", period: "/month", features: ["7-day free trial", "More Ask Lee answers", "Document drafting", "Ad-free experience"], cta: "Start 7-day free trial", path: "/pricing?plan=premium", popular: true, audience: "individual" },
+  { name: "Solo", price: "Early access", period: "", features: [], cta: "", path: "/lawyers#plans", popular: false, audience: "firm" },
+  { name: "Firm", price: "$99", period: "/month", features: [], cta: "", path: "/lawyers#plans", popular: false, audience: "firm" },
+  { name: "Enterprise", price: "Early access", period: "", features: [], cta: "", path: "/lawyers#plans", popular: false, audience: "firm" },
 ];
 
 interface ChatMessage {
@@ -138,8 +94,8 @@ export default function Index() {
     }
   };
 
-  const individualTiers = pricingTiers.filter((t) => t.name === "Free" || t.name === "Premium");
-  const firmTiers = pricingTiers.filter((t) => t.name !== "Free" && t.name !== "Premium");
+  const individualTiers = pricingTiers.filter((t) => t.audience === "individual");
+  const firmTiers = pricingTiers.filter((t) => t.audience === "firm");
 
   return (
     <Layout>
@@ -172,7 +128,7 @@ export default function Index() {
                   >
                     <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider opacity-75"><Users className="h-3.5 w-3.5" aria-hidden="true" /> For individuals</span>
                     <span className="mt-1.5 flex items-center justify-between gap-2 font-display text-lg font-bold">Get legal help <ArrowRight className="h-5 w-5 shrink-0 transition-transform group-hover:translate-x-1" aria-hidden="true" /></span>
-                    <span className="mt-1 block text-sm opacity-80">Ask Lee free: 5 questions, no card</span>
+                    <span className="mt-1 block text-sm opacity-80">5 free questions, no card needed</span>
                   </button>
                   <Link
                     to="/lawyers"
@@ -367,7 +323,7 @@ export default function Index() {
           <div className="container mx-auto max-w-6xl">
             <div className="text-center mb-8">
               <h2 id="pricing-heading" className="text-2xl sm:text-4xl font-display font-bold mb-3">Start free, upgrade when ready</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">Free stays ad-supported so core tools remain accessible. Paid plans include a 7-day free trial where eligible.</p>
+              <p className="text-muted-foreground max-w-2xl mx-auto">Free stays ad-supported so core tools remain accessible. Premium and Firm include a 7-day free trial if eligible.</p>
             </div>
             <h3 className="sr-only">Plans for individuals</h3>
             <div className="grid md:grid-cols-2 gap-5 max-w-3xl mx-auto">
