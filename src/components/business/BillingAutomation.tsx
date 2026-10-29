@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureUserOrganization } from "@/lib/organizations";
 import { errorMessage } from "@/lib/mutationResult";
+import { canReadOrgInvoices } from "@/lib/invoiceAccess";
 
 interface TimeEntry {
   id: string;
@@ -25,7 +26,8 @@ interface TimeEntry {
   description: string;
   hours: number;
   rate: number;
-  status: "unbilled" | "billed" | "written_off";
+  // "unverified": the user can't read the org's invoices, so we can't tell if it was billed (LEG-25).
+  status: "unbilled" | "billed" | "written_off" | "unverified";
   selected?: boolean;
 }
 
@@ -54,6 +56,8 @@ export function BillingAutomation() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // Only roles that can read every org invoice may invoice (see src/lib/invoiceAccess.ts).
+  const [canInvoice, setCanInvoice] = useState(false);
 
   const loadTimeEntries = useCallback(async () => {
     setIsLoading(true);
@@ -62,9 +66,18 @@ export function BillingAutomation() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setTimeEntries([]);
+        setCanInvoice(false);
         return;
       }
       const organizationId = await ensureUserOrganization(user.id);
+
+      // Fail closed: if the role lookup fails, treat the user as unable to read invoices.
+      const { data: roleRows, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("role, organization_id")
+        .eq("user_id", user.id);
+      const mayInvoice = !rolesError && canReadOrgInvoices(roleRows, organizationId);
+      setCanInvoice(mayInvoice);
 
       // RLS limits rows to the user's own entries (plus org entries for privileged roles).
       const { data: rows, error } = await supabase
@@ -78,10 +91,12 @@ export function BillingAutomation() {
       if (error) throw error;
 
       // Entries already referenced by an invoice's items are treated as billed.
+      // Without org-wide invoice read, RLS can return zero rows even when entries were billed,
+      // so we never read "no invoices" as "unbilled". Entries are shown as unverified instead.
       const billedIds = new Set<string>();
       const PAGE = 1000;
       const invoiceRows: { items: unknown }[] = [];
-      for (let from = 0; ; from += PAGE) {
+      for (let from = 0; mayInvoice; from += PAGE) {
         const { data: page, error: invoiceError } = await supabase
           .from("invoices")
           .select("items")
@@ -114,11 +129,12 @@ export function BillingAutomation() {
           description: r.description ?? "",
           hours,
           rate: Number(r.hourly_rate ?? 0),
-          status: "unbilled" as const,
+          status: mayInvoice ? ("unbilled" as const) : ("unverified" as const),
         };
       }));
     } catch (error) {
       console.error("Time entry load error:", error);
+      setCanInvoice(false);
       setLoadError(errorMessage(error, "Failed to load time entries"));
     } finally {
       setIsLoading(false);
@@ -129,21 +145,27 @@ export function BillingAutomation() {
     void loadTimeEntries();
   }, [loadTimeEntries]);
 
-  const selectedEntries = timeEntries.filter(e => e.selected);
+  const selectedEntries = canInvoice ? timeEntries.filter(e => e.selected && e.status === "unbilled") : [];
   const selectedTotal = selectedEntries.reduce((sum, e) => sum + (e.hours * e.rate), 0);
 
   const toggleEntry = (id: string) => {
+    if (!canInvoice) return;
     setTimeEntries(prev => prev.map(e => 
       e.id === id ? { ...e, selected: !e.selected } : e
     ));
   };
 
   const selectAll = () => {
+    if (!canInvoice) return;
     const allSelected = timeEntries.every(e => e.selected);
     setTimeEntries(prev => prev.map(e => ({ ...e, selected: !allSelected })));
   };
 
   const generateInvoices = async () => {
+    if (!canInvoice) {
+      toast.error("Only firm owners, admins and managers can generate invoices.");
+      return;
+    }
     if (selectedEntries.length === 0) {
       toast.error("Please select time entries to invoice");
       return;
@@ -213,6 +235,7 @@ export function BillingAutomation() {
     unbilled: "bg-yellow-500/20 text-yellow-400",
     billed: "bg-green-500/20 text-green-400",
     written_off: "bg-gray-500/20 text-gray-400",
+    unverified: "bg-muted text-muted-foreground",
     draft: "bg-gray-500/20 text-gray-400",
     sent: "bg-blue-500/20 text-blue-400",
     paid: "bg-green-500/20 text-green-400",
@@ -237,6 +260,7 @@ export function BillingAutomation() {
                 Billing records are not connected. No sample entries or payment records are shown.
               </p>
             </div>
+            {canInvoice && (
             <Button variant="gold" onClick={generateInvoices} disabled={selectedEntries.length === 0 || isGenerating}>
               {isGenerating ? (
                 <>
@@ -250,6 +274,7 @@ export function BillingAutomation() {
                 </>
               )}
             </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -288,8 +313,10 @@ export function BillingAutomation() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Unbilled Time Entries</CardTitle>
-                  <CardDescription>Select entries to generate invoices</CardDescription>
+                  <CardTitle>{canInvoice ? "Unbilled Time Entries" : "Billable Time Entries"}</CardTitle>
+                  <CardDescription>
+                    {canInvoice ? "Select entries to generate invoices" : "Read-only view of your billable time"}
+                  </CardDescription>
                 </div>
                 <div className="flex items-center gap-3">
                   {selectedEntries.length > 0 && (
@@ -310,14 +337,26 @@ export function BillingAutomation() {
               </div>
             </CardHeader>
             <CardContent>
+              {!isLoading && !loadError && !canInvoice && (
+                <div role="status" className="mb-4 flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
+                  <AlertCircle className="h-4 w-4 mt-0.5 text-amber-500 shrink-0" />
+                  <span>
+                    Invoicing is limited to firm owners, admins and managers, who can see every invoice and so avoid
+                    billing the same time twice. These entries are read-only and may already be billed. Ask an
+                    owner, admin or manager to generate invoices.
+                  </span>
+                </div>
+              )}
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-12">
-                      <Checkbox 
-                        checked={timeEntries.length > 0 && timeEntries.every(e => e.selected)}
-                        onCheckedChange={selectAll}
-                      />
+                      {canInvoice && (
+                        <Checkbox
+                          checked={timeEntries.length > 0 && timeEntries.every(e => e.selected)}
+                          onCheckedChange={selectAll}
+                        />
+                      )}
                     </TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Attorney</TableHead>
@@ -345,20 +384,22 @@ export function BillingAutomation() {
                       </TableCell>
                     </TableRow>
                   )}
-                  {!isLoading && !loadError && timeEntries.filter(e => e.status === "unbilled").length === 0 && (
+                  {!isLoading && !loadError && timeEntries.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={9} className="text-center text-muted-foreground">
-                        No unbilled time entries.
+                        {canInvoice ? "No unbilled time entries." : "No billable time entries."}
                       </TableCell>
                     </TableRow>
                   )}
-                  {!isLoading && !loadError && timeEntries.filter(e => e.status === "unbilled").map((entry) => (
+                  {!isLoading && !loadError && timeEntries.map((entry) => (
                     <TableRow key={entry.id} className={entry.selected ? "bg-primary/5" : ""}>
                       <TableCell>
-                        <Checkbox 
-                          checked={entry.selected}
-                          onCheckedChange={() => toggleEntry(entry.id)}
-                        />
+                        {canInvoice && entry.status === "unbilled" && (
+                          <Checkbox
+                            checked={entry.selected}
+                            onCheckedChange={() => toggleEntry(entry.id)}
+                          />
+                        )}
                       </TableCell>
                       <TableCell>{new Date(entry.date).toLocaleDateString()}</TableCell>
                       <TableCell>{entry.attorney}</TableCell>
