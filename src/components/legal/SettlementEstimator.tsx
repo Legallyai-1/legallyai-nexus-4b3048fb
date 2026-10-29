@@ -48,11 +48,11 @@ export function SettlementEstimator() {
               <CardTitle className="text-xl font-display flex items-center gap-2">
                 Settlement & Damages Claim Estimator
                 <Badge className="bg-neon-green/20 text-neon-green border-neon-green/40 text-xs">
-                  <Sparkles className="w-3 h-3 mr-1" /> EvenUp-Grade Valuation
+                  <Calculator className="w-3 h-3 mr-1" aria-hidden="true" /> Transparent calculator
                 </Badge>
               </CardTitle>
               <CardDescription>
-                Calculate your potential claim valuation for personal injury, car accidents, tenant disputes, or breach of contract.
+                A rough, rule-of-thumb starting point for an injury or damages claim. You can see exactly how the number is calculated.
               </CardDescription>
             </div>
           </div>
@@ -144,12 +144,12 @@ export function SettlementEstimator() {
         <div className="rounded-xl border border-neon-gold/40 bg-gradient-to-br from-neon-gold/10 via-background to-neon-cyan/5 p-6 space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <span className="text-xs uppercase font-bold text-neon-gold tracking-wider">Estimated Settlement Range</span>
+              <span className="text-xs uppercase font-bold text-neon-gold tracking-wider">Rough illustrative range</span>
               <div className="text-3xl md:text-4xl font-extrabold font-display text-foreground mt-1">
                 {formatCurrency(totalLow)} – {formatCurrency(totalHigh)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Expected target median value: <strong className="text-neon-green">{formatCurrency(totalMedian)}</strong>
+                Midpoint of the formula: <strong className="text-neon-green">{formatCurrency(totalMedian)}</strong>
               </p>
             </div>
 
@@ -175,6 +175,11 @@ export function SettlementEstimator() {
               <span className="text-muted-foreground">Multiplier Applied:</span>
               <div className="font-bold text-neon-cyan">{severityMultiplier}x Medical Costs</div>
             </div>
+          </div>
+
+          <div className="rounded-lg border border-border/60 bg-background/80 p-3 text-xs text-muted-foreground space-y-1.5">
+            <p><strong className="text-foreground">How this is calculated:</strong> economic losses (medical + property + lost wages) plus medical costs × the severity multiplier you chose. The range is 75%–135% of that total.</p>
+            <p><strong className="text-foreground">This is not a prediction or legal advice.</strong> Real outcomes depend on liability, evidence, insurance limits, your state&apos;s law and deadlines, and negotiation. Many claims settle for less, and some for nothing. Talk to a licensed attorney about your situation.</p>
           </div>
 
           {/* Lee Advice */}

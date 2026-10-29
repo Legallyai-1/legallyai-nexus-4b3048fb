@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { GlowScales } from "@/components/brand/GlowScales";
+import { HubBrand } from "@/components/brand/HubBrand";
 import { 
   Home, MessageSquare, FileText, Users, Calendar, Clock, 
   DollarSign, Briefcase, Shield, GraduationCap, Phone, 
@@ -127,20 +128,16 @@ export function AppSidebar({ userRole = "client", notificationCount = 0 }: AppSi
 
   return (
     <aside className={cn(
-      "flex flex-col h-screen bg-card border-r border-border transition-all duration-300 sticky top-0",
+      "flex flex-col h-screen sticky top-0 border-r border-white/70 bg-white/72 backdrop-blur-xl shadow-[8px_0_30px_-20px_hsl(218_45%_25%/0.5)] transition-all duration-300",
       collapsed ? "w-16" : "w-64"
     )}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
-        {!collapsed && (
-          <div className="flex items-center gap-2">
-            <GlowScales className="h-6 w-6 text-legal-gold" />
-            <span className="font-display font-semibold text-lg">LegallyAI</span>
-          </div>
-        )}
+      <div className="flex h-16 items-center justify-between px-4 border-b border-border/70">
+        {collapsed ? <GlowScales className="sr-only" sparkles={false} /> : <HubBrand />}
         <Button 
           variant="ghost" 
           size="icon" 
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           onClick={() => setCollapsed(!collapsed)}
           className={collapsed ? "mx-auto" : ""}
         >
@@ -161,12 +158,14 @@ export function AppSidebar({ userRole = "client", notificationCount = 0 }: AppSi
               {section.items.map((item) => (
                 <button
                   key={item.href}
+                  data-nav-item
                   onClick={() => navigate(item.href)}
+                  aria-current={isActive(item.href) ? "page" : undefined}
                   className={cn(
-                    "flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm transition-all",
+                    "flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     isActive(item.href) 
-                      ? "bg-legal-gold/20 text-legal-gold font-medium" 
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      ? "hub-nav-active font-semibold" 
+                      : "text-foreground/75 hover:bg-white/80 hover:text-foreground",
                     collapsed && "justify-center px-2"
                   )}
                   title={collapsed ? item.title : undefined}
@@ -192,6 +191,7 @@ export function AppSidebar({ userRole = "client", notificationCount = 0 }: AppSi
       {/* Footer */}
       <div className="border-t border-border p-3 space-y-1">
         <button
+          data-nav-item
           onClick={() => navigate("/settings")}
           className={cn(
             "flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-all",

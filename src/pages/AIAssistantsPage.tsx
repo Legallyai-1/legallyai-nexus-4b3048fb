@@ -4,9 +4,7 @@ import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { Layout } from "@/components/layout/Layout";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Heart, Shield, Scale, Briefcase, Building2, FileText, Gavel, GraduationCap, Phone, Headphones, Users, DollarSign, BarChart3, Car, Home, Star, Sparkles } from "lucide-react";
-import AdBanner from "@/components/ads/AdBanner";
 import AdContainer from "@/components/ads/AdContainer";
-import AdMobBanner, { ADMOB_AD_UNITS } from "@/components/ads/AdMobBanner";
 
 const assistants = [
   {
@@ -65,7 +63,7 @@ const assistants = [
   {
     id: "dui",
     name: "DriveSafeAI - DUI Defense",
-    description: "DUI specialists: Breathalyzer data parsers, hearing simulations, lead matching, contingency billing.",
+    description: "AI assistant for DUI cases: breathalyzer data parsers, hearing simulations, lead matching, contingency billing.",
     icon: Car,
     variant: "orange" as const,
     path: "/dui-hub",
@@ -227,7 +225,7 @@ export default function AIAssistantsPage() {
               AI Legal <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-cyan to-neon-blue">Assistants</span>
             </h1>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Choose your specialized AI assistant. Industry-leading legal AI technology.
+              Choose your specialized AI assistant. Each one is Lee, focused on a single area of law.
             </p>
             <div className="flex justify-center gap-2 mt-4">
               <Badge className="bg-neon-cyan/20 text-neon-cyan border-neon-cyan/30">
@@ -324,12 +322,7 @@ export default function AIAssistantsPage() {
             ))}
           </div>
 
-          {/* Ad Banner - Web */}
-          <AdContainer position="inline" className="mt-8">
-            <AdBanner slot="5824691357" format="horizontal" />
-          </AdContainer>
-          {/* Ad Banner - Mobile */}
-          <AdMobBanner adUnitId={ADMOB_AD_UNITS.ASSISTANTS_BANNER} size="banner" className="mt-2" />
+          <AdContainer slot="5824691357" className="mt-12" />
 
           {/* Bottom CTA */}
           <div className="mt-8 text-center">

@@ -20,8 +20,6 @@ import { CourtPrepTab } from "@/components/hub/CourtPrepTab";
 
 import { DocuAI } from "@/components/hub/DocuAI";
 import { HubNotifications } from "@/components/hub/HubNotifications";
-import AdBanner from "@/components/ads/AdBanner";
-import AdContainer from "@/components/ads/AdContainer";
 
 const topics = [
   {
@@ -289,9 +287,6 @@ export default function WorkplaceLegalAidPage() {
         {/* Ad Banner */}
         <section className="pb-4">
           <div className="container mx-auto px-4 max-w-3xl">
-            <AdContainer position="inline">
-              <AdBanner slot="8392716450" format="horizontal" />
-            </AdContainer>
           </div>
         </section>
 

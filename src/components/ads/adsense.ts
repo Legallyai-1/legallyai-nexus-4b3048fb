@@ -30,12 +30,12 @@ export function trackAdPerformance(slot: string, event: AdPerformanceEvent, deta
   }
 }
 
-function ensureAdsenseScriptLoaded() {
+export function ensureAdsenseScriptLoaded() {
   if (typeof document === 'undefined') {
     return;
   }
 
-  // index.html already loads adsbygoogle.js. Google only allows ONE copy per page; a second tag makes the
+  // Loaded on demand (AdsenseRouteLoader / first ad slot). Google only allows ONE copy per page; a second tag makes the
   // loader bail out and queued slots stay "pending" forever. Reuse any existing tag, whatever its id.
   const existing = document.querySelector<HTMLScriptElement>(`script[src^="${ADSENSE_SCRIPT_BASE_URL}"]`);
   if (existing) {

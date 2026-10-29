@@ -12,8 +12,6 @@ import {
 import { toast } from "sonner";
 import { streamLegalChat } from "@/lib/legalChat";
 import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
-import AdBanner from "@/components/ads/AdBanner";
-import AdContainer from "@/components/ads/AdContainer";
 
 interface LegalSource {
   id: number;
@@ -91,12 +89,8 @@ export function PerplexityLegalSearch() {
     const matched = detectHubFromQuery(q);
     setDetectedHub(matched);
 
-    // Mock Perplexity-style verified grounding sources
-    setSources([
-      { id: 1, title: "Official State Court Guidelines & Civil Code", source: "Courts & Statutory Law", url: "https://www.courts.ca.gov", badge: "Primary Law" },
-      { id: 2, title: "Uniform Legal Code & Model Act Benchmarks", source: "Legal Information Institute", url: "https://www.law.cornell.edu", badge: "Statute" },
-      { id: 3, title: "State Bar Association Public Resource Guide", source: "State Bar Association", url: "https://www.americanbar.org", badge: "Practice Standard" }
-    ]);
+    // Only real sources would be shown here; the chat stream does not return citations yet.
+    setSources([]);
 
     setFollowUps([
       `Draft a formal notice letter regarding this issue`,
@@ -122,7 +116,7 @@ export function PerplexityLegalSearch() {
       console.error(err);
       toast.error("Could not complete AI search. Showing guidance summary.");
       setAnswer(
-        `### Legal Guidance from Lee:\n\nRegarding: **${q}**\n\n1. **General Rule:** In most US jurisdictions, statutory law requires explicit advance notice and procedural adherence before adverse actions can occur.\n2. **Critical Deadlines:** Review your county court local rules or administrative guidelines immediately, as dispute windows range from 15 to 30 days.\n3. **Recommended Next Steps:** Collect all written communications, lease/contract terms, and witness statements.\n\n*Lee provides verified legal information to help you understand your rights.*`
+        `### Legal Guidance from Lee:\n\nRegarding: **${q}**\n\n1. **General Rule:** In most US jurisdictions, statutory law requires explicit advance notice and procedural adherence before adverse actions can occur.\n2. **Critical Deadlines:** Review your county court local rules or administrative guidelines immediately, as dispute windows range from 15 to 30 days.\n3. **Recommended Next Steps:** Collect all written communications, lease/contract terms, and witness statements.\n\n*General legal information only, not legal advice. Check your court and a licensed attorney.*`
       );
     } finally {
       setIsLoading(false);
@@ -278,10 +272,10 @@ export function PerplexityLegalSearch() {
             </div>
           </div>
 
-          {/* Perplexity-Style Sources Strip */}
-          <div className="space-y-2">
+          {/* Sources strip: shown only when real sources are returned */}
+          {sources.length > 0 && <div className="space-y-2">
             <div className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5">
-              <BookOpen className="w-3.5 h-3.5 text-neon-cyan" /> Grounded Legal Sources & Authorities:
+              <BookOpen className="w-3.5 h-3.5 text-neon-cyan" /> Sources:
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {sources.map((src) => (
@@ -310,7 +304,7 @@ export function PerplexityLegalSearch() {
                 </a>
               ))}
             </div>
-          </div>
+          </div>}
 
           {/* The AI Answer Text */}
           <div className="p-5 rounded-xl bg-background/60 border border-border/50 text-foreground leading-relaxed text-sm">
@@ -332,7 +326,7 @@ export function PerplexityLegalSearch() {
               </div>
               <div className="text-xs">
                 <span className="font-bold text-foreground block sm:inline">Need licensed attorney representation? </span>
-                <span className="text-muted-foreground">Get matched with a verified local attorney in your state. Free case consultation.</span>
+                <span className="text-muted-foreground">Find a licensed attorney in your state.</span>
               </div>
             </div>
             <Link to="/lawyers">
@@ -366,9 +360,6 @@ export function PerplexityLegalSearch() {
       )}
 
       {/* Ad placement for free traffic monetization */}
-      <AdContainer position="inline" className="my-6">
-        <AdBanner slot="9777464779" format="horizontal" />
-      </AdContainer>
     </div>
   );
 }

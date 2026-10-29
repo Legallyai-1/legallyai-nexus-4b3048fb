@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Settings, User, Bell, Shield, Palette, ArrowLeft, Save, Moon, Sun, Loader2, Phone, MapPin, Clock, DollarSign } from "lucide-react";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
-import { Layout } from "@/components/layout/Layout";
+import { MainLayout } from "@/components/layout/MainLayout";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { ApiKeysCard } from "@/components/settings/ApiKeysCard";
 
@@ -179,16 +179,16 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <Layout>
+      <MainLayout>
         <div className="min-h-screen flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-neon-cyan" />
         </div>
-      </Layout>
+      </MainLayout>
     );
   }
 
   return (
-    <Layout>
+    <MainLayout>
       <FuturisticBackground>
         <div className="min-h-screen py-8 px-4">
           <div className="max-w-3xl mx-auto">
@@ -397,6 +397,6 @@ export default function SettingsPage() {
           </div>
         </div>
       </FuturisticBackground>
-    </Layout>
+    </MainLayout>
   );
 }

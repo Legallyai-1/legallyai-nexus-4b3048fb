@@ -11,7 +11,7 @@ import { errorMessage, requireAffectedRows } from "@/lib/mutationResult";
 import { toast } from "sonner";
 import { Users, Search, Plus, Phone, Mail, FileText, ArrowLeft, Loader2, Trash2 } from "lucide-react";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
-import { Layout } from "@/components/layout/Layout";
+import { MainLayout } from "@/components/layout/MainLayout";
 import type { User } from "@supabase/supabase-js";
 import { ensureUserOrganization } from "@/lib/organizations";
 
@@ -148,16 +148,16 @@ export default function ClientsPage() {
 
   if (loading) {
     return (
-      <Layout>
+      <MainLayout>
         <div className="min-h-screen bg-background flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-neon-cyan" />
         </div>
-      </Layout>
+      </MainLayout>
     );
   }
 
   return (
-    <Layout>
+    <MainLayout>
       <FuturisticBackground>
         <div className="min-h-screen py-8 px-4">
           <div className="max-w-6xl mx-auto">
@@ -330,6 +330,6 @@ export default function ClientsPage() {
           </div>
         </div>
       </FuturisticBackground>
-    </Layout>
+    </MainLayout>
   );
 }

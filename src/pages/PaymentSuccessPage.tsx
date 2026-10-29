@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { trackPurchaseConversion } from "@/lib/googleAds";
 import { getPurchaseConversion } from "@/lib/purchaseConversion";
+import { setAdEligibility } from "@/lib/subscription";
 
 type VerificationState = "checking" | "active" | "pending" | "error" | "signin" | "missing";
 
@@ -29,6 +30,7 @@ export default function PaymentSuccessPage() {
         if (error || data?.error) { setState("error"); return; }
         if (data?.hasPaid === true && data?.isActive === true) {
           setState("active");
+          setAdEligibility("paid");
           const conversion = getPurchaseConversion(sessionId, data?.checkout);
           if (conversion) trackPurchaseConversion(conversion);
           return;

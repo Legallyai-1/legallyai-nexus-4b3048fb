@@ -197,9 +197,9 @@ export default function AppointmentsPage() {
   });
 
   return (
-    <DashboardLayout adSlot="APPOINTMENTS_SIDEBAR_SLOT">
-      <div className="min-h-screen bg-background">
-        <header className="border-b border-border bg-card sticky top-0 z-10">
+    <DashboardLayout>
+      <div className="bg-background">
+        <header className="border-b border-border bg-card sticky top-16 z-10">
           <div className="container mx-auto px-4 py-4 flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
               <ChevronLeft className="h-5 w-5" />

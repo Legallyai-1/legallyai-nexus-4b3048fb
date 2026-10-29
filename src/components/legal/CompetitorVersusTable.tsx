@@ -93,13 +93,13 @@ export function CompetitorVersusTable() {
     <Card className="glass-card border-neon-cyan/30 shadow-2xl overflow-hidden">
       <CardHeader className="text-center bg-gradient-to-b from-neon-cyan/10 to-transparent border-b border-border/40 pb-8">
         <Badge className="mx-auto mb-3 bg-neon-cyan/15 text-neon-cyan border-neon-cyan/40">
-          <Trophy className="w-3.5 h-3.5 mr-1 text-neon-gold" /> Market Dominance Comparison
+          <Trophy className="w-3.5 h-3.5 mr-1 text-neon-gold" /> Feature comparison
         </Badge>
         <CardTitle className="text-2xl md:text-3xl font-display font-bold">
-          Why <span className="gold-text">LegallyAI Nexus</span> Crushes The Competition
+          How <span className="gold-text">LegallyAI</span> compares
         </CardTitle>
         <CardDescription className="max-w-2xl mx-auto text-sm text-muted-foreground">
-          Built for everyday people, trusted by law firms. See how LegallyAI compares head-to-head with single-purpose legal tools.
+          Built for everyday people and law firms. A side-by-side look at features compared with single-purpose legal tools, based on publicly listed features.
         </CardDescription>
       </CardHeader>
 

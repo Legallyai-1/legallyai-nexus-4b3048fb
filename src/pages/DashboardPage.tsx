@@ -124,9 +124,9 @@ export default function DashboardPage() {
   const indexedPct = casesTotal === 0 ? 0 : Math.round((recentActivity.filter((a) => a.action.includes("active")).length / casesTotal) * 100);
 
   const workflows = [
-    { title: "AI Document Drafting", icon: PenLine, tile: "gold-tile", to: "/generate", hint: "Letters, motions, agreements" },
-    { title: "Document Forensic & OCR Upload", icon: Upload, tile: "silver-tile", to: "/custody", hint: "Drop a file for Lee to read" },
-    { title: "Multijurisdictional Research", icon: Search, tile: "silver-tile", to: "/court-records", hint: "Official sources, every state" },
+    { title: "AI Document Drafting", icon: PenLine, active: true, to: "/generate", hint: "Letters, motions, agreements" },
+    { title: "Document Forensic & OCR Upload", icon: Upload, to: "/custody", hint: "Drop a file for Lee to read" },
+    { title: "Multijurisdictional Research", icon: Search, to: "/research", hint: "Plain-English research answers" },
   ];
 
   const metrics = [
@@ -138,7 +138,7 @@ export default function DashboardPage() {
 
   return (
     <MainLayout>
-      <div className="dash-bg min-h-full p-4 md:p-6 text-white">
+      <div className="min-h-full p-4 md:p-6">
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           {/* ===== Main column ===== */}
           <div className="min-w-0 space-y-8">
@@ -149,70 +149,70 @@ export default function DashboardPage() {
                 <Button size="sm" className="gold-tile border-0 font-semibold hover:brightness-105" onClick={() => navigate("/chat")}><Plus className="h-4 w-4 mr-1" /> New AI Progress</Button>
               </div>
               {loadError && (
-                <p role="alert" className="mt-2 rounded-lg border border-amber-300/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">{loadError}</p>
+                <p role="alert" className="mt-2 rounded-lg border border-amber-400/60 bg-amber-50 px-3 py-2 text-sm text-amber-900">{loadError}</p>
               )}
-              <p className="mt-1 text-sm text-white/60">Welcome back{firstName ? `, ${firstName}` : ""}. Here is what Lee is tracking for your practice.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Welcome back{firstName ? `, ${firstName}` : ""}. Here is what Lee is tracking for your practice.</p>
               <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <div className="glass-panel rounded-2xl p-5">
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <h3 className="font-semibold">{recentActivity[0] ? `Analyzing ${recentActivity[0].case_title}` : "Case file analysis"}</h3>
-                      <p className="text-xs text-white/60">{recentActivity[0] ? `Updated ${recentActivity[0].time}` : "Save a Lee answer to a case to start tracking"}</p>
+                      <p className="text-xs text-muted-foreground">{recentActivity[0] ? `Updated ${recentActivity[0].time}` : "Save a Lee answer to a case to start tracking"}</p>
                     </div>
-                    <MoreVertical className="h-4 w-4 text-white/50" aria-hidden="true" />
+                    <MoreVertical className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   </div>
-                  <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-white/10">
+                  <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-slate-300/60">
                     <div className="h-full rounded-full bg-gradient-to-r from-[hsl(46_95%_78%)] to-[hsl(40_90%_52%)] transition-all" style={{ width: `${Math.max(indexedPct, casesTotal ? 8 : 0)}%` }} />
                   </div>
-                  <p className="mt-2 text-xs text-white/60">{casesTotal ? `${indexedPct}% of recent matters active` : "No matters yet"} · {stats.activeCases} active</p>
+                  <p className="mt-2 text-xs text-muted-foreground">{casesTotal ? `${indexedPct}% of recent matters active` : "No matters yet"} · {stats.activeCases} active</p>
                 </div>
                 <div className="glass-panel rounded-2xl p-5">
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <h3 className="font-semibold">Deadlines on calendar</h3>
-                      <p className="text-xs text-white/60">Lee keeps hearings and filing dates in one place</p>
+                      <p className="text-xs text-muted-foreground">Lee keeps hearings and filing dates in one place</p>
                     </div>
-                    <MoreVertical className="h-4 w-4 text-white/50" aria-hidden="true" />
+                    <MoreVertical className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   </div>
                   <div className="mt-4 flex items-center gap-3">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10"><BadgeCheck className="h-5 w-5 text-emerald-300" aria-hidden="true" /></span>
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200"><BadgeCheck className="h-5 w-5 text-emerald-700" aria-hidden="true" /></span>
                     <div>
                       <p className="text-sm font-medium">{appointments.length ? `Next: ${appointments[0].type}, ${appointments[0].time}` : "Nothing scheduled"}</p>
-                      <p className="text-xs text-white/60">{stats.upcomingAppointments} upcoming</p>
+                      <p className="text-xs text-muted-foreground">{stats.upcomingAppointments} upcoming</p>
                     </div>
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* Enterprise AI Workflows */}
+            {/* AI Workflows */}
             <section aria-labelledby="workflows">
               <h2 id="workflows" className="font-display text-xl font-semibold">Enterprise AI Workflows</h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-3">
                 {workflows.map((w) => (
-                  <button key={w.title} type="button" onClick={() => navigate(w.to)} className={`${w.tile} group relative flex min-h-[150px] flex-col justify-between rounded-2xl p-4 text-left transition-transform hover:-translate-y-0.5`}>
+                  <button key={w.title} type="button" onClick={() => navigate(w.to)} data-active={w.active ? "true" : undefined} className="metal-card group relative flex min-h-[150px] flex-col justify-between rounded-2xl p-4 text-left">
                     <span className="font-display text-base font-bold leading-tight">{w.title}</span>
                     <span className="flex items-end justify-between">
-                      <span className="text-xs opacity-70">{w.hint}</span>
-                      <span className="rounded-xl bg-white/40 p-2"><w.icon className="h-6 w-6" aria-hidden="true" /></span>
+                      <span className="text-xs text-[hsl(218_22%_30%)]">{w.hint}</span>
+                      <span className="metal-icon-well h-11 w-11"><w.icon className="h-6 w-6" aria-hidden="true" /></span>
                     </span>
                   </button>
                 ))}
               </div>
             </section>
 
-            {/* Firm Insights & Metrics */}
+            {/* Insights & Metrics */}
             <section aria-labelledby="insights">
               <h2 id="insights" className="font-display text-xl font-semibold">Firm Insights & Metrics</h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {metrics.map((m) => (
-                  <button key={m.label} type="button" onClick={() => navigate(m.to)} className="silver-tile flex flex-col rounded-2xl p-4 text-left transition-transform hover:-translate-y-0.5">
+                  <button key={m.label} type="button" onClick={() => navigate(m.to)} className="metal-card flex flex-col rounded-2xl p-4 text-left">
                     <span className="text-sm font-semibold">{m.label}</span>
                     <span className="mt-2 flex items-end justify-between">
                       <span className="font-display text-3xl font-bold">{m.value}</span>
-                      <m.icon className="h-7 w-7 opacity-70" aria-hidden="true" />
+                      <m.icon className="metal-icon h-7 w-7" aria-hidden="true" />
                     </span>
-                    <span className="mt-1 text-xs opacity-70">{m.sub}</span>
+                    <span className="mt-1 text-xs text-[hsl(218_22%_30%)]">{m.sub}</span>
                   </button>
                 ))}
               </div>
@@ -222,10 +222,10 @@ export default function DashboardPage() {
             <section aria-labelledby="docs" className="glass-panel rounded-2xl p-5">
               <div className="flex items-center justify-between gap-3">
                 <h2 id="docs" className="font-display text-xl font-semibold">Document Workspace</h2>
-                <Button size="sm" variant="outline" className="border-white/20 bg-white/5 text-white hover:bg-white/15" onClick={() => navigate("/generate")}><Sparkles className="h-4 w-4 mr-1" /> Draft with Lee</Button>
+                <Button size="sm" variant="outline" className="bg-white/70" onClick={() => navigate("/generate")}><Sparkles className="h-4 w-4 mr-1" /> Draft with Lee</Button>
               </div>
               <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_280px]">
-                <div className="rounded-xl bg-white p-5 text-slate-800 shadow-inner">
+                <div className="rounded-xl border border-border/70 bg-white p-5 text-slate-800 shadow-inner">
                   <p className="text-center text-xs font-semibold tracking-wide text-slate-500">DOCUMENT REVIEW</p>
                   <p className="mt-1 text-center text-[11px] text-slate-400">Drafted & Reviewed by Lee</p>
                   {recentActivity.length === 0 ? (
@@ -245,19 +245,19 @@ export default function DashboardPage() {
                   )}
                 </div>
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-white/80">Upcoming</h3>
-                  {appointments.length === 0 && <p className="text-sm text-white/60">No appointments scheduled.</p>}
+                  <h3 className="text-sm font-semibold text-foreground">Upcoming</h3>
+                  {appointments.length === 0 && <p className="text-sm text-muted-foreground">No appointments scheduled.</p>}
                   {appointments.map((apt) => (
-                    <button key={apt.id} type="button" onClick={() => navigate("/appointments")} className="flex w-full items-center gap-3 rounded-xl bg-white/5 p-3 text-left hover:bg-white/10">
-                      <Clock className="h-4 w-4 text-[hsl(46_95%_72%)]" aria-hidden="true" />
+                    <button key={apt.id} type="button" onClick={() => navigate("/appointments")} className="flex w-full items-center gap-3 rounded-xl metal-card p-3 text-left">
+                      <Clock className="h-4 w-4 metal-icon" aria-hidden="true" />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm">{apt.type}</span>
-                        <span className="block text-xs text-white/60">{apt.time} · {apt.client}</span>
+                        <span className="block text-xs text-muted-foreground">{apt.time} · {apt.client}</span>
                       </span>
-                      <ChevronRight className="h-4 w-4 text-white/40" aria-hidden="true" />
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     </button>
                   ))}
-                  <Button variant="ghost" className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10" onClick={() => navigate("/appointments")}><TrendingUp className="h-4 w-4 mr-2" /> View all activity</Button>
+                  <Button variant="ghost" className="w-full justify-start text-foreground/80 hover:bg-white/70" onClick={() => navigate("/appointments")}><TrendingUp className="h-4 w-4 mr-2" /> View all activity</Button>
                 </div>
               </div>
             </section>

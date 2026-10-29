@@ -1,34 +1,21 @@
 import { ReactNode } from "react";
-import SidebarAd from "@/components/ads/SidebarAd";
 import { ActiveOrganizationSwitcher } from "./ActiveOrganizationSwitcher";
+import { MainLayout } from "./MainLayout";
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  showSidebarAd?: boolean;
-  adSlot?: string;
 }
 
-export default function DashboardLayout({ 
-  children, 
-  showSidebarAd = true,
-  adSlot = "DASHBOARD_SIDEBAR_SLOT"
-}: DashboardLayoutProps) {
+// Hub pages (Cases, Appointments, Payroll) share the hub shell: sidebar, search, tools launcher.
+// Hubs are ad-free, so there is no ad rail here.
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <div className="flex min-h-screen">
-      {/* Main Content */}
-      <div className="flex-1">
-        <ActiveOrganizationSwitcher containerClassName="flex justify-end px-4 py-2" />
+    <MainLayout>
+      <div className="min-h-full min-w-0">
+        {/* The header shows the organization switcher on large screens; show it here otherwise. */}
+        <ActiveOrganizationSwitcher containerClassName="lg:hidden flex justify-end px-4 pt-3" />
         {children}
       </div>
-      
-      {/* Right Sidebar Ad */}
-      {showSidebarAd && (
-        <aside className="hidden xl:block w-[160px] shrink-0 p-4 border-l border-border bg-card/50">
-          <div className="sticky top-4">
-            <SidebarAd slot={adSlot} />
-          </div>
-        </aside>
-      )}
-    </div>
+    </MainLayout>
   );
 }

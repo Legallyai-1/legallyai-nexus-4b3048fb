@@ -1,109 +1,48 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, FileText, Bot, Briefcase, User, ArrowLeft, ArrowRight } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { Home, FileText, Bot, Briefcase, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { name: "Home", path: "/", icon: Home },
-  { name: "Generate", path: "/generate", icon: FileText },
-  { name: "AI", path: "/ai-assistants", icon: Bot },
-  { name: "Jobs", path: "/jobs", icon: Briefcase },
+  { name: "Ask Lee", path: "/chat", icon: Bot },
+  { name: "My cases", path: "/cases", icon: Briefcase },
+  { name: "Docs", path: "/generate", icon: FileText },
   { name: "Account", path: "/dashboard", icon: User },
 ];
 
+// Mobile-only tab bar. The browser/OS already provides back and forward, so the bar holds
+// just the five main destinations, each at least 44px tall and wide.
 export function BottomNavigation() {
   const location = useLocation();
-  const navigate = useNavigate();
-
-  const handleBack = () => navigate(-1);
-  const handleForward = () => navigate(1);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden">
-      {/* Glow effect */}
-      <div className="absolute inset-0 bg-gradient-to-t from-legal-cyan/20 via-transparent to-transparent blur-xl" />
-      
-      {/* Main container */}
-      <div className="relative bg-background/80 backdrop-blur-xl border-t border-legal-cyan/30">
-        <div className="flex items-center justify-around px-2 py-2">
-          {/* Back Button */}
-          <button
-            onClick={handleBack}
-            className="relative flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-300 text-muted-foreground hover:text-foreground"
-          >
-            <div className="relative p-1.5 rounded-lg">
-              <ArrowLeft className="h-5 w-5" />
-            </div>
-            <span className="text-[10px] font-medium">Back</span>
-          </button>
+    <nav aria-label="Main" className="fixed bottom-0 left-0 right-0 z-50 lg:hidden">
+      <div className="bg-background/90 backdrop-blur-xl border-t border-border/70 pb-[env(safe-area-inset-bottom)]">
+        <ul className="grid grid-cols-5 px-1">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
+            const isActive = item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path);
             const Icon = item.icon;
-            
             return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  "relative flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-300",
-                  isActive 
-                    ? "text-legal-cyan" 
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {/* Active indicator glow */}
-                {isActive && (
-                  <>
-                    <div className="absolute inset-0 bg-legal-cyan/10 rounded-xl" />
-                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-legal-cyan rounded-full shadow-[0_0_10px_hsl(var(--legal-cyan))]" />
-                  </>
-                )}
-                
-                {/* Icon container with animation */}
-                <div className={cn(
-                  "relative p-1.5 rounded-lg transition-all duration-300",
-                  isActive && "animate-pulse"
-                )}>
-                  <Icon 
-                    className={cn(
-                      "h-5 w-5 transition-all duration-300",
-                      isActive && "drop-shadow-[0_0_8px_hsl(var(--legal-cyan))]"
-                    )} 
-                  />
-                  
-                  {/* Orbiting dot for active state */}
-                  {isActive && (
-                    <div className="absolute inset-0 animate-spin" style={{ animationDuration: '3s' }}>
-                      <div className="absolute -top-0.5 left-1/2 w-1 h-1 bg-legal-cyan rounded-full shadow-[0_0_4px_hsl(var(--legal-cyan))]" />
-                    </div>
+              <li key={item.path} className="min-w-0">
+                <Link
+                  to={item.path}
+                  aria-current={isActive ? "page" : undefined}
+                  className={cn(
+                    "relative flex min-h-[56px] min-w-[44px] flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    isActive ? "text-legal-gold" : "text-muted-foreground hover:text-foreground",
                   )}
-                </div>
-                
-                {/* Label */}
-                <span className={cn(
-                  "text-[10px] font-medium transition-all duration-300",
-                  isActive && "text-legal-cyan"
-                )}>
-                  {item.name}
-                </span>
-              </Link>
+                >
+                  {isActive && <span aria-hidden="true" className="absolute top-0 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-legal-gold" />}
+                  <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                  <span className="max-w-full truncate text-[11px] font-medium leading-tight">{item.name}</span>
+                </Link>
+              </li>
             );
           })}
-          
-          {/* Forward Button */}
-          <button
-            onClick={handleForward}
-            className="relative flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-300 text-muted-foreground hover:text-foreground"
-          >
-            <div className="relative p-1.5 rounded-lg">
-              <ArrowRight className="h-5 w-5" />
-            </div>
-            <span className="text-[10px] font-medium">Next</span>
-          </button>
-        </div>
-        
-        {/* Bottom safe area for iOS */}
-        <div className="h-safe-area-inset-bottom bg-background/80" />
+        </ul>
       </div>
     </nav>
   );
 }
+
+export default BottomNavigation;

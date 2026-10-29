@@ -20,8 +20,6 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { streamLegalChat } from "@/lib/legalChat";
 import { DocumentGenerator } from "@/components/hub/DocumentGenerator";
-import AdBanner from "@/components/ads/AdBanner";
-import AdContainer from "@/components/ads/AdContainer";
 import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
 
 const STATES = ["California", "Texas", "Florida", "New York", "Illinois", "Arizona", "Nevada", "Washington", "Colorado", "Georgia"];
@@ -453,9 +451,6 @@ export default function MarriageDivorcePage() {
             </Tabs>
 
             {/* Ad Banner for Free Users */}
-            <AdContainer position="inline" className="mt-8">
-              <AdBanner slot="7461825930" format="horizontal" />
-            </AdContainer>
 
             {/* Legal Disclaimer */}
             <div className="mt-6 text-center">

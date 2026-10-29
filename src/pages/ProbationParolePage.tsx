@@ -17,8 +17,6 @@ import { CourtPrepTab } from "@/components/hub/CourtPrepTab";
 
 import { DocuAI } from "@/components/hub/DocuAI";
 import { HubNotifications } from "@/components/hub/HubNotifications";
-import AdBanner from "@/components/ads/AdBanner";
-import AdContainer from "@/components/ads/AdContainer";
 
 const supportCategories = [
   {
@@ -264,9 +262,6 @@ export default function ProbationParolePage() {
             </div>
 
             {/* Ad Banner for Free Users */}
-            <AdContainer position="inline" className="mt-6">
-              <AdBanner slot="9516284073" format="horizontal" />
-            </AdContainer>
 
             {/* Back Button */}
             <div className="text-center mt-4">

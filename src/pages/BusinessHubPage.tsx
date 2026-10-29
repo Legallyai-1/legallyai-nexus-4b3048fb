@@ -69,12 +69,12 @@ export default function BusinessHubPage() {
 
   return (
     <MainLayout>
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-display font-bold flex items-center gap-3">
-              <Building2 className="h-8 w-8 text-primary" />
+              <Building2 className="metal-icon h-8 w-8" />
               Business Hub
               
             </h1>
@@ -134,7 +134,7 @@ export default function BusinessHubPage() {
                   </CardTitle>
                   <CardDescription>Automate your practice with intelligent workflows</CardDescription>
                 </CardHeader>
-                <CardContent className="grid grid-cols-2 gap-4">
+                <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {[
                     { title: "Case Workflows", desc: "Automated task pipelines", icon: GitBranch, action: () => setActiveTab("workflows") },
                     { title: "Predictive AI", desc: "Case outcome forecasts", icon: Brain, action: () => setActiveTab("predictive") },
@@ -143,18 +143,18 @@ export default function BusinessHubPage() {
                     { title: "Auto-Billing", desc: "Intelligent invoice generation", icon: DollarSign, action: () => setActiveTab("billing") },
                     { title: "Certifications", desc: "Team skill tracking", icon: Award, action: () => setActiveTab("certifications") },
                   ].map((item, i) => (
-                    <Button
+                    <button
                       key={i}
-                      variant="outline"
-                      className="h-auto p-4 flex flex-col items-start gap-2 hover:bg-primary/5 hover:border-primary/50"
+                      type="button"
+                      className="metal-card rounded-2xl p-4 flex items-start gap-3 text-left"
                       onClick={item.action}
                     >
-                      <item.icon className="h-5 w-5 text-primary" />
-                      <div className="text-left">
-                        <p className="font-semibold">{item.title}</p>
-                        <p className="text-xs text-muted-foreground">{item.desc}</p>
-                      </div>
-                    </Button>
+                      <span className="metal-icon-well h-10 w-10 shrink-0"><item.icon className="h-5 w-5" aria-hidden="true" /></span>
+                      <span className="min-w-0">
+                        <span className="block font-semibold">{item.title}</span>
+                        <span className="block text-xs text-[hsl(218_22%_30%)]">{item.desc}</span>
+                      </span>
+                    </button>
                   ))}
                 </CardContent>
               </Card>
