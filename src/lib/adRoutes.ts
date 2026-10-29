@@ -8,7 +8,6 @@ export const AD_ROUTES: readonly string[] = [
   "/templates",
   "/legal-academy",
   "/pro-bono",
-  "/jobs",
 ];
 
 export function areAdsAllowedOnPath(pathname: string): boolean {

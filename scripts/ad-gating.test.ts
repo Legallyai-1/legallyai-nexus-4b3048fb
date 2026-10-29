@@ -40,10 +40,10 @@ test("no ads until the tier has resolved, and none for paid users", () => {
 });
 
 test("free visitors only get ads on the allowlisted pages", () => {
-  for (const path of ["/", "/ai-assistants", "/templates", "/legal-academy", "/pro-bono", "/jobs"]) {
+  for (const path of ["/", "/ai-assistants", "/templates", "/legal-academy", "/pro-bono"]) {
     assert.equal(canShowAdOn(path, "free"), true, path);
   }
-  for (const path of ["/chat", "/pricing", "/custody", "/dashboard", "/business-hub", "/generate", "/login", "/terms", "/invoices"]) {
+  for (const path of ["/chat", "/jobs", "/pricing", "/custody", "/dashboard", "/business-hub", "/generate", "/login", "/terms", "/invoices"]) {
     assert.equal(canShowAdOn(path, "free"), false, path);
   }
 });
