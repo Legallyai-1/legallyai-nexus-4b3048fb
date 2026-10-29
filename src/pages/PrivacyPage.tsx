@@ -1,9 +1,16 @@
 import { Layout } from "@/components/layout/Layout";
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { DO_NOT_SELL_ANCHOR, showGooglePrivacyChoices } from "@/lib/consent";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const PrivacyPage = () => {
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (!hash) return;
+    document.getElementById(decodeURIComponent(hash.slice(1)))?.scrollIntoView();
+  }, [hash]);
   return (
     <Layout>
       <div className="min-h-screen bg-background py-16">
@@ -62,6 +69,26 @@ const PrivacyPage = () => {
             <section>
               <h2 className="text-2xl font-semibold text-foreground mb-4">4. Advertising and Cookies</h2>
               <p>We show ads to free-plan visitors on a few public pages through Google AdSense. Google and its partners use cookies and device identifiers to serve and measure ads and, where you allow it, to personalize them. Paid subscribers don&apos;t see ads. You can manage ad personalization at <a href="https://adssettings.google.com" className="underline" target="_blank" rel="noopener noreferrer">adssettings.google.com</a>. Learn how Google uses data: <a href="https://policies.google.com/technologies/partner-sites" className="underline" target="_blank" rel="noopener noreferrer">policies.google.com/technologies/partner-sites</a>.</p>
+              <p className="mt-2"><strong>Visitors in the EEA, UK and Switzerland:</strong> Before Google&apos;s ad and measurement cookies are used, Google&apos;s consent message asks for your choice. Until you choose, Google&apos;s tags on our site run with ad storage, ad personalization and analytics storage turned off.</p>
+              <p className="mt-2"><strong>Google Ads measurement:</strong> If we measure sign-ups from our own Google Ads campaigns, we ask first and only load that measurement if you allow it.</p>
+            </section>
+
+            <section id={DO_NOT_SELL_ANCHOR} className="scroll-mt-24">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">Do Not Sell or Share My Personal Information</h2>
+              <p>Some US state privacy laws, including California&apos;s, give you the right to opt out of the &quot;sale&quot; or &quot;sharing&quot; of personal information and of targeted advertising. Advertising cookies set by Google AdSense on our free public pages may count as sharing under those laws. To opt out or change your choices, you can:</p>
+              <ul className="list-disc pl-6 space-y-2 mt-2">
+                <li>
+                  Use our{" "}
+                  <button type="button" className="underline" onClick={() => { if (!showGooglePrivacyChoices()) window.alert("Google's privacy choices aren't available on this page right now. You can use the other options listed here."); }}>
+                    privacy choices
+                  </button>{" "}
+                  (Google&apos;s consent message, where it&apos;s available in your region) to change your ad choices.
+                </li>
+                <li>Turn off personalized ads from Google at <a href="https://adssettings.google.com" className="underline" target="_blank" rel="noopener noreferrer">adssettings.google.com</a>.</li>
+                <li>Block or delete third-party cookies in your browser settings.</li>
+                <li>Email <a href="mailto:support@legallyai.ai" className="underline">support@legallyai.ai</a> with the subject &quot;Do Not Sell or Share&quot; and we&apos;ll process your request.</li>
+              </ul>
+              <p className="mt-2">Paid subscribers don&apos;t see ads. We won&apos;t treat you differently for using these rights.</p>
             </section>
 
             <section>
@@ -155,7 +182,7 @@ const PrivacyPage = () => {
                 <li>Right to non-discrimination for exercising privacy rights</li>
                 <li>Right to limit use of sensitive personal information</li>
               </ul>
-              <p className="mt-2 font-medium">We do not sell your personal information.</p>
+              <p className="mt-2 font-medium">We do not sell your personal information for money. Advertising cookies on free pages may count as &quot;sharing&quot;; see <a href={`#${DO_NOT_SELL_ANCHOR}`} className="underline">Do Not Sell or Share My Personal Information</a>.</p>
             </section>
 
             <section>

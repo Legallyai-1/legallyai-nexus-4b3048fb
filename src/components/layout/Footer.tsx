@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { DO_NOT_SELL_ANCHOR, isGoogleCmpActive, showGooglePrivacyChoices } from "@/lib/consent";
 import { GlowScales } from "@/components/brand/GlowScales";
 import { Scale, Sparkles, Mail, MapPin, Phone } from "lucide-react";
 
@@ -21,10 +23,28 @@ const footerLinks = {
     { name: "Privacy Policy", path: "/privacy" },
     { name: "Terms of Service", path: "/terms" },
     { name: "Disclaimer", path: "/disclaimer" },
+    { name: "Do Not Sell or Share My Personal Information", path: `/privacy#${DO_NOT_SELL_ANCHOR}` },
   ],
 };
 
+// Google's consent tool loads with the AdSense script, so it can appear after the footer renders.
+function useGoogleCmpAvailable() {
+  const [available, setAvailable] = useState(() => isGoogleCmpActive());
+  useEffect(() => {
+    if (available) return;
+    let checks = 0;
+    const timer = window.setInterval(() => {
+      checks += 1;
+      if (isGoogleCmpActive()) setAvailable(true);
+      if (isGoogleCmpActive() || checks >= 10) window.clearInterval(timer);
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [available]);
+  return available;
+}
+
 export function Footer() {
+  const googleCmpAvailable = useGoogleCmpAvailable();
   return (
     <footer className="border-t border-border bg-card text-foreground">
       <div className="container mx-auto px-4 py-16">
@@ -107,6 +127,17 @@ export function Footer() {
                   </Link>
                 </li>
               ))}
+              {googleCmpAvailable && (
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => showGooglePrivacyChoices()}
+                    className="text-left text-muted-foreground hover:text-legal-gold transition-colors"
+                  >
+                    Privacy choices
+                  </button>
+                </li>
+              )}
             </ul>
           </div>
         </div>
