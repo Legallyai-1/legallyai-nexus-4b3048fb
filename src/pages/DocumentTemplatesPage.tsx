@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { getTemplateNotices, withTemplateNotices } from "@/lib/template-disclaimers";
 import { 
   FileText, Search, Download, Eye, Star, 
   Filter, ArrowRight, Briefcase, Home, Users,
@@ -155,7 +156,7 @@ export default function DocumentTemplatesPage() {
       }
 
       toast.success(`Downloading "${template.title}"...`);
-      const blob = new Blob([content], { type: 'text/plain' });
+      const blob = new Blob([withTemplateNotices(template.id, content)], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -358,6 +359,13 @@ export default function DocumentTemplatesPage() {
             </DialogHeader>
             <div className="mt-4">
               <p className="text-sm text-muted-foreground mb-4">{previewTemplate?.description}</p>
+              {previewTemplate && (
+                <div role="note" aria-label="Legal notice" className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-foreground space-y-1">
+                  {getTemplateNotices(previewTemplate.id).map((line) => (
+                    <p key={line}>{line}</p>
+                  ))}
+                </div>
+              )}
               <div className="bg-muted/30 rounded-lg p-4 font-mono text-sm whitespace-pre-wrap border border-border/50">
                 {previewTemplate && (templatePreviews[previewTemplate.id] || `${previewTemplate.title}\n\n${previewTemplate.description}\n\n[Full template content available upon use or download]`)}
               </div>
