@@ -65,12 +65,35 @@ function getClients() {
     db: createClient<any>(url, serverKey, { auth: { persistSession: false, autoRefreshToken: false } }) };
 }
 
+/**
+ * Customers migrated from the old backend carry no user_id. Match the Stripe customer's email to exactly one
+ * profile, then confirm against auth (profiles.email is user-editable): same email, and that email is verified.
+ */
+export async function ownerByVerifiedEmail(db: Db, email: string | null | undefined): Promise<string | null> {
+  const normalized = email?.trim().toLowerCase();
+  if (!normalized || !normalized.includes('@')) return null;
+  const { data: rows } = await db.from('profiles').select('id')
+    .ilike('email', normalized.replace(/[\\%_]/g, '\\$&')).limit(2).throwOnError();
+  if (!Array.isArray(rows) || rows.length !== 1) return null;
+  const { data, error } = await db.auth.admin.getUserById(rows[0].id);
+  const user = data?.user;
+  if (error || !user?.email || user.email.trim().toLowerCase() !== normalized || !user.email_confirmed_at) return null;
+  return user.id;
+}
+
 async function resolveOwner(stripe: Stripe, db: Db, customerId: string, candidates: (string | null | undefined)[]) {
   const { data: mapping } = await db.from('subscriptions').select('user_id')
     .eq('stripe_customer_id', customerId).maybeSingle().throwOnError();
   const customer = await stripe.customers.retrieve(customerId);
   if (!('metadata' in customer)) throw new Error('Deleted billing customer');
   const owners = new Set([...candidates, mapping?.user_id, customer.metadata?.user_id].filter(Boolean));
+  if (owners.size === 0) {
+    const byEmail = await ownerByVerifiedEmail(db, customer.email);
+    if (byEmail) {
+      await stripe.customers.update(customerId, { metadata: { user_id: byEmail } });
+      owners.add(byEmail);
+    }
+  }
   if (owners.size !== 1) throw new Error('Missing or conflicting billing ownership');
   const userId = [...owners][0] as string;
   const { data: profile } = await db.from('profiles').select('id').eq('id', userId).maybeSingle().throwOnError();
@@ -175,6 +198,53 @@ export async function processVerifiedEvent(event: Stripe.Event, stripe: Stripe, 
   }
 }
 
+const LINKABLE_STATUSES = new Set(['active', 'trialing']);
+
+/**
+ * Signed-in user with no live subscription: claim a paid Stripe subscription billed to their verified email
+ * (customers migrated from the old backend), stamp user_id on the customer and sync it exactly like the webhook.
+ */
+export async function linkStripeCustomerForUser(stripe: Stripe, db: Db, user: { id: string; email?: string | null; email_confirmed_at?: string | null }) {
+  const email = user.email?.trim().toLowerCase();
+  if (!email || !user.email_confirmed_at) return { linked: false, reason: 'email_unverified' };
+  const { data: existing } = await db.from('subscriptions').select('status')
+    .eq('user_id', user.id).maybeSingle().throwOnError();
+  if (existing && ['active', 'trialing', 'past_due'].includes(existing.status)) return { linked: false, reason: 'already_subscribed' };
+  const customers = await stripe.customers.list({ email, limit: 10 });
+  for (const customer of customers.data) {
+    if ((customer.email ?? '').trim().toLowerCase() !== email) continue;
+    if (customer.metadata?.user_id && customer.metadata.user_id !== user.id) continue;
+    const { data: mapping } = await db.from('subscriptions').select('user_id')
+      .eq('stripe_customer_id', customer.id).maybeSingle().throwOnError();
+    if (mapping?.user_id && mapping.user_id !== user.id) continue;
+    const subscriptions = await stripe.subscriptions.list({ customer: customer.id, status: 'all', limit: 10 });
+    const live = subscriptions.data.find((sub) => LINKABLE_STATUSES.has(sub.status) && getSubscriptionTier(sub) !== 'free'
+      && (!sub.metadata?.user_id || sub.metadata.user_id === user.id));
+    if (!live) continue;
+    if (customer.metadata?.user_id !== user.id) await stripe.customers.update(customer.id, { metadata: { user_id: user.id } });
+    const now = Math.floor(Date.now() / 1000);
+    await syncSubscription(stripe, db, { id: `link_${live.id}_${now}`, created: now } as Stripe.Event, live.id, user.id);
+    return { linked: true, tier: getSubscriptionTier(live) };
+  }
+  return { linked: false, reason: 'no_subscription' };
+}
+
+async function handleLink(req: VercelRequest, res: VercelResponse) {
+  const header = req.headers.authorization;
+  const token = typeof header === 'string' && header.startsWith('Bearer ') ? header.slice(7).trim() : '';
+  if (!token) return res.status(401).json({ error: 'Sign in required' });
+  let clients: ReturnType<typeof getClients>;
+  try { clients = getClients(); } catch { return res.status(503).json({ error: 'Billing temporarily unavailable' }); }
+  const { data, error } = await clients.db.auth.getUser(token);
+  if (error || !data?.user) return res.status(401).json({ error: 'Sign in required' });
+  try {
+    return res.status(200).json(await linkStripeCustomerForUser(clients.stripe, clients.db, data.user));
+  } catch (err) {
+    console.error('[stripe-link] failed', { userId: data.user.id, reason: failureReason(err) });
+    return res.status(503).json({ error: 'Billing link failed; try again later' });
+  }
+}
+
 export async function checkStripeHealth() {
   try { const { stripe } = getClients(); const account = await stripe.accounts.retrieve(); return { ok: true, accountId: account.id, supportedEvents: [...SUPPORTED_EVENTS] }; }
   catch { return { ok: false, error: 'Stripe webhook configuration or connectivity requires review' }; }
@@ -203,6 +273,8 @@ export async function readRawBody(req: AsyncIterable<unknown>): Promise<Buffer> 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  // Same-origin call from the app after sign-in (Bearer token, no Stripe signature): link a migrated customer.
+  if (req.query?.action === 'link-customer') return handleLink(req, res);
   let clients: ReturnType<typeof getClients>;
   try { clients = getClients(); } catch { return res.status(503).json({ error: 'Webhook temporarily unavailable' }); }
   const signature = req.headers['stripe-signature'];

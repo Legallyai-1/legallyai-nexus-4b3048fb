@@ -1,7 +1,7 @@
 export const buildInviteAcceptancePath = (token: string) =>
   `/accept-invite?token=${encodeURIComponent(token)}`;
 
-export const PRICING_RETURN_PLANS = new Set(["premium", "firm", "document"]);
+export const PRICING_RETURN_PLANS = new Set(["premium", "document", "solo", "firm", "enterprise"]);
 
 export const getInviteAcceptanceReturnTo = (returnTo: string | null, origin: string) => {
   if (!returnTo) return null;

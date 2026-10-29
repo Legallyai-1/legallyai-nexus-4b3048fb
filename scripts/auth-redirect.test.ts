@@ -43,7 +43,9 @@ test('missing and unrelated destinations are rejected', () => {
 test('pricing return may preselect a known plan, nothing else', () => {
   assert.equal(getInviteAcceptanceReturnTo('/pricing?plan=firm', origin), '/pricing?plan=firm');
   assert.equal(getInviteAcceptanceReturnTo('/pricing?plan=premium', origin), '/pricing?plan=premium');
-  assert.equal(getInviteAcceptanceReturnTo('/pricing?plan=enterprise', origin), null);
+  assert.equal(getInviteAcceptanceReturnTo('/pricing?plan=enterprise', origin), '/pricing?plan=enterprise');
+  assert.equal(getInviteAcceptanceReturnTo('/pricing?plan=solo', origin), '/pricing?plan=solo');
+  assert.equal(getInviteAcceptanceReturnTo('/pricing?plan=free', origin), null);
   assert.equal(getInviteAcceptanceReturnTo('/pricing?plan=firm&checkout=true', origin), null);
   assert.equal(getInviteAcceptanceReturnTo('/pricing?plan=firm#x', origin), null);
 });
