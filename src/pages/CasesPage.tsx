@@ -103,7 +103,10 @@ export default function CasesPage() {
           .select('id, full_name')
           .eq('organization_id', organizationId)
           .order('full_name');
-        if (clientsError) console.error("Error fetching clients for case form:", clientsError);
+        if (clientsError) {
+          console.error("Error fetching clients for case form:", clientsError);
+          toast.error("Couldn't load your clients. Refresh the page before creating a case.");
+        }
 
         setClients(clientsData || []);
       }
