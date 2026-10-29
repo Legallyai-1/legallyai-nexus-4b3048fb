@@ -52,8 +52,15 @@ test('active subscribers are unlimited and not counted', async () => {
   assert.equal(calls.length, 0);
 });
 
-test('fails closed on missing profile, DB/RPC errors, bad cost or missing user', async () => {
-  assert.equal((await reservePaidAIQuota({ admin: fakeAdmin({ profile: false }).admin, userId: 'u1', cost: 1, limit: 5 })).status, 'unavailable');
+test('a stale profiles.subscription_tier with no subscription row gets the free quota', async () => {
+  const { admin, calls } = fakeAdmin({ tier: 'pro' });
+  assert.deepEqual(await reservePaidAIQuota({ admin, userId: 'u1', cost: 1, limit: 2, now: day }), { status: 'free_allowed', used: 1, limit: 2 });
+  assert.equal(calls.length, 1);
+  const lapsed = fakeAdmin({ tier: 'pro', subscription: { status: 'past_due', tier: 'pro' } });
+  assert.equal((await reservePaidAIQuota({ admin: lapsed.admin, userId: 'u1', cost: 1, limit: 2, now: day })).status, 'free_allowed');
+});
+
+test('fails closed on DB/RPC errors, bad cost or missing user', async () => {
   assert.equal((await reservePaidAIQuota({ admin: fakeAdmin({ dbError: true }).admin, userId: 'u1', cost: 1, limit: 5 })).status, 'unavailable');
   assert.equal((await reservePaidAIQuota({ admin: fakeAdmin({ rpcError: true }).admin, userId: 'u1', cost: 1, limit: 5 })).status, 'unavailable');
   for (const cost of [0, -1, 1.5]) assert.equal((await reservePaidAIQuota({ admin: fakeAdmin().admin, userId: 'u1', cost, limit: 5 })).status, 'unavailable', String(cost));

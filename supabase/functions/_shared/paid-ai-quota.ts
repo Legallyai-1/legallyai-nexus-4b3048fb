@@ -3,7 +3,7 @@
 // service-role client. Usage is counted atomically by the existing service-role-only RPC
 // public.consume_free_question on public.ai_question_usage (no RLS policies => no client access),
 // using a per-user, per-UTC-day subject so the count resets daily. No schema change.
-import { resolveSubscriptionAccess } from "./subscription-access.ts";
+import { hasSubscriptionEntitlement } from "./document-credits.ts";
 
 export const DEFAULT_FREE_PAID_AI_DAILY_LIMIT = 10;
 
@@ -40,14 +40,14 @@ export async function reservePaidAIQuota(opts: {
   const { admin, userId, cost, limit } = opts;
   if (!userId || !Number.isSafeInteger(cost) || cost <= 0) return { status: "unavailable" };
   try {
-    const [profileRes, subscriptionRes, paymentsRes] = await Promise.all([
-      admin.from("profiles").select("id, subscription_tier").eq("id", userId).maybeSingle(),
+    // Entitlement matches generate-document (hasSubscriptionEntitlement): an active/trialing
+    // subscriptions row or a live paid payment_record. profiles.subscription_tier is never trusted.
+    const [subscriptionRes, paymentsRes] = await Promise.all([
       admin.from("subscriptions").select("status, tier, current_period_end, cancel_at_period_end").eq("user_id", userId).maybeSingle(),
       admin.from("payment_records").select("tier, payment_method, expires_at, status, metadata").eq("user_id", userId),
     ]);
-    if (profileRes.error || !profileRes.data || subscriptionRes.error || paymentsRes.error) return { status: "unavailable" };
-    const access = resolveSubscriptionAccess(profileRes.data.subscription_tier || "free", subscriptionRes.data, paymentsRes.data);
-    if (access.entitled) return { status: "subscriber" };
+    if (subscriptionRes.error || paymentsRes.error) return { status: "unavailable" };
+    if (hasSubscriptionEntitlement(subscriptionRes.data, paymentsRes.data, opts.now ?? new Date())) return { status: "subscriber" };
     if (cost > limit) return { status: "quota_exceeded", used: 0, limit };
 
     const subject = paidAIQuotaSubject(userId, opts.now ?? new Date());
