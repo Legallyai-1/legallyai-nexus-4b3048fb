@@ -1,4 +1,6 @@
 // Per-route search and share metadata. Pure data so it can be unit tested without a browser.
+import { GUIDES, guidePath } from "./guides.ts";
+
 export const SITE_URL = "https://www.legallyai.ai";
 export const SITE_NAME = "LegallyAI";
 export const OG_IMAGE = `${SITE_URL}/og-image.png`;
@@ -47,6 +49,8 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
   "/jobs": { title: "Legal job board | LegallyAI", description: "Browse legal jobs for attorneys, paralegals and legal staff.", indexable: false },
   "/about": pub("About LegallyAI – Ask Lee and firm hubs | LegallyAI", "LegallyAI pairs Ask Lee, an AI legal assistant for everyday people, with AI workspaces for law firms. Legal information, not advice."),
   "/contact": pub("Contact us | LegallyAI", "Email LegallyAI about your account, billing, refunds or firm plans, or ask Lee a legal question. Legal information, not legal advice."),
+  "/guides": pub("Legal guides in plain English | LegallyAI", "Step-by-step guides to evictions, leases, small claims, traffic tickets, custody, divorce and powers of attorney. Legal information, not advice."),
+  ...Object.fromEntries(GUIDES.map((g) => [guidePath(g.slug), pub(g.seoTitle, g.description)])),
   "/support": pub("Support | LegallyAI", "Get help with your LegallyAI account, billing or features from the support team."),
   "/terms": pub("Terms of service | LegallyAI", "The terms that apply when you use LegallyAI and Lee, the AI legal assistant."),
   "/privacy": pub("Privacy policy | LegallyAI", "How LegallyAI collects, uses and protects your information."),
