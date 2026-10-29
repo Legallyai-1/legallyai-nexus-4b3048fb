@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { ensureUserOrganization } from "@/lib/organizations";
+import { ensureUserOrganization, findUserOrganization } from "@/lib/organizations";
+import { errorMessage } from "@/lib/mutationResult";
 import { toast } from "sonner";
 import { 
   Shield, DollarSign, CheckCircle, AlertTriangle, RefreshCw,
@@ -67,7 +68,12 @@ export function TrustAccounting() {
       setIsLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const organizationId = await ensureUserOrganization(user.id);
+      const organizationId = await findUserOrganization(user.id);
+      if (!organizationId) {
+        setAccounts([]);
+        setTransactions([]);
+        return;
+      }
 
       const [accountsRes, transactionsRes] = await Promise.all([
         supabase.from('trust_accounts').select('*').eq('organization_id', organizationId).order('created_at', { ascending: false }),
@@ -86,7 +92,7 @@ export function TrustAccounting() {
       setTransactions(transactionsRes.data || []);
     } catch (error) {
       console.error('Error fetching trust data:', error);
-      toast.error('Failed to load trust data');
+      toast.error(errorMessage(error, 'Failed to load trust data'));
     } finally {
       setIsLoading(false);
     }
@@ -126,7 +132,7 @@ export function TrustAccounting() {
       fetchData();
     } catch (error) {
       console.error('Error creating account:', error);
-      toast.error(error instanceof Error && error.message ? error.message : 'Failed to create account');
+      toast.error(errorMessage(error, 'Failed to create account'));
     }
   };
 
@@ -140,7 +146,11 @@ export function TrustAccounting() {
         return;
       }
 
-      const organizationId = await ensureUserOrganization(session.user.id);
+      const organizationId = await findUserOrganization(session.user.id);
+      if (!organizationId) {
+        toast.error('Create a trust account before running reconciliation');
+        return;
+      }
 
       const response = await supabase.functions.invoke('business-hub', {
         body: {
@@ -155,7 +165,7 @@ export function TrustAccounting() {
       fetchData();
     } catch (error) {
       console.error('Reconciliation error:', error);
-      toast.error('Reconciliation failed');
+      toast.error(errorMessage(error, 'Reconciliation failed'));
     } finally {
       setIsReconciling(false);
     }

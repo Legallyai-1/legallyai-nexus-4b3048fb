@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { ensureUserOrganization } from "@/lib/organizations";
+import { ensureUserOrganization, findUserOrganization } from "@/lib/organizations";
+import { errorMessage } from "@/lib/mutationResult";
 import { toast } from "sonner";
 import { 
   Briefcase, Users, Calendar, FileText, Clock, Search, 
@@ -56,7 +57,11 @@ export function PracticeManagement() {
       setIsLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const organizationId = await ensureUserOrganization(user.id);
+      const organizationId = await findUserOrganization(user.id);
+      if (!organizationId) {
+        setMatters([]);
+        return;
+      }
       const { data, error } = await supabase
         .from('matters')
         .select(`
@@ -71,7 +76,7 @@ export function PracticeManagement() {
       setMatters(data || []);
     } catch (error) {
       console.error('Error fetching matters:', error);
-      toast.error('Failed to load matters');
+      toast.error(errorMessage(error, 'Failed to load matters'));
     } finally {
       setIsLoading(false);
     }
@@ -117,7 +122,7 @@ export function PracticeManagement() {
       fetchMatters();
     } catch (error) {
       console.error('Error creating matter:', error);
-      toast.error(error instanceof Error && error.message ? error.message : 'Failed to create matter');
+      toast.error(errorMessage(error, 'Failed to create matter'));
     }
   };
 

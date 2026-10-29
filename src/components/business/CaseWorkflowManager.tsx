@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { requireAffectedRows } from '@/lib/mutationResult';
 
 interface CaseWorkflowManagerProps {
   caseId?: string;
@@ -118,8 +119,14 @@ export function CaseWorkflowManager({ caseId, organizationId = 'default-org' }: 
   const updateTaskStatus = async (taskId: string, status: string) => {
     try {
       if (caseId) {
-        const { error } = await supabase.from('case_tasks').update({ status }).eq('id', taskId).eq('case_id', caseId);
+        const { data, error } = await supabase
+          .from('case_tasks')
+          .update({ status })
+          .eq('id', taskId)
+          .eq('case_id', caseId)
+          .select('id');
         if (error) throw error;
+        requireAffectedRows(data, 'updated');
       }
       setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status } : t));
       toast.success('Task updated');

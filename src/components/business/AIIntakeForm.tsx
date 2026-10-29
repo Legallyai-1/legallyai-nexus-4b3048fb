@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureUserOrganization } from "@/lib/organizations";
+import { errorMessage } from "@/lib/mutationResult";
 import { streamLegalChat } from "@/lib/legalChat";
 
 interface IntakeQuestion {
@@ -194,7 +195,7 @@ export function AIIntakeForm() {
       setConflictCheckResult(null);
     } catch (error) {
       console.error("Submit error:", error);
-      toast.error("Failed to submit intake form");
+      toast.error(errorMessage(error, "Failed to submit intake form"));
     }
   };
 

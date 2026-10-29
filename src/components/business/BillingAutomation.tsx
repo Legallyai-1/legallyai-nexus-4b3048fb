@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureUserOrganization } from "@/lib/organizations";
+import { errorMessage } from "@/lib/mutationResult";
 
 interface TimeEntry {
   id: string;
@@ -127,7 +128,7 @@ export function BillingAutomation() {
       ));
     } catch (error) {
       console.error("Invoice generation error:", error);
-      toast.error("Failed to generate invoice");
+      toast.error(errorMessage(error, "Failed to generate invoice"));
     } finally {
       setIsGenerating(false);
     }

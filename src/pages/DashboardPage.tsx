@@ -10,7 +10,7 @@ import type { User } from "@supabase/supabase-js";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { AskLeePanel } from "@/components/dashboard/AskLeePanel";
 import { formatDistanceToNow } from "date-fns";
-import { ensureUserOrganization } from "@/lib/organizations";
+import { findUserOrganization } from "@/lib/organizations";
 import { errorMessage } from "@/lib/mutationResult";
 import { formatAppointmentWhen, loadDashboardData, type DashboardStats } from "@/lib/dashboardData";
 
@@ -72,7 +72,14 @@ export default function DashboardPage() {
     setStatsLoading(true);
     setLoadError(null);
     try {
-      const organizationId = await ensureUserOrganization(userId);
+      const organizationId = await findUserOrganization(userId);
+      if (!organizationId) {
+        // New account without a practice yet: show the empty dashboard, don't create one on view.
+        setStats({ activeCases: 0, clients: 0, upcomingAppointments: 0, pendingInvoices: 0 });
+        setAppointments([]);
+        setRecentActivity([]);
+        return;
+      }
       const data = await loadDashboardData(supabase, organizationId);
       setStats(data.stats);
       setAppointments(
