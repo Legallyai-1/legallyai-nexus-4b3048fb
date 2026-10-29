@@ -74,7 +74,11 @@ test("409 retries exactly once, then returns the retry message", async () => {
 test("hub checkout uses the same one-time price as /generate", () => {
   assert.equal(DOCUMENT_EXPORT_CHECKOUT_MODE, "payment");
   const generatePage = readFileSync(new URL("../src/pages/GeneratePage.tsx", import.meta.url), "utf8");
-  assert.ok(generatePage.includes(DOCUMENT_EXPORT_PRICE_ID));
+  // /generate now uses the same hook as the hubs, so both share one price constant.
+  assert.ok(generatePage.includes("useDocumentCheckout()"));
+  const hook = readFileSync(new URL("../src/hooks/useHubDocumentGeneration.ts", import.meta.url), "utf8");
+  assert.ok(hook.includes("priceId: DOCUMENT_EXPORT_PRICE_ID"));
+  assert.equal(DOCUMENT_EXPORT_PRICE_ID, "price_1SckVt0QhWGUtGKvl9YdmQqk");
 });
 
 test("hub generators gate exports on the server's exportUnlocked", () => {

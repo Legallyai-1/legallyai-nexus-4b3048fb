@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureUserProfile } from '@/lib/ai-credits';
 import { arePaymentsEnabled } from "@/lib/env";
+import { useDocumentCheckout } from "@/hooks/useHubDocumentGeneration";
 
 const documentTypes = [
   "NDA (Non-Disclosure Agreement)",
@@ -247,37 +248,7 @@ export default function GeneratePage() {
     }
   };
 
-  const handleUnlock = async () => {
-    if (!arePaymentsEnabled()) {
-      toast.error("Payments are currently disabled.");
-      return;
-    }
-
-    if (!user) {
-      toast.error("Please sign in first");
-      navigate("/auth");
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { priceId: 'price_1SckVt0QhWGUtGKvl9YdmQqk', mode: 'payment' }
-      });
-
-      if (error) {
-        console.error("Checkout error:", error);
-        toast.error("Failed to start checkout. Please try again.");
-        return;
-      }
-
-      if (data?.url) {
-        window.open(data.url, '_blank');
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("An error occurred. Please try again.");
-    }
-  };
+  const handleUnlock = useDocumentCheckout();
 
   const canExport = !arePaymentsEnabled() || isSubscriber || (generatedDoc !== null && generatedDoc === unlockedDoc);
 
