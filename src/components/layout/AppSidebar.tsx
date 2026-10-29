@@ -128,7 +128,7 @@ export function AppSidebar({ userRole = "client", notificationCount = 0 }: AppSi
 
   return (
     <aside className={cn(
-      "flex flex-col h-screen sticky top-0 border-r border-white/70 bg-white/72 backdrop-blur-xl shadow-[8px_0_30px_-20px_hsl(218_45%_25%/0.5)] transition-all duration-300",
+      "flex flex-col h-screen sticky top-0 silver-sidebar transition-all duration-300",
       collapsed ? "w-16" : "w-64"
     )}>
       {/* Header */}
@@ -165,7 +165,7 @@ export function AppSidebar({ userRole = "client", notificationCount = 0 }: AppSi
                     "flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     isActive(item.href) 
                       ? "hub-nav-active font-semibold" 
-                      : "text-foreground/75 hover:bg-white/80 hover:text-foreground",
+                      : "hover:border-[hsl(43_85%_58%)] hover:text-foreground",
                     collapsed && "justify-center px-2"
                   )}
                   title={collapsed ? item.title : undefined}

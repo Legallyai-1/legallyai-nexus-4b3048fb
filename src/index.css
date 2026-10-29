@@ -843,3 +843,195 @@ a:focus-visible > .launcher-icon {
 
 /* Old neon text glows read as blur on light glass; drop them. */
 .hub-theme .text-glow-cyan, .hub-theme .text-glow-purple { text-shadow: none; }
+
+/* ===========================================================================
+   v2 (Dakota mockup, Oct 29): "magical white" page + brushed-silver panels,
+   rich gold feature tiles, gold progress, gold active pills, and the
+   Ask Lee · AI Partner chat panel (polished silver frame + gold rim light).
+   Text stays deep navy on silver for WCAG AA.
+   =========================================================================== */
+.hub-theme {
+  --background: 40 33% 98%;
+  --muted-foreground: 218 26% 29%;
+  --border: 220 12% 78%;
+  --silver-edge: 0 0% 100% / 0.95;
+}
+
+/* Magical white: pearly base, iridescent soft gold / lilac / sky blooms, faint sparkles. */
+.hub-bg {
+  background:
+    radial-gradient(circle, hsl(45 100% 70% / 0.55) 0 1px, transparent 1.6px) 0 0 / 173px 173px,
+    radial-gradient(circle, hsl(210 80% 85% / 0.6) 0 1.2px, transparent 2px) 61px 89px / 241px 241px,
+    radial-gradient(circle, hsl(0 0% 100%) 0 1.5px, hsl(45 100% 80% / 0.35) 2px, transparent 4px) 120px 40px / 311px 311px,
+    radial-gradient(ellipse 45% 38% at 88% 6%, hsl(45 95% 72% / 0.28), transparent 70%),
+    radial-gradient(ellipse 42% 40% at 6% 92%, hsl(270 60% 88% / 0.32), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 60% 55%, hsl(195 75% 90% / 0.30), transparent 70%),
+    radial-gradient(ellipse 35% 30% at 20% 20%, hsl(330 70% 94% / 0.35), transparent 70%),
+    linear-gradient(165deg, hsl(0 0% 100%) 0%, hsl(42 45% 98%) 40%, hsl(220 30% 97%) 75%, hsl(0 0% 100%) 100%);
+  background-attachment: fixed;
+}
+
+/* Brushed silver surface (the mockup's tiles): diagonal sheen + fine brushed grain + cool metal gradient. */
+.silver-metal,
+.hub-theme .glass-card:not(.lee-partner),
+.hub-theme .glass-panel:not(.lee-partner),
+.hub-theme .metal-card,
+.hub-theme .silver-tile,
+.hub-theme .rounded-lg.border.bg-card:not(.lee-partner),
+.hub-theme .rounded-xl.border.bg-card:not(.lee-partner),
+.hub-theme [role="tablist"] {
+  color: hsl(222 52% 13%);
+  background:
+    linear-gradient(118deg, transparent 0 28%, hsl(0 0% 100% / 0.6) 40%, transparent 54%),
+    repeating-linear-gradient(90deg, hsl(0 0% 100% / 0.12) 0 1px, hsl(220 10% 50% / 0.05) 1px 3px),
+    linear-gradient(162deg, hsl(220 16% 97%) 0%, hsl(218 13% 88%) 42%, hsl(220 11% 82%) 68%, hsl(220 15% 92%) 100%);
+  border: 1px solid hsl(var(--silver-edge));
+  box-shadow:
+    0 0 0 1px hsl(220 12% 68% / 0.55),
+    inset 0 1px 0 hsl(0 0% 100%),
+    inset 0 -1px 0 hsl(220 10% 58% / 0.35),
+    0 16px 34px -20px hsl(222 35% 20% / 0.5);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.hub-theme .metal-card:hover,
+.hub-theme .metal-card[data-active="true"],
+.hub-theme .metal-card[aria-current="page"],
+.hub-theme .metal-card[data-state="active"],
+.hub-theme .glass-card-hover:hover,
+.hub-theme .silver-tile:hover,
+.hub-theme .rounded-xl.border.bg-card:not(.lee-partner):hover {
+  border-color: hsl(45 95% 62%);
+  box-shadow:
+    0 0 0 1px hsl(42 90% 52% / 0.7),
+    0 0 22px hsl(43 95% 55% / 0.42),
+    inset 0 1px 0 hsl(0 0% 100%),
+    0 16px 34px -20px hsl(30 70% 25% / 0.5);
+}
+.hub-theme .silver-tile, .hub-theme .silver-tile:hover { border-color: hsl(43 85% 58% / 0.9); }
+
+/* Thick polished silver bezel for big frames (app shell, chat panels). */
+.silver-bezel {
+  border: 6px solid transparent;
+  background:
+    linear-gradient(162deg, hsl(220 16% 97%), hsl(218 13% 89%) 55%, hsl(220 14% 93%)) padding-box,
+    linear-gradient(145deg, hsl(0 0% 100%), hsl(220 10% 74%) 30%, hsl(0 0% 98%) 50%, hsl(220 10% 70%) 75%, hsl(0 0% 100%)) border-box;
+  box-shadow: 0 0 0 1px hsl(220 10% 62% / 0.5), inset 0 2px 6px hsl(220 15% 40% / 0.18), 0 26px 60px -30px hsl(222 40% 18% / 0.55);
+}
+
+/* Rich gold feature tile (Enterprise AI Workflows look): gold metal, light rays, glossy edge. */
+.hub-theme .gold-tile,
+.gold-feature {
+  color: hsl(222 55% 11%);
+  background:
+    radial-gradient(ellipse 70% 55% at 28% 18%, hsl(50 100% 90% / 0.9), transparent 62%),
+    repeating-conic-gradient(from 200deg at 15% 0%, hsl(48 100% 88% / 0.18) 0 4deg, transparent 4deg 12deg),
+    linear-gradient(148deg, hsl(46 88% 74%) 0%, hsl(41 82% 60%) 42%, hsl(37 78% 50%) 72%, hsl(45 88% 68%) 100%);
+  border: 1.5px solid hsl(47 100% 70%);
+  box-shadow:
+    0 0 0 1px hsl(36 80% 38% / 0.45),
+    0 0 26px hsl(43 95% 55% / 0.5),
+    inset 0 1px 0 hsl(52 100% 94%),
+    inset 0 -8px 18px -10px hsl(30 80% 30% / 0.45);
+}
+.hub-theme .gold-tile:hover, .gold-feature:hover {
+  box-shadow: 0 0 0 1px hsl(36 80% 38% / 0.5), 0 0 34px hsl(45 100% 58% / 0.65), inset 0 1px 0 hsl(52 100% 94%);
+}
+
+/* Gold progress bars with glow (Live AI Processing). */
+.gold-progress-track { background: linear-gradient(180deg, hsl(220 14% 70%), hsl(220 12% 80%)); box-shadow: inset 0 1px 2px hsl(222 30% 20% / 0.35); }
+.gold-progress-bar {
+  background: linear-gradient(90deg, hsl(36 80% 42%), hsl(44 95% 58%) 60%, hsl(50 100% 82%));
+  box-shadow: 0 0 10px hsl(45 100% 60% / 0.8), 0 0 2px hsl(50 100% 85%);
+}
+
+/* Active pills (tabs + sidebar) = gold gradient with glow; inactive = silver pill with hairline border. */
+.hub-theme [role="tablist"] { border-radius: 1.1rem; padding: 0.35rem; }
+.hub-theme [role="tab"][data-state="active"],
+.hub-nav-active {
+  color: hsl(222 55% 11%);
+  background: linear-gradient(100deg, hsl(48 95% 80%), hsl(42 90% 60%) 55%, hsl(38 82% 52%));
+  border: 1px solid hsl(47 100% 72%);
+  box-shadow: 0 0 0 1px hsl(36 80% 40% / 0.5), 0 0 18px hsl(43 95% 55% / 0.55), inset 0 1px 0 hsl(52 100% 92%);
+}
+.hub-theme [role="tab"][data-state="active"] svg, .hub-nav-active svg { color: hsl(222 55% 14%); }
+.silver-sidebar {
+  background:
+    repeating-linear-gradient(90deg, hsl(0 0% 100% / 0.14) 0 1px, hsl(220 10% 50% / 0.05) 1px 3px),
+    linear-gradient(180deg, hsl(220 16% 96%), hsl(218 12% 86%) 60%, hsl(220 14% 90%));
+  border-right: 1px solid hsl(0 0% 100%);
+  box-shadow: 1px 0 0 hsl(220 10% 70% / 0.6), 8px 0 30px -20px hsl(222 40% 20% / 0.5);
+}
+.silver-sidebar [data-nav-item]:not([aria-current]) {
+  border: 1px solid hsl(220 10% 74% / 0.8);
+  background: linear-gradient(180deg, hsl(0 0% 100% / 0.75), hsl(220 14% 92% / 0.6));
+  color: hsl(222 45% 16%);
+}
+
+/* Silver-glass inputs (search bar, chat inputs). */
+.hub-theme input.border-input,
+.hub-theme textarea.border-input {
+  background: linear-gradient(180deg, hsl(0 0% 100% / 0.95), hsl(220 16% 94%));
+  border-color: hsl(220 12% 74%);
+  box-shadow: inset 0 1px 3px hsl(222 30% 30% / 0.12), 0 1px 0 hsl(0 0% 100%);
+}
+
+/* Ask Lee · AI Partner panel: silver glass interior, polished silver frame, gold rim light. */
+.lee-partner,
+.hub-theme .lee-partner {
+  position: relative;
+  color: hsl(222 52% 12%);
+  border: 2.5px solid transparent;
+  background:
+    radial-gradient(ellipse 80% 45% at 50% 32%, hsl(45 100% 80% / 0.45), transparent 70%) padding-box,
+    linear-gradient(180deg, hsl(220 18% 95%) 0%, hsl(218 14% 87%) 45%, hsl(220 13% 84%) 100%) padding-box,
+    linear-gradient(150deg, hsl(48 100% 78%), hsl(38 82% 48%) 35%, hsl(50 100% 85%) 55%, hsl(36 78% 44%) 80%, hsl(46 95% 70%)) border-box;
+  box-shadow:
+    0 0 0 5px hsl(220 14% 90%),
+    0 0 0 6px hsl(220 10% 66% / 0.7),
+    0 0 0 7px hsl(45 95% 60% / 0.35),
+    0 0 44px 6px hsl(43 95% 55% / 0.55),
+    0 30px 60px -30px hsl(222 40% 18% / 0.55);
+  backdrop-filter: none;
+}
+.lee-partner-title-accent { color: hsl(34 88% 31%); }
+.lee-burst {
+  position: absolute; left: 50%; top: 50%; width: 140%; aspect-ratio: 1; transform: translate(-50%, -50%);
+  pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(circle, hsl(48 100% 82% / 0.9) 0%, hsl(45 100% 65% / 0.35) 22%, transparent 50%),
+    repeating-conic-gradient(from 0deg, hsl(44 100% 62% / 0.55) 0 4deg, transparent 4deg 13deg);
+  -webkit-mask: radial-gradient(circle, #000 0 22%, transparent 66%);
+  mask: radial-gradient(circle, #000 0 22%, transparent 66%);
+  animation: lee-burst-spin 60s linear infinite;
+}
+@keyframes lee-burst-spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+.lee-chip {
+  display: inline-flex; align-items: center; justify-content: center; text-align: center;
+  border-radius: 9999px; padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 600; line-height: 1.25;
+  color: hsl(0 0% 100%);
+  background: linear-gradient(180deg, hsl(222 42% 26%), hsl(222 50% 16%));
+  border: 1px solid hsl(43 90% 58%);
+  box-shadow: inset 0 1px 0 hsl(220 40% 45% / 0.6), 0 4px 12px -6px hsl(222 50% 10% / 0.6);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.lee-chip:hover, .lee-chip:focus-visible { box-shadow: 0 0 0 1px hsl(45 100% 65%), 0 0 16px hsl(43 95% 55% / 0.6); transform: translateY(-1px); outline: none; }
+.lee-chip:focus-visible { outline: 2px solid hsl(222 52% 20%); outline-offset: 2px; }
+.gold-wave { display: flex; align-items: center; justify-content: center; gap: 3px; height: 28px; }
+.gold-wave > span {
+  width: 3px; border-radius: 9999px;
+  background: linear-gradient(180deg, hsl(50 100% 80%), hsl(42 95% 55%), hsl(36 80% 42%));
+  box-shadow: 0 0 6px hsl(45 100% 60% / 0.7);
+  animation: gold-wave 1.6s ease-in-out infinite;
+  transform-origin: center;
+}
+@keyframes gold-wave { 0%, 100% { transform: scaleY(0.55); } 50% { transform: scaleY(1); } }
+.lee-partner-input {
+  background: linear-gradient(180deg, hsl(0 0% 100% / 0.92), hsl(220 16% 93%));
+  border: 1px solid hsl(220 12% 70%);
+  box-shadow: inset 0 1px 3px hsl(222 30% 30% / 0.15);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lee-burst, .gold-wave > span { animation: none; }
+}
+.lee-partner .text-legal-gold, .lee-partner-title-accent { color: hsl(32 90% 24%); }
