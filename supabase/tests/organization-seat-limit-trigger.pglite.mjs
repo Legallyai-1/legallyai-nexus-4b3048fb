@@ -142,3 +142,68 @@ test("the error carries a clear message and detail", async () => {
     return true;
   });
 });
+
+// --- user_roles: promotions to a non-client role are checked too ---
+const promote = (db, n, role = "lawyer") =>
+  db.query("update public.user_roles set role = $3 where user_id = $1 and organization_id = $2", [u(n), ORG, role]);
+// Like set_org_member_role: delete the member's roles, insert the new one, in one transaction.
+const setOrgMemberRole = (db, n, role) => db.transaction(async (tx) => {
+  await tx.query("delete from public.user_roles where user_id = $1 and organization_id = $2", [u(n), ORG]);
+  await tx.query("insert into public.user_roles values ($1,$2,$3)", [u(n), ORG, role]);
+});
+
+test("a client promoted to staff via a user_roles update past the limit is blocked", async () => {
+  const db = await setup({ price: SOLO }); // limit 1 = the owner
+  await addMember(db, 2, "client");
+  await assert.rejects(promote(db, 2), /Seat limit reached for this plan/);
+  const { rows } = await db.query("select role from public.user_roles where user_id = $1", [u(2)]);
+  assert.deepEqual(rows.map((r) => r.role), ["client"]);
+});
+
+test("a direct staff user_roles insert for an existing client member past the limit is blocked", async () => {
+  const db = await setup({ price: FIRM });
+  await addMember(db, 2); await addMember(db, 3); await addMember(db, 4, "client");
+  await assert.rejects(db.query("insert into public.user_roles values ($1,$2,'paralegal')", [u(4), ORG]), /Seat limit reached/);
+  await assert.rejects(setOrgMemberRole(db, 4, "lawyer"), /Seat limit reached/); // set_org_member_role path
+});
+
+test("a promotion within the limit succeeds", async () => {
+  const db = await setup({ price: FIRM });
+  await addMember(db, 2); await addMember(db, 3, "client");
+  await promote(db, 3);
+  await setOrgMemberRole(db, 2, "paralegal");
+  const { rows } = await db.query("select count(*)::int c from public.user_roles where role <> 'client'");
+  assert.equal(rows[0].c, 2);
+});
+
+test("the owner is unaffected by role changes, even in a full firm", async () => {
+  const db = await setup({ price: SOLO });
+  await addMember(db, 1, "client"); // u(1) === OWNER
+  await promote(db, 1, "owner");
+  await setOrgMemberRole(db, 1, "admin");
+});
+
+test("an over-limit firm can still change an existing staff member's role and demote to client", async () => {
+  const db = await overLimitFirm(); // owner + 4 staff on a 3-seat Firm
+  await setOrgMemberRole(db, 2, "paralegal"); // set_org_member_role (delete + insert) staff -> staff
+  await promote(db, 3, "admin");              // direct update staff -> staff
+  await db.query("insert into public.user_roles values ($1,$2,'paralegal')", [u(4), ORG]); // extra staff role
+  await setOrgMemberRole(db, 5, "client");    // demotion always works
+  await assert.rejects(promote(db, 5, "lawyer"), /Seat limit reached/); // ...but re-promoting is a new seat
+  assert.equal(await count(db), 4);
+});
+
+test("the deferred check takes the per-org advisory lock before counting", async () => {
+  const db = await setup({ price: FIRM });
+  await db.transaction(async (tx) => {
+    await tx.query("insert into public.organization_members (organization_id, user_id) values ($1,$2)", [ORG, u(2)]);
+    await tx.query("insert into public.user_roles values ($1,$2,'lawyer')", [u(2), ORG]);
+    await tx.query("set constraints all immediate"); // run the deferred checks now, inside the transaction
+    const { rows } = await tx.query(
+      `select count(*)::int c from pg_locks l
+        where l.locktype = 'advisory' and l.pid = pg_backend_pid()
+          and l.objid::bigint = (hashtext('org_seats:' || $1::text)::bigint & 4294967295)`,
+      [ORG]);
+    assert.ok(rows[0].c >= 1, "advisory lock org_seats:<org> is held");
+  });
+});
