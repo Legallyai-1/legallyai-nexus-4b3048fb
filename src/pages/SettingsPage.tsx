@@ -14,6 +14,7 @@ import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { MainLayout } from "@/components/layout/MainLayout";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { ApiKeysCard } from "@/components/settings/ApiKeysCard";
+import { AddSeatsControl } from "@/components/settings/AddSeatsControl";
 
 interface Profile {
   id: string;
@@ -388,6 +389,9 @@ export default function SettingsPage() {
                   <Button variant="outline" className="w-full justify-start" onClick={handleManageSubscription}>
                     Manage or Cancel Subscription
                   </Button>
+                  {(plan?.name === "Firm" || plan?.name === "Enterprise") && (
+                    <AddSeatsControl onChanged={(seats) => setPlan((p) => (p ? { ...p, seats } : p))} />
+                  )}
                   <Button variant="outline" className="w-full justify-start text-destructive" onClick={() => toast.error("Please contact support to delete your account")}>
                     Delete Account
                   </Button>
