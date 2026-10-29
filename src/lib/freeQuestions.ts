@@ -39,3 +39,9 @@ export function getDeviceId(storage: Pick<Storage, "getItem" | "setItem"> | null
     return null;
   }
 }
+
+/** Chat-bubble text shown when the free limit is hit, so closing the pop-up never leaves a silent chat. */
+export function freeLimitChatMessage(detail: FreeLimitDetail): string {
+  const next = detail.signedIn ? "" : " or [sign in](https://www.legallyai.ai/login) if you already subscribe,";
+  return `You've used today's ${detail.limit} free questions. [Subscribe to Premium](https://www.legallyai.ai/pricing) to keep asking Lee${next} or come back tomorrow for ${detail.limit} more.`;
+}

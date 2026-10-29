@@ -10,6 +10,8 @@
 import { resolveSubscriptionAccess } from "./subscription-access.ts";
 
 export const DEFAULT_FREE_QUESTION_LIMIT = 5;
+/** Site-wide roles (user_roles rows with no organization_id) that skip the free-question limit. */
+export const PLATFORM_STAFF_ROLES = ["admin", "owner"];
 /** Per-network cap for anonymous devices sharing one IP, as a multiple of the per-device limit. */
 export const NETWORK_LIMIT_MULTIPLIER = 10;
 
@@ -71,11 +73,14 @@ export async function checkFreeQuestion(opts: {
 }): Promise<GateResult> {
   const { admin } = opts;
   if (opts.userId) {
-    const [{ data: profile }, { data: subscription }, { data: paymentRecords }] = await Promise.all([
+    const [{ data: profile }, { data: subscription }, { data: paymentRecords }, { data: staffRoles }] = await Promise.all([
       admin.from("profiles").select("subscription_tier").eq("id", opts.userId).maybeSingle(),
       admin.from("subscriptions").select("status, tier, current_period_end, cancel_at_period_end").eq("user_id", opts.userId).maybeSingle(),
       admin.from("payment_records").select("tier, payment_method, expires_at, status, metadata").eq("user_id", opts.userId),
+      // Platform staff (site-wide admin/owner role, not tied to a customer organization) are never limited.
+      admin.from("user_roles").select("role").eq("user_id", opts.userId).is("organization_id", null).in("role", PLATFORM_STAFF_ROLES).limit(1),
     ]);
+    if (Array.isArray(staffRoles) && staffRoles.length > 0) return { allowed: true, used: 0, limit: opts.limit, subscriber: true };
     const access = resolveSubscriptionAccess(profile?.subscription_tier || "free", subscription, paymentRecords);
     if (access.entitled) return { allowed: true, used: 0, limit: opts.limit, subscriber: true };
   }

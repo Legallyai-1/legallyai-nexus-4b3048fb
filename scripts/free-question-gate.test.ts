@@ -8,11 +8,21 @@ import { getDeviceId } from '../src/lib/freeQuestions.ts';
 const now = new Date('2026-10-29T20:00:00Z');
 const req = (ip = '203.0.113.7') => new Request('https://x.test', { headers: { 'x-forwarded-for': ip } });
 
-function fakeAdmin() {
+function fakeAdmin(staffUserIds: string[] = []) {
   const counts = new Map<string, number>(); const calls: string[] = [];
   const empty = { data: null, error: null };
-  const q: any = { select: () => q, eq: () => q, maybeSingle: async () => empty, then: (r: any) => r({ data: [], error: null }) };
-  return { calls, counts, from: () => q, rpc: async (_: string, { p_subject, p_limit }: { p_subject: string; p_limit: number }) => {
+  const query = (table: string) => {
+    const filters: Record<string, unknown> = {};
+    const q: any = {
+      select: () => q, maybeSingle: async () => empty, limit: () => q,
+      eq: (k: string, v: unknown) => { filters[k] = v; return q; },
+      is: (k: string, v: unknown) => { filters[k] = v; return q; },
+      in: (k: string, v: unknown) => { filters[k] = v; return q; },
+      then: (r: any) => r({ data: table === 'user_roles' && filters.organization_id === null && staffUserIds.includes(String(filters.user_id)) ? [{ role: 'owner' }] : [], error: null }),
+    };
+    return q;
+  };
+  return { calls, counts, from: query, rpc: async (_: string, { p_subject, p_limit }: { p_subject: string; p_limit: number }) => {
     calls.push(p_subject); const used = counts.get(p_subject) ?? 0;
     if (used >= p_limit) return { data: [{ allowed: false, used }], error: null };
     counts.set(p_subject, used + 1); return { data: [{ allowed: true, used: used + 1 }], error: null };
@@ -71,5 +81,24 @@ test('free-limit dialog offers Subscribe and Sign in only, with no fake sponsor-
   assert.match(dialog, /\/login/);
   for (const file of ['../src/pages/PricingPage.tsx', '../src/pages/Index.tsx']) {
     assert.doesNotMatch(readFileSync(new URL(file, import.meta.url), 'utf8'), /price: "\$0"/);
+  }
+});
+
+test('platform staff (site-wide admin/owner) are never limited; other signed-in free users get 5', async () => {
+  const admin = fakeAdmin(['staff-1']);
+  for (let i = 0; i < 8; i++) {
+    const r = await checkFreeQuestion({ admin, req: req(), userId: 'staff-1', deviceId: null, salt: 's', limit: 5, now });
+    assert.deepEqual(r, { allowed: true, used: 0, limit: 5, subscriber: true });
+  }
+  assert.equal(admin.calls.length, 0, 'staff questions are not counted');
+  const results = [];
+  for (let i = 0; i < 6; i++) results.push((await checkFreeQuestion({ admin, req: req(), userId: 'free-1', deviceId: null, salt: 's', limit: 5, now })).allowed);
+  assert.deepEqual(results, [true, true, true, true, true, false]);
+});
+
+test('hitting the free limit leaves a visible message in the chat, not just a pop-up', () => {
+  for (const file of ['../src/pages/Index.tsx', '../src/hooks/useAIChat.ts']) {
+    const src = readFileSync(new URL(file, import.meta.url), 'utf8');
+    assert.match(src, /FreeLimitError/, `${file} handles the free limit`);
   }
 });
