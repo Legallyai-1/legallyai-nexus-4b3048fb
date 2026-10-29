@@ -13,7 +13,7 @@ const monthly = (id: string, amount: number) => ({ id, currency: 'usd', unit_amo
 type Opts = {
   user?: { id: string } | null; orgs?: { id: string }[];
   row?: Record<string, unknown> | null; status?: string; items?: Record<string, unknown>[];
-  customerMeta?: Record<string, string>; subCustomer?: string; used?: number;
+  customerMeta?: Record<string, string>; subCustomer?: string; used?: number; pendingUpdate?: boolean;
 };
 function setup(opts: Opts = {}) {
   const updates: { id: string; params: Record<string, unknown>; options: Record<string, unknown> }[] = [];
@@ -40,10 +40,14 @@ function setup(opts: Opts = {}) {
         return { id, customer: opts.subCustomer ?? 'cus_A', status: opts.status ?? 'active',
           items: { data: opts.items ?? [{ id: 'si_plan', quantity: 1, price: monthly(FIRM, 9900) }] } };
       },
-      update: async (id: string, params: Record<string, unknown>, options: Record<string, unknown>) => { updates.push({ id, params, options }); return { id }; },
+      update: async (id: string, params: Record<string, unknown>, options: Record<string, unknown>) => {
+        updates.push({ id, params, options });
+        return { id, pending_update: opts.pendingUpdate ? { expires_at: 1 } : null };
+      },
     },
   };
-  const handler = updateSeatsHandler({ env, createClient: () => db, createStripe: () => stripe, seatsUsed: async () => opts.used ?? 2 });
+  let n = 0;
+  const handler = updateSeatsHandler({ env, createClient: () => db, createStripe: () => stripe, seatsUsed: async () => opts.used ?? 2, nonce: () => `n${++n}` });
   return { handler, updates, retrieved };
 }
 const post = (body: unknown, headers: Record<string, string> = {}) => new Request('https://fn/update-seats', {
@@ -126,8 +130,51 @@ test('adds the Extra seat item when missing, with prorations', async () => {
   const body = await res.json();
   assert.equal(body.seat_limit, 5);
   assert.equal(body.updated, true);
-  assert.deepEqual(updates[0].params, { items: [{ price: EXTRA_SEAT_PRICE_ID, quantity: 2 }], proration_behavior: 'create_prorations' });
-  assert.match(String(updates[0].options.idempotencyKey), /^update-seats:sub_A:0->2$/);
+  assert.deepEqual(updates[0].params, { items: [{ price: EXTRA_SEAT_PRICE_ID, quantity: 2 }], proration_behavior: 'always_invoice', payment_behavior: 'pending_if_incomplete' });
+  assert.equal(updates[0].options.idempotencyKey, 'update-seats:sub_A:0->2:n1');
+});
+
+test('increases are invoiced now and only applied after payment', async () => {
+  const { handler, updates } = setup({ items: [{ id: 'si_plan', quantity: 1, price: monthly(FIRM, 9900) }, { id: 'si_seat', quantity: 2, price: monthly(EXTRA_SEAT_PRICE_ID, 2500) }] });
+  const res = await (await handler(post({ extraSeats: 3 }))).json();
+  assert.deepEqual(updates[0].params, { items: [{ id: 'si_seat', quantity: 3 }], proration_behavior: 'always_invoice', payment_behavior: 'pending_if_incomplete' });
+  assert.equal(res.updated, true);
+  assert.equal(res.seat_limit, 6);
+});
+
+test('a pending update (payment incomplete) reports payment_required and keeps the old seats', async () => {
+  const { handler } = setup({ pendingUpdate: true, items: [{ id: 'si_plan', quantity: 1, price: monthly(FIRM, 9900) }, { id: 'si_seat', quantity: 2, price: monthly(EXTRA_SEAT_PRICE_ID, 2500) }] });
+  const res = await handler(post({ extraSeats: 5 }));
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.updated, false);
+  assert.equal(body.payment_required, true);
+  assert.equal(body.extra_seats, 2);
+  assert.equal(body.seat_limit, 5);
+  assert.match(body.error, /Payment/);
+});
+
+test('idempotency keys are unique per request, so 2->3, 3->2, 2->3 never replays', async () => {
+  const s1 = setup({ items: [{ id: 'si_plan', quantity: 1, price: monthly(FIRM, 9900) }, { id: 'si_seat', quantity: 2, price: monthly(EXTRA_SEAT_PRICE_ID, 2500) }], used: 1 });
+  await s1.handler(post({ extraSeats: 3 }));
+  await s1.handler(post({ extraSeats: 3 }));
+  const keys = s1.updates.map((u) => u.options.idempotencyKey);
+  assert.equal(new Set(keys).size, keys.length);
+  // Default nonce is a random UUID.
+  const updates: Record<string, unknown>[] = [];
+  const db = { auth: { getUser: async () => ({ data: { user: { id: 'owner' } }, error: null }) }, from: (t: string) => {
+    const f: Record<string, unknown> = {};
+    const q = { select: () => q, eq: (c: string, v: unknown) => { f[c] = v; return q; },
+      limit: async () => ({ data: [{ id: 'org1' }], error: null }),
+      maybeSingle: async () => ({ data: t === 'subscriptions' ? { user_id: 'owner', stripe_customer_id: 'cus_A', stripe_subscription_id: 'sub_A' } : null, error: null }) };
+    return q; } };
+  const stripe = { customers: { retrieve: async (id: string) => ({ id, metadata: {} }) }, subscriptions: {
+    retrieve: async () => ({ id: 'sub_A', customer: 'cus_A', status: 'active', items: { data: [{ id: 'si_plan', price: { id: FIRM } }] } }),
+    update: async (_id: string, _p: unknown, o: Record<string, unknown>) => { updates.push(o); return {}; } } };
+  const h = updateSeatsHandler({ env, createClient: () => db, createStripe: () => stripe, seatsUsed: async () => 1 });
+  await h(post({ extraSeats: 1 })); await h(post({ extraSeats: 1 }));
+  assert.match(String(updates[0].idempotencyKey), /^update-seats:sub_A:0->1:[0-9a-f-]{36}$/);
+  assert.notEqual(updates[0].idempotencyKey, updates[1].idempotencyKey);
 });
 
 test('changes the quantity of the existing Extra seat item', async () => {

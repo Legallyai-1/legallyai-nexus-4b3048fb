@@ -50,6 +50,12 @@ export function AddSeatsControl({ onChanged }: { onChanged?: (seatLimit: number)
     const { data, error } = await supabase.functions.invoke("update-seats", { body: { extraSeats: requested } });
     setSaving(false);
     setConfirming(false);
+    if (data?.payment_required) {
+      setStatus(data as SeatStatus);
+      setExtra(String(data.extra_seats));
+      toast.error("Payment is needed before the new seats are added. Update your payment method in Manage Subscription, then try again.");
+      return;
+    }
     if (error || typeof data?.seat_limit !== "number") {
       toast.error("Seats could not be updated. Please try again or contact support@legallyai.ai.");
       return;
@@ -82,8 +88,11 @@ export function AddSeatsControl({ onChanged }: { onChanged?: (seatLimit: number)
           <AlertDialogHeader>
             <AlertDialogTitle>Change extra seats from {status.extra_seats} to {requested}?</AlertDialogTitle>
             <AlertDialogDescription>
-              Extra seats are ${status.price_per_seat_usd}/seat/month, prorated for the rest of the current billing period
-              on your next invoice. Your plan will have {newLimit} seats
+              Extra seats are ${status.price_per_seat_usd}/seat/month.{" "}
+              {delta > 0
+                ? "Added seats are charged now, prorated for the rest of the current billing period, and are added once the payment goes through."
+                : "Removed seats are credited, prorated, on your next invoice."}{" "}
+              Your plan will have {newLimit} seats
               ({delta > 0 ? `+$${delta * status.price_per_seat_usd}` : `-$${Math.abs(delta) * status.price_per_seat_usd}`}/month).
             </AlertDialogDescription>
           </AlertDialogHeader>

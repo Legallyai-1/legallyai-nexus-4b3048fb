@@ -6,7 +6,8 @@
 //   organization ID is read from the request body; everything is looked up from the caller's own rows.
 // - The caller must own a firm (organizations.owner_id) AND hold the subscription (subscriptions.user_id),
 //   whose Stripe customer must match the mapped customer and whose plan item must be Firm or Enterprise.
-// - Only the Extra seat line item is touched (quantity 0..100), with prorations.
+// - Only the Extra seat line item is touched (quantity 0..100). Increases are invoiced immediately and
+//   only applied once paid (pending_if_incomplete); decreases are prorated onto the next invoice.
 // - Seats are never lowered below the seats already in use.
 import { getBillingReturnOrigin, getMappedBillingCustomerId, isBillingCustomerConsistent } from "./billing-ownership.ts";
 import { ENTERPRISE_PLAN_PRICE_ID, FIRM_PLAN_PRICE_ID, MAX_EXTRA_SEATS } from "./plan-catalog.ts";
@@ -28,6 +29,8 @@ export interface UpdateSeatsDeps {
   createStripe: (key: string) => Any;
   /** Seats in use for one organization (defaults to the shared seat counter). */
   seatsUsed?: (db: Any, organizationId: string) => Promise<number>;
+  /** Per-request nonce for the Stripe idempotency key (defaults to crypto.randomUUID). */
+  nonce?: () => string;
 }
 
 /** The requested Extra seat quantity: an integer 0..100, else null. Strings, floats and other types are rejected. */
@@ -116,6 +119,7 @@ export const updateSeatsHandler = (deps: UpdateSeatsDeps) => async (req: Request
     const seatItem = seatItems[0] ?? null;
     const current = seatItem ? Math.max(0, Number(seatItem.quantity) || 0) : 0;
 
+    const newNonce = deps.nonce ?? (() => crypto.randomUUID());
     const seatsUsed = deps.seatsUsed ?? (async (client: Any, orgId: string) => (await getOrganizationSeats(client, orgId)).used);
     let used = 0;
     for (const orgId of orgIds) used = Math.max(used, await seatsUsed(db, orgId));
@@ -137,8 +141,21 @@ export const updateSeatsHandler = (deps: UpdateSeatsDeps) => async (req: Request
     const items = seatItem
       ? [{ id: seatItem.id, quantity: requested }]
       : [{ price: EXTRA_SEAT_PRICE_ID, quantity: requested }];
-    await stripe.subscriptions.update(subscriptionId, { items, proration_behavior: "create_prorations" },
-      { idempotencyKey: `update-seats:${subscriptionId}:${current}->${requested}` });
+    const increase = (requested as number) > current;
+    // Increases are invoiced now and only applied once paid; decreases credit the next invoice.
+    const params = increase
+      ? { items, proration_behavior: "always_invoice", payment_behavior: "pending_if_incomplete" }
+      : { items, proration_behavior: "create_prorations" };
+    const updated = await stripe.subscriptions.update(subscriptionId, params,
+      { idempotencyKey: `update-seats:${subscriptionId}:${current}->${requested}:${newNonce()}` });
+    if (updated?.pending_update) {
+      return reply({
+        ...status(current),
+        updated: false,
+        payment_required: true,
+        error: "Payment for the new seats didn't go through, so your seats haven't changed. Update your payment method in Manage Subscription and try again.",
+      });
+    }
     return reply({ ...status(requested as number), updated: true });
   } catch {
     console.error("[UPDATE-SEATS] Seat update failed");
