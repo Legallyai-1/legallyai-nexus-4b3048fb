@@ -15,7 +15,7 @@ import { getSupabaseFunctionHeaders } from '@/lib/supabase-functions';
 import { toast } from 'sonner';
 
 interface IntegrationHubPanelProps {
-  organizationId?: string;
+  organizationId: string;
 }
 
 const ICON_MAP: Record<string, any> = {
@@ -31,12 +31,11 @@ const ICON_MAP: Record<string, any> = {
   search: BookOpen
 };
 
-export function IntegrationHubPanel({ organizationId = 'default-org' }: IntegrationHubPanelProps) {
+export function IntegrationHubPanel({ organizationId }: IntegrationHubPanelProps) {
   const [loading, setLoading] = useState(true);
   const [integrations, setIntegrations] = useState<any>({ connected: [], available: [] });
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
-  const [syncing, setSyncing] = useState<string | null>(null);
   const [connecting, setConnecting] = useState<string | null>(null);
 
   const fetchIntegrations = async () => {
@@ -84,7 +83,7 @@ export function IntegrationHubPanel({ organizationId = 'default-org' }: Integrat
       const result = await response.json();
       if (result.error) throw new Error(result.error);
 
-      toast.success('Integration connected successfully');
+      toast.success('Saved to your firm\'s app list');
       fetchIntegrations();
     } catch (error: any) {
       toast.error(error.message || 'Failed to connect integration');
@@ -118,33 +117,6 @@ export function IntegrationHubPanel({ organizationId = 'default-org' }: Integrat
     }
   };
 
-  const syncIntegration = async (integrationName: string) => {
-    setSyncing(integrationName);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
-
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/integration-hub`, {
-        method: 'POST',
-        headers: getSupabaseFunctionHeaders(session.access_token),
-        body: JSON.stringify({
-          action: 'sync',
-          organization_id: organizationId,
-          integration_name: integrationName
-        })
-      });
-
-      const result = await response.json();
-      if (result.error) throw new Error(result.error);
-
-      toast.success(`Synced ${result.records_synced} records`);
-      fetchIntegrations();
-    } catch (error: any) {
-      toast.error(error.message || 'Sync failed');
-    } finally {
-      setSyncing(null);
-    }
-  };
 
   useEffect(() => {
     fetchIntegrations();
@@ -176,7 +148,7 @@ export function IntegrationHubPanel({ organizationId = 'default-org' }: Integrat
             <Plug className="h-6 w-6 text-primary" />
             Integration Hub
           </h2>
-          <p className="text-muted-foreground">Connect 50+ apps to supercharge your practice</p>
+          <p className="text-muted-foreground">Keep a record of the apps your firm uses. LegallyAI does not sign in to these apps or import their data.</p>
         </div>
         <Button onClick={fetchIntegrations} variant="outline">
           <RefreshCw className="h-4 w-4 mr-2" />
@@ -190,7 +162,7 @@ export function IntegrationHubPanel({ organizationId = 'default-org' }: Integrat
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-green-500" />
-              Connected ({integrations.connected.length})
+              Your firm's apps ({integrations.connected.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -210,27 +182,15 @@ export function IntegrationHubPanel({ organizationId = 'default-org' }: Integrat
                             <p className="text-xs text-muted-foreground">{integration.integration_type}</p>
                           </div>
                         </div>
-                        <Badge variant="default" className="bg-green-500">
-                          Active
+                        <Badge variant="outline">
+                          Not synced
                         </Badge>
                       </div>
                       <div className="mt-4 flex items-center justify-between">
                         <span className="text-xs text-muted-foreground">
-                          Last sync: {integration.last_sync_at ? new Date(integration.last_sync_at).toLocaleDateString() : 'Never'}
+                          Added {integration.created_at ? new Date(integration.created_at).toLocaleDateString() : ''}
                         </span>
                         <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => syncIntegration(integration.integration_name)}
-                            disabled={syncing === integration.integration_name}
-                          >
-                            {syncing === integration.integration_name ? (
-                              <RefreshCw className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <RefreshCw className="h-3 w-3" />
-                            )}
-                          </Button>
                           <Button 
                             size="sm" 
                             variant="destructive"
@@ -252,7 +212,7 @@ export function IntegrationHubPanel({ organizationId = 'default-org' }: Integrat
       {/* Available Integrations */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Available Integrations</CardTitle>
+          <CardTitle className="text-lg">App directory</CardTitle>
           <div className="flex items-center gap-4 mt-4">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -311,12 +271,12 @@ export function IntegrationHubPanel({ organizationId = 'default-org' }: Integrat
                         {isConnecting ? (
                           <>
                             <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                            Connecting...
+                            Saving...
                           </>
                         ) : (
                           <>
                             <Plug className="h-4 w-4 mr-2" />
-                            Connect
+                            Add to firm list
                           </>
                         )}
                       </Button>

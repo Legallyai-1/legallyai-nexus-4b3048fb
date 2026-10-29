@@ -124,7 +124,7 @@ serve(async (req) => {
             integration_type: integrationInfo.type,
             settings: config || {},
             is_active: true,
-            sync_status: 'connected'
+            sync_status: 'not_synced'
           })
           .select()
           .single();
@@ -186,26 +186,20 @@ serve(async (req) => {
           throw new Error('Integration not connected');
         }
 
-        // Simulate sync operation
-        await supabase
-          .from('integration_configs')
-          .update({ 
-            last_sync_at: new Date().toISOString(),
-            sync_status: 'synced'
-          })
-          .eq('id', syncConfig.id);
-
+        // No third-party connector (OAuth/API client) exists for this integration, so nothing is
+        // imported. Record the attempt honestly instead of reporting made-up record counts.
         await supabase.from('integration_logs').insert({
           integration_id: syncConfig.id,
           action: 'sync',
-          status: 'success',
-          response_data: { records_synced: Math.floor(Math.random() * 50) + 10 }
+          status: 'not_supported',
+          response_data: { records_synced: 0 }
         });
 
-        result = { 
-          success: true, 
-          last_sync: new Date().toISOString(),
-          records_synced: Math.floor(Math.random() * 50) + 10
+        result = {
+          success: false,
+          supported: false,
+          records_synced: 0,
+          message: 'Automatic data sync is not available for this app. No records were imported.'
         };
         break;
 

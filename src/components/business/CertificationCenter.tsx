@@ -16,118 +16,7 @@ interface CertificationCenterProps {
   userId?: string;
 }
 
-const MICRO_CERTIFICATIONS = [
-  {
-    id: 'ai-drafting',
-    name: 'AI Legal Drafting',
-    category: 'Technology',
-    description: 'Master AI-powered document generation and review',
-    courses: 2,
-    quizzes: 3,
-    hours: 8,
-    prediction_boost: 10,
-    color: 'from-purple-500 to-indigo-500'
-  },
-  {
-    id: 'case-strategy',
-    name: 'Case Strategy Analytics',
-    category: 'Practice',
-    description: 'Leverage data for winning case strategies',
-    courses: 3,
-    quizzes: 4,
-    hours: 12,
-    prediction_boost: 15,
-    color: 'from-cyan-500 to-blue-500'
-  },
-  {
-    id: 'client-management',
-    name: 'Client Relations Excellence',
-    category: 'Business',
-    description: 'Build lasting client relationships and retention',
-    courses: 2,
-    quizzes: 2,
-    hours: 6,
-    prediction_boost: 5,
-    color: 'from-green-500 to-emerald-500'
-  },
-  {
-    id: 'billing-mastery',
-    name: 'Legal Billing Mastery',
-    category: 'Business',
-    description: 'Maximize revenue through optimized billing practices',
-    courses: 2,
-    quizzes: 3,
-    hours: 8,
-    prediction_boost: 8,
-    color: 'from-yellow-500 to-orange-500'
-  },
-  {
-    id: 'compliance-pro',
-    name: 'Compliance Professional',
-    category: 'Regulatory',
-    description: 'Stay ahead of regulatory requirements',
-    courses: 4,
-    quizzes: 5,
-    hours: 16,
-    prediction_boost: 12,
-    color: 'from-red-500 to-pink-500'
-  },
-  {
-    id: 'litigation-tech',
-    name: 'Litigation Technology',
-    category: 'Technology',
-    description: 'Advanced e-discovery and litigation support tools',
-    courses: 3,
-    quizzes: 4,
-    hours: 14,
-    prediction_boost: 15,
-    color: 'from-indigo-500 to-purple-500'
-  },
-  {
-    id: 'negotiation',
-    name: 'Advanced Negotiation',
-    category: 'Practice',
-    description: 'Master settlement and deal negotiation techniques',
-    courses: 2,
-    quizzes: 3,
-    hours: 10,
-    prediction_boost: 12,
-    color: 'from-teal-500 to-cyan-500'
-  },
-  {
-    id: 'ethics',
-    name: 'Legal Ethics Excellence',
-    category: 'Regulatory',
-    description: 'Ethical practice and professional responsibility',
-    courses: 3,
-    quizzes: 4,
-    hours: 12,
-    prediction_boost: 10,
-    color: 'from-slate-500 to-gray-500'
-  },
-  {
-    id: 'trial-prep',
-    name: 'Trial Preparation Pro',
-    category: 'Practice',
-    description: 'Comprehensive trial preparation strategies',
-    courses: 4,
-    quizzes: 5,
-    hours: 20,
-    prediction_boost: 20,
-    color: 'from-rose-500 to-red-500'
-  },
-  {
-    id: 'contract-ai',
-    name: 'AI Contract Analysis',
-    category: 'Technology',
-    description: 'AI-powered contract review and analysis',
-    courses: 2,
-    quizzes: 3,
-    hours: 10,
-    prediction_boost: 12,
-    color: 'from-violet-500 to-purple-500'
-  }
-];
+const CARD_COLORS = ['from-purple-500 to-indigo-500', 'from-cyan-500 to-blue-500', 'from-green-500 to-emerald-500', 'from-amber-500 to-orange-500'];
 
 export function CertificationCenter({ userId }: CertificationCenterProps) {
   const [loading, setLoading] = useState(false);
@@ -135,6 +24,7 @@ export function CertificationCenter({ userId }: CertificationCenterProps) {
   const [enrollments, setEnrollments] = useState<any[]>([]);
   const [completed, setCompleted] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('available');
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const fetchCertifications = async () => {
     setLoading(true);
@@ -149,14 +39,15 @@ export function CertificationCenter({ userId }: CertificationCenterProps) {
       });
 
       const result = await response.json();
-      if (result.error) throw new Error(result.error);
+      if (!response.ok || result.error) throw new Error(result.error || 'Could not load certifications');
 
+      setLoadError(null);
       setCertifications(result.certifications || []);
       setEnrollments(result.certifications?.filter((c: any) => c.enrollment && !c.completed) || []);
       setCompleted(result.certifications?.filter((c: any) => c.completed) || []);
     } catch (error: any) {
-      // Use mock data if API fails
-      setCertifications(MICRO_CERTIFICATIONS);
+      setCertifications([]);
+      setLoadError(error?.message || 'Could not load certifications');
     } finally {
       setLoading(false);
     }
@@ -227,7 +118,7 @@ export function CertificationCenter({ userId }: CertificationCenterProps) {
             <div className="flex items-center gap-3">
               <BookOpen className="h-8 w-8 text-primary" />
               <div>
-                <p className="text-2xl font-bold">{MICRO_CERTIFICATIONS.length}</p>
+                <p className="text-2xl font-bold">{certifications.length}</p>
                 <p className="text-sm text-muted-foreground">Available</p>
               </div>
             </div>
@@ -272,24 +163,29 @@ export function CertificationCenter({ userId }: CertificationCenterProps) {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="available">Available ({MICRO_CERTIFICATIONS.length})</TabsTrigger>
+          <TabsTrigger value="available">Available ({certifications.length})</TabsTrigger>
           <TabsTrigger value="in-progress">In Progress ({enrollments.length})</TabsTrigger>
           <TabsTrigger value="completed">Completed ({completed.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="available" className="mt-6">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {MICRO_CERTIFICATIONS.map((cert) => (
+            {certifications.length === 0 && (
+              <Card className="md:col-span-2 lg:col-span-3">
+                <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                  {loading ? 'Loading certifications…' : loadError ? `${loadError}. Try again shortly.` : 'No certifications are published yet.'}
+                </CardContent>
+              </Card>
+            )}
+            {certifications.map((cert, index) => (
               <Card key={cert.id} className="overflow-hidden hover:border-primary/50 transition-all group">
-                <div className={`h-2 bg-gradient-to-r ${cert.color}`} />
+                <div className={`h-2 bg-gradient-to-r ${CARD_COLORS[index % CARD_COLORS.length]}`} />
                 <CardContent className="pt-4">
                   <div className="flex items-start justify-between mb-3">
                     <Badge className={getCategoryColor(cert.category)}>
                       {cert.category}
                     </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      +{cert.prediction_boost}% AI
-                    </Badge>
+                    {cert.completed ? <Badge variant="outline" className="text-xs">Earned</Badge> : cert.enrollment ? <Badge variant="outline" className="text-xs">In progress</Badge> : null}
                   </div>
                   <h4 className="font-bold text-lg mb-1">{cert.name}</h4>
                   <p className="text-sm text-muted-foreground mb-4">{cert.description}</p>
@@ -297,11 +193,11 @@ export function CertificationCenter({ userId }: CertificationCenterProps) {
                   <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                     <span className="flex items-center gap-1">
                       <BookOpen className="h-4 w-4" />
-                      {cert.courses} courses
+                      {cert.required_courses?.length ?? 0} courses
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
-                      {cert.hours}h
+                      {cert.required_quizzes?.length ?? 0} quizzes
                     </span>
                   </div>
 

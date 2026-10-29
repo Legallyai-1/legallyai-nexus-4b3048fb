@@ -15,10 +15,19 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { requireAffectedRows } from '@/lib/mutationResult';
 import { findUserOrganization } from '@/lib/organizations';
+import { FirmTeamPanel } from '@/components/business/FirmTeamPanel';
 
 interface CaseWorkflowManagerProps {
   caseId?: string;
-  organizationId?: string;
+  organizationId?: string | null;
+}
+
+interface TimelineEvent {
+  id: string;
+  event_title: string;
+  event_description: string | null;
+  event_type: string;
+  event_date: string;
 }
 
 interface Task {
@@ -49,14 +58,11 @@ const DEFAULT_STAGES: Stage[] = [
   { id: '6', name: 'Resolution', order_index: 5, color: '#10b981' }
 ];
 
-const MOCK_TASKS: Task[] = [];
-
-const TIMELINE_EVENTS = [];
 
 export function CaseWorkflowManager({ caseId: caseIdProp, organizationId: organizationIdProp }: CaseWorkflowManagerProps) {
   // case_tasks.case_id is NOT NULL, so every task must belong to a case.
   // When no case is passed in, the user picks one of their organization's cases.
-  const [resolvedOrgId, setResolvedOrgId] = useState<string | undefined>(organizationIdProp);
+  const [resolvedOrgId, setResolvedOrgId] = useState<string | undefined>(organizationIdProp ?? undefined);
   const [caseOptions, setCaseOptions] = useState<{ id: string; title: string }[]>([]);
   // Case whose tasks are listed (applied after a task is created).
   const [selectedCaseId, setSelectedCaseId] = useState<string>('');
@@ -66,15 +72,17 @@ export function CaseWorkflowManager({ caseId: caseIdProp, organizationId: organi
   const caseId = caseIdProp || selectedCaseId || undefined;
   const organizationId = organizationIdProp || resolvedOrgId;
   const [stages, setStages] = useState<Stage[]>(DEFAULT_STAGES);
-  const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
-  const [currentStage, setCurrentStage] = useState(2); // Discovery
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
+  const [newEvent, setNewEvent] = useState({ title: '', description: '', type: 'milestone', date: '' });
+  const [savingEvent, setSavingEvent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showAddTask, setShowAddTask] = useState(false);
   const [newTask, setNewTask] = useState({ title: '', description: '', priority: 'medium', due_date: '' });
 
   useEffect(() => {
     if (organizationIdProp) {
-      setResolvedOrgId(organizationIdProp);
+      setResolvedOrgId(organizationIdProp ?? undefined);
       return;
     }
     let cancelled = false;
@@ -129,6 +137,7 @@ export function CaseWorkflowManager({ caseId: caseIdProp, organizationId: organi
     const requestId = ++fetchRequestId.current;
     if (!caseId || !organizationId) {
       setTasks([]);
+      setTimeline([]);
       return;
     }
 
@@ -143,7 +152,9 @@ export function CaseWorkflowManager({ caseId: caseIdProp, organizationId: organi
       if (requestId !== fetchRequestId.current) return; // stale response
       if (tasksResult.error) throw tasksResult.error;
       if (stagesResult.error) throw stagesResult.error;
+      if (timelineResult.error) throw timelineResult.error;
       setTasks((tasksResult.data ?? []) as Task[]);
+      setTimeline((timelineResult.data ?? []) as TimelineEvent[]);
       if (stagesResult.data?.length) setStages(stagesResult.data as Stage[]);
     } catch (error: any) {
       if (requestId !== fetchRequestId.current) return;
@@ -235,6 +246,40 @@ export function CaseWorkflowManager({ caseId: caseIdProp, organizationId: organi
     }
   };
 
+  const addTimelineEvent = async () => {
+    if (!caseId) return;
+    if (!newEvent.title.trim() || !newEvent.date) {
+      toast.error('Event title and date are required');
+      return;
+    }
+    setSavingEvent(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await supabase
+        .from('case_timelines')
+        .insert({
+          case_id: caseId,
+          created_by: user?.id ?? null,
+          event_title: newEvent.title.trim(),
+          event_description: newEvent.description.trim() || null,
+          event_type: newEvent.type,
+          event_date: new Date(`${newEvent.date}T12:00:00`).toISOString(),
+        })
+        .select('id, event_title, event_description, event_type, event_date')
+        .single();
+      if (error) throw error;
+      setTimeline((prev) => [data as TimelineEvent, ...prev].sort((a, b) => b.event_date.localeCompare(a.event_date)));
+      setNewEvent({ title: '', description: '', type: 'milestone', date: '' });
+      toast.success('Event added to the timeline');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to add event');
+    } finally {
+      setSavingEvent(false);
+    }
+  };
+
+  const completedCount = tasks.filter((t) => t.status === 'completed').length;
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed': return 'bg-green-500';
@@ -256,38 +301,49 @@ export function CaseWorkflowManager({ caseId: caseIdProp, organizationId: organi
 
   return (
     <div className="space-y-6">
-      {/* Stage Pipeline */}
+      {/* Case picker + firm stages */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Workflow className="h-5 w-5 text-primary" />
-            Case Pipeline
+            Case Workflow
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2 overflow-x-auto pb-2">
-            {stages.map((stage, index) => (
-              <React.Fragment key={stage.id}>
-                <button
-                  onClick={() => setCurrentStage(index)}
-                  className={`flex-shrink-0 px-4 py-2 rounded-lg transition-all ${
-                    index === currentStage
-                      ? 'bg-primary text-primary-foreground'
-                      : index < currentStage
-                      ? 'bg-green-500/20 text-green-500'
-                      : 'bg-muted text-muted-foreground'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    {index < currentStage && <CheckCircle className="h-4 w-4" />}
-                    <span className="font-medium">{stage.name}</span>
-                  </div>
-                </button>
-                {index < stages.length - 1 && (
-                  <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                )}
-              </React.Fragment>
-            ))}
+        <CardContent className="space-y-4">
+          {!caseIdProp && (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <Select value={selectedCaseId} onValueChange={setSelectedCaseId}>
+                <SelectTrigger aria-label="Case" className="sm:w-80">
+                  <SelectValue placeholder={caseOptions.length ? 'Choose a case' : 'No cases yet'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {caseOptions.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {!organizationId ? (
+                <p className="text-sm text-muted-foreground">Set up your practice in the Practice tab to start tracking cases.</p>
+              ) : !caseOptions.length ? (
+                <p className="text-sm text-muted-foreground">Create a case in the Practice tab, then manage its tasks and timeline here.</p>
+              ) : null}
+            </div>
+          )}
+          {caseId && (
+            <p className="text-sm text-muted-foreground">
+              {tasks.length ? `${completedCount} of ${tasks.length} tasks complete` : 'No tasks on this case yet'} · {timeline.length} timeline event{timeline.length === 1 ? '' : 's'}
+            </p>
+          )}
+          <div>
+            <p className="text-xs text-muted-foreground mb-2">Your firm's case stages</p>
+            <div className="flex items-center gap-2 overflow-x-auto pb-2">
+              {stages.map((stage, index) => (
+                <React.Fragment key={stage.id}>
+                  <span className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-muted text-sm font-medium">{stage.name}</span>
+                  {index < stages.length - 1 && <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
+                </React.Fragment>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -372,6 +428,11 @@ export function CaseWorkflowManager({ caseId: caseIdProp, organizationId: organi
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
+                {!loading && tasks.length === 0 && (
+                  <p className="text-sm text-muted-foreground py-6 text-center">
+                    {caseId ? 'No tasks on this case yet. Select Add Task to create one.' : 'Choose a case to see its tasks.'}
+                  </p>
+                )}
                 {tasks.map((task) => (
                   <div 
                     key={task.id}
@@ -421,31 +482,59 @@ export function CaseWorkflowManager({ caseId: caseIdProp, organizationId: organi
             <CardHeader>
               <CardTitle className="text-lg">Case Timeline</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="relative">
-                <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-muted" />
-                <div className="space-y-6">
-                  {TIMELINE_EVENTS.map((event, index) => (
-                    <div key={event.id} className="relative pl-10">
-                      <div className={`absolute left-2 w-4 h-4 rounded-full ${
-                        event.type === 'milestone' ? 'bg-primary' :
-                        event.type === 'deadline' ? 'bg-red-500' :
-                        event.type === 'document' ? 'bg-blue-500' :
-                        'bg-green-500'
-                      }`} />
-                      <div className="bg-muted/50 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-1">
-                          <h4 className="font-medium">{event.title}</h4>
-                          <span className="text-sm text-muted-foreground">
-                            {new Date(event.date).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{event.description}</p>
+            <CardContent className="space-y-6">
+              {!caseId ? (
+                <p className="text-sm text-muted-foreground py-6 text-center">Choose a case to see its timeline.</p>
+              ) : (
+                <>
+                  <div className="grid gap-2 sm:grid-cols-[1fr_10rem_10rem_auto] items-start">
+                    <Input placeholder="Event (e.g. Complaint filed)" value={newEvent.title} onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })} />
+                    <Select value={newEvent.type} onValueChange={(v) => setNewEvent({ ...newEvent, type: v })}>
+                      <SelectTrigger aria-label="Event type"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="milestone">Milestone</SelectItem>
+                        <SelectItem value="deadline">Deadline</SelectItem>
+                        <SelectItem value="document">Document</SelectItem>
+                        <SelectItem value="hearing">Hearing</SelectItem>
+                        <SelectItem value="note">Note</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input type="date" aria-label="Event date" value={newEvent.date} onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })} />
+                    <Button onClick={addTimelineEvent} disabled={savingEvent || !newEvent.title.trim() || !newEvent.date}>
+                      <Plus className="h-4 w-4 mr-1" /> Add
+                    </Button>
+                    <Textarea className="sm:col-span-4" rows={2} placeholder="Details (optional)" value={newEvent.description} onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })} />
+                  </div>
+                  {timeline.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">No timeline events yet.</p>
+                  ) : (
+                    <div className="relative">
+                      <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-muted" />
+                      <div className="space-y-6">
+                        {timeline.map((event) => (
+                          <div key={event.id} className="relative pl-10">
+                            <div className={`absolute left-2 w-4 h-4 rounded-full ${
+                              event.event_type === 'milestone' ? 'bg-primary' :
+                              event.event_type === 'deadline' ? 'bg-red-500' :
+                              event.event_type === 'document' ? 'bg-blue-500' :
+                              'bg-green-500'
+                            }`} />
+                            <div className="bg-muted/50 rounded-lg p-4">
+                              <div className="flex items-center justify-between mb-1 gap-2">
+                                <h4 className="font-medium">{event.event_title}</h4>
+                                <span className="text-sm text-muted-foreground">
+                                  {new Date(event.event_date).toLocaleDateString()}
+                                </span>
+                              </div>
+                              {event.event_description && <p className="text-sm text-muted-foreground">{event.event_description}</p>}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -460,6 +549,9 @@ export function CaseWorkflowManager({ caseId: caseIdProp, organizationId: organi
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
+                {!tasks.some(t => t.due_date && t.status !== 'completed') && (
+                  <p className="text-sm text-muted-foreground py-6 text-center">No open tasks with due dates{caseId ? ' on this case' : ''}.</p>
+                )}
                 {tasks
                   .filter(t => t.due_date && t.status !== 'completed')
                   .sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime())
@@ -499,21 +591,15 @@ export function CaseWorkflowManager({ caseId: caseIdProp, organizationId: organi
         </TabsContent>
 
         <TabsContent value="team">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                Team & Collaboration
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Team collaboration features coming soon</p>
-                <p className="text-sm">Assign tasks, @mention team members, and track contributions</p>
-              </div>
-            </CardContent>
-          </Card>
+          {organizationId ? (
+            <FirmTeamPanel organizationId={organizationId} />
+          ) : (
+            <Card>
+              <CardContent className="py-8 text-center text-muted-foreground">
+                Set up your practice in the Practice tab, then invite your team here.
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
     </div>

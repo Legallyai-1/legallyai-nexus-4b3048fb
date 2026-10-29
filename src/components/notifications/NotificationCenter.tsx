@@ -33,78 +33,95 @@ const notificationColors = {
   system: "text-orange-400",
 };
 
+interface NotificationRow {
+  id: string;
+  title: string;
+  message: string | null;
+  type: string | null;
+  is_read: boolean | null;
+  created_at: string;
+}
+
+const KNOWN_TYPES = new Set<Notification["type"]>(["message", "appointment", "case", "invoice", "system"]);
+
+function toNotification(row: NotificationRow): Notification {
+  const type = (row.type ?? "system") as Notification["type"];
+  return {
+    id: row.id,
+    type: KNOWN_TYPES.has(type) ? type : "system",
+    title: row.title,
+    description: row.message ?? "",
+    timestamp: new Date(row.created_at),
+    read: row.is_read === true,
+  };
+}
+
 export function NotificationCenter() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    // Load initial notifications (demo data)
-    setNotifications([]);
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
 
-    // Set up real-time subscription for new messages
-    const channel = supabase
-      .channel('notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages'
-        },
-        (payload) => {
-          const newNotification: Notification = {
-            id: payload.new.id,
-            type: "message",
-            title: "New Message",
-            description: payload.new.subject || "You received a new message",
-            timestamp: new Date(payload.new.created_at),
-            read: false,
-            actionUrl: "/messages"
-          };
-          setNotifications(prev => [newNotification, ...prev]);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'appointments'
-        },
-        (payload) => {
-          const newNotification: Notification = {
-            id: payload.new.id,
-            type: "appointment",
-            title: "New Appointment",
-            description: payload.new.title || "A new appointment has been scheduled",
-            timestamp: new Date(payload.new.created_at),
-            read: false,
-            actionUrl: "/appointments"
-          };
-          setNotifications(prev => [newNotification, ...prev]);
-        }
-      )
-      .subscribe();
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      if (!userId || cancelled) return;
+
+      // RLS limits notifications to the signed-in user's own rows.
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("id, title, message, type, is_read, created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (cancelled) return;
+      if (error) {
+        console.error("Notifications load error:", error);
+      } else {
+        setNotifications((data ?? []).map(toNotification));
+      }
+
+      channel = supabase
+        .channel(`notifications-${userId}`)
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
+          (payload) => setNotifications((prev) => [toNotification(payload.new as NotificationRow), ...prev]),
+        )
+        .subscribe();
+    })();
 
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      if (channel) supabase.removeChannel(channel);
     };
   }, []);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
+  const persistRead = async (ids: string[]) => {
+    if (!ids.length) return;
+    const { error } = await supabase.from("notifications").update({ is_read: true }).in("id", ids);
+    if (error) console.error("Could not mark notifications read:", error);
+  };
+
   const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(n => n.id === id ? { ...n, read: true } : n)
-    );
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    void persistRead([id]);
   };
 
   const markAllAsRead = () => {
+    const unread = notifications.filter(n => !n.read).map(n => n.id);
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    void persistRead(unread);
   };
 
+  // Dismissing hides the item here and marks it read; notifications aren't deleted.
   const clearNotification = (id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
+    void persistRead([id]);
   };
 
   return (

@@ -1,332 +1,276 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  FileText, Plus, Search, Sparkles, Download, Edit, Copy,
-  Folder, Star, Clock, Check, ChevronRight, Wand2, Eye,
-  FileSignature, Share2
-} from "lucide-react";
-import { toast } from "sonner";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { arePaymentsEnabled } from "@/lib/env";
+import { requestHubDocument, useDocumentCheckout } from "@/hooks/useHubDocumentGeneration";
+import { canExportHubDocument, type GeneratedDocumentResult } from "@/lib/document-export-entitlement";
+import { HubDocumentStatus } from "@/components/hub/HubDocumentStatus";
+import { Copy, Download, FileText, Loader2, Plus, Search, Wand2 } from "lucide-react";
 
-interface Template {
+interface AssemblyTemplate {
   id: string;
   name: string;
   category: string;
-  lastUsed: string;
-  timesUsed: number;
-  isFavorite: boolean;
-  variables: number;
+  description: string;
+  /** Firm-authored template text, sent as the drafting base. */
+  content?: string | null;
+  source: "standard" | "firm";
 }
 
-interface GeneratedDoc {
+interface AssembledDoc {
   id: string;
   name: string;
-  template: string;
-  createdAt: string;
-  status: "draft" | "final" | "signed";
-  client: string;
+  createdAt: Date;
+  result: GeneratedDocumentResult;
 }
 
-const mockTemplates: Template[] = [
-  { id: "1", name: "Non-Disclosure Agreement (NDA)", category: "Corporate", lastUsed: "2024-01-10", timesUsed: 45, isFavorite: true, variables: 12 },
-  { id: "2", name: "Employment Contract", category: "Employment", lastUsed: "2024-01-09", timesUsed: 32, isFavorite: true, variables: 18 },
-  { id: "3", name: "Retainer Agreement", category: "General", lastUsed: "2024-01-08", timesUsed: 89, isFavorite: true, variables: 15 },
-  { id: "4", name: "Property Purchase Agreement", category: "Real Estate", lastUsed: "2024-01-07", timesUsed: 23, isFavorite: false, variables: 25 },
-  { id: "5", name: "Divorce Petition", category: "Family Law", lastUsed: "2024-01-06", timesUsed: 18, isFavorite: false, variables: 20 },
-  { id: "6", name: "LLC Operating Agreement", category: "Corporate", lastUsed: "2024-01-05", timesUsed: 41, isFavorite: true, variables: 22 },
-  { id: "7", name: "Lease Agreement", category: "Real Estate", lastUsed: "2024-01-04", timesUsed: 56, isFavorite: false, variables: 30 },
-  { id: "8", name: "Power of Attorney", category: "Estate", lastUsed: "2024-01-03", timesUsed: 27, isFavorite: false, variables: 8 },
+// Standard document types the generator can draft. No usage stats are shown: none are tracked.
+const STANDARD_TEMPLATES: AssemblyTemplate[] = [
+  { id: "nda", name: "Non-Disclosure Agreement (NDA)", category: "Corporate", description: "Mutual or one-way confidentiality agreement.", source: "standard" },
+  { id: "engagement", name: "Engagement / Retainer Agreement", category: "General", description: "Scope of representation, fees, retainer and billing terms.", source: "standard" },
+  { id: "employment", name: "Employment Agreement", category: "Employment", description: "Role, compensation, confidentiality and termination terms.", source: "standard" },
+  { id: "llc", name: "LLC Operating Agreement", category: "Corporate", description: "Members, capital, management and distributions.", source: "standard" },
+  { id: "lease", name: "Residential Lease Agreement", category: "Real Estate", description: "Rent, deposit, term, maintenance and default terms.", source: "standard" },
+  { id: "purchase", name: "Property Purchase Agreement", category: "Real Estate", description: "Price, contingencies, closing and disclosures.", source: "standard" },
+  { id: "poa", name: "Power of Attorney", category: "Estate", description: "General or limited authority to act on someone's behalf.", source: "standard" },
+  { id: "demand", name: "Demand Letter", category: "Litigation", description: "Formal demand for payment or performance before suit.", source: "standard" },
+  { id: "settlement", name: "Settlement Agreement & Release", category: "Litigation", description: "Payment terms, release of claims and confidentiality.", source: "standard" },
 ];
 
-const mockGeneratedDocs: GeneratedDoc[] = [];
+const LAWFIRM_CONTEXT = "You are a legal document specialist for law firm operations, contracts, and client agreements.";
+const MAX_TEMPLATE_CHARS = 8000;
 
-const categories = ["All", "Corporate", "Employment", "Real Estate", "Family Law", "Estate", "General"];
-
-export function DocumentAssembly() {
+export function DocumentAssembly({ organizationId, canManageTemplates = false }: { organizationId?: string | null; canManageTemplates?: boolean }) {
+  const navigate = useNavigate();
+  const startCheckout = useDocumentCheckout();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
   const [activeTab, setActiveTab] = useState("templates");
+  const [firmTemplates, setFirmTemplates] = useState<AssemblyTemplate[]>([]);
+  const [selected, setSelected] = useState<AssemblyTemplate | null>(null);
+  const [details, setDetails] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [docs, setDocs] = useState<AssembledDoc[]>([]);
+  const [activeDoc, setActiveDoc] = useState<AssembledDoc | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [draft, setDraft] = useState({ name: "", category: "", description: "", content: "" });
+  const [saving, setSaving] = useState(false);
 
-  const filteredTemplates = mockTemplates.filter(t => {
-    const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "All" || t.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const loadFirmTemplates = useCallback(async () => {
+    if (!organizationId) { setFirmTemplates([]); return; }
+    const { data, error } = await supabase
+      .from("document_templates")
+      .select("id, name, category, description, content")
+      .eq("organization_id", organizationId)
+      .order("updated_at", { ascending: false })
+      .limit(200);
+    if (error) { console.error("Template load error:", error); return; }
+    setFirmTemplates((data ?? []).map((t) => ({
+      id: t.id, name: t.name, category: t.category || "Firm", description: t.description || "", content: t.content, source: "firm" as const,
+    })));
+  }, [organizationId]);
 
-  const handleAssemble = async (template: Template) => {
+  useEffect(() => { void loadFirmTemplates(); }, [loadFirmTemplates]);
+
+  const all = [...firmTemplates, ...STANDARD_TEMPLATES];
+  const q = searchTerm.trim().toLowerCase();
+  const filtered = q ? all.filter((t) => `${t.name} ${t.category} ${t.description}`.toLowerCase().includes(q)) : all;
+
+  const assemble = async () => {
+    if (!selected) return;
+    if (!details.trim()) { toast.error("Add the parties, terms and facts to fill in"); return; }
+    setGenerating(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast.error("Please sign in to generate documents");
+      const base = selected.content ? `\n\nUse this firm template as the base text and keep its structure:\n"""\n${selected.content.slice(0, MAX_TEMPLATE_CHARS)}\n"""` : "";
+      const outcome = await requestHubDocument({
+        prompt: `Draft a ${selected.name} (${selected.category}). Details to include:\n${details.trim()}${base}`,
+        type: "lawfirm",
+        systemContext: LAWFIRM_CONTEXT,
+      });
+      if (!outcome.result) {
+        toast.error(outcome.error || "Failed to generate document");
+        if (outcome.needsSignIn) navigate("/auth");
         return;
       }
-
-      // Call document generation
-      const { data, error } = await supabase.functions.invoke("generate-document", {
-        body: {
-          prompt: `Generate a ${template.name} document with standard legal formatting. Include all necessary clauses and sections typically found in this type of document.`,
-          documentType: template.category,
-        }
-      });
-
-      if (error) throw error;
-
-      toast.success(`Document "${template.name}" generated successfully!`);
-      
-      // In a real implementation, this would open a document editor or download
-      console.log("Generated document:", data);
-    } catch (error) {
-      console.error("Document assembly error:", error);
-      toast.error("Failed to generate document. Please try again.");
+      const doc: AssembledDoc = {
+        id: crypto.randomUUID(),
+        name: `${selected.name}${outcome.result.mode === "template" ? " (free worksheet)" : ""}`,
+        createdAt: new Date(),
+        result: outcome.result,
+      };
+      setDocs((prev) => [doc, ...prev]);
+      setActiveDoc(doc);
+      setSelected(null);
+      setDetails("");
+      setActiveTab("generated");
+      toast.success(outcome.result.mode === "template" ? "Free worksheet ready" : "Document drafted");
+    } finally {
+      setGenerating(false);
     }
   };
 
-  const statusColors = {
-    draft: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-    final: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-    signed: "bg-green-500/20 text-green-400 border-green-500/30",
+  const exportable = (doc: AssembledDoc) => canExportHubDocument(doc.result, arePaymentsEnabled());
+  const copyDoc = async (doc: AssembledDoc) => {
+    if (!exportable(doc)) return;
+    await navigator.clipboard.writeText(doc.result.document);
+    toast.success("Copied");
+  };
+  const downloadDoc = (doc: AssembledDoc) => {
+    if (!exportable(doc)) return;
+    const blob = new Blob([doc.result.document], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${doc.name.replace(/[^\w\- ]+/g, "").trim() || "document"}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const saveTemplate = async () => {
+    if (!organizationId) return;
+    if (!draft.name.trim() || !draft.content.trim()) { toast.error("Name and template text are required"); return; }
+    setSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase.from("document_templates").insert({
+        organization_id: organizationId,
+        created_by: user?.id ?? null,
+        name: draft.name.trim(),
+        category: draft.category.trim() || "Firm",
+        description: draft.description.trim() || null,
+        content: draft.content,
+        is_public: false,
+      });
+      if (error) throw error;
+      toast.success("Template saved");
+      setDraft({ name: "", category: "", description: "", content: "" });
+      setShowCreate(false);
+      await loadFirmTemplates();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not save template");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <Card className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/20">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-purple-500/20">
-              <Wand2 className="h-8 w-8 text-purple-400" />
-            </div>
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                Document Assembly
-                <Badge className="bg-purple-500/20 text-purple-400">Smart Templates</Badge>
-              </h2>
-              <p className="text-muted-foreground">
-                Generate professional legal documents from intelligent templates with auto-fill
-              </p>
-            </div>
-            <Button variant="gold">
-              <Plus className="h-4 w-4 mr-2" />
-              Create Template
-            </Button>
+      <Card>
+        <CardHeader className="flex flex-row items-start justify-between gap-4">
+          <div>
+            <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5 text-primary" /> Document Assembly</CardTitle>
+            <CardDescription>Pick a template, add the deal or case details, and draft it with AI. Have a licensed attorney review every draft.</CardDescription>
           </div>
-        </CardContent>
+          {canManageTemplates && organizationId && (
+            <Button variant="outline" onClick={() => setShowCreate(true)}><Plus className="h-4 w-4 mr-2" /> New firm template</Button>
+          )}
+        </CardHeader>
       </Card>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <FileText className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{mockTemplates.length}</p>
-              <p className="text-xs text-muted-foreground">Templates</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-green-500/10">
-              <Check className="h-5 w-5 text-green-400" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{mockGeneratedDocs.length}</p>
-              <p className="text-xs text-muted-foreground">Generated This Week</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-yellow-500/10">
-              <Star className="h-5 w-5 text-yellow-400" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{mockTemplates.filter(t => t.isFavorite).length}</p>
-              <p className="text-xs text-muted-foreground">Favorites</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-purple-500/10">
-              <Sparkles className="h-5 w-5 text-purple-400" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">AI</p>
-              <p className="text-xs text-muted-foreground">Auto-Fill Enabled</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="templates">Template Library</TabsTrigger>
-          <TabsTrigger value="generated">Generated Documents</TabsTrigger>
-          <TabsTrigger value="clauses">Clause Library</TabsTrigger>
+          <TabsTrigger value="templates">Templates ({all.length})</TabsTrigger>
+          <TabsTrigger value="generated">Drafted this session ({docs.length})</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="templates" className="space-y-4 mt-4">
-          {/* Search and Filter */}
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search templates..." 
-                className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              {categories.map((cat) => (
-                <Button
-                  key={cat}
-                  variant={selectedCategory === cat ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedCategory(cat)}
-                >
-                  {cat}
-                </Button>
-              ))}
-            </div>
+        <TabsContent value="templates" className="mt-4 space-y-4">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input className="pl-10" placeholder="Search templates..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
-
-          {/* Templates Grid */}
+          {filtered.length === 0 && <p className="text-sm text-muted-foreground">No templates match "{searchTerm}".</p>}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredTemplates.map((template) => (
-              <Card key={template.id} className="hover:shadow-lg transition-shadow group">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <FileText className="h-6 w-6 text-primary" />
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      className={template.isFavorite ? "text-yellow-400" : "text-muted-foreground"}
-                    >
-                      <Star className="h-4 w-4" fill={template.isFavorite ? "currentColor" : "none"} />
-                    </Button>
+            {filtered.map((t) => (
+              <Card key={`${t.source}-${t.id}`}>
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <h4 className="font-semibold">{t.name}</h4>
+                    <Badge variant="outline">{t.source === "firm" ? "Firm template" : t.category}</Badge>
                   </div>
-                  <h3 className="font-semibold mb-1">{template.name}</h3>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Badge variant="outline">{template.category}</Badge>
-                    <span className="text-xs text-muted-foreground">{template.variables} variables</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      className="flex-1"
-                      onClick={() => handleAssemble(template)}
-                    >
-                      <Wand2 className="h-4 w-4 mr-2" />
-                      Assemble
-                    </Button>
-                    <Button variant="outline" size="icon">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  {t.description && <p className="text-sm text-muted-foreground">{t.description}</p>}
+                  <Button className="w-full" onClick={() => { setSelected(t); setDetails(""); }}>
+                    <Wand2 className="h-4 w-4 mr-2" /> Assemble
+                  </Button>
                 </CardContent>
               </Card>
             ))}
           </div>
         </TabsContent>
 
-        <TabsContent value="generated" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recently Generated Documents</CardTitle>
-              <CardDescription>Documents created from templates</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {mockGeneratedDocs.map((doc) => (
-                  <div key={doc.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <FileText className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium">{doc.name}</h4>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span>{doc.template}</span>
-                          <span>•</span>
-                          <span>{doc.client}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm text-muted-foreground">
-                        {new Date(doc.createdAt).toLocaleDateString()}
-                      </span>
-                      <Badge className={statusColors[doc.status]}>{doc.status}</Badge>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="icon">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon">
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon">
-                          <FileSignature className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon">
-                          <Share2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+        <TabsContent value="generated" className="mt-4 space-y-4">
+          {docs.length === 0 ? (
+            <Card><CardContent className="p-8 text-center text-muted-foreground">
+              Nothing drafted yet. Choose a template and select Assemble.
+            </CardContent></Card>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">Drafts stay in this browser tab only. Download the ones you want to keep.</p>
+                {docs.map((d) => (
+                  <button key={d.id} type="button" onClick={() => setActiveDoc(d)}
+                    className={`w-full rounded-lg border p-3 text-left ${activeDoc?.id === d.id ? "border-primary" : ""}`}>
+                    <p className="font-medium text-sm">{d.name}</p>
+                    <p className="text-xs text-muted-foreground">{d.createdAt.toLocaleTimeString()}</p>
+                  </button>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="clauses" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Clause Library</CardTitle>
-              <CardDescription>Reusable legal clauses with risk scoring</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                  { name: "Standard Indemnification", risk: "low", category: "General" },
-                  { name: "Limitation of Liability", risk: "medium", category: "Corporate" },
-                  { name: "Confidentiality Clause", risk: "low", category: "NDA" },
-                  { name: "Force Majeure", risk: "low", category: "General" },
-                  { name: "Non-Compete Agreement", risk: "high", category: "Employment" },
-                  { name: "Arbitration Clause", risk: "medium", category: "Dispute" },
-                ].map((clause, i) => (
-                  <div key={i} className="p-4 border rounded-lg hover:bg-muted/30 transition-colors cursor-pointer">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium">{clause.name}</h4>
-                        <p className="text-sm text-muted-foreground">{clause.category}</p>
-                      </div>
-                      <Badge className={
-                        clause.risk === "low" ? "bg-green-500/20 text-green-400" :
-                        clause.risk === "medium" ? "bg-yellow-500/20 text-yellow-400" :
-                        "bg-red-500/20 text-red-400"
-                      }>
-                        {clause.risk} risk
-                      </Badge>
+              {activeDoc && (
+                <Card className="lg:col-span-2">
+                  <CardHeader className="flex flex-row items-center justify-between gap-2">
+                    <CardTitle className="text-base">{activeDoc.name}</CardTitle>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" disabled={!exportable(activeDoc)} onClick={() => void copyDoc(activeDoc)}><Copy className="h-4 w-4 mr-1" /> Copy</Button>
+                      <Button size="sm" variant="outline" disabled={!exportable(activeDoc)} onClick={() => downloadDoc(activeDoc)}><Download className="h-4 w-4 mr-1" /> Download</Button>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <HubDocumentStatus result={activeDoc.result} onBuy={() => void startCheckout()} />
+                    <pre className={`max-h-[480px] overflow-auto whitespace-pre-wrap rounded-md bg-muted/40 p-4 text-sm ${exportable(activeDoc) ? "" : "select-none"}`}>
+                      {activeDoc.result.document}
+                    </pre>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!selected} onOpenChange={(open) => { if (!open && !generating) setSelected(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selected?.name}</DialogTitle>
+            <DialogDescription>Describe the parties, key terms, dates, amounts and jurisdiction.</DialogDescription>
+          </DialogHeader>
+          <Textarea rows={8} value={details} onChange={(e) => setDetails(e.target.value)}
+            placeholder="e.g. Mutual NDA between Acme LLC (California) and Beta Inc. (Texas), 2-year term, covers product roadmap and pricing..." />
+          <Button onClick={() => void assemble()} disabled={generating || !details.trim()}>
+            {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Wand2 className="h-4 w-4 mr-2" />}
+            {generating ? "Drafting..." : "Draft document"}
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New firm template</DialogTitle>
+            <DialogDescription>Saved to your firm. Everyone in the firm can draft from it.</DialogDescription>
+          </DialogHeader>
+          <Input placeholder="Template name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+          <Input placeholder="Category (e.g. Corporate)" value={draft.category} onChange={(e) => setDraft({ ...draft, category: e.target.value })} />
+          <Input placeholder="Short description (optional)" value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
+          <Textarea rows={8} placeholder="Template text. Use [BRACKETS] for the parts to fill in." value={draft.content} onChange={(e) => setDraft({ ...draft, content: e.target.value })} />
+          <Button onClick={() => void saveTemplate()} disabled={saving}>{saving ? "Saving..." : "Save template"}</Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
