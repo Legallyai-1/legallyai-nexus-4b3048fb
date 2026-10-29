@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Bell, X, Check, Calendar, FileText, MessageSquare, DollarSign, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -56,7 +57,7 @@ function toNotification(row: NotificationRow): Notification {
   };
 }
 
-export function NotificationCenter() {
+export function NotificationCenter({ triggerClassName }: { triggerClassName?: string } = {}) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
 
@@ -127,8 +128,13 @@ export function NotificationCenter() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
+          className={cn("relative", triggerClassName)}
+        >
+          <Bell className="h-5 w-5" aria-hidden="true" />
           {unreadCount > 0 && (
             <Badge 
               className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-legal-gold text-legal-navy text-xs"
