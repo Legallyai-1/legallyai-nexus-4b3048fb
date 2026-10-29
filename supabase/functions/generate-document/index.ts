@@ -2,6 +2,11 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 import { getAnthropicKey } from "../_shared/anthropic-key.ts";
+import {
+  consumeDocumentCredit,
+  hasSubscriptionEntitlement,
+  refundDocumentCredit,
+} from "../_shared/document-credits.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -161,6 +166,66 @@ serve(async (req) => {
       );
     }
 
+    // Entitlement: subscribers generate freely; a Per Document ($5) purchase buys exactly
+    // one generated document, spent atomically before the paid AI call.
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!serviceRoleKey) {
+      return new Response(
+        JSON.stringify({ error: "Document generation is temporarily unavailable." }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
+    const userId = userData.user.id;
+    const [
+      { data: profile, error: profileError },
+      { data: subscription, error: subscriptionError },
+      { data: paymentRecords, error: paymentError },
+    ] = await Promise.all([
+      admin.from("profiles").select("subscription_tier").eq("id", userId).maybeSingle(),
+      admin.from("subscriptions").select("status, tier").eq("user_id", userId).maybeSingle(),
+      admin.from("payment_records").select("tier, status, expires_at").eq("user_id", userId),
+    ]);
+    if (profileError || subscriptionError || paymentError) {
+      throw profileError || subscriptionError || paymentError;
+    }
+
+    let spentCreditRecordId: string | null = null;
+    let documentsRemaining: number | null = null;
+    const subscriber = hasSubscriptionEntitlement(profile?.subscription_tier, subscription, paymentRecords);
+    if (!subscriber) {
+      const credit = await consumeDocumentCredit(admin, userId);
+      if (credit.ok) {
+        spentCreditRecordId = credit.recordId;
+        documentsRemaining = credit.remaining;
+      } else if (credit.reason === "exhausted") {
+        return new Response(
+          JSON.stringify({
+            error: "Your Per Document purchase has already been used for a document. Buy another document to generate a new one.",
+            code: "document_credit_required",
+          }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      } else if (credit.reason === "contention") {
+        return new Response(
+          JSON.stringify({ error: "Another document request is in progress. Please try again in a moment." }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      // reason === "no_purchase": unchanged preview flow; exports stay locked until purchase.
+    }
+    const exportUnlocked = subscriber || spentCreditRecordId !== null;
+    const failGeneration = async (message: string, status: number) => {
+      if (spentCreditRecordId) {
+        const refunded = await refundDocumentCredit(admin, userId, spentCreditRecordId);
+        if (!refunded) console.error("Document credit refund failed", { userId, recordId: spentCreditRecordId });
+      }
+      return new Response(
+        JSON.stringify({ error: message }),
+        { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    };
+
     const systemPrompt = `You draft legal document templates for LegallyAI; you are not a lawyer and do not provide legal advice.\n\nBefore drafting, identify what is known and what is missing. If the request lacks jurisdiction, parties, purpose, key dates, payment terms, or required provisions, clearly mark those items as assumptions or bracketed placeholders rather than inventing them.\n\nProduce a structured, review-ready draft with:\n1. A clear title.\n2. A short "Information needed" list for missing facts.\n3. Numbered headings and complete clauses using bracketed placeholders such as [PARTY NAME], [STATE], and [DATE].\n4. Jurisdiction-specific or high-risk provisions flagged for attorney review.\n5. Signature blocks where appropriate.\n6. A final "Attorney review required" checklist covering jurisdiction, parties, dates, payment terms, termination, dispute resolution, and signing requirements.\n\nNever invent statutes, citations, filing requirements, or case-specific legal conclusions. Make clear that the draft is a template for review by a licensed attorney, not legal advice or an enforceable agreement.`;
 
     let response: Response | undefined;
@@ -184,23 +249,17 @@ serve(async (req) => {
     }
 
     if (!response || !response.ok) {
-      return new Response(
-        JSON.stringify({ error: "Document generation failed. Please try again." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return await failGeneration("Document generation failed. Please try again.", 502);
     }
 
-    const data = await response.json();
-    const document = data.content?.find((b: { type?: string }) => b.type === "text")?.text?.trim();
+    const data = await response.json().catch(() => null);
+    const document = data?.content?.find((b: { type?: string }) => b.type === "text")?.text?.trim();
     if (!document) {
-      return new Response(
-        JSON.stringify({ error: "No document was returned. Please try again." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return await failGeneration("No document was returned. Please try again.", 502);
     }
 
     return new Response(
-      JSON.stringify({ document, success: true }),
+      JSON.stringify({ document, success: true, exportUnlocked, documentsRemaining }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 

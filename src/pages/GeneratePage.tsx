@@ -33,6 +33,10 @@ export default function GeneratePage() {
   const [generatedDoc, setGeneratedDoc] = useState<string | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [isPaid, setIsPaid] = useState(false);
+  // Subscribers export anything; Per Document buyers export only the document their credit generated.
+  const [isSubscriber, setIsSubscriber] = useState(false);
+  const [unlockedDoc, setUnlockedDoc] = useState<string | null>(null);
+  const [creditRequired, setCreditRequired] = useState(false);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -58,6 +62,7 @@ export default function GeneratePage() {
         verifyPaymentStatus();
       } else {
         setIsPaid(false);
+        setIsSubscriber(false);
       }
     });
 
@@ -77,6 +82,7 @@ export default function GeneratePage() {
       }
       
       setIsPaid(data?.hasPaid === true);
+      setIsSubscriber(data?.hasPaid === true && data?.tier !== 'document');
     } catch (error) {
       console.error("Error verifying payment:", error);
       setIsPaid(false);
@@ -93,7 +99,10 @@ export default function GeneratePage() {
       setIsVerifyingPayment(true);
       try {
         const { data, error } = await supabase.functions.invoke('verify-payment');
-        if (!error) setIsPaid(data?.hasPaid === true);
+        if (!error) {
+          setIsPaid(data?.hasPaid === true);
+          setIsSubscriber(data?.hasPaid === true && data?.tier !== 'document');
+        }
       } finally {
         setIsVerifyingPayment(false);
       }
@@ -146,6 +155,7 @@ export default function GeneratePage() {
     }
 
     setGenerationError(null);
+    setCreditRequired(false);
     setGeneratedDoc(null);
     setIsGenerating(true);
 
@@ -164,6 +174,9 @@ export default function GeneratePage() {
           ? await errorResponse.clone().json().catch(() => null)
           : null;
         const errorMessage = typeof errorBody?.error === "string" ? errorBody.error : null;
+        if (errorResponse?.status === 402 || errorBody?.code === "document_credit_required") {
+          setCreditRequired(true);
+        }
 
         if (error.message?.includes("401") || error.message?.includes("Authentication") || errorMessage?.includes("Authentication")) {
           toast.error("Please sign in to generate documents");
@@ -195,7 +208,16 @@ export default function GeneratePage() {
         return;
       }
 
-      setGeneratedDoc(data.document.trim());
+      const doc = data.document.trim();
+      setGeneratedDoc(doc);
+      if (typeof data?.exportUnlocked === "boolean") {
+        // New server contract: exports unlock for this exact document only.
+        setUnlockedDoc(data.exportUnlocked ? doc : null);
+        if (typeof data?.documentsRemaining === "number") void verifyPaymentStatus();
+      } else {
+        // Template mode or an older function: keep the previous entitlement check.
+        setUnlockedDoc(isPaid ? doc : null);
+      }
       toast.success("Document generated successfully!");
     } catch (error) {
       console.error("Error:", error);
@@ -238,6 +260,8 @@ export default function GeneratePage() {
       toast.error("An error occurred. Please try again.");
     }
   };
+
+  const canExport = !arePaymentsEnabled() || isSubscriber || (generatedDoc !== null && generatedDoc === unlockedDoc);
 
   const handleDownload = () => {
     if (!generatedDoc) {
@@ -411,7 +435,14 @@ export default function GeneratePage() {
                 {!generatedDoc ? (
                   <div className="flex flex-col items-center justify-center h-64 text-center">
                     {generationError ? (
-                      <p role="alert" className="max-w-lg text-sm text-destructive">{generationError}</p>
+                      <div className="flex flex-col items-center gap-4">
+                        <p role="alert" className="max-w-lg text-sm text-destructive">{generationError}</p>
+                        {creditRequired && arePaymentsEnabled() && (
+                          <Button onClick={handleUnlock} variant="gold">
+                            Buy another document – $5
+                          </Button>
+                        )}
+                      </div>
                     ) : (
                       <>
                         <FileText className="h-16 w-16 text-muted-foreground/30 mb-4" />
@@ -428,7 +459,28 @@ export default function GeneratePage() {
                 )}
               </div>
 
-              {generatedDoc && arePaymentsEnabled() && !isPaid && (
+              {generatedDoc && arePaymentsEnabled() && !canExport && isPaid && (
+                <div className="p-6 rounded-2xl bg-gradient-to-br from-legal-gold/10 to-amber-500/10 border border-legal-gold/30">
+                  <div className="flex items-start gap-4">
+                    <div className="p-2 rounded-lg bg-legal-gold/20">
+                      <Sparkles className="h-6 w-6 text-legal-gold" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground mb-2">
+                        Your document credit is ready
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Your $5 purchase covers one generated document and its exports. Generate the final version to unlock downloads for it.
+                      </p>
+                      <Button onClick={() => handleGenerate()} variant="gold" className="w-full sm:w-auto" disabled={isGenerating}>
+                        Generate my paid document
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {generatedDoc && arePaymentsEnabled() && !canExport && !isPaid && (
                 <div className="p-6 rounded-2xl bg-gradient-to-br from-legal-gold/10 to-amber-500/10 border border-legal-gold/30">
                   <div className="flex items-start gap-4">
                     <div className="p-2 rounded-lg bg-legal-gold/20">
@@ -439,7 +491,7 @@ export default function GeneratePage() {
                         Unlock Document Exports
                       </h3>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Download a text copy or use Print to save as PDF for $5.
+                        $5 buys one generated document with download and print (save as PDF) unlocked for it.
                       </p>
                       <Button onClick={handleUnlock} variant="gold" className="w-full sm:w-auto">
                         Pay $5 – Unlock Exports
@@ -449,7 +501,7 @@ export default function GeneratePage() {
                 </div>
               )}
 
-              {generatedDoc && (isPaid || !arePaymentsEnabled()) && (
+              {generatedDoc && canExport && (
                 <div className="flex gap-3">
                   <Button onClick={handleDownload} variant="gold" className="flex-1">
                     <Download className="h-4 w-4" />
