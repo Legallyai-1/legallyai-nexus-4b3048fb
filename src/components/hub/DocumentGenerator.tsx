@@ -7,9 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Sparkles, Download, Copy, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { useDocumentExportEntitlement } from "@/hooks/useDocumentExportEntitlement";
+import { requestHubDocument, useDocumentCheckout } from "@/hooks/useHubDocumentGeneration";
+import { canExportHubDocument, type GeneratedDocumentResult } from "@/lib/document-export-entitlement";
+import { arePaymentsEnabled } from "@/lib/env";
+import { HubDocumentStatus } from "@/components/hub/HubDocumentStatus";
 
 interface DocumentField {
   id: string;
@@ -41,9 +44,13 @@ export function DocumentGenerator({
 }: DocumentGeneratorProps) {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [additionalNotes, setAdditionalNotes] = useState("");
-  const [generatedDocument, setGeneratedDocument] = useState("");
+  // Server entitlement for the current document (mode, exportUnlocked, purchaseRequired…).
+  const [result, setResult] = useState<GeneratedDocumentResult | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const { canExport, requireExport } = useDocumentExportEntitlement();
+  const navigate = useNavigate();
+  const startCheckout = useDocumentCheckout();
+  const generatedDocument = result?.document ?? "";
+  const canExport = canExportHubDocument(result, arePaymentsEnabled());
 
   const colorClasses = {
     pink: "border-neon-pink/30 from-neon-pink/20",
@@ -70,7 +77,7 @@ export function DocumentGenerator({
     }
 
     setIsGenerating(true);
-    setGeneratedDocument("");
+    setResult(null);
 
     try {
       // Build the prompt with form data
@@ -86,19 +93,21 @@ ${additionalNotes ? `Additional Notes/Instructions:\n${additionalNotes}` : ""}
 
 Please create a complete, professional legal document that is ready for review. Include all standard clauses and provisions appropriate for this document type. Format it properly with sections, headings, and legal language.`;
 
-      const { data, error } = await supabase.functions.invoke("generate-document", {
-        body: {
-          prompt: fullPrompt,
-          documentType,
-          systemPrompt
-        }
+      const outcome = await requestHubDocument({
+        prompt: fullPrompt,
+        documentType,
+        systemPrompt
       });
 
-      if (error) throw error;
+      if (!outcome.result) {
+        toast.error(outcome.error || "Failed to generate document. Please try again.");
+        if (outcome.needsSignIn) navigate("/auth");
+        return;
+      }
 
-      setGeneratedDocument(data.document || data.response || "Document generated successfully.");
-      toast.success("Document generated successfully!");
-    } catch (error: any) {
+      setResult(outcome.result);
+      toast.success(outcome.result.mode === "template" ? "Free worksheet ready" : "Document generated successfully!");
+    } catch (error: unknown) {
       console.error("Generation error:", error);
       toast.error("Failed to generate document. Please try again.");
     } finally {
@@ -107,11 +116,13 @@ Please create a complete, professional legal document that is ready for review. 
   };
 
   const handleCopy = () => {
+    if (!canExport) return;
     navigator.clipboard.writeText(generatedDocument);
     toast.success("Copied to clipboard!");
   };
 
-  const handleDownload = () => requireExport(() => {
+  const handleDownload = () => {
+    if (!canExport) return;
     const blob = new Blob([generatedDocument], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -122,7 +133,7 @@ Please create a complete, professional legal document that is ready for review. 
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast.success("Document downloaded!");
-  });
+  };
 
   const renderField = (field: DocumentField) => {
     switch (field.type) {
@@ -253,26 +264,27 @@ Please create a complete, professional legal document that is ready for review. 
             <CardTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                Generated {documentType}
+                {result?.mode === "template" ? `${documentType} – Free Worksheet` : `Generated ${documentType}`}
               </span>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={handleCopy}>
+                <Button variant="outline" size="sm" onClick={handleCopy} disabled={!canExport}>
                   <Copy className="h-4 w-4 mr-1" />
                   Copy
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleDownload}>
+                <Button variant="outline" size="sm" onClick={handleDownload} disabled={!canExport}>
                   <Download className="h-4 w-4 mr-1" />
-                  {canExport ? "Download" : "Unlock download ($5)"}
+                  Download
                 </Button>
               </div>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            {result && <HubDocumentStatus result={result} onBuy={startCheckout} />}
             <div className="bg-muted/30 rounded-lg p-4 max-h-[500px] overflow-y-auto">
               <pre className="whitespace-pre-wrap text-sm font-mono">{generatedDocument}</pre>
             </div>
-            <p className="text-xs text-muted-foreground mt-4">
-              ⚠️ This is an AI-generated template. Please review carefully and consult with a licensed attorney before use.
+            <p className="text-xs text-muted-foreground">
+              ⚠️ {result?.mode === "template" ? "This is a free planning worksheet, not legal advice." : "This is an AI-generated draft."} Please review carefully and consult with a licensed attorney before use.
             </p>
           </CardContent>
         </Card>
