@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureUserOrganization, findUserOrganization } from "@/lib/organizations";
+import { errorMessage } from "@/lib/mutationResult";
 import { toast } from "sonner";
 import { 
   Briefcase, Users, Calendar, FileText, Clock, Search, 
@@ -53,6 +55,13 @@ export function PracticeManagement() {
   const fetchMatters = async () => {
     try {
       setIsLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const organizationId = await findUserOrganization(user.id);
+      if (!organizationId) {
+        setMatters([]);
+        return;
+      }
       const { data, error } = await supabase
         .from('matters')
         .select(`
@@ -60,13 +69,14 @@ export function PracticeManagement() {
           client:clients(full_name),
           responsible_attorney:profiles!matters_responsible_attorney_id_fkey(full_name)
         `)
+        .eq('organization_id', organizationId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       setMatters(data || []);
     } catch (error) {
       console.error('Error fetching matters:', error);
-      toast.error('Failed to load matters');
+      toast.error(errorMessage(error, 'Failed to load matters'));
     } finally {
       setIsLoading(false);
     }
@@ -80,24 +90,14 @@ export function PracticeManagement() {
         return;
       }
 
-      // Get user's organization
-      const { data: orgMember } = await supabase
-        .from('organization_members')
-        .select('organization_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (!orgMember) {
-        toast.error('You must belong to an organization');
-        return;
-      }
+      const organizationId = await ensureUserOrganization(user.id);
 
       const matterNumber = newMatter.matter_number || `M-${Date.now().toString(36).toUpperCase()}`;
 
       const { error } = await supabase
         .from('matters')
         .insert({
-          organization_id: orgMember.organization_id,
+          organization_id: organizationId,
           matter_number: matterNumber,
           name: newMatter.name,
           description: newMatter.description,
@@ -122,7 +122,7 @@ export function PracticeManagement() {
       fetchMatters();
     } catch (error) {
       console.error('Error creating matter:', error);
-      toast.error('Failed to create matter');
+      toast.error(errorMessage(error, 'Failed to create matter'));
     }
   };
 

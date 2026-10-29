@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureUserOrganization } from "@/lib/organizations";
+import { errorMessage } from "@/lib/mutationResult";
 import { streamLegalChat } from "@/lib/legalChat";
 
 interface IntakeQuestion {
@@ -160,17 +162,8 @@ export function AIIntakeForm() {
         return;
       }
 
-      // Get user's organization
-      const { data: orgMember } = await supabase
-        .from("organization_members")
-        .select("organization_id")
-        .eq("user_id", user.id)
-        .single();
-
-      if (!orgMember) {
-        toast.error("No organization found. Please contact support.");
-        return;
-      }
+      // Same organization rules as Cases/Clients (active membership, chosen org, or a new practice)
+      const organizationId = await ensureUserOrganization(user.id);
 
       // Create client record
       const { error } = await supabase.from("clients").insert({
@@ -185,7 +178,8 @@ export function AIIntakeForm() {
             aiQuestions.map(q => [q.question, formData[q.id]])
           )
         }),
-        organization_id: orgMember.organization_id,
+        organization_id: organizationId,
+        user_id: user.id,
         intake_date: new Date().toISOString(),
       });
 
@@ -201,7 +195,7 @@ export function AIIntakeForm() {
       setConflictCheckResult(null);
     } catch (error) {
       console.error("Submit error:", error);
-      toast.error("Failed to submit intake form");
+      toast.error(errorMessage(error, "Failed to submit intake form"));
     }
   };
 

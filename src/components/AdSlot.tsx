@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { isValidAdSlot } from "@/components/ads/adsense";
 
 interface AdSlotProps {
   slotId?: string;
@@ -23,7 +24,8 @@ export default function AdSlot({
 }: AdSlotProps) {
   const pushedRef = useRef(false);
   const client = import.meta.env.VITE_ADSENSE_CLIENT ?? "ca-pub-4991947741196600";
-  const resolvedSlotId = slotId ?? import.meta.env.VITE_ADSENSE_SLOT_ID;
+  const candidateSlotId = slotId ?? import.meta.env.VITE_ADSENSE_SLOT_ID;
+  const resolvedSlotId = isValidAdSlot(candidateSlotId) ? candidateSlotId : undefined;
 
   useEffect(() => {
     if (!resolvedSlotId || pushedRef.current) return;

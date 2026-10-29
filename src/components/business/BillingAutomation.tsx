@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureUserOrganization } from "@/lib/organizations";
+import { errorMessage } from "@/lib/mutationResult";
 
 interface TimeEntry {
   id: string;
@@ -81,19 +83,15 @@ export function BillingAutomation() {
         return;
       }
 
-      // Get user's organization
-      const { data: orgMember } = await supabase
-        .from("organization_members")
-        .select("organization_id")
-        .eq("user_id", user.id)
-        .single();
+      const organizationId = await ensureUserOrganization(user.id);
 
       // Get a client for this invoice (in real implementation, group by client)
-      const { data: clients } = await supabase
+      const { data: clients, error: clientsError } = await supabase
         .from("clients")
         .select("id")
-        .eq("organization_id", orgMember.organization_id)
+        .eq("organization_id", organizationId)
         .limit(1);
+      if (clientsError) throw clientsError;
 
       if (!clients || clients.length === 0) {
         toast.error("No clients found. Please add a client first.");
@@ -107,7 +105,7 @@ export function BillingAutomation() {
 
       const { error } = await supabase.from("invoices").insert({
         invoice_number: invoiceNumber,
-        organization_id: orgMember.organization_id,
+        organization_id: organizationId,
         client_id: clients[0].id,
         amount: selectedTotal,
         status: "draft",
@@ -130,7 +128,7 @@ export function BillingAutomation() {
       ));
     } catch (error) {
       console.error("Invoice generation error:", error);
-      toast.error("Failed to generate invoice");
+      toast.error(errorMessage(error, "Failed to generate invoice"));
     } finally {
       setIsGenerating(false);
     }

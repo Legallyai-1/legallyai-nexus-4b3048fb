@@ -28,7 +28,12 @@ export const buildOrganizationSlug = (name: string, uniqueSuffix: string) => {
   return `${base || "org"}-${suffix}`;
 };
 
-export const ensureUserOrganization = async (userId: string) => {
+/**
+ * Read-only lookup of the user's active organization. Returns null when the user has no
+ * membership yet (nothing is created), so page loads never create a practice as a side effect.
+ * Throws when the user must pick between several organizations or only has inactive memberships.
+ */
+export const findUserOrganization = async (userId: string): Promise<string | null> => {
   const { data: orgMembers, error: memberError } = await supabase
     .from("organization_members")
     .select("organization_id, is_active")
@@ -56,6 +61,16 @@ export const ensureUserOrganization = async (userId: string) => {
 
   if (orgMembers?.length) {
     throw new Error("You do not have an active organization membership");
+  }
+
+  return null;
+};
+
+/** Like findUserOrganization, but creates a default practice on first write. */
+export const ensureUserOrganization = async (userId: string) => {
+  const existingOrganizationId = await findUserOrganization(userId);
+  if (existingOrganizationId) {
+    return existingOrganizationId;
   }
 
   const { data: organization, error: createError } = await supabase.rpc("create_organization_atomic", {
