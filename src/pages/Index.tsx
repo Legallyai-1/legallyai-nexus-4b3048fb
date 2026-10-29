@@ -105,10 +105,10 @@ export default function Index() {
           <div className="container mx-auto max-w-6xl">
             <div className="grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] gap-8 lg:gap-10 items-center">
               <div className="min-w-0 text-center lg:text-left">
-                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 mb-5">
-                  <LeeAvatar heightClass="h-32 sm:h-36" alt="Lee, the LegallyAI assistant, waving" priority />
-                  <Badge className="bg-legal-gold/15 text-legal-gold border-legal-gold/40">
-                    <Sparkles className="w-3 h-3 mr-1" aria-hidden="true" /> Meet Lee, your AI legal partner
+                {/* One Lee only: the big floating Lee lives in the Ask Lee panel (shown on all screen sizes). */}
+                <div className="flex items-center justify-center lg:justify-start mb-4">
+                  <Badge className="bg-legal-gold/15 text-legal-gold border-legal-gold/40 px-3 py-1 text-xs sm:text-sm">
+                    <Sparkles className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" /> Meet Lee, your AI legal partner
                   </Badge>
                 </div>
 
@@ -162,7 +162,7 @@ export default function Index() {
                   <ScrollArea className={chatMessages.length === 0 ? "p-4" : "h-[300px] sm:h-[340px] p-4"} ref={scrollRef}>
                     {chatMessages.length === 0 ? (
                       <div className="pb-2 text-center flex flex-col items-center">
-                        <LeeAvatar heightClass="h-32 sm:h-40" burst />
+                        <LeeAvatar heightClass="h-32 sm:h-40" alt="Lee, the LegallyAI assistant" priority burst />
                         <p className="relative mt-2 font-display text-base font-bold text-foreground">How can I help with your legal situation today?</p>
                         <p className="relative text-xs text-muted-foreground mb-4">Verify deadlines and court rules for your state.</p>
                         <div className="relative flex flex-wrap gap-2 justify-center">
