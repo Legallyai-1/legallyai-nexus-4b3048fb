@@ -18,6 +18,20 @@ type Env = { get(name: string): string | undefined };
 
 export function getFreeProviders(env: Env): FreeProvider[] {
   const providers: FreeProvider[] = [];
+  const xai = ["XAI_API_KEY", "GROK_API_KEY", "Grok API Key", "xAI API Key"]
+    .map((name) => env.get(name)?.trim())
+    .find((value) => value && value.length > 0);
+  if (xai) {
+    const xaiBase = (env.get("XAI_BASE_URL") || "https://api.x.ai/v1").replace(/\/+$/, "");
+    if (xaiBase.startsWith("https://")) {
+      providers.push({
+        name: "xai",
+        baseUrl: xaiBase,
+        apiKey: xai,
+        model: env.get("XAI_MODEL") || env.get("GROK_MODEL") || "grok-3-mini",
+      });
+    }
+  }
   const groq = env.get("GROQ_API_KEY");
   if (groq) {
     providers.push({ name: "groq", baseUrl: "https://api.groq.com/openai/v1", apiKey: groq, model: env.get("GROQ_MODEL") || "openai/gpt-oss-120b" });
