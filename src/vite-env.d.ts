@@ -8,6 +8,9 @@ interface ImportMetaEnv {
   readonly VITE_ADSENSE_CLIENT_ID?: string;
   readonly VITE_ENABLE_ADSENSE: 'true' | 'false';
   readonly VITE_ENABLE_PAYMENTS: 'true' | 'false';
+  readonly VITE_GOOGLE_ADS_ID?: string;
+  readonly VITE_GOOGLE_ADS_SIGNUP_LABEL?: string;
+  readonly VITE_GOOGLE_ADS_PURCHASE_LABEL?: string;
 }
 
 interface ImportMeta {

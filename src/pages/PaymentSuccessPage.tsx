@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { trackPurchaseConversion } from "@/lib/googleAds";
 
 type VerificationState = "checking" | "active" | "pending" | "error" | "signin" | "missing";
 
@@ -27,6 +28,7 @@ export default function PaymentSuccessPage() {
         if (error || data?.error) { setState("error"); return; }
         if (data?.hasPaid === true && data?.isActive === true) {
           setState("active");
+          if (sessionId) trackPurchaseConversion(sessionId);
           return;
         }
         if (attempts >= 6) { setState("pending"); return; }

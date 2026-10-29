@@ -6,6 +6,9 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/sonner';
 import App from './App';
 import './index.css';
+import { initGoogleAds } from '@/lib/googleAds';
+
+initGoogleAds();
 
 const queryClient = new QueryClient();
 
