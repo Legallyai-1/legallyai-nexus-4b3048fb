@@ -18,11 +18,15 @@ test("no keys means no providers (in-house guide only)", () => {
   assert.deepEqual(ai.getFreeProviders(env({})), []);
 });
 
-test("provider order: Groq, then OpenRouter, then custom; https only", () => {
+test("provider order: xAI Grok (when set), Groq, then OpenRouter, then custom; https only", () => {
   const p = ai.getFreeProviders(env({ GROQ_API_KEY: "g", OPENROUTER_API_KEY: "o", OPENROUTER_MODEL: "x:free", FREE_AI_API_KEY: "c", FREE_AI_BASE_URL: "https://ex.com/v1/", FREE_AI_MODEL: "m" }));
   assert.deepEqual(p.map((x) => x.name), ["groq", "openrouter", "custom"]);
   assert.equal(p[0].model, "openai/gpt-oss-120b");
   assert.equal(p[2].baseUrl, "https://ex.com/v1");
+  const withXai = ai.getFreeProviders(env({ GROK_API_KEY: "xai-key", GROQ_API_KEY: "g" }));
+  assert.deepEqual(withXai.map((x) => x.name), ["xai", "groq"]);
+  assert.equal(withXai[0].baseUrl, "https://api.x.ai/v1");
+  assert.equal(withXai[0].model, "grok-3-mini");
   assert.equal(ai.getFreeProviders(env({ FREE_AI_API_KEY: "c", FREE_AI_BASE_URL: "http://insecure", FREE_AI_MODEL: "m" })).length, 0);
   assert.equal(ai.getFreeProviders(env({ OPENROUTER_API_KEY: "o" })).length, 0);
 });
