@@ -9,6 +9,7 @@ class DailyAILimitError extends Error {
   }
 }
 import { hasOrgAccess } from "../_shared/org-access.ts";
+import { getOrganizationSeats, type OrganizationSeats } from "../_shared/organization-seats.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -622,5 +623,11 @@ async function getTeam(supabase: any, userId: string, organizationId: string) {
     if (!error) invites = data || [];
   }
 
-  return { members: roster, invites, canManage: isAdmin };
+  // Seat usage for owners/admins (plan name + limit come from the owner's plan; null limit = no seat plan).
+  let seats: OrganizationSeats | null = null;
+  if (isAdmin) {
+    try { seats = await getOrganizationSeats(supabase, organizationId); } catch { seats = null; }
+  }
+
+  return { members: roster, invites, canManage: isAdmin, seats };
 }

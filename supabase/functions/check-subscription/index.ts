@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { resolveSubscriptionAccess } from "../_shared/subscription-access.ts";
 import { resolveFirmAccess } from "../_shared/firm-access.ts";
+import { planNameFor, seatLimitFor } from "../_shared/plan-catalog.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -55,7 +56,7 @@ serve(async (req) => {
         .maybeSingle(),
       supabaseClient
         .from("subscriptions")
-        .select("status, tier, current_period_end, cancel_at_period_end")
+        .select("status, tier, stripe_price_id, metadata, current_period_end, cancel_at_period_end")
         .eq("user_id", user.id)
         .maybeSingle(),
       supabaseClient
@@ -92,6 +93,11 @@ serve(async (req) => {
       firm_access_source: firm.source,
       product_id: null,
       plan: access.plan,
+      // Display name (Solo/Firm/Enterprise are all tier "pro"; the price ID tells them apart).
+      plan_name: access.activeSubscription
+        ? planNameFor(subscription?.stripe_price_id, subscription?.tier)
+        : planNameFor(null, access.activePayment ? access.activePaymentRecord?.tier : access.profileFallback ? profileTier : "free"),
+      seat_limit: access.activeSubscription ? seatLimitFor(subscription?.stripe_price_id, subscription?.tier, subscription?.metadata) : null,
       subscription_end: subscription?.current_period_end || access.activePaymentRecord?.expires_at || null,
       cancel_at_period_end: subscription?.cancel_at_period_end || false,
     }), {

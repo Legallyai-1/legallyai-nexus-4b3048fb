@@ -11,13 +11,15 @@ type AcceptanceStatus =
   | "already_accepted"
   | "email_mismatch"
   | "expired"
-  | "invalid";
+  | "invalid"
+  | "seat_limit";
 
 const statusMessages: Record<AcceptanceStatus, string> = {
   already_accepted: "This invitation has already been used.",
   email_mismatch: "Sign in with the email address that received this invitation.",
   expired: "This invitation has expired. Ask an organization owner to send a new one.",
   invalid: "This invitation link is invalid. Ask an organization owner to send a new one.",
+  seat_limit: "This firm has no free seats right now. Ask the firm owner to add a seat on the pricing page, then open this link again.",
 };
 
 const rolePaths: Record<string, string> = {
@@ -38,6 +40,7 @@ export default function AcceptInvitePage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isAccepting, setIsAccepting] = useState(false);
   const [message, setMessage] = useState("");
+  const [seatLimit, setSeatLimit] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -84,6 +87,7 @@ export default function AcceptInvitePage() {
       }
 
       const failureMessage = statusMessages[result?.status as AcceptanceStatus];
+      setSeatLimit(result?.status === "seat_limit");
       setMessage(failureMessage ?? "We couldn't accept this invitation. Please try again.");
     } catch {
       setMessage("We couldn't accept this invitation. Please try again.");
@@ -123,6 +127,11 @@ export default function AcceptInvitePage() {
                 Signed in as <strong>{userEmail}</strong>. Accept the invitation to join the organization.
               </p>
               {message && <p role="alert" className="mt-4 text-sm text-destructive">{message}</p>}
+              {seatLimit && (
+                <p className="mt-2 text-sm">
+                  <Link to="/pricing" className="font-medium underline">See plans and seat pricing</Link>
+                </p>
+              )}
               <Button
                 className="mt-6 w-full"
                 variant="gold"

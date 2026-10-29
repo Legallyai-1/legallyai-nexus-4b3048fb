@@ -60,6 +60,8 @@ export default function SettingsPage() {
   
   // Earnings state
   const [earnings, setEarnings] = useState({ balance: 0, lifetime: 0 });
+  // Plan name from check-subscription (price-ID based: Solo, Firm, Enterprise, Premium...).
+  const [plan, setPlan] = useState<{ name: string; seats: number | null } | null>(null);
   const [payoutRequests, setPayoutRequests] = useState<any[]>([]);
 
   useEffect(() => {
@@ -73,6 +75,11 @@ export default function SettingsPage() {
       setEmail(session.user.email || "");
       await fetchProfile(session.user.id);
       setLoading(false);
+      supabase.functions.invoke("check-subscription").then(({ data, error }) => {
+        if (!error && typeof data?.plan_name === "string") {
+          setPlan({ name: data.plan_name, seats: typeof data.seat_limit === "number" ? data.seat_limit : null });
+        }
+      }).catch(() => { /* plan label is display-only */ });
     };
     checkAuth();
   }, [navigate]);
@@ -372,6 +379,12 @@ export default function SettingsPage() {
                   <Button variant="outline" className="w-full justify-start" onClick={handleChangePassword}>
                     Change Password
                   </Button>
+                  {plan && (
+                    <p className="text-sm" data-testid="current-plan">
+                      Current plan: <strong>{plan.name}</strong>
+                      {plan.seats !== null && <span className="text-muted-foreground"> · {plan.seats} seat{plan.seats === 1 ? "" : "s"}</span>}
+                    </p>
+                  )}
                   <Button variant="outline" className="w-full justify-start" onClick={handleManageSubscription}>
                     Manage or Cancel Subscription
                   </Button>
