@@ -1,24 +1,17 @@
 import { useCallback, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getActiveOrganizationId, setActiveOrganizationId } from "@/lib/organizations";
+import { NO_ROLE_PATH, pathForRole, type AppRole } from "@/lib/postLoginPath";
 
-type AppRole = "owner" | "admin" | "manager" | "lawyer" | "paralegal" | "employee" | "client";
 interface UserRoleData {
   role: AppRole;
   isLoading: boolean;
   redirectPath: string;
 }
-// Default landing after sign-in. Owners/admins land on the dashboard too: anyone who creates a
-// workspace becomes its owner, so /admin (firm settings) is opened from the sidebar, not on login.
-const roleToPath: Record<AppRole, string> = {
-  owner: "/dashboard", admin: "/dashboard", manager: "/dashboard",
-  lawyer: "/dashboard", paralegal: "/dashboard",
-  employee: "/employee", client: "/client-portal",
-};
 
 export function useRoleBasedRedirect() {
   const [roleData, setRoleData] = useState<UserRoleData>({
-    role: "client", isLoading: true, redirectPath: "/ai-assistants",
+    role: "client", isLoading: true, redirectPath: NO_ROLE_PATH,
   });
   const redirectToHub = useCallback(async () => {
     try {
@@ -38,7 +31,7 @@ export function useRoleBasedRedirect() {
         if (!activeOrganizationId && roleRecord.organization_id) {
           setActiveOrganizationId(roleRecord.organization_id);
         }
-        const path = roleToPath[roleRecord.role as AppRole] || "/ai-assistants";
+        const path = pathForRole(roleRecord.role);
         setRoleData({ role: roleRecord.role as AppRole, isLoading: false, redirectPath: path });
         return path;
       }
@@ -60,12 +53,12 @@ export function useRoleBasedRedirect() {
         setRoleData({ role: "employee", isLoading: false, redirectPath: "/dashboard" });
         return "/dashboard";
       }
-      setRoleData({ role: "client", isLoading: false, redirectPath: "/ai-assistants" });
-      return "/ai-assistants";
+      setRoleData({ role: "client", isLoading: false, redirectPath: NO_ROLE_PATH });
+      return NO_ROLE_PATH;
     } catch (error) {
       console.error("Error determining user role:", error);
-      setRoleData(prev => ({ ...prev, isLoading: false, redirectPath: "/ai-assistants" }));
-      return "/ai-assistants";
+      setRoleData(prev => ({ ...prev, isLoading: false, redirectPath: NO_ROLE_PATH }));
+      return NO_ROLE_PATH;
     }
   }, []);
   return { ...roleData, redirectToHub };
