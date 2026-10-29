@@ -5,34 +5,21 @@ interface LeeAvatarProps {
   heightClass?: string;
   /** Empty alt hides Lee from screen readers when a heading already names him. */
   alt?: string;
-  /** Show the gold pulse ring + sparkles (use for hero / panel sizes, not tiny icons). */
+  /** @deprecated No effect: Lee has no aura, ring, sparkles or rays behind him any more (Dakota, Oct 29). */
   stage?: boolean;
   priority?: boolean;
   /** "sm" uses the lighter 64px image for small placements. */
   imageSize?: "sm" | "lg";
   className?: string;
-  /** Golden light burst / rays behind Lee (Ask Lee · AI Partner panel look). */
-  burst?: boolean;
 }
 
-// Lee, alive: only the original Oct 23 motion Dakota likes (gentle float, slight sway, breathing gold
-// glow, see .animate-lee-alive). No extra wave/shake on Lee; the aura, ring, sparkles and burst behind
-// him only pulse softly.
+// Lee, alive: only the gentle float and slight sway Dakota likes (see .animate-lee-alive).
+// Nothing behind Lee: no sunburst, rays, aura, ring, sparkles or gold halo (Dakota, Oct 29).
 // All motion stops under prefers-reduced-motion (see index.css).
-export function LeeAvatar({ heightClass = "h-40", alt = "", stage = true, priority = false, imageSize = "lg", className, burst = false }: LeeAvatarProps) {
+export function LeeAvatar({ heightClass = "h-40", alt = "", priority = false, imageSize = "lg", className }: LeeAvatarProps) {
   const small = imageSize === "sm";
   return (
     <span className={cn("lee-stage relative inline-flex items-end justify-center", className)}>
-      {burst && <span className="lee-burst" aria-hidden="true" />}
-      {stage && (
-        <>
-          <span className="lee-aura" aria-hidden="true" />
-          <span className="lee-ring" aria-hidden="true" />
-          <span className="lai-sparkle" style={{ top: "12%", left: "10%", animationDelay: "0.2s" }} aria-hidden="true" />
-          <span className="lai-sparkle" style={{ top: "6%", right: "14%", animationDelay: "1.1s" }} aria-hidden="true" />
-          <span className="lai-sparkle" style={{ bottom: "28%", right: "4%", animationDelay: "1.9s" }} aria-hidden="true" />
-        </>
-      )}
       <span className="relative inline-block">
         <img
           src={small ? "/lee-mascot-sm.png" : "/lee-mascot.png"}

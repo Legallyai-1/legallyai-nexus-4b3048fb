@@ -177,7 +177,7 @@ export function HubAssistant({
   return (
     <Card className="lee-partner rounded-3xl p-4">
       <div className="flex items-center gap-3 mb-4 pb-3 border-b border-border/30">
-        <img src="/lee-mascot-sm.png" alt="" aria-hidden="true" width={44} height={66} className={`h-14 w-auto animate-lee-alive drop-shadow-[0_0_12px_hsl(var(--${colorClass})/0.5)] ${isLoading ? "animate-pulse" : ""}`} />
+        <img src="/lee-mascot-sm.png" alt="" aria-hidden="true" width={44} height={66} className={`h-14 w-auto animate-lee-alive drop-shadow-[0_8px_14px_hsl(222_60%_5%/0.45)] ${isLoading ? "animate-pulse" : ""}`} />
         <div className="min-w-0">
           <h3 className={`font-display font-semibold text-${colorClass}`}>{displayName}</h3>
           <p className="text-xs text-muted-foreground truncate">Lee, focused on {persona.focus}</p>
