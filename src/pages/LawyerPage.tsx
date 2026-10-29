@@ -178,7 +178,7 @@ export default function LawyerPage() {
         <section id="plans" className="px-4 py-10 scroll-mt-20" aria-labelledby="plans-heading">
           <div className="container mx-auto max-w-6xl">
             <h2 id="plans-heading" className="font-display text-2xl sm:text-3xl font-bold">Plans by firm size</h2>
-            <p className="mt-1 text-muted-foreground">Firm includes a 7-day free trial if eligible. Prices in USD before tax.</p>
+            <p className="mt-1 text-muted-foreground">Firm includes a 7-day free trial on your first subscription only. Prices in USD before tax.</p>
             <div className="mt-6 grid md:grid-cols-3 gap-4">
               {plans.map((plan) => (
                 <div key={plan.name} className="metal-card rounded-3xl p-6 flex flex-col" data-active={plan.highlight ? "true" : undefined}>

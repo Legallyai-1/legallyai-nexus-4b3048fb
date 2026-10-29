@@ -84,7 +84,7 @@ export default function PricingPage() {
       <p className="mt-3"><span className="text-4xl font-bold">{offer.price}</span> <span className="text-sm text-[hsl(218_22%_30%)]">{offer.period}</span></p>
       <p className="mt-4 text-sm flex-1">{offer.description}</p>
       {offer.trial && offer.trialTerms && (
-        <p className="mt-4 text-xs text-[hsl(218_22%_30%)]">If eligible: 7 days free, then {offer.trialTerms} plus applicable taxes until canceled. A payment method is required; cancel before the trial ends to avoid the first charge.</p>
+        <p className="mt-4 text-xs text-[hsl(218_22%_30%)]">First subscription only: 7 days free, then {offer.trialTerms} plus applicable taxes until canceled. A payment method is required; cancel before the trial ends to avoid the first charge.</p>
       )}
       <div className="mt-5">
         {offer.key === "free" ? (
