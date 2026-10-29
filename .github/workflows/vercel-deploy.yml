@@ -1,11 +1,10 @@
 name: Deploy to Vercel
 
+# Production and preview deploys come from Vercel's Git integration on this GitHub repo
+# (every push to main is built and deployed by Vercel itself). This workflow failed on every
+# push and duplicated what Vercel already does, leaving a red X on each commit,
+# so it is now manual-only. Run it from the Actions tab if a CLI-based deploy is ever needed.
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
       deploy_production:

@@ -37,14 +37,14 @@ const HUB_ROUTES: Record<string, { path: string; icon: any; name: string }> = {
   estate: { path: "/will-hub", icon: Home, name: "LegacyAI" },
   parole: { path: "/enhanced-parole", icon: Shield, name: "Freedom AI" },
   probation: { path: "/enhanced-parole", icon: Shield, name: "Freedom AI" },
-  job: { path: "/jobs", icon: Briefcase, name: "Job Board" },
-  career: { path: "/jobs", icon: Briefcase, name: "Job Board" },
+  job: { path: "/workplace-legal-aid", icon: Briefcase, name: "WorkAI" },
+  career: { path: "/workplace-legal-aid", icon: Briefcase, name: "WorkAI" },
   probono: { path: "/pro-bono", icon: Heart, name: "Pro Bono" },
   volunteer: { path: "/pro-bono", icon: Heart, name: "Pro Bono" },
   academy: { path: "/legal-academy", icon: GraduationCap, name: "ScholarAI" },
   learn: { path: "/legal-academy", icon: GraduationCap, name: "ScholarAI" },
-  business: { path: "/business-hub", icon: Briefcase, name: "PraxisAI" },
-  firm: { path: "/business-hub", icon: Briefcase, name: "PraxisAI" },
+  business: { path: "/business-hub", icon: Briefcase, name: "Business Hub" },
+  firm: { path: "/business-hub", icon: Briefcase, name: "Business Hub" },
   generate: { path: "/generate", icon: FileText, name: "Document Generator" },
   document: { path: "/generate", icon: FileText, name: "Document Generator" },
 };
@@ -255,7 +255,7 @@ export function FloatingLeeAssistant() {
                     { label: "Generate Doc", icon: FileText, path: "/generate" },
                     { label: "Custody", icon: Users, path: "/custody" },
                     { label: "Defense", icon: Shield, path: "/tickets-defense" },
-                    { label: "Jobs", icon: Briefcase, path: "/jobs" },
+                    { label: "Work", icon: Briefcase, path: "/workplace-legal-aid" },
                   ].map((action) => (
                     <Button
                       key={action.label}

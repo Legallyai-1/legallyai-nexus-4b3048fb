@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { 
   MessageSquare, Search, Send, ChevronLeft, Loader2, Paperclip
 } from "lucide-react";
-import { Layout } from "@/components/layout/Layout";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { ensureUserOrganization } from "@/lib/organizations";
 
 interface Message {
@@ -195,16 +195,16 @@ export default function MessagesPage() {
 
   if (loading) {
     return (
-      <Layout>
+      <MainLayout>
         <div className="min-h-screen flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-neon-cyan" />
         </div>
-      </Layout>
+      </MainLayout>
     );
   }
 
   return (
-    <Layout>
+    <MainLayout>
       <div className="min-h-screen bg-background">
         <header className="border-b border-border bg-card sticky top-0 z-10">
           <div className="container mx-auto px-4 py-4 flex items-center gap-4">
@@ -358,6 +358,6 @@ export default function MessagesPage() {
           </div>
         </main>
       </div>
-    </Layout>
+    </MainLayout>
   );
 }

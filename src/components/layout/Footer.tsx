@@ -15,7 +15,6 @@ const footerLinks = {
   resources: [
     { name: "Workplace Legal Aid", path: "/workplace-legal-aid" },
     { name: "Pro Bono", path: "/pro-bono" },
-    { name: "Job Board", path: "/jobs" },
     { name: "For Lawyers", path: "/lawyers" },
     { name: "Client Portal", path: "/client-portal" },
   ],

@@ -179,19 +179,6 @@ const assistants = [
     questions: ["Case management", "Client intake", "Firm billing"]
   },
   {
-    id: "jobs",
-    name: "JobAI - Legal Careers",
-    description: "Comprehensive job board: AI resume/job matching, free postings, real-time alerts.",
-    icon: Briefcase,
-    variant: "cyan" as const,
-    path: "/job-board",
-    gradient: "from-cyan-500/20 to-blue-500/20",
-    border: "border-cyan-500/30",
-    glow: "shadow-[0_0_30px_rgba(0,255,255,0.2)]",
-    iconBg: "bg-cyan-500/20",
-    questions: ["Find jobs", "Resume match", "Career advice"]
-  },
-  {
     id: "probono",
     name: "ProBonoAI - Volunteer Matching",
     description: "Complete pro bono platform: AI case-volunteer pairing, intake forms, progress trackers.",

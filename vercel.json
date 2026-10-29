@@ -16,6 +16,10 @@
       "maxDuration": 30
     }
   },
+  "redirects": [
+    { "source": "/jobs", "destination": "/workplace-legal-aid", "permanent": false },
+    { "source": "/job-board", "destination": "/workplace-legal-aid", "permanent": false }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
