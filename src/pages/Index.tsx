@@ -19,7 +19,7 @@ import { CompetitorVersusTable } from "@/components/legal/CompetitorVersusTable"
 import { ToolLauncher } from "@/components/layout/ToolLauncher";
 import { TOOL_ICONS } from "@/components/layout/toolIcons";
 import { featuredTools } from "@/lib/toolCatalog";
-import { LeeAvatar } from "@/components/brand/LeeAvatar";
+import { LeeAvatar, GoldWave } from "@/components/brand/LeeAvatar";
 
 const hubs = [
   { id: "chat", name: "Lee Legal AI", icon: MessageSquare, color: "cyan", path: "/chat", description: "General legal assistant" },
@@ -149,34 +149,35 @@ export default function Index() {
 
               {/* Ask Lee chat: roomy on phones (chips wrap, full-width input). */}
               <div className="min-w-0">
-                <div className="glass-card rounded-3xl border border-legal-gold/40 shadow-[0_0_40px_hsl(var(--legal-gold)/0.18)] overflow-hidden">
-                  <div className="flex items-center gap-3 p-4 border-b border-border/30 bg-gradient-to-r from-legal-gold/15 via-transparent to-transparent">
-                    <LeeAvatar heightClass="h-12" imageSize="sm" stage={false} />
+                <div className="lee-partner rounded-3xl overflow-hidden">
+                  <div className="flex items-center gap-3 px-5 pt-4 pb-3 border-b border-white/70">
                     <div className="min-w-0">
                       <h2 className="font-display text-lg font-bold text-foreground flex flex-wrap items-center gap-2">
-                        Ask Lee <Badge className="bg-neon-green/20 text-neon-green text-xs">Free</Badge>
+                        Ask Lee <span className="text-muted-foreground">·</span> <span className="lee-partner-title-accent">AI Partner</span> <Badge className="bg-neon-green/20 text-neon-green text-xs">Free</Badge>
                       </h2>
                       <p className="text-xs text-muted-foreground">Legal information · sign in for your case file</p>
                     </div>
                   </div>
 
-                  <ScrollArea className="h-[260px] sm:h-[300px] p-4" ref={scrollRef}>
+                  <ScrollArea className={chatMessages.length === 0 ? "p-4" : "h-[300px] sm:h-[340px] p-4"} ref={scrollRef}>
                     {chatMessages.length === 0 ? (
-                      <div className="py-4 text-center">
-                        <p className="text-foreground text-sm mb-1">How can I help with your legal situation today?</p>
-                        <p className="text-xs text-muted-foreground mb-4">Verify deadlines and court rules for your state.</p>
-                        <div className="flex flex-wrap gap-2 justify-center">
+                      <div className="pb-2 text-center flex flex-col items-center">
+                        <LeeAvatar heightClass="h-32 sm:h-40" burst />
+                        <p className="relative mt-2 font-display text-base font-bold text-foreground">How can I help with your legal situation today?</p>
+                        <p className="relative text-xs text-muted-foreground mb-4">Verify deadlines and court rules for your state.</p>
+                        <div className="relative flex flex-wrap gap-2 justify-center">
                           {["Custody rights", "Fight a ticket", "Tenant rights", "Draft an NDA"].map((suggestion) => (
                             <button
                               key={suggestion}
                               type="button"
-                              className="btn-silver rounded-full px-3.5 py-2 text-sm font-medium"
+                              className="lee-chip"
                               onClick={() => { setChatInput(suggestion); document.getElementById("hero-chat-input")?.focus(); }}
                             >
                               {suggestion}
                             </button>
                           ))}
                         </div>
+                        <GoldWave className="mt-4" />
                       </div>
                     ) : (
                       <div className="space-y-4" aria-live="polite">
@@ -198,7 +199,7 @@ export default function Index() {
                     )}
                   </ScrollArea>
 
-                  <form className="p-3 sm:p-4 border-t border-border/30 bg-background/50" onSubmit={(e) => { e.preventDefault(); void handleSendMessage(); }}>
+                  <form className="p-3 sm:p-4 border-t border-white/70" onSubmit={(e) => { e.preventDefault(); void handleSendMessage(); }}>
                     <div className="flex gap-2">
                       <Input
                         id="hero-chat-input"
@@ -206,7 +207,7 @@ export default function Index() {
                         value={chatInput}
                         onChange={(e) => setChatInput(e.target.value)}
                         placeholder="Ask a legal question..."
-                        className="h-11 min-w-0 flex-1 rounded-full text-base sm:text-sm"
+                        className="lee-partner-input h-11 min-w-0 flex-1 rounded-full text-base sm:text-sm"
                       />
                       <Button type="submit" size="icon" className="h-11 w-11 shrink-0 rounded-full gold-tile border-0" disabled={isLoading || !chatInput.trim()} aria-label="Send question">
                         {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

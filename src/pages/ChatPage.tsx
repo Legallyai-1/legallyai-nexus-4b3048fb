@@ -13,6 +13,7 @@ import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
 import { SaveToCaseFile } from "@/components/chat/SaveToCaseFile";
 import { ChatHistoryDrawer } from "@/components/chat/ChatHistoryDrawer";
 import { LeeGreeting } from "@/components/chat/LeeGreeting";
+import { GoldWave } from "@/components/brand/LeeAvatar";
 
 const suggestedQuestions = [
   "What are my rights as a tenant in California?",
@@ -87,7 +88,7 @@ export default function ChatPage() {
           <div className="container mx-auto max-w-4xl flex flex-wrap items-center gap-3">
             <AnimatedAIHead variant="cyan" size="sm" />
             <div className="flex-1 min-w-[12rem]">
-              <h1 className="font-display text-lg font-semibold">Ask Lee <span className="text-white/50">·</span> <span className="gold-text">AI Partner</span></h1>
+              <h1 className="font-display text-lg font-semibold">Ask Lee <span className="text-muted-foreground">·</span> <span className="lee-partner-title-accent">AI Partner</span></h1>
               <p className="text-sm text-muted-foreground">Plain-English legal research for your state.</p>
             </div>
             <ChatHistoryDrawer userId={user?.id ?? null} refreshKey={historyKey} onSelect={(sid, saved) => { loadConversation(sid, saved); setInput(""); }} />
@@ -100,15 +101,16 @@ export default function ChatPage() {
           ) : !user ? <p className="text-sm text-muted-foreground"><Link to="/login" className="underline">Sign in</Link> for account-linked chat. Anonymous access, if available, may provide limited no-cost guidance rather than a model-generated answer.</p> : null}
         </div>
         <section aria-label="Conversation" aria-busy={isLoading} className="flex-1 container mx-auto max-w-4xl px-4 py-6 space-y-5">
-          {messages.length === 0 && <div className="glass-card rounded-2xl p-5 space-y-3">
+          {messages.length === 0 && <div className="lee-partner rounded-3xl p-5 sm:p-6 space-y-3">
             <LeeGreeting />
             <p>Ask a legal-information question and include your state or country when relevant. Avoid names, case numbers, and confidential documents. Verify important answers with official sources or a licensed attorney.</p>
             <p className="text-sm text-muted-foreground">Answers come from Lee, the LegallyAI legal AI, with official links for your state. Save any answer to your case file to track deadlines and appointments.</p>
-            <div className="flex flex-wrap gap-2">{suggestedQuestions.map(question => <button key={question} type="button" onClick={() => setInput(question)} className="rounded-xl border border-border px-3 py-2 text-left text-sm focus-visible:outline focus-visible:outline-2">{question}</button>)}</div>
+            <div className="flex flex-wrap gap-2">{suggestedQuestions.map(question => <button key={question} type="button" onClick={() => setInput(question)} className="lee-chip">{question}</button>)}</div>
+            <GoldWave />
           </div>}
           {messages.map((message, index) => <div key={message.id ?? index} className={cn("flex gap-3", message.role === "user" ? "justify-end" : "justify-start")}>
             {message.role !== "user" && <AnimatedAIHead variant="cyan" size="sm" isActive={isLoading && !message.content} />}
-            <div className={cn("min-w-0 max-w-[85%] rounded-2xl px-4 py-3 break-words", message.role === "user" ? "bg-neon-cyan/20" : "glass-card border border-border")}>
+            <div className={cn("min-w-0 max-w-[85%] rounded-2xl px-4 py-3 break-words", message.role === "user" ? "gold-feature" : "glass-card border border-border")}>
               {message.role === "user" || !message.content ? <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content || (isLoading ? "Preparing response…" : "")}</p> : <ChatMarkdown content={message.content} />}
               {message.reviewed && <p className="mt-2 text-xs text-muted-foreground">Secondary AI review performed; accuracy is not independently verified.</p>}
               {message.role === "assistant" && message.content && !(isLoading && index === messages.length - 1) && (
@@ -125,7 +127,7 @@ export default function ChatPage() {
           <div className="container mx-auto max-w-4xl">
             <form className="flex gap-3" onSubmit={event => { event.preventDefault(); void submit(); }}>
               <label htmlFor="legal-chat-input" className="sr-only">Your legal-information question</label>
-              <Input id="legal-chat-input" value={input} onChange={event => setInput(event.target.value)} maxLength={6000} placeholder="Ask a legal-information question…" className="flex-1 min-w-0 h-12" disabled={checkingAuth || isLoading} />
+              <Input id="legal-chat-input" value={input} onChange={event => setInput(event.target.value)} maxLength={6000} placeholder="Ask a legal-information question…" className="lee-partner-input flex-1 min-w-0 h-12 rounded-full" disabled={checkingAuth || isLoading} />
               <Button type="submit" variant="neon" disabled={checkingAuth || isLoading || !input.trim()} aria-label="Send question">{isLoading ? <Loader2 aria-hidden="true" className="h-5 w-5 animate-spin" /> : <Send aria-hidden="true" className="h-5 w-5" />}</Button>
             </form>
             <p role="status" className="mt-2 text-sm text-muted-foreground">{isLoading ? "Waiting for a response. New conversation cancels this request and clears the chat." : ""}</p>
