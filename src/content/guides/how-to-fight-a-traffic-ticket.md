@@ -87,7 +87,6 @@ If you win, the case is usually dismissed. If you lose, you will typically pay t
 ## Sources and further reading
 
 - Texas Judicial Branch, Self-help: https://www.txcourts.gov/programs-services/self-help/
-- Florida Courts, Self-help information: https://www.flcourts.gov/Resources-Services/Office-of-Family-Courts/Self-Help-Information
 - Illinois Courts, Self-help: https://www.illinoiscourts.gov/self-help
 - USA.gov, State motor vehicle services: https://www.usa.gov/state-motor-vehicle-services
 - Washington Law Help: https://www.washingtonlawhelp.org/

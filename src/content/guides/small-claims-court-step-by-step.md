@@ -86,7 +86,6 @@ Winning does not mean the court collects for you. If the other party does not pa
 - Michigan Legal Help: https://www.michiganlegalhelp.org/
 - Texas Judicial Branch, Self-help: https://www.txcourts.gov/programs-services/self-help/
 - Texas State Law Library, Small claims: https://guides.sll.texas.gov/small-claims
-- Florida Courts, Self-help information: https://www.flcourts.gov/Resources-Services/Office-of-Family-Courts/Self-Help-Information
 - Illinois Courts, Self-help: https://www.illinoiscourts.gov/self-help
 - Legal Services Corporation, I need legal help: https://www.lsc.gov/about-lsc/what-legal-aid/i-need-legal-help
 - USA.gov, Find affordable legal aid: https://www.usa.gov/legal-aid

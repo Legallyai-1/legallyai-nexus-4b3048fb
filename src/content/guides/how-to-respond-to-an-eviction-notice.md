@@ -74,7 +74,6 @@ If you win, the case may be dismissed. If the landlord wins, the judge will usua
 ## Sources and further reading
 
 - Texas Judicial Branch, Self-help: https://www.txcourts.gov/programs-services/self-help/
-- Florida Courts, Self-help information: https://www.flcourts.gov/Resources-Services/Office-of-Family-Courts/Self-Help-Information
 - Illinois Courts, Self-help: https://www.illinoiscourts.gov/self-help
 - Ohio Legal Help, Eviction: https://www.ohiolegalhelp.org/topic/eviction
 - HUD, Tenant rights: https://www.hud.gov/topics/rental_assistance/tenantrights
