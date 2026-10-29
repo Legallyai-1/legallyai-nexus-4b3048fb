@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { corsHeaders } from "../_shared/cors.ts";
 import { sha256Hex } from "../_shared/invite-email.ts";
-import { getOrganizationSeats, hasFreeSeat, PRICING_URL } from "../_shared/organization-seats.ts";
+import { getOrganizationSeats, hasFreeSeat, isSeatLimitDbError, PRICING_URL } from "../_shared/organization-seats.ts";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -83,6 +83,15 @@ serve(async (req) => {
     });
 
     if (error) {
+      // The database seat-limit trigger is the backstop for races with the check above.
+      if (isSeatLimitDbError(error)) {
+        return json({
+          success: false,
+          status: "seat_limit",
+          error: `This firm has no free seats right now. Ask the firm owner to add a seat in Settings (${PRICING_URL}), then open this invite link again.`,
+          pricingUrl: PRICING_URL,
+        }, 409);
+      }
       throw error;
     }
 

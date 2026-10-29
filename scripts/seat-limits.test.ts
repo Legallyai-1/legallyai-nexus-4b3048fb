@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ENTERPRISE_PLAN_PRICE_ID, FIRM_PLAN_PRICE_ID, PREMIUM_PRICE_ID, SOLO_PLAN_PRICE_ID, extraSeatsFrom, planNameFor, seatLimitFor } from "../supabase/functions/_shared/plan-catalog.ts";
-import { getOrganizationSeats, hasFreeSeat, seatLimitMessage } from "../supabase/functions/_shared/organization-seats.ts";
+import { getOrganizationSeats, hasFreeSeat, isSeatLimitDbError, SEAT_LIMIT_DB_MESSAGE, seatLimitMessage } from "../supabase/functions/_shared/organization-seats.ts";
 import { subscriptionMetadata } from "../api/webhooks/stripe.ts";
 import { seatsFull, seatSummary } from "../src/lib/firmSeats.ts";
 
@@ -114,4 +114,12 @@ test("team panel seat summary and full state", () => {
   assert.equal(seatSummary(seats), "Firm plan · 3 of 3 seats used (1 pending invite)");
   assert.equal(seatsFull({ ...seats, limit: null }), false);
   assert.equal(seatsFull(null), false);
+});
+
+test("the seat-limit trigger error is recognised (so accept-invite answers 409, not 500)", () => {
+  assert.equal(isSeatLimitDbError({ code: "P0001", message: SEAT_LIMIT_DB_MESSAGE }), true);
+  assert.equal(isSeatLimitDbError({ code: "P0001", message: "something else" }), false);
+  assert.equal(isSeatLimitDbError({ code: "23505", message: SEAT_LIMIT_DB_MESSAGE }), false);
+  assert.equal(isSeatLimitDbError(null), false);
+  assert.equal(isSeatLimitDbError("Seat limit reached for this plan"), false);
 });
