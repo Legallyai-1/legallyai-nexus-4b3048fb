@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { requireAffectedRows } from '@/lib/mutationResult';
+import { ensureUserOrganization } from '@/lib/organizations';
 
 interface CaseWorkflowManagerProps {
   caseId?: string;
@@ -52,7 +53,14 @@ const MOCK_TASKS: Task[] = [];
 
 const TIMELINE_EVENTS = [];
 
-export function CaseWorkflowManager({ caseId, organizationId = 'default-org' }: CaseWorkflowManagerProps) {
+export function CaseWorkflowManager({ caseId: caseIdProp, organizationId: organizationIdProp }: CaseWorkflowManagerProps) {
+  // case_tasks.case_id is NOT NULL, so every task must belong to a case.
+  // When no case is passed in, the user picks one of their organization's cases.
+  const [resolvedOrgId, setResolvedOrgId] = useState<string | undefined>(organizationIdProp);
+  const [caseOptions, setCaseOptions] = useState<{ id: string; title: string }[]>([]);
+  const [selectedCaseId, setSelectedCaseId] = useState<string>('');
+  const caseId = caseIdProp || selectedCaseId || undefined;
+  const organizationId = organizationIdProp || resolvedOrgId;
   const [stages, setStages] = useState<Stage[]>(DEFAULT_STAGES);
   const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
   const [currentStage, setCurrentStage] = useState(2); // Discovery
@@ -60,9 +68,50 @@ export function CaseWorkflowManager({ caseId, organizationId = 'default-org' }: 
   const [showAddTask, setShowAddTask] = useState(false);
   const [newTask, setNewTask] = useState({ title: '', description: '', priority: 'medium', due_date: '' });
 
-  const fetchWorkflowData = async () => {
-    if (!caseId) return;
-    
+  useEffect(() => {
+    if (organizationIdProp) {
+      setResolvedOrgId(organizationIdProp);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const orgId = await ensureUserOrganization(user.id);
+        if (!cancelled) setResolvedOrgId(orgId || undefined);
+      } catch (error) {
+        console.error('Error resolving organization:', error);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [organizationIdProp]);
+
+  useEffect(() => {
+    if (caseIdProp || !organizationId) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from('cases')
+        .select('id, title')
+        .eq('organization_id', organizationId)
+        .order('created_at', { ascending: false })
+        .limit(200);
+      if (error) {
+        console.error('Error loading cases:', error);
+        return;
+      }
+      if (!cancelled) setCaseOptions(data ?? []);
+    })();
+    return () => { cancelled = true; };
+  }, [caseIdProp, organizationId]);
+
+  const fetchWorkflowData = useCallback(async () => {
+    if (!caseId || !organizationId) {
+      setTasks([]);
+      return;
+    }
+
     setLoading(true);
     try {
       const [tasksResult, stagesResult, timelineResult] = await Promise.all([
@@ -71,22 +120,27 @@ export function CaseWorkflowManager({ caseId, organizationId = 'default-org' }: 
         supabase.from('case_timelines').select('*').eq('case_id', caseId).order('event_date', { ascending: false })
       ]);
 
-      if (tasksResult.data?.length) setTasks(tasksResult.data as Task[]);
+      if (tasksResult.error) throw tasksResult.error;
+      setTasks((tasksResult.data ?? []) as Task[]);
       if (stagesResult.data?.length) setStages(stagesResult.data as Stage[]);
     } catch (error) {
       console.error('Error fetching workflow data:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [caseId, organizationId]);
 
   useEffect(() => {
     fetchWorkflowData();
-  }, [caseId, organizationId]);
+  }, [fetchWorkflowData]);
 
   const addTask = async () => {
     if (!newTask.title) {
       toast.error('Task title is required');
+      return;
+    }
+    if (!caseId || !organizationId) {
+      toast.error('Select a case before adding a task');
       return;
     }
 
@@ -98,14 +152,13 @@ export function CaseWorkflowManager({ caseId, organizationId = 'default-org' }: 
         is_auto_generated: false
       };
 
-      if (caseId) {
-        const { error } = await supabase.from('case_tasks').insert({
-          case_id: caseId,
-          organization_id: organizationId,
-          ...task
-        });
-        if (error) throw error;
-      }
+      const { error } = await supabase.from('case_tasks').insert({
+        case_id: caseId,
+        organization_id: organizationId,
+        ...task,
+        due_date: task.due_date || null
+      });
+      if (error) throw error;
 
       setTasks(prev => [...prev, task]);
       setNewTask({ title: '', description: '', priority: 'medium', due_date: '' });
@@ -216,6 +269,25 @@ export function CaseWorkflowManager({ caseId, organizationId = 'default-org' }: 
                     <DialogTitle>Add New Task</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 pt-4">
+                    {!caseIdProp && (
+                      <div className="space-y-1">
+                        <Select value={selectedCaseId} onValueChange={setSelectedCaseId}>
+                          <SelectTrigger aria-label="Case">
+                            <SelectValue placeholder="Select a case (required)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {caseOptions.map((c) => (
+                              <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {!caseId && (
+                          <p className="text-xs text-muted-foreground">
+                            {caseOptions.length ? 'Tasks must be linked to a case.' : 'No cases found. Create a case first to add tasks.'}
+                          </p>
+                        )}
+                      </div>
+                    )}
                     <Input
                       placeholder="Task title"
                       value={newTask.title}
@@ -246,7 +318,7 @@ export function CaseWorkflowManager({ caseId, organizationId = 'default-org' }: 
                         onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
                       />
                     </div>
-                    <Button onClick={addTask} className="w-full">Create Task</Button>
+                    <Button onClick={addTask} className="w-full" disabled={!caseId || !organizationId || !newTask.title.trim()}>Create Task</Button>
                   </div>
                 </DialogContent>
               </Dialog>
