@@ -143,13 +143,22 @@ export async function checkStripeHealth() {
   catch { return { ok: false, error: 'Stripe webhook configuration or connectivity requires review' }; }
 }
 
-async function getRawBody(req: VercelRequest) {
-  const raw = (req as VercelRequest & { rawBody?: Buffer | string }).rawBody;
-  if (Buffer.isBuffer(raw) || typeof raw === 'string') return Buffer.from(raw);
-  if (Buffer.isBuffer(req.body) || typeof req.body === 'string') return Buffer.from(req.body);
+// Stripe signs the exact request bytes, so never parse the body before verification.
+// Next.js-style flag (requested in LEG-24); @vercel/node itself parses req.body lazily and
+// leaves the request stream intact, so we read the raw bytes from the stream and never touch req.body.
+export const config = { api: { bodyParser: false } };
+
+const MAX_WEBHOOK_BYTES = 1048576;
+
+export async function readRawBody(req: AsyncIterable<unknown>): Promise<Buffer> {
   const chunks: Buffer[] = [];
   let size = 0;
-  for await (const chunk of req) { const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk); size += buffer.length; if (size > 1048576) throw new Error('Webhook body too large'); chunks.push(buffer); }
+  for await (const chunk of req) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as string | Uint8Array);
+    size += buffer.length;
+    if (size > MAX_WEBHOOK_BYTES) throw new Error('Webhook body too large');
+    chunks.push(buffer);
+  }
   if (!chunks.length) throw new Error('Exact raw webhook body unavailable');
   return Buffer.concat(chunks);
 }
@@ -162,7 +171,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const signature = req.headers['stripe-signature'];
   if (typeof signature !== 'string') return res.status(400).json({ error: 'Missing Stripe signature' });
   let event: Stripe.Event;
-  try { event = clients.stripe.webhooks.constructEvent(await getRawBody(req), signature, clients.secret); }
+  try { event = clients.stripe.webhooks.constructEvent(await readRawBody(req), signature, clients.secret); }
   catch { return res.status(400).json({ error: 'Webhook verification failed' }); }
   const result = await processVerifiedEvent(event, clients.stripe, clients.db);
   return res.status(result.status).json(result.body);
