@@ -18,6 +18,8 @@ const footerLinks = {
     { name: "Client Portal", path: "/client-portal" },
   ],
   legal: [
+    { name: "About LegallyAI", path: "/about" },
+    { name: "Contact", path: "/contact" },
     { name: "Privacy Policy", path: "/privacy" },
     { name: "Terms of Service", path: "/terms" },
     { name: "Disclaimer", path: "/disclaimer" },
