@@ -61,7 +61,11 @@ const WillHubPage = lazy(() => import("@/pages/WillHubPage"));
 const MarriageDivorcePage = lazy(() => import("@/pages/MarriageDivorcePage"));
 const EnhancedCustodyPage = lazy(() => import("@/pages/EnhancedCustodyPage"));
 const EnhancedParolePage = lazy(() => import("@/pages/EnhancedParolePage"));
-const NotFound = lazy(() => import("@/pages/NotFound"));
+const AboutPage = lazy(() => import("@/pages/AboutPage"));
+const ContactPage = lazy(() => import("@/pages/ContactPage"));
+const GuidesIndexPage = lazy(() => import("@/pages/GuidesIndexPage"));
+const GuidePage = lazy(() => import("@/pages/GuidePage"));
+const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 const StoreAssetsPage = lazy(() => import("@/pages/StoreAssetsPage"));
 const NotificationsPage = lazy(() => import("@/pages/NotificationsPage"));
 
@@ -137,7 +141,17 @@ export function AnimatedRoutes() {
         <Route path="/marriage-divorce" element={<PageTransition><LazyRoute><MarriageDivorcePage /></LazyRoute></PageTransition>} />
         <Route path="/store-assets" element={<PageTransition><LazyRoute><StoreAssetsPage /></LazyRoute></PageTransition>} />
         <Route path="/notifications" element={<PageTransition><LazyRoute><NotificationsPage /></LazyRoute></PageTransition>} />
-        <Route path="*" element={<PageTransition><LazyRoute><NotFound /></LazyRoute></PageTransition>} />
+        <Route path="/about" element={<PageTransition><LazyRoute><AboutPage /></LazyRoute></PageTransition>} />
+        <Route path="/contact" element={<PageTransition><LazyRoute><ContactPage /></LazyRoute></PageTransition>} />
+        <Route path="/guides" element={<PageTransition><LazyRoute><GuidesIndexPage /></LazyRoute></PageTransition>} />
+        <Route path="/guides/how-to-respond-to-an-eviction-notice" element={<PageTransition><LazyRoute><GuidePage slug="how-to-respond-to-an-eviction-notice" /></LazyRoute></PageTransition>} />
+        <Route path="/guides/how-to-read-a-lease-before-signing" element={<PageTransition><LazyRoute><GuidePage slug="how-to-read-a-lease-before-signing" /></LazyRoute></PageTransition>} />
+        <Route path="/guides/small-claims-court-step-by-step" element={<PageTransition><LazyRoute><GuidePage slug="small-claims-court-step-by-step" /></LazyRoute></PageTransition>} />
+        <Route path="/guides/how-to-fight-a-traffic-ticket" element={<PageTransition><LazyRoute><GuidePage slug="how-to-fight-a-traffic-ticket" /></LazyRoute></PageTransition>} />
+        <Route path="/guides/how-child-custody-is-decided" element={<PageTransition><LazyRoute><GuidePage slug="how-child-custody-is-decided" /></LazyRoute></PageTransition>} />
+        <Route path="/guides/how-to-file-for-divorce-without-a-lawyer" element={<PageTransition><LazyRoute><GuidePage slug="how-to-file-for-divorce-without-a-lawyer" /></LazyRoute></PageTransition>} />
+        <Route path="/guides/how-a-power-of-attorney-works" element={<PageTransition><LazyRoute><GuidePage slug="how-a-power-of-attorney-works" /></LazyRoute></PageTransition>} />
+        <Route path="*" element={<PageTransition><LazyRoute><NotFoundPage /></LazyRoute></PageTransition>} />
       </Routes>
     </AnimatePresence>
     </>

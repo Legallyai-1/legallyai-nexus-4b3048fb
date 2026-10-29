@@ -22,7 +22,7 @@
       "destination": "/api/$1"
     },
     {
-      "source": "/(generate|contract-review|settlement-estimator|research|chat|custody|enhanced-custody|lawyers|pricing|signup|login|auth|accept-invite|forgot-password|reset-password|dashboard|cases|clients|settings|appointments|messages|timeclock|employee|admin|disclaimer|terms|privacy|client-portal|invoices|consultations|payment-success|ai-assistants|onboarding|payroll|jobs|job-board|workplace-legal-aid|pro-bono|templates|tickets-defense|probation-parole|enhanced-parole|legal-academy|quiz|telephony|support|court-records|business-hub|dui-hub|will-hub|marriage-divorce|store-assets|notifications)",
+      "source": "/(generate|contract-review|settlement-estimator|research|chat|custody|enhanced-custody|lawyers|pricing|signup|login|auth|accept-invite|forgot-password|reset-password|dashboard|cases|clients|settings|appointments|messages|timeclock|employee|admin|disclaimer|terms|privacy|client-portal|invoices|consultations|payment-success|ai-assistants|onboarding|payroll|jobs|job-board|workplace-legal-aid|pro-bono|templates|tickets-defense|probation-parole|enhanced-parole|legal-academy|quiz|telephony|support|court-records|business-hub|dui-hub|will-hub|marriage-divorce|store-assets|notifications|about|contact|guides|guides/how-to-respond-to-an-eviction-notice|guides/how-to-read-a-lease-before-signing|guides/small-claims-court-step-by-step|guides/how-to-fight-a-traffic-ticket|guides/how-child-custody-is-decided|guides/how-to-file-for-divorce-without-a-lawyer|guides/how-a-power-of-attorney-works)",
       "destination": "/index.html"
     }
   ],

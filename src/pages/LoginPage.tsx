@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { loginSchema } from "@/lib/validations/auth";
 import { useRoleBasedRedirect } from "@/hooks/useRoleBasedRedirect";
 import { getInviteAcceptanceReturnTo } from "@/lib/invite";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -109,6 +110,7 @@ export default function LoginPage() {
           </div>
 
           <div className="p-8 rounded-2xl bg-card border border-border shadow-card">
+            <GoogleSignInButton returnPath={inviteReturnTo ? `/login?returnTo=${encodeURIComponent(inviteReturnTo)}` : "/login"} />
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>

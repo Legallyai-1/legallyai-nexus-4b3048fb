@@ -11,6 +11,7 @@ import { trackSignUpConversion } from "@/lib/googleAds";
 import { supabase } from "@/integrations/supabase/client";
 import { signupSchema } from "@/lib/validations/auth";
 import { getInviteAcceptanceReturnTo } from "@/lib/invite";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 
 const benefits = [
   "AI-assisted legal document drafting",
@@ -122,6 +123,7 @@ export default function SignupPage() {
               </p>
             </div>
 
+            <GoogleSignInButton label="Sign up with Google" returnPath={inviteReturnTo ? `/login?returnTo=${encodeURIComponent(inviteReturnTo)}` : "/login"} />
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>

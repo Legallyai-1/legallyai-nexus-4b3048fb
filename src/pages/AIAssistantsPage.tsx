@@ -5,6 +5,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Heart, Shield, Scale, Briefcase, Building2, FileText, Gavel, GraduationCap, Phone, Headphones, Users, DollarSign, BarChart3, Car, Home, Star, Sparkles } from "lucide-react";
 import AdContainer from "@/components/ads/AdContainer";
+import { AD_SLOTS } from "@/lib/adSlots";
 
 const assistants = [
   {
@@ -322,7 +323,7 @@ export default function AIAssistantsPage() {
             ))}
           </div>
 
-          <AdContainer slot="5824691357" className="mt-12" />
+          {AD_SLOTS.AI_ASSISTANTS && <AdContainer slot={AD_SLOTS.AI_ASSISTANTS} className="mt-12" />}
 
           {/* Bottom CTA */}
           <div className="mt-8 text-center">
