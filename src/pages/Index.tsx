@@ -159,9 +159,10 @@ export default function Index() {
                     </div>
                   </div>
 
-                  <ScrollArea className={chatMessages.length === 0 ? "p-4" : "h-[300px] sm:h-[340px] p-4"} ref={scrollRef}>
+                  {/* Empty state: top padding lives inside the scroll viewport so Lee's float never clips his head. */}
+                  <ScrollArea className={chatMessages.length === 0 ? "px-4 pb-4" : "h-[300px] sm:h-[340px] p-4"} ref={scrollRef}>
                     {chatMessages.length === 0 ? (
-                      <div className="pb-2 text-center flex flex-col items-center">
+                      <div className="pt-4 pb-2 text-center flex flex-col items-center">
                         <LeeAvatar heightClass="h-32 sm:h-40" alt="Lee, the LegallyAI assistant" priority />
                         <p className="relative mt-2 font-display text-base font-bold text-foreground">How can I help with your legal situation today?</p>
                         <p className="relative text-xs text-muted-foreground mb-4">Verify deadlines and court rules for your state.</p>
