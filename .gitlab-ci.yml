@@ -7,7 +7,7 @@ unit_and_regression_tests:
   image: node:22-bookworm
   script:
     - npm ci --ignore-scripts --no-audit --no-fund
-    - node --experimental-strip-types --test scripts/auth-validation.test.ts scripts/auth-redirect.test.ts scripts/billing-ownership.test.ts scripts/stripe-webhook.test.ts scripts/stripe-webhook-boundaries.test.ts scripts/checkout-session-verification.test.ts
+    - node --experimental-strip-types --test scripts/auth-validation.test.ts scripts/auth-redirect.test.ts scripts/billing-ownership.test.ts scripts/stripe-webhook.test.ts scripts/stripe-webhook-boundaries.test.ts scripts/checkout-session-verification.test.ts scripts/billing-handlers.test.ts
     - node --test scripts/legal-chat-protocol.test.mjs scripts/legal-knowledge.test.mjs scripts/free-ai-engine.test.mjs scripts/lee-gemini.test.mjs
     - npm run build
 
