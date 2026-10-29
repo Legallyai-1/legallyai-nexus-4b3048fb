@@ -591,6 +591,11 @@
   box-shadow: 0 14px 34px -20px hsl(218 45% 25% / 0.4);
 }
 
+/* Gold buttons use text-background; on the light hub palette that is near-white, so keep navy text for contrast. */
+.hub-theme .bg-section-premium.text-background {
+  color: hsl(var(--primary-foreground));
+}
+
 .hub-theme .gold-text {
   background: linear-gradient(90deg, hsl(38 90% 40%), hsl(30 85% 32%));
   -webkit-background-clip: text;
