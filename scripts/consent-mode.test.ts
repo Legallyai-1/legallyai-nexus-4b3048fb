@@ -39,3 +39,9 @@ test("Google CMP detection and privacy-choices helper", () => {
   assert.equal(showGooglePrivacyChoices(queued as never), true);
   assert.equal(queued.googlefc.callbackQueue.length, 1);
 });
+
+test("footer privacy-choices button is gated on Google's own tool, not any TCF CMP", async () => {
+  const { isGoogleFcLoaded } = await import("../src/lib/consent.ts");
+  assert.equal(isGoogleFcLoaded({ __tcfapi: () => {} } as never), false);
+  assert.equal(isGoogleFcLoaded({ googlefc: {} } as never), true);
+});

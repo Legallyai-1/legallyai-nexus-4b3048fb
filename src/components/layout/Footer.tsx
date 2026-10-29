@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { DO_NOT_SELL_ANCHOR, isGoogleCmpActive, showGooglePrivacyChoices } from "@/lib/consent";
+import { DO_NOT_SELL_ANCHOR, isGoogleFcLoaded, showGooglePrivacyChoices } from "@/lib/consent";
 import { GlowScales } from "@/components/brand/GlowScales";
 import { Scale, Sparkles, Mail, MapPin, Phone } from "lucide-react";
 
@@ -28,15 +28,15 @@ const footerLinks = {
 };
 
 // Google's consent tool loads with the AdSense script, so it can appear after the footer renders.
-function useGoogleCmpAvailable() {
-  const [available, setAvailable] = useState(() => isGoogleCmpActive());
+function useGoogleFcAvailable() {
+  const [available, setAvailable] = useState(() => isGoogleFcLoaded());
   useEffect(() => {
     if (available) return;
     let checks = 0;
     const timer = window.setInterval(() => {
       checks += 1;
-      if (isGoogleCmpActive()) setAvailable(true);
-      if (isGoogleCmpActive() || checks >= 10) window.clearInterval(timer);
+      if (isGoogleFcLoaded()) setAvailable(true);
+      if (isGoogleFcLoaded() || checks >= 10) window.clearInterval(timer);
     }, 1000);
     return () => window.clearInterval(timer);
   }, [available]);
@@ -44,7 +44,7 @@ function useGoogleCmpAvailable() {
 }
 
 export function Footer() {
-  const googleCmpAvailable = useGoogleCmpAvailable();
+  const googleCmpAvailable = useGoogleFcAvailable();
   return (
     <footer className="border-t border-border bg-card text-foreground">
       <div className="container mx-auto px-4 py-16">

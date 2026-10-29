@@ -9,7 +9,9 @@ const PrivacyPage = () => {
   const { hash } = useLocation();
   useEffect(() => {
     if (!hash) return;
-    document.getElementById(decodeURIComponent(hash.slice(1)))?.scrollIntoView();
+    let id = hash.slice(1);
+    try { id = decodeURIComponent(id); } catch { /* keep raw fragment */ }
+    document.getElementById(id)?.scrollIntoView();
   }, [hash]);
   return (
     <Layout>
@@ -69,7 +71,7 @@ const PrivacyPage = () => {
             <section>
               <h2 className="text-2xl font-semibold text-foreground mb-4">4. Advertising and Cookies</h2>
               <p>We show ads to free-plan visitors on a few public pages through Google AdSense. Google and its partners use cookies and device identifiers to serve and measure ads and, where you allow it, to personalize them. Paid subscribers don&apos;t see ads. You can manage ad personalization at <a href="https://adssettings.google.com" className="underline" target="_blank" rel="noopener noreferrer">adssettings.google.com</a>. Learn how Google uses data: <a href="https://policies.google.com/technologies/partner-sites" className="underline" target="_blank" rel="noopener noreferrer">policies.google.com/technologies/partner-sites</a>.</p>
-              <p className="mt-2"><strong>Visitors in the EEA, UK and Switzerland:</strong> Before Google&apos;s ad and measurement cookies are used, Google&apos;s consent message asks for your choice. Until you choose, Google&apos;s tags on our site run with ad storage, ad personalization and analytics storage turned off.</p>
+              <p className="mt-2"><strong>Visitors in the EEA, UK and Switzerland:</strong> Google&apos;s tags on our site start with ad storage, ad user data, ad personalization and analytics storage turned off. Where Google&apos;s consent message is shown, they stay off unless you allow them there.</p>
               <p className="mt-2"><strong>Google Ads measurement:</strong> If we measure sign-ups from our own Google Ads campaigns, we ask first and only load that measurement if you allow it.</p>
             </section>
 

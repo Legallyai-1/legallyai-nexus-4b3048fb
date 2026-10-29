@@ -26,6 +26,11 @@ export function isGoogleCmpActive(win: Partial<Window> | undefined = typeof wind
   return Boolean(win && (win.googlefc || typeof win.__tcfapi === 'function'));
 }
 
+/** True when Google's own consent tool (googlefc) is loaded, so its privacy-choices message can be reopened. */
+export function isGoogleFcLoaded(win: Partial<Window> | undefined = typeof window === 'undefined' ? undefined : window) {
+  return Boolean(win?.googlefc);
+}
+
 /** True while Google's consent message is on screen. */
 export function isGoogleConsentMessageVisible(doc: Document | undefined = typeof document === 'undefined' ? undefined : document) {
   return Boolean(doc?.querySelector('.fc-consent-root, .fc-dialog-container'));

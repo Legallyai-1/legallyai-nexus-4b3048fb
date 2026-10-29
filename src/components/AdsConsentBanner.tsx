@@ -6,6 +6,8 @@ import { isGoogleCmpActive, isGoogleConsentMessageVisible } from "@/lib/consent"
 // Asks before loading Google Ads measurement. Renders nothing when Google Ads is not configured, and steps aside
 // whenever Google's certified consent tool (AdSense Privacy & messaging) is on the page, since that tool governs
 // consent for EEA/UK/CH visitors and the two prompts must never show at the same time.
+// Intended trade-off: where the CMP is present we don't record a choice here, so Google Ads conversion measurement
+// stays off for those visitors (privacy-conservative). Bridging the CMP's TCF decision into it is a possible follow-up.
 export function AdsConsentBanner() {
   const [needed, setNeeded] = useState(() => isGoogleAdsConfigured() && getAdsConsent() === null);
   const [googleCmp, setGoogleCmp] = useState(() => isGoogleCmpActive() || isGoogleConsentMessageVisible());
