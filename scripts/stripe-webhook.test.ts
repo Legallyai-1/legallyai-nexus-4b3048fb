@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { getSubscriptionTier, processVerifiedEvent, SUPPORTED_EVENTS } from '../api/webhooks/stripe.ts';
+import { failureReason, getSubscriptionTier, processVerifiedEvent, SUPPORTED_EVENTS } from '../api/webhooks/stripe.ts';
 
 function harness() {
   const state = { processed: false, pending: false, fail: false, status: 'active', syncs: [] as any[], logs: [] as any[], records: new Map<string, any>() };
@@ -68,4 +68,12 @@ test('distinct checkout events cannot reset a consumed document allowance', asyn
   h.state.processed = false;
   assert.equal((await h.run(h.event('checkout.session.async_payment_succeeded', 'evt_B'))).status, 200);
   assert.equal(h.state.records.size, 1); assert.equal(h.state.records.get('cs_A').metadata.documents_remaining, 0);
+});
+
+test('failed deliveries record a short, secret-free reason', async () => {
+  const h = harness(); h.state.fail = true; assert.equal((await h.run()).status, 503);
+  assert.match(h.state.logs.at(-1).processing_error, /retry required: Error: Simulated database failure$/);
+  assert.equal(failureReason(new Error('bad key sk_live_abc123 and eyJhbGciOi.x.y')), 'Error: bad key [redacted] and [redacted]');
+  assert.equal(failureReason('x'), 'UnknownError');
+  assert.ok(failureReason(new Error('a'.repeat(500))).length <= 200);
 });
