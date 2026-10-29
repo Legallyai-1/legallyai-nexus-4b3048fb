@@ -79,11 +79,21 @@ export function BillingAutomation() {
 
       // Entries already referenced by an invoice's items are treated as billed.
       const billedIds = new Set<string>();
-      const { data: invoiceRows } = await supabase
-        .from("invoices")
-        .select("items")
-        .eq("organization_id", organizationId);
-      for (const inv of invoiceRows ?? []) {
+      const PAGE = 1000;
+      const invoiceRows: { items: unknown }[] = [];
+      for (let from = 0; ; from += PAGE) {
+        const { data: page, error: invoiceError } = await supabase
+          .from("invoices")
+          .select("items")
+          .eq("organization_id", organizationId)
+          .order("id")
+          .range(from, from + PAGE - 1);
+        // Fail closed: without invoice data we can't tell what is already billed.
+        if (invoiceError) throw invoiceError;
+        invoiceRows.push(...(page ?? []));
+        if (!page || page.length < PAGE) break;
+      }
+      for (const inv of invoiceRows) {
         if (!Array.isArray(inv.items)) continue;
         for (const item of inv.items) {
           const id = (item as { time_entry_id?: unknown } | null)?.time_entry_id;
@@ -91,7 +101,8 @@ export function BillingAutomation() {
         }
       }
 
-      setTimeEntries((rows ?? []).map((r) => {
+      // Only unbilled entries are kept in state, so selection can never include billed ones.
+      setTimeEntries((rows ?? []).filter((r) => !billedIds.has(r.id)).map((r) => {
         const ms = new Date(r.clock_out as string).getTime() - new Date(r.clock_in).getTime();
         const hours = Math.max(0, Math.round((ms / 3_600_000) * 100) / 100);
         const caseRow = r.cases as { title?: string } | null;
@@ -103,7 +114,7 @@ export function BillingAutomation() {
           description: r.description ?? "",
           hours,
           rate: Number(r.hourly_rate ?? 0),
-          status: billedIds.has(r.id) ? "billed" : "unbilled",
+          status: "unbilled" as const,
         };
       }));
     } catch (error) {
@@ -189,9 +200,7 @@ export function BillingAutomation() {
 
       toast.success(`Generated invoice ${invoiceNumber} for $${selectedTotal.toLocaleString()}`);
       
-      setTimeEntries(prev => prev.map(e => 
-        e.selected ? { ...e, selected: false, status: "billed" } : e
-      ));
+      setTimeEntries(prev => prev.filter(e => !e.selected));
     } catch (error) {
       console.error("Invoice generation error:", error);
       toast.error(errorMessage(error, "Failed to generate invoice"));
@@ -306,7 +315,7 @@ export function BillingAutomation() {
                   <TableRow>
                     <TableHead className="w-12">
                       <Checkbox 
-                        checked={timeEntries.every(e => e.selected)}
+                        checked={timeEntries.length > 0 && timeEntries.every(e => e.selected)}
                         onCheckedChange={selectAll}
                       />
                     </TableHead>
