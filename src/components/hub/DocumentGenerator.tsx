@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { FileText, Sparkles, Download, Copy, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useDocumentExportEntitlement } from "@/hooks/useDocumentExportEntitlement";
 
 interface DocumentField {
   id: string;
@@ -42,6 +43,7 @@ export function DocumentGenerator({
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [generatedDocument, setGeneratedDocument] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const { canExport, requireExport } = useDocumentExportEntitlement();
 
   const colorClasses = {
     pink: "border-neon-pink/30 from-neon-pink/20",
@@ -109,7 +111,7 @@ Please create a complete, professional legal document that is ready for review. 
     toast.success("Copied to clipboard!");
   };
 
-  const handleDownload = () => {
+  const handleDownload = () => requireExport(() => {
     const blob = new Blob([generatedDocument], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -120,7 +122,7 @@ Please create a complete, professional legal document that is ready for review. 
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast.success("Document downloaded!");
-  };
+  });
 
   const renderField = (field: DocumentField) => {
     switch (field.type) {
@@ -260,7 +262,7 @@ Please create a complete, professional legal document that is ready for review. 
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleDownload}>
                   <Download className="h-4 w-4 mr-1" />
-                  Download
+                  {canExport ? "Download" : "Unlock download ($5)"}
                 </Button>
               </div>
             </CardTitle>
