@@ -98,14 +98,15 @@ export function CaseWorkflowManager({ caseId, organizationId = 'default-org' }: 
       };
 
       if (caseId) {
-        await supabase.from('case_tasks').insert({
+        const { error } = await supabase.from('case_tasks').insert({
           case_id: caseId,
           organization_id: organizationId,
           ...task
         });
+        if (error) throw error;
       }
 
-      setTasks([...tasks, task]);
+      setTasks(prev => [...prev, task]);
       setNewTask({ title: '', description: '', priority: 'medium', due_date: '' });
       setShowAddTask(false);
       toast.success('Task added successfully');
@@ -117,9 +118,10 @@ export function CaseWorkflowManager({ caseId, organizationId = 'default-org' }: 
   const updateTaskStatus = async (taskId: string, status: string) => {
     try {
       if (caseId) {
-        await supabase.from('case_tasks').update({ status }).eq('id', taskId);
+        const { error } = await supabase.from('case_tasks').update({ status }).eq('id', taskId).eq('case_id', caseId);
+        if (error) throw error;
       }
-      setTasks(tasks.map(t => t.id === taskId ? { ...t, status } : t));
+      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status } : t));
       toast.success('Task updated');
     } catch (error: any) {
       toast.error(error.message || 'Failed to update task');

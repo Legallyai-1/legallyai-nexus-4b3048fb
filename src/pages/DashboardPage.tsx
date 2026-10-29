@@ -10,13 +10,10 @@ import type { User } from "@supabase/supabase-js";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { AskLeePanel } from "@/components/dashboard/AskLeePanel";
 import { formatDistanceToNow } from "date-fns";
+import { ensureUserOrganization } from "@/lib/organizations";
+import { errorMessage } from "@/lib/mutationResult";
+import { formatAppointmentWhen, loadDashboardData, type DashboardStats } from "@/lib/dashboardData";
 
-interface DashboardStats {
-  activeCases: number;
-  clients: number;
-  upcomingAppointments: number;
-  pendingInvoices: number;
-}
 
 interface RecentActivity {
   id: string;
@@ -45,6 +42,7 @@ export default function DashboardPage() {
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [appointments, setAppointments] = useState<UpcomingAppointment[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -63,77 +61,42 @@ export default function DashboardPage() {
       if (!session?.user) {
         navigate("/auth");
       } else {
-        fetchDashboardData();
+        fetchDashboardData(session.user.id);
       }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (userId: string) => {
     setStatsLoading(true);
+    setLoadError(null);
     try {
-      // Fetch active cases count
-      const { count: casesCount } = await supabase
-        .from('cases')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'active');
-
-      // Fetch clients count
-      const { count: clientsCount } = await supabase
-        .from('clients')
-        .select('*', { count: 'exact', head: true });
-
-      // Fetch upcoming appointments
-      const today = new Date().toISOString();
-      const { data: appointmentsData, count: appointmentsCount } = await supabase
-        .from('appointments')
-        .select('id, title, start_time, clients(full_name)', { count: 'exact' })
-        .gte('start_time', today)
-        .order('start_time', { ascending: true })
-        .limit(5);
-
-      // Fetch pending invoices total
-      const { data: invoicesData } = await supabase
-        .from('invoices')
-        .select('amount')
-        .eq('status', 'pending');
-
-      const pendingTotal = invoicesData?.reduce((sum, inv) => sum + (inv.amount || 0), 0) || 0;
-
-      // Fetch recent case activity
-      const { data: recentCases } = await supabase
-        .from('cases')
-        .select('id, title, status, updated_at')
-        .order('updated_at', { ascending: false })
-        .limit(4);
-
-      setStats({
-        activeCases: casesCount || 0,
-        clients: clientsCount || 0,
-        upcomingAppointments: appointmentsCount || 0,
-        pendingInvoices: pendingTotal,
-      });
-
+      const organizationId = await ensureUserOrganization(userId);
+      const data = await loadDashboardData(supabase, organizationId);
+      setStats(data.stats);
       setAppointments(
-        (appointmentsData || []).map((apt: any) => ({
+        data.appointments.map((apt) => ({
           id: apt.id,
-          time: new Date(apt.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          client: apt.clients?.full_name || 'Unknown Client',
-          type: apt.title || 'Appointment',
+          time: formatAppointmentWhen(apt.startTime),
+          client: apt.clientName,
+          type: apt.title,
         }))
       );
-
       setRecentActivity(
-        (recentCases || []).map((c: any) => ({
+        data.recentCases.map((c) => ({
           id: c.id,
           action: `Case status: ${c.status}`,
           case_title: c.title,
-          time: formatDistanceToNow(new Date(c.updated_at), { addSuffix: true }),
+          time: formatDistanceToNow(new Date(c.updatedAt), { addSuffix: true }),
         }))
       );
+      if (data.failed.length) {
+        setLoadError(`Some figures couldn't load (${data.failed.join(", ")}). Refresh to try again.`);
+      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      setLoadError(errorMessage(error, "We couldn't load your dashboard. Refresh to try again."));
     } finally {
       setStatsLoading(false);
     }
@@ -178,6 +141,9 @@ export default function DashboardPage() {
                 <h2 id="live-ai" className="font-display text-xl font-semibold">Live AI Processing</h2>
                 <Button size="sm" className="gold-tile border-0 font-semibold hover:brightness-105" onClick={() => navigate("/chat")}><Plus className="h-4 w-4 mr-1" /> New AI Progress</Button>
               </div>
+              {loadError && (
+                <p role="alert" className="mt-2 rounded-lg border border-amber-300/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">{loadError}</p>
+              )}
               <p className="mt-1 text-sm text-white/60">Welcome back{firstName ? `, ${firstName}` : ""}. Here is what Lee is tracking for your practice.</p>
               <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <div className="glass-panel rounded-2xl p-5">
@@ -204,7 +170,7 @@ export default function DashboardPage() {
                   <div className="mt-4 flex items-center gap-3">
                     <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10"><BadgeCheck className="h-5 w-5 text-emerald-300" aria-hidden="true" /></span>
                     <div>
-                      <p className="text-sm font-medium">{appointments.length ? `Next: ${appointments[0].type} at ${appointments[0].time}` : "Nothing scheduled"}</p>
+                      <p className="text-sm font-medium">{appointments.length ? `Next: ${appointments[0].type}, ${appointments[0].time}` : "Nothing scheduled"}</p>
                       <p className="text-xs text-white/60">{stats.upcomingAppointments} upcoming</p>
                     </div>
                   </div>

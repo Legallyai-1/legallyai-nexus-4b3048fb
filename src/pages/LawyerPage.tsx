@@ -109,23 +109,29 @@ export default function LawyerPage() {
         toast.success("Welcome back!");
         navigate("/dashboard");
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/dashboard`,
+            // Same metadata key the main signup (AuthPage) uses for the account type.
             data: {
-              role: "lawyer",
+              user_type: "lawyer",
             },
           },
         });
         if (error) throw error;
-        toast.success("Account created! You can now sign in.");
+        if (data.session) {
+          toast.success("Account created! Welcome to LegallyAI.");
+          navigate("/dashboard");
+          return;
+        }
+        toast.success("Check your email to confirm your account, then sign in.");
         setIsLogin(true);
         setErrors({});
       }
-    } catch (error: any) {
-      toast.error(error.message || "Authentication failed");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error && error.message ? error.message : "Authentication failed");
     } finally {
       setIsLoading(false);
     }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { canRenderAds, getAdClient, queueAdsenseSlot, trackAdPerformance } from './adsense';
+import { shouldShowAds } from '@/lib/subscription';
+import { canRenderAds, getAdClient, isValidAdSlot, queueAdsenseSlot, trackAdPerformance } from './adsense';
 
 interface SidebarAdProps {
   slot: string;
@@ -16,7 +17,8 @@ export default function SidebarAd({ slot, className = '' }: SidebarAdProps) {
   const adRef = useRef<HTMLDivElement>(null);
   const isAdLoaded = useRef(false);
   const [loadFailed, setLoadFailed] = useState(false);
-  const adsenseEnabled = canRenderAds();
+  // Paying subscribers get an ad-free app, same rule as AdBanner.
+  const adsenseEnabled = canRenderAds() && shouldShowAds() && isValidAdSlot(slot);
 
   useEffect(() => {
     if (!adsenseEnabled || isAdLoaded.current || loadFailed) return;

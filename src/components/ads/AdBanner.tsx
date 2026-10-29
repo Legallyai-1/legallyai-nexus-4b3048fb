@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { shouldShowAds } from '@/lib/subscription';
-import { canRenderAds, getAdClient, queueAdsenseSlot, trackAdPerformance } from './adsense';
+import { canRenderAds, getAdClient, isValidAdSlot, queueAdsenseSlot, trackAdPerformance } from './adsense';
 
 interface AdBannerProps {
   slot: string;
@@ -18,7 +18,7 @@ export default function AdBanner({ slot, format = 'auto', className = '' }: AdBa
   const adRef = useRef<HTMLDivElement>(null);
   const isAdLoaded = useRef(false);
   const [loadFailed, setLoadFailed] = useState(false);
-  const adsenseEnabled = canRenderAds() && shouldShowAds();
+  const adsenseEnabled = canRenderAds() && shouldShowAds() && isValidAdSlot(slot);
 
   useEffect(() => {
     if (!adsenseEnabled || isAdLoaded.current || loadFailed) return;

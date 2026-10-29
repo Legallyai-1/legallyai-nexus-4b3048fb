@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureUserOrganization } from "@/lib/organizations";
 import { toast } from "sonner";
 import { 
   Shield, DollarSign, CheckCircle, AlertTriangle, RefreshCw,
@@ -64,14 +65,18 @@ export function TrustAccounting() {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const organizationId = await ensureUserOrganization(user.id);
+
       const [accountsRes, transactionsRes] = await Promise.all([
-        supabase.from('trust_accounts').select('*').order('created_at', { ascending: false }),
+        supabase.from('trust_accounts').select('*').eq('organization_id', organizationId).order('created_at', { ascending: false }),
         supabase.from('trust_transactions').select(`
           *,
           matter:matters(name),
-          client:clients(full_name)
-        `).order('transaction_date', { ascending: false }).limit(50)
+          client:clients(full_name),
+          trust_account:trust_accounts!inner(organization_id)
+        `).eq('trust_account.organization_id', organizationId).order('transaction_date', { ascending: false }).limit(50)
       ]);
 
       if (accountsRes.error) throw accountsRes.error;
@@ -95,21 +100,12 @@ export function TrustAccounting() {
         return;
       }
 
-      const { data: orgMember } = await supabase
-        .from('organization_members')
-        .select('organization_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (!orgMember) {
-        toast.error('You must belong to an organization');
-        return;
-      }
+      const organizationId = await ensureUserOrganization(user.id);
 
       const { error } = await supabase
         .from('trust_accounts')
         .insert({
-          organization_id: orgMember.organization_id,
+          organization_id: organizationId,
           account_name: newAccount.account_name,
           account_number: newAccount.account_number || null,
           bank_name: newAccount.bank_name || null,
@@ -130,7 +126,7 @@ export function TrustAccounting() {
       fetchData();
     } catch (error) {
       console.error('Error creating account:', error);
-      toast.error('Failed to create account');
+      toast.error(error instanceof Error && error.message ? error.message : 'Failed to create account');
     }
   };
 
@@ -144,21 +140,12 @@ export function TrustAccounting() {
         return;
       }
 
-      const { data: orgMember } = await supabase
-        .from('organization_members')
-        .select('organization_id')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
-
-      if (!orgMember) {
-        toast.error('You must belong to an organization');
-        return;
-      }
+      const organizationId = await ensureUserOrganization(session.user.id);
 
       const response = await supabase.functions.invoke('business-hub', {
         body: {
           action: 'trust-reconciliation',
-          organizationId: orgMember.organization_id
+          organizationId
         }
       });
 

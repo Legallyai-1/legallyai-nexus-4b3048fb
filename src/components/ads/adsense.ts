@@ -61,3 +61,5 @@ export function queueAdsenseSlot() {
   window.adsbygoogle.push({});
   return true;
 }
+
+export { isValidAdSlot } from '@/lib/adSlots';
