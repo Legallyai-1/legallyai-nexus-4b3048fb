@@ -172,7 +172,7 @@ export function LexiAssistant({ userType = "individual", userName = "there" }: L
       <button
         onClick={() => setIsExpanded(false)}
         aria-label="Close assistant"
-        className="absolute top-4 right-4 p-1 rounded-full hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
+        className="absolute top-4 right-4 z-20 p-1 rounded-full hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
       >
         <X className="w-4 h-4" />
       </button>
