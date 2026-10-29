@@ -4,7 +4,7 @@ import { HubBrand } from "@/components/brand/HubBrand";
 import { 
   Home, MessageSquare, FileText, Users, Calendar, Clock, 
   DollarSign, Briefcase, Shield, GraduationCap, Phone, 
-  Headphones, Settings, LogOut, Scale, BarChart3, Gavel,
+  Headphones, Settings, LogOut, LogIn, Scale, BarChart3, Gavel,
   Heart, Building2, Search, Bell, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -108,6 +108,8 @@ export function AppSidebar({ userRole = "client", notificationCount = 0 }: AppSi
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
+    return () => sub.subscription.unsubscribe();
   }, []);
 
   const handleLogout = async () => {
@@ -203,16 +205,29 @@ export function AppSidebar({ userRole = "client", notificationCount = 0 }: AppSi
           <Settings className="h-4 w-4" />
           {!collapsed && <span>Settings</span>}
         </button>
-        <button
-          onClick={handleLogout}
-          className={cn(
-            "flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all",
-            collapsed && "justify-center px-2"
-          )}
-        >
-          <LogOut className="h-4 w-4" />
-          {!collapsed && <span>Logout</span>}
-        </button>
+        {user ? (
+          <button
+            onClick={handleLogout}
+            className={cn(
+              "flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all",
+              collapsed && "justify-center px-2"
+            )}
+          >
+            <LogOut className="h-4 w-4" />
+            {!collapsed && <span>Logout</span>}
+          </button>
+        ) : (
+          <button
+            onClick={() => navigate("/login")}
+            className={cn(
+              "flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-all",
+              collapsed && "justify-center px-2"
+            )}
+          >
+            <LogIn className="h-4 w-4" />
+            {!collapsed && <span>Sign in</span>}
+          </button>
+        )}
       </div>
       </div>
     </aside>

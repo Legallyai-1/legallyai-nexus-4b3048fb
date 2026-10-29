@@ -98,6 +98,18 @@ export default function PayrollPage() {
     );
   };
 
+  // Marks every pending entry as processed in this view (same as the per-row action).
+  // LegallyAI does not move money; payments still run through the firm's payroll provider.
+  const runPayroll = () => {
+    const pending = payrollEntries.filter(e => e.status === "pending").length;
+    if (pending === 0) {
+      toast.info("No pending payroll entries to run");
+      return;
+    }
+    setPayrollEntries(entries => entries.map(e => e.status === "pending" ? { ...e, status: "processed" as const } : e));
+    toast.success(`Marked ${pending} payroll ${pending === 1 ? "entry" : "entries"} as processed`);
+  };
+
   const exportPayroll = () => {
     const csv = [
       ["Employee", "Hours", "Rate", "Gross", "Deductions", "Net", "Period", "Status"].join(","),
@@ -142,7 +154,7 @@ export default function PayrollPage() {
               <Download className="h-4 w-4" />
               Export
             </Button>
-            <Button variant="neon-green" className="gap-2">
+            <Button variant="neon-green" className="gap-2" onClick={runPayroll}>
               <Plus className="h-4 w-4" />
               Run Payroll
             </Button>

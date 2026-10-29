@@ -306,8 +306,7 @@ export default function GeneratePage() {
 
   const handleCopy = () => {
     if (generatedDoc) {
-      navigator.clipboard.writeText(generatedDoc);
-      toast.success("Copied to clipboard!");
+      navigator.clipboard.writeText(generatedDoc).then(() => toast.success("Copied to clipboard!")).catch(() => toast.error("Couldn't copy. Select the text and copy it manually."));
     }
   };
 

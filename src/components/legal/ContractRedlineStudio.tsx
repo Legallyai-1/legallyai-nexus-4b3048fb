@@ -85,10 +85,14 @@ export function ContractRedlineStudio() {
   };
 
   const handleCopy = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    toast.success("Clause copied to clipboard!");
-    setTimeout(() => setCopiedId(null), 2000);
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setCopiedId(id);
+        toast.success("Clause copied to clipboard!");
+        setTimeout(() => setCopiedId(null), 2000);
+      })
+      .catch(() => toast.error("Couldn't copy. Select the clause text and copy it manually."));
   };
 
   const handleExport = () => {

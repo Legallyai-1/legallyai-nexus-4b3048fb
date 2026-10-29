@@ -125,8 +125,7 @@ export function PerplexityLegalSearch() {
 
   const handleCopy = () => {
     if (!answer) return;
-    navigator.clipboard.writeText(`LegallyAI Nexus Search (${activeQuery}):\n\n${answer}`);
-    toast.success("Answer copied to clipboard!");
+    navigator.clipboard.writeText(`LegallyAI Nexus Search (${activeQuery}):\n\n${answer}`).then(() => toast.success("Answer copied to clipboard!")).catch(() => toast.error("Couldn't copy. Select the text and copy it manually."));
   };
 
   return (

@@ -111,6 +111,9 @@ export default function QuizPage() {
       if (quizzes && quizzes.length > 0) {
         const randomQuiz = quizzes[Math.floor(Math.random() * quizzes.length)];
         await fetchQuizData(randomQuiz.id);
+      } else {
+        // No quizzes published yet: show the empty state instead of an endless spinner.
+        setIsLoading(false);
       }
     } catch (error) {
       console.error('Error fetching random quiz:', error);
@@ -233,7 +236,9 @@ export default function QuizPage() {
             <Card className="glass-card p-8 text-center max-w-md">
               <Brain className="h-16 w-16 text-neon-purple mx-auto mb-4" />
               <h2 className="text-2xl font-display font-bold text-foreground mb-4">No Quiz Available</h2>
-              <p className="text-muted-foreground mb-6">This quiz doesn't have any questions yet.</p>
+              <p className="text-muted-foreground mb-6">
+                {quizId ? "This quiz doesn't have any questions yet." : "No quizzes are published yet. Check back soon."}
+              </p>
               <Button variant="neon" onClick={() => navigate("/legal-academy")}>
                 Back to Academy
               </Button>
