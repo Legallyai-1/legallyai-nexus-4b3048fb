@@ -12,9 +12,11 @@ import {
   FolderOpen, Send, Loader2, CheckCircle2, Eye, Trash2,
   File, Image, Video, FileSpreadsheet, Copy, ExternalLink
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { useDocumentExportEntitlement } from "@/hooks/useDocumentExportEntitlement";
+import { requestHubDocument, useDocumentCheckout } from "@/hooks/useHubDocumentGeneration";
+import type { GeneratedDocumentResult } from "@/lib/document-export-entitlement";
+import { HubDocumentStatus } from "@/components/hub/HubDocumentStatus";
 
 interface Document {
   id: string;
@@ -26,6 +28,8 @@ interface Document {
   folder?: string;
   content?: string;
   shared?: boolean;
+  /** Server entitlement for AI-generated documents (absent for user uploads). */
+  entitlement?: GeneratedDocumentResult;
 }
 
 interface DocuAIProps {
@@ -48,7 +52,8 @@ export function DocuAI({
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [shareEmail, setShareEmail] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { requireExport } = useDocumentExportEntitlement();
+  const navigate = useNavigate();
+  const startCheckout = useDocumentCheckout();
 
   const colorClass = `neon-${colorVariant}`;
 
@@ -70,34 +75,39 @@ export function DocuAI({
 
     setIsGenerating(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-document', {
-        body: {
-          prompt: prompt,
-          type: hubContext,
-          systemContext: contextPrompts[hubContext] || contextPrompts.general
-        }
+      const outcome = await requestHubDocument({
+        prompt: prompt,
+        type: hubContext,
+        systemContext: contextPrompts[hubContext] || contextPrompts.general
       });
 
-      if (error) throw error;
+      if (!outcome.result) {
+        toast.error(outcome.error || "Failed to generate document. Please try again.");
+        if (outcome.needsSignIn) navigate("/auth");
+        return;
+      }
 
+      const result = outcome.result;
+      const label = hubContext.charAt(0).toUpperCase() + hubContext.slice(1);
       const newDoc: Document = {
         id: `doc-${Date.now()}`,
-        name: `${hubContext.charAt(0).toUpperCase() + hubContext.slice(1)} Document - ${new Date().toLocaleDateString()}`,
-        type: 'application/pdf',
-        size: data.document?.length || 5000,
+        name: `${label} ${result.mode === "template" ? "Free Worksheet" : "Document"} - ${new Date().toLocaleDateString()}`,
+        type: 'text/plain',
+        size: result.document.length,
         uploadedAt: new Date(),
         signed: false,
-        content: data.document
+        content: result.document,
+        entitlement: result
       };
 
       setDocuments(prev => [newDoc, ...prev]);
       setSelectedDoc(newDoc);
       onDocumentGenerated?.(newDoc);
-      toast.success("Document generated successfully!");
+      toast.success(result.mode === "template" ? "Free worksheet ready" : "Document generated successfully!");
       setPrompt("");
       setActiveTab("manage");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to generate document");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error && error.message ? error.message : "Failed to generate document");
     } finally {
       setIsGenerating(false);
     }
@@ -160,11 +170,20 @@ export function DocuAI({
     toast.success("Document downloaded");
   };
 
-  // AI-generated documents (they carry content) go through the same export
-  // entitlement as /generate; user-uploaded file entries do not.
+  // Generated documents (they carry content) export only when the server unlocked
+  // that exact document; user-uploaded file entries are not gated.
+  const canExportDoc = (doc: Document) => !doc.content || doc.entitlement?.exportUnlocked === true;
+
   const handleDownload = (doc: Document) => {
-    if (doc.content) requireExport(() => downloadDocument(doc));
-    else downloadDocument(doc);
+    if (!canExportDoc(doc)) {
+      toast.error(
+        doc.entitlement?.mode === "template"
+          ? "This free worksheet can't be downloaded. Buy the AI-drafted document to download it."
+          : "Download isn't unlocked for this document."
+      );
+      return;
+    }
+    downloadDocument(doc);
   };
 
   const handleDelete = (doc: Document) => {
@@ -309,7 +328,7 @@ export function DocuAI({
                     )}
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); handleDownload(doc); }}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" disabled={!canExportDoc(doc)} aria-label="Download" onClick={(e) => { e.stopPropagation(); handleDownload(doc); }}>
                       <Download className="w-3 h-3" />
                     </Button>
                     {!doc.signed && (
@@ -324,6 +343,10 @@ export function DocuAI({
                 </div>
               ))}
             </div>
+          )}
+
+          {selectedDoc?.entitlement && (
+            <HubDocumentStatus result={selectedDoc.entitlement} onBuy={startCheckout} />
           )}
 
           {selectedDoc?.content && (
@@ -418,7 +441,7 @@ export function DocuAI({
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" className="gap-2" onClick={() => handleDownload(selectedDoc)}>
+                <Button variant="outline" className="gap-2" disabled={!canExportDoc(selectedDoc)} onClick={() => handleDownload(selectedDoc)}>
                   <Download className="w-4 h-4" /> Download
                 </Button>
                 <Button variant="outline" className="gap-2" onClick={() => {
