@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Scale, Sparkles, ArrowRight, CheckCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { trackSignUpConversion } from "@/lib/googleAds";
 import { supabase } from "@/integrations/supabase/client";
 import { signupSchema } from "@/lib/validations/auth";
 import { getInviteAcceptanceReturnTo } from "@/lib/invite";
@@ -81,6 +82,7 @@ export default function SignupPage() {
         },
       });
       if (error) throw error;
+      trackSignUpConversion();
       toast.success(data.session
         ? "Account created successfully."
         : "Check your email to confirm your account before signing in.");

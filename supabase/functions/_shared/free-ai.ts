@@ -1,11 +1,14 @@
-// Free generative AI providers for LegallyAI (no paid plan required).
+// Generative AI providers for LegallyAI. Free providers are always tried first.
 // Every provider here uses the OpenAI-compatible chat completions API.
-// Configure any of these Supabase secrets; the first one that works is used:
+// Configure any of these Supabase secrets; they are tried in this order and the first one that works is used:
 //   GROQ_API_KEY        free plan, open-source models (default model: openai/gpt-oss-120b)
 //   OPENROUTER_API_KEY  free ":free" model variants (set OPENROUTER_MODEL to a :free model)
 //   FREE_AI_API_KEY + FREE_AI_BASE_URL + FREE_AI_MODEL  any other OpenAI-compatible endpoint
+//   XAI_API_KEY / GROK_API_KEY  OPTIONAL PAID fallback (xAI Grok, billed per token; default model grok-3-mini).
+//                       Only used when no free provider is configured or all free providers fail.
+//                       Leave it unset to keep the chat at $0.
 // If no key is set, or every provider fails or hits its daily limit, callers fall back
-// to the in-house legal guide, so the chat keeps working at $0.
+// to the in-house legal guide, so the chat keeps working at $0 without the paid xAI key.
 
 export interface FreeProvider {
   name: string;
@@ -32,6 +35,21 @@ export function getFreeProviders(env: Env): FreeProvider[] {
   const genericModel = env.get("FREE_AI_MODEL");
   if (genericKey && genericUrl && genericModel && genericUrl.startsWith("https://")) {
     providers.push({ name: "custom", baseUrl: genericUrl.replace(/\/+$/, ""), apiKey: genericKey, model: genericModel });
+  }
+  // xAI Grok is a paid API, so it is tried only after every free provider above.
+  const xai = ["XAI_API_KEY", "GROK_API_KEY", "Grok API Key", "xAI API Key"]
+    .map((name) => env.get(name)?.trim())
+    .find((value) => value && value.length > 0);
+  if (xai) {
+    const xaiBase = (env.get("XAI_BASE_URL") || "https://api.x.ai/v1").replace(/\/+$/, "");
+    if (xaiBase.startsWith("https://")) {
+      providers.push({
+        name: "xai",
+        baseUrl: xaiBase,
+        apiKey: xai,
+        model: env.get("XAI_MODEL") || env.get("GROK_MODEL") || "grok-3-mini",
+      });
+    }
   }
   return providers;
 }

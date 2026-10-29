@@ -136,26 +136,26 @@ export function Navbar() {
           {/* Desktop CTA */}
           <div className="hidden lg:flex items-center gap-3">
             <ActiveOrganizationSwitcher />
-            <Link to="/login">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                className="text-muted-foreground hover:text-foreground hover:bg-white/5"
-              >
-                Sign In
-              </Button>
-            </Link>
-            <Link to="/signup">
-              <Button 
-                size="sm"
-                className="relative overflow-hidden bg-gradient-to-r from-legal-gold to-legal-gold/80 text-background hover:from-legal-gold/90 hover:to-legal-gold/70 border-0 shadow-[0_0_20px_hsl(var(--legal-gold)/0.3)]"
-              >
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground hover:bg-white/5"
+            >
+              <Link to="/login">Sign In</Link>
+            </Button>
+            <Button
+              asChild
+              size="sm"
+              className="relative overflow-hidden bg-gradient-to-r from-legal-gold to-legal-gold/80 text-background hover:from-legal-gold/90 hover:to-legal-gold/70 border-0 shadow-[0_0_20px_hsl(var(--legal-gold)/0.3)]"
+            >
+              <Link to="/signup">
                 <Zap className="h-4 w-4 mr-1" />
                 Get Started
                 {/* Shine effect */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
 
           {/* Mobile Menu Button */}

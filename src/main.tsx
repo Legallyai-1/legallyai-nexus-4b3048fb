@@ -6,6 +6,10 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/sonner';
 import App from './App';
 import './index.css';
+import { initGoogleAds } from '@/lib/googleAds';
+import { AdsConsentBanner } from '@/components/AdsConsentBanner';
+
+initGoogleAds();
 
 const queryClient = new QueryClient();
 
@@ -16,6 +20,7 @@ createRoot(document.getElementById('root')!).render(
         <BrowserRouter>
           <App />
           <Toaster />
+          <AdsConsentBanner />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

@@ -1,0 +1,44 @@
+stages:
+  - test
+  - browser_audit
+
+unit_and_regression_tests:
+  stage: test
+  image: node:22-bookworm
+  script:
+    - npm ci --ignore-scripts --no-audit --no-fund
+    - node --experimental-strip-types --test scripts/auth-validation.test.ts scripts/auth-redirect.test.ts scripts/billing-ownership.test.ts scripts/stripe-webhook.test.ts scripts/stripe-webhook-boundaries.test.ts
+    - node --test scripts/legal-chat-protocol.test.mjs scripts/legal-knowledge.test.mjs scripts/free-ai-engine.test.mjs scripts/lee-gemini.test.mjs
+    - npm run build
+
+# Runs the mocked login audit against a local preview of THIS commit's build (not production),
+# so the pipeline actually verifies the code in the MR. Auth token requests are mocked by the audit.
+interactive_login_audit:
+  stage: browser_audit
+  image: mcr.microsoft.com/playwright:v1.56.1-noble
+  variables:
+    # Public project URL so the audit's /auth/v1/token mock matches; the key is a placeholder
+    # because every token POST is intercepted and all other writes are blocked.
+    VITE_SUPABASE_URL: "https://whdljtbtqisoszbrzdwq.supabase.co"
+    VITE_SUPABASE_ANON_KEY: "qa-placeholder-anon-key"
+    VITE_ENABLE_ADSENSE: "false"
+    VITE_ENABLE_PAYMENTS: "false"
+    QA_BASE_URL: "http://127.0.0.1:4173"
+  script:
+    - npm ci --ignore-scripts --no-audit --no-fund
+    - npm run build
+    - npm install --prefix "$CI_PROJECT_DIR/.playwright-qa" --ignore-scripts --no-audit --no-fund playwright@1.56.1
+    - (npx vite preview --host 127.0.0.1 --port 4173 --strictPort > preview.log 2>&1 &)
+    - node -e "const t=Date.now();(async function w(){try{const r=await fetch(process.env.QA_BASE_URL+'/login');if(r.ok)return}catch{}if(Date.now()-t>60000){console.error('preview server did not start');process.exit(1)}setTimeout(w,1000)})()"
+    - AUDIT_STATUS=0
+    - QA_PLAYWRIGHT_PATH="$CI_PROJECT_DIR/.playwright-qa/node_modules/playwright/index.mjs" node scripts/interactive-login-audit.mjs || AUDIT_STATUS=$?
+    - mkdir -p reports/qa
+    - cp interactive-login-results/report.json reports/qa/interactive-login.json || true
+    - exit "$AUDIT_STATUS"
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - interactive-login-results/
+      - reports/qa/interactive-login.json
+      - preview.log
