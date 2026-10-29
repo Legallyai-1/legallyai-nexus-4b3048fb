@@ -10,20 +10,38 @@ export const SUPPORTED_EVENTS = new Set([
   'customer.subscription.updated', 'customer.subscription.deleted',
   'customer.subscription.paused', 'customer.subscription.resumed',
 ]);
-const PRICES: Record<string, { tier: 'premium' | 'pro'; amount: number }> = {
+// Solo and Enterprise sync as the 'pro' (Firm) tier; firm-access.ts tells them apart by price ID.
+const PRICES: Record<string, { tier: 'premium' | 'pro'; amount: number; extraSeats?: boolean }> = {
   price_1Sdfqp0QhWGUtGKvcQuWONuB: { tier: 'premium', amount: 999 },
-  price_1SckV70QhWGUtGKvvg1tH7lu: { tier: 'pro', amount: 9900 },
+  price_1UVwxE0QhWGUtGKv3tjz0A3I: { tier: 'pro', amount: 2900 }, // Solo
+  price_1SckV70QhWGUtGKvvg1tH7lu: { tier: 'pro', amount: 9900, extraSeats: true }, // Firm
+  price_1UVwxL0QhWGUtGKvpqH8gbUR: { tier: 'pro', amount: 29900, extraSeats: true }, // Enterprise
 };
+const EXTRA_SEAT_PRICE = 'price_1UVwxO0QhWGUtGKvUKZM9SCE';
 const DOCUMENT_PRICE = 'price_1SckVt0QhWGUtGKvl9YdmQqk';
 const idOf = (value: unknown): string | null => typeof value === 'string' ? value
   : value && typeof value === 'object' && 'id' in value && typeof value.id === 'string' ? value.id : null;
+const isMonthly = (price: Stripe.Price, amount: number) => price.currency === 'usd' && price.unit_amount === amount &&
+  price.recurring?.interval === 'month' && price.recurring.interval_count === 1;
+const isPlanItem = (item: Stripe.SubscriptionItem) => Object.prototype.hasOwnProperty.call(PRICES, item.price.id);
+
+/** The plan line of a subscription: the one item on a known plan price (extra-seat lines are add-ons). */
+export function getPlanItem(subscription: Stripe.Subscription): Stripe.SubscriptionItem | undefined {
+  const plans = subscription.items.data.filter(isPlanItem);
+  return plans.length === 1 ? plans[0] : subscription.items.data[0];
+}
 
 export function getSubscriptionTier(subscription: Stripe.Subscription): 'free' | 'premium' | 'pro' {
-  if (subscription.items.data.length !== 1) return 'free';
-  const price = subscription.items.data[0].price;
-  const expected = Object.prototype.hasOwnProperty.call(PRICES, price.id) ? PRICES[price.id] : undefined;
-  return expected && price.currency === 'usd' && price.unit_amount === expected.amount &&
-    price.recurring?.interval === 'month' && price.recurring.interval_count === 1 ? expected.tier : 'free';
+  const items = subscription.items.data;
+  const plans = items.filter(isPlanItem);
+  if (plans.length !== 1 || (plans[0].quantity ?? 1) !== 1) return 'free';
+  const expected = PRICES[plans[0].price.id];
+  if (!isMonthly(plans[0].price, expected.amount)) return 'free';
+  const addOns = items.filter((item) => item !== plans[0]);
+  if (addOns.length > 1) return 'free';
+  if (addOns.length === 1 && !(expected.extraSeats && addOns[0].price.id === EXTRA_SEAT_PRICE &&
+    isMonthly(addOns[0].price, 2500))) return 'free';
+  return expected.tier;
 }
 
 function getClients() {
@@ -60,7 +78,7 @@ async function syncSubscription(stripe: Stripe, db: Db, event: Stripe.Event, id:
   const customerId = idOf(subscription.customer);
   if (!customerId) throw new Error('Subscription customer missing');
   const userId = await resolveOwner(stripe, db, customerId, [fallback, subscription.metadata?.user_id]);
-  const item = subscription.items.data[0];
+  const item = getPlanItem(subscription);
   if (!item) throw new Error('Subscription item missing');
   const status = ['active', 'trialing', 'past_due', 'canceled', 'unpaid'].includes(subscription.status) ? subscription.status : 'inactive';
   await db.rpc('sync_stripe_subscription_state', {

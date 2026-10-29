@@ -28,7 +28,7 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
   "/": DEFAULT_SEO,
   "/chat": pub("Ask Lee – free AI legal help | LegallyAI", "Ask Lee a legal question in plain English and get next steps, forms and deadlines to check. Legal information, not legal advice."),
   "/lawyers": pub("AI for law firms, solo to enterprise | LegallyAI", "Case files, client portal, AI drafting, contract redlines, research, billing and trust accounting in one workspace for your firm."),
-  "/pricing": pub("Pricing – free, Premium and Firm plans | LegallyAI", "Start free with Lee. Premium is $9.99/mo, documents $5, Firm $99/mo with a 7-day trial on your first subscription. Solo and Enterprise: waitlist."),
+  "/pricing": pub("Pricing – individuals and law firms | LegallyAI", "Start free with Lee. Premium $9.99/mo, documents $5. Law firms: Solo $29/mo, Firm $99/mo (3 seats), Enterprise $299/mo (10 seats), extra seats $25/mo."),
   "/generate": pub("AI legal document generator | LegallyAI", "Draft letters, motions, agreements and court forms with Lee, then review and edit before you file or send."),
   "/contract-review": pub("AI contract review and redline | LegallyAI", "Paste a lease, NDA or employment agreement. Lee flags risky clauses and suggests fairer wording you can export."),
   "/settlement-estimator": pub("Settlement estimator | LegallyAI", "Get a rough settlement range for your claim from the details you enter, with the factors that move the number."),

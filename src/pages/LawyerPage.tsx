@@ -27,11 +27,10 @@ const features = [
 ];
 
 // Plans by firm size. Prices match the published pricing; checkout lives on /pricing.
-const SALES_MAILTO = "mailto:support@legallyai.ai?subject=LegallyAI%20firm%20plan%20question";
 const plans = [
-  { name: "Solo", price: "Contact us", period: "", seats: "Working alone? The Firm plan covers you today", points: ["Case workspace", "Client portal", "AI drafting & hearing prep"], cta: "Contact us", href: SALES_MAILTO },
-  { name: "Firm", price: "$99", period: "/month", seats: "Your firm's shared workspace", points: ["Case files & client portal", "AI drafting, redlines & research", "Billing & trust accounting"], cta: "Start 7-day free trial", to: "/pricing?plan=firm", highlight: true },
-  { name: "Enterprise", price: "Contact sales", period: "", seats: "Larger firms", points: ["More seats", "Higher AI limits", "Onboarding help"], cta: "Contact sales", href: SALES_MAILTO },
+  { name: "Solo", price: "$29", period: "/month", seats: "1 seat for one attorney or paralegal", points: ["Case workspace", "Client portal", "AI drafting & hearing prep"], cta: "Start 7-day free trial", to: "/pricing?plan=solo" },
+  { name: "Firm", price: "$99", period: "/month", seats: "3 seats included, extra seats $25/month", points: ["Case files & client portal", "AI drafting, redlines & research", "Billing & trust accounting"], cta: "Start 7-day free trial", to: "/pricing?plan=firm", highlight: true },
+  { name: "Enterprise", price: "$299", period: "/month", seats: "10 seats included, extra seats $25/month", points: ["Everything in Firm", "Room for larger teams", "Same 7-day first-subscription trial"], cta: "Start 7-day free trial", to: "/pricing?plan=enterprise" },
 ];
 
 // Factual statements about how the app handles data today. No certifications are claimed.
@@ -200,13 +199,9 @@ export default function LawyerPage() {
                       <li key={point} className="flex items-center gap-2 text-sm"><Check className="metal-icon h-4 w-4 shrink-0" aria-hidden="true" />{point}</li>
                     ))}
                   </ul>
-                  {plan.href ? (
-                    <Button asChild variant="outline" className="mt-5 bg-white/70"><a href={plan.href}>{plan.cta}</a></Button>
-                  ) : (
-                    <Button asChild className={`mt-5 ${plan.highlight ? "gold-tile border-0 font-semibold" : ""}`} variant={plan.highlight ? "default" : "outline"}>
-                      <Link to={plan.to!}>{plan.cta}</Link>
-                    </Button>
-                  )}
+                  <Button asChild className={`mt-5 ${plan.highlight ? "gold-tile border-0 font-semibold" : ""}`} variant={plan.highlight ? "default" : "outline"}>
+                    <Link to={plan.to}>{plan.cta}</Link>
+                  </Button>
                 </div>
               ))}
             </div>

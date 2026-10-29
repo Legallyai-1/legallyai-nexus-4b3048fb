@@ -89,7 +89,7 @@ test('every price the UI sells is allowlisted server-side and fulfilled by the w
   const sold = new Set([...ids(read('src/pages/PricingPage.tsx')), ...ids(read('src/lib/document-export-entitlement.ts'))]);
   const allowed = ids(read('supabase/functions/_shared/create-checkout-handler.ts'));
   const webhook = ids(read('api/webhooks/stripe.ts'));
-  assert.equal(sold.size, 3);
+  assert.equal(sold.size, 5); // Premium, Document, Solo, Firm, Enterprise (extra seats are added server-side)
   for (const id of sold) {
     assert.ok(allowed.has(id), `${id} missing from create-checkout allowlist`);
     assert.ok(webhook.has(id), `${id} not fulfilled by the webhook`);

@@ -2,11 +2,21 @@
 import { getCheckoutCustomerOptions } from "./checkout-customer.ts";
 
 const origins = new Set(["https://legallyai.ai", "https://www.legallyai.ai"]);
-const prices: Record<string, { tier: string; amount: number; mode: "subscription" | "payment" }> = {
+// Solo and Enterprise sync as the "pro" (Firm) tier; the price ID tells them apart (see firm-access.ts).
+const prices: Record<string, { tier: string; amount: number; mode: "subscription" | "payment"; extraSeats?: boolean }> = {
   price_1Sdfqp0QhWGUtGKvcQuWONuB: { tier: "premium", amount: 999, mode: "subscription" },
-  price_1SckV70QhWGUtGKvvg1tH7lu: { tier: "pro", amount: 9900, mode: "subscription" },
+  price_1UVwxE0QhWGUtGKv3tjz0A3I: { tier: "pro", amount: 2900, mode: "subscription" }, // Solo, 1 seat
+  price_1SckV70QhWGUtGKvvg1tH7lu: { tier: "pro", amount: 9900, mode: "subscription", extraSeats: true }, // Firm, 3 seats
+  price_1UVwxL0QhWGUtGKvpqH8gbUR: { tier: "pro", amount: 29900, mode: "subscription", extraSeats: true }, // Enterprise, 10 seats
   price_1SckVt0QhWGUtGKvl9YdmQqk: { tier: "document", amount: 500, mode: "payment" },
 };
+export const EXTRA_SEAT_PRICE_ID = "price_1UVwxO0QhWGUtGKvUKZM9SCE";
+const EXTRA_SEAT_AMOUNT = 2500;
+export const MAX_EXTRA_SEATS = 100;
+
+// deno-lint-ignore no-explicit-any
+const isMonthlyPrice = (price: any, amount: number) => Boolean(price?.active && price.currency === "usd" &&
+  price.unit_amount === amount && price.recurring?.interval === "month" && price.recurring.interval_count === 1);
 
 // deno-lint-ignore no-explicit-any
 type Any = any;
@@ -46,7 +56,7 @@ export const createCheckoutHandler = (deps: CreateCheckoutDeps) => async (req: R
     if (authError || !user?.email || !user.email_confirmed_at) {
       return reply({ error: "A confirmed account is required." }, 401);
     }
-    let input: { priceId?: unknown; mode?: unknown; trial?: unknown };
+    let input: { priceId?: unknown; mode?: unknown; trial?: unknown; extraSeats?: unknown };
     try { input = await req.json(); } catch { return reply({ error: "Invalid JSON body." }, 400); }
     if (!input || typeof input !== "object") return reply({ error: "Invalid request." }, 400);
     const priceId = typeof input.priceId === "string" ? input.priceId : "";
@@ -55,12 +65,20 @@ export const createCheckoutHandler = (deps: CreateCheckoutDeps) => async (req: R
     if (input.mode !== undefined && input.mode !== selected.mode) return reply({ error: "Payment mode does not match this price." }, 400);
     if (input.trial !== undefined && typeof input.trial !== "boolean") return reply({ error: "Invalid trial request." }, 400);
     const trial = input.trial === true;
+    const extraSeats = input.extraSeats === undefined ? 0 : input.extraSeats;
+    if (typeof extraSeats !== "number" || !Number.isInteger(extraSeats) || extraSeats < 0 || extraSeats > MAX_EXTRA_SEATS) {
+      return reply({ error: "Invalid seat count." }, 400);
+    }
+    if (extraSeats > 0 && !selected.extraSeats) return reply({ error: "Extra seats are available on Firm and Enterprise only." }, 400);
     if (trial && selected.mode !== "subscription") return reply({ error: "Trials require a subscription." }, 400);
     const stripe = deps.createStripe(key);
     const price = await stripe.prices.retrieve(priceId);
     if (!price.active || price.currency !== "usd" || price.unit_amount !== selected.amount ||
       (selected.mode === "subscription" && (!price.recurring || price.recurring.interval !== "month" || price.recurring.interval_count !== 1)) ||
       (selected.mode === "payment" && price.recurring)) {
+      return reply({ error: "The configured price requires administrator review." }, 503);
+    }
+    if (extraSeats > 0 && !isMonthlyPrice(await stripe.prices.retrieve(EXTRA_SEAT_PRICE_ID), EXTRA_SEAT_AMOUNT)) {
       return reply({ error: "The configured price requires administrator review." }, 503);
     }
     const customers = await stripe.customers.list({ email: user.email, limit: 100 });
@@ -77,13 +95,14 @@ export const createCheckoutHandler = (deps: CreateCheckoutDeps) => async (req: R
       }
     }
     const productId = typeof price.product === "string" ? price.product : price.product.id;
-    const metadata = { user_id: user.id, tier: selected.tier, price_id: priceId, product_id: productId };
+    const metadata: Record<string, string> = { user_id: user.id, tier: selected.tier, price_id: priceId, product_id: productId };
+    if (extraSeats > 0) metadata.extra_seats = String(extraSeats);
     const returnOrigin = origin && origins.has(origin) ? origin : "https://www.legallyai.ai";
     const session = await stripe.checkout.sessions.create({
       ...getCheckoutCustomerOptions(selected.mode, customerId, user.email),
       client_reference_id: user.id,
       metadata,
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }, ...(extraSeats > 0 ? [{ price: EXTRA_SEAT_PRICE_ID, quantity: extraSeats }] : [])],
       mode: selected.mode,
       ...(selected.mode === "subscription" ? {
         subscription_data: { metadata, ...(trial ? { trial_period_days: 7 } : {}) },
@@ -91,7 +110,7 @@ export const createCheckoutHandler = (deps: CreateCheckoutDeps) => async (req: R
       } : {}),
       success_url: `${returnOrigin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${returnOrigin}/pricing`,
-    }, { idempotencyKey: `checkout:${user.id}:${priceId}:${trial ? "trial" : "paid"}:${Math.floor(now() / 1800000)}` });
+    }, { idempotencyKey: `checkout:${user.id}:${priceId}:${trial ? "trial" : "paid"}:${extraSeats ? `seats${extraSeats}:` : ""}${Math.floor(now() / 1800000)}` });
     if (!session.url) return reply({ error: "Checkout did not return a URL." }, 502);
     return reply({ url: session.url, trialDays: trial ? 7 : 0 });
   } catch (error) {
