@@ -128,6 +128,14 @@ async function fulfillCheckout(stripe: Stripe, db: Db, event: Stripe.Event) {
   }, { onConflict: 'stripe_checkout_session_id', ignoreDuplicates: true }).throwOnError();
 }
 
+/** Short, secret-free failure reason so stuck deliveries can be diagnosed from webhook_logs and runtime logs. */
+export function failureReason(error: unknown): string {
+  const name = error instanceof Error ? error.name : 'UnknownError';
+  const message = error instanceof Error ? error.message : '';
+  const safe = message.replace(/(sk|rk|pk|whsec)_[A-Za-z0-9_]+/g, '[redacted]').replace(/eyJ[A-Za-z0-9._-]+/g, '[redacted]').replace(/\s+/g, ' ').trim();
+  return `${name}${safe ? `: ${safe}` : ''}`.slice(0, 200);
+}
+
 export async function processVerifiedEvent(event: Stripe.Event, stripe: Stripe, db: Db) {
   if (!SUPPORTED_EVENTS.has(event.type)) return { status: 200, body: { received: true, ignored: true } };
   let claimId: string | undefined;
@@ -157,11 +165,12 @@ export async function processVerifiedEvent(event: Stripe.Event, stripe: Stripe, 
     }
     await db.from('webhook_logs').update({ processing_status: 'processed', processed_at: new Date().toISOString(), processing_error: null }).eq('id', claimId).throwOnError();
     return { status: 200, body: { received: true } };
-  } catch {
+  } catch (error) {
+    const reason = failureReason(error);
     if (claimId) {
-      try { await db.from('webhook_logs').update({ processing_status: 'error', processing_error: 'Processing failed; retry required' }).eq('id', claimId).throwOnError(); } catch { /* Claim lease permits later recovery. */ }
+      try { await db.from('webhook_logs').update({ processing_status: 'error', processing_error: `Processing failed; retry required: ${reason}` }).eq('id', claimId).throwOnError(); } catch { /* Claim lease permits later recovery. */ }
     }
-    console.error('[stripe-webhook] processing failed');
+    console.error('[stripe-webhook] processing failed', { eventId: event.id, type: event.type, reason });
     return { status: 503, body: { error: 'Event processing failed; retry required' } };
   }
 }
