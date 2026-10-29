@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { seatsFull, seatSummary, type FirmSeats } from "@/lib/firmSeats";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +34,9 @@ export interface FirmTeam {
   members: TeamMember[];
   invites: PendingInvite[];
   canManage: boolean;
+  seats?: FirmSeats | null;
 }
+
 
 // Owner invites are not offered here; invite-member only lets owners create them anyway.
 const INVITE_ROLES = ["admin", "manager", "lawyer", "paralegal", "employee"] as const;
@@ -91,6 +95,7 @@ export function FirmTeamPanel({ organizationId, onTeamLoaded }: { organizationId
       await load();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not create the invite");
+      void load();
     } finally {
       setInviting(false);
     }
@@ -148,6 +153,20 @@ export function FirmTeamPanel({ organizationId, onTeamLoaded }: { organizationId
         {team?.canManage && (
           <div className="space-y-3 rounded-lg border p-4">
             <h4 className="font-semibold flex items-center gap-2"><UserPlus className="h-4 w-4" /> Invite someone</h4>
+            {team.seats && (
+              <p className="text-sm text-muted-foreground" data-testid="firm-seat-summary">{seatSummary(team.seats)}</p>
+            )}
+            {seatsFull(team.seats) && (
+              <div role="alert" className="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
+                <AlertCircle className="h-4 w-4 mt-0.5 text-amber-500 shrink-0" />
+                <span>
+                  {team.seats?.planName === "Solo"
+                    ? "Solo includes 1 seat, for you. Upgrade to Firm or Enterprise to add staff. "
+                    : `All ${team.seats?.limit} seats on your ${team.seats?.planName} plan are in use (pending invites count). Add seats for $25/seat/month, or remove someone first. `}
+                  <Link to="/pricing" className="font-medium underline">{team.seats?.planName === "Solo" ? "See Firm and Enterprise" : "Add seats"}</Link>
+                </span>
+              </div>
+            )}
             <div className="flex flex-col sm:flex-row gap-2">
               <Input type="email" placeholder="colleague@yourfirm.com" value={email} onChange={(e) => setEmail(e.target.value)} />
               <Select value={role} onValueChange={(v) => setRole(v as (typeof INVITE_ROLES)[number])}>
@@ -156,7 +175,7 @@ export function FirmTeamPanel({ organizationId, onTeamLoaded }: { organizationId
                   {INVITE_ROLES.map((r) => <SelectItem key={r} value={r} className="capitalize">{r}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Button onClick={() => void invite()} disabled={inviting || !email.trim()}>
+              <Button onClick={() => void invite()} disabled={inviting || !email.trim() || seatsFull(team.seats)}>
                 {inviting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />} Create invite
               </Button>
             </div>

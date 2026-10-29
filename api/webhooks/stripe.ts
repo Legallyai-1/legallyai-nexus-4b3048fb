@@ -31,6 +31,16 @@ export function getPlanItem(subscription: Stripe.Subscription): Stripe.Subscript
   return plans.length === 1 ? plans[0] : subscription.items.data[0];
 }
 
+/** Metadata stored with the subscription; extra_seats is the live seat add-on quantity (used for seat limits). */
+export function subscriptionMetadata(subscription: Stripe.Subscription): Record<string, string> {
+  const extraSeats = subscription.items.data.filter((item) => item.price.id === EXTRA_SEAT_PRICE)
+    .reduce((total, item) => total + (item.quantity ?? 0), 0);
+  const metadata: Record<string, string> = { ...(subscription.metadata ?? {}) };
+  if (extraSeats > 0) metadata.extra_seats = String(extraSeats);
+  else delete metadata.extra_seats;
+  return metadata;
+}
+
 export function getSubscriptionTier(subscription: Stripe.Subscription): 'free' | 'premium' | 'pro' {
   const items = subscription.items.data;
   const plans = items.filter(isPlanItem);
@@ -87,7 +97,7 @@ async function syncSubscription(stripe: Stripe, db: Db, event: Stripe.Event, id:
     p_stripe_product_id: idOf(item.price.product),
     p_current_period_start: new Date(item.current_period_start * 1000).toISOString(),
     p_current_period_end: new Date(item.current_period_end * 1000).toISOString(),
-    p_cancel_at_period_end: subscription.cancel_at_period_end, p_metadata: subscription.metadata,
+    p_cancel_at_period_end: subscription.cancel_at_period_end, p_metadata: subscriptionMetadata(subscription),
     p_event_id: event.id, p_event_created_at: new Date(event.created * 1000).toISOString(),
   }).throwOnError();
 }

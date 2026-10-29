@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { corsHeaders } from "../_shared/cors.ts";
+import { getOrganizationSeats, hasFreeSeat, PRICING_URL, seatLimitMessage } from "../_shared/organization-seats.ts";
 import {
   generateInviteToken,
   sha256Hex,
@@ -89,6 +90,14 @@ serve(async (req) => {
 
     if (!organization) {
       return json({ error: "Organization not found" }, 404);
+    }
+
+    // Staff invites use a seat on the owner's plan (pending invites hold one). Client-portal invites don't.
+    if (role !== "client") {
+      const seats = await getOrganizationSeats(supabase, organizationId);
+      if (!hasFreeSeat(seats)) {
+        return json({ error: seatLimitMessage(seats), code: "seat_limit", seats, pricingUrl: PRICING_URL }, 409);
+      }
     }
 
     const rawToken = generateInviteToken();
