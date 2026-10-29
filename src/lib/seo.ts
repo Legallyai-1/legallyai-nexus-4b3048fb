@@ -30,7 +30,7 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
   "/generate": pub("AI legal document generator | LegallyAI", "Draft letters, motions, agreements and court forms with Lee, then review and edit before you file or send."),
   "/contract-review": pub("AI contract review and redline | LegallyAI", "Paste a lease, NDA or employment agreement. Lee flags risky clauses and suggests fairer wording you can export."),
   "/settlement-estimator": pub("Settlement estimator | LegallyAI", "Get a rough settlement range for your claim from the details you enter, with the factors that move the number."),
-  "/research": pub("AI legal research with sources | LegallyAI", "Search laws and court rules in plain English and get answers with links to the official sources."),
+  "/research": pub("AI legal research | LegallyAI", "Search laws and court rules in plain English and get clear answers. Check key points with your court or a licensed attorney."),
   "/templates": pub("Legal document templates | LegallyAI", "Browse ready-to-edit legal templates for common situations and fill them in with help from Lee."),
   "/ai-assistants": pub("AI legal assistants for every situation | LegallyAI", "AI assistants for custody, divorce, traffic tickets, DUI, probation, wills and workplace issues."),
   "/custody": pub("Child custody help | LegallyAI", "Understand custody options, prepare parenting plans and get ready for hearings with step-by-step help from Lee."),

@@ -41,7 +41,7 @@ export function SettlementEstimatorPage() {
 
 export function LegalResearchPage() {
   return (
-    <ToolShell title="Legal Research" intro="Ask a legal question and get an answer with links to official sources.">
+    <ToolShell title="Legal Research" intro="Ask a legal question and get a plain-English answer. Check key points with official sources.">
       <PerplexityLegalSearch />
     </ToolShell>
   );

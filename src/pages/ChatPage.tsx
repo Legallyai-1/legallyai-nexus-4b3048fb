@@ -88,7 +88,7 @@ export default function ChatPage() {
             <AnimatedAIHead variant="cyan" size="sm" />
             <div className="flex-1 min-w-[12rem]">
               <h1 className="font-display text-lg font-semibold">Ask Lee <span className="text-white/50">·</span> <span className="gold-text">AI Partner</span></h1>
-              <p className="text-sm text-muted-foreground">Legal research with official sources for your state.</p>
+              <p className="text-sm text-muted-foreground">Plain-English legal research for your state.</p>
             </div>
             <ChatHistoryDrawer userId={user?.id ?? null} refreshKey={historyKey} onSelect={(sid, saved) => { loadConversation(sid, saved); setInput(""); }} />
             <Button variant="outline" onClick={() => { clearMessages(); setInput(""); }} disabled={checkingAuth}>New conversation</Button>

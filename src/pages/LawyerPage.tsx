@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   FileText, Users, Clock, Lock, Shield, Loader2, ArrowRight, Check, FolderOpen, FileSearch,
   BookOpenCheck, Receipt, CalendarClock, KeyRound, CreditCard, Building2, Mail,
@@ -19,7 +19,7 @@ const features = [
   { icon: Users, title: "Clients & client portal", description: "Client records, intake and a secure portal for clients" },
   { icon: FileText, title: "AI document drafting", description: "First drafts of letters, motions and agreements" },
   { icon: FileSearch, title: "Contract redline", description: "Clause-level risk flags and suggested redlines" },
-  { icon: BookOpenCheck, title: "Legal research", description: "Answers with links to official sources" },
+  { icon: BookOpenCheck, title: "Legal research", description: "Plain-English research answers" },
   { icon: Receipt, title: "Billing & trust accounting", description: "Time, invoices and trust ledgers in the Business Hub" },
   { icon: CalendarClock, title: "Deadlines & calendar", description: "Court dates and appointments with reminders" },
   { icon: Clock, title: "Time tracking", description: "Clock time against matters for accurate billing" },
@@ -45,6 +45,15 @@ const DEMO_MAILTO = "mailto:support@legallyai.ai?subject=LegallyAI%20firm%20demo
 
 export default function LawyerPage() {
   const navigate = useNavigate();
+  const { hash } = useLocation();
+
+  // BrowserRouter doesn't scroll to #anchors after client-side navigation (e.g. /lawyers#plans).
+  useEffect(() => {
+    if (!hash) return;
+    const id = decodeURIComponent(hash.slice(1));
+    const frame = requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ block: "start" }));
+    return () => cancelAnimationFrame(frame);
+  }, [hash]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLogin, setIsLogin] = useState(true);

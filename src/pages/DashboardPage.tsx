@@ -126,7 +126,7 @@ export default function DashboardPage() {
   const workflows = [
     { title: "AI Document Drafting", icon: PenLine, active: true, to: "/generate", hint: "Letters, motions, agreements" },
     { title: "Document Forensic & OCR Upload", icon: Upload, to: "/custody", hint: "Drop a file for Lee to read" },
-    { title: "Multijurisdictional Research", icon: Search, to: "/research", hint: "Answers linked to official sources" },
+    { title: "Multijurisdictional Research", icon: Search, to: "/research", hint: "Plain-English research answers" },
   ];
 
   const metrics = [

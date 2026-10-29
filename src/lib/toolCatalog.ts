@@ -21,7 +21,7 @@ export const TOOL_CATALOG: ToolEntry[] = [
   { title: "Document Generator", path: "/generate", icon: "generate", description: "Letters, motions, agreements", group: "Documents & analysis", featured: true },
   { title: "Contract Redline", path: "/contract-review", icon: "redline", description: "Spot risky clauses and get redlines", group: "Documents & analysis", featured: true },
   { title: "Settlement Estimator", path: "/settlement-estimator", icon: "settlement", description: "Estimate damages and claim value", group: "Documents & analysis", featured: true },
-  { title: "Legal Research", path: "/research", icon: "research", description: "Cited answers from official sources", group: "Documents & analysis", featured: true },
+  { title: "Legal Research", path: "/research", icon: "research", description: "Plain-English legal research", group: "Documents & analysis", featured: true },
   { title: "Templates", path: "/templates", icon: "templates", description: "Ready-to-use legal forms", group: "Documents & analysis", featured: true },
   { title: "Court Records", path: "/court-records", icon: "records", description: "Find dockets and court sites", group: "Documents & analysis" },
   { title: "Custody Helper", path: "/custody", icon: "custody", description: "Parenting plans and custody prep", group: "Legal help hubs" },

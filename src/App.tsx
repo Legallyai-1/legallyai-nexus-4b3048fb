@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { AnimatedRoutes } from '@/components/AnimatedRoutes';
-import { resolveAdEligibility, setAdEligibility, setStoredSubscriptionTier } from '@/lib/subscription';
+import { getAdEligibility, resolveAdEligibility, setAdEligibility, setStoredSubscriptionTier } from '@/lib/subscription';
 import { supabase } from '@/integrations/supabase/client';
 import { getSupabaseSessionSafely, subscribeToSupabaseAuthState } from '@/integrations/supabase/helpers';
 const SpeedInsights = () => null;
@@ -19,6 +19,7 @@ function App() {
   useEffect(() => {
     let disposed = false;
     let revision = 0;
+    let lastUserId: string | undefined;
     let timer: ReturnType<typeof setTimeout> | undefined;
     // Display cache only: server-side authorization must independently check access.
     const applyTier = (value: unknown) => {
@@ -33,14 +34,18 @@ function App() {
       const request = ++revision;
       if (timer !== undefined) clearTimeout(timer);
       if (!session?.user) {
+        lastUserId = undefined;
         setStoredSubscriptionTier('free');
         document.body.dataset.subscriptionTier = 'free';
         setAdEligibility(resolveAdEligibility({ signedIn: false }));
         return;
       }
-      // Signed in: show no ads until the plan is known, so paying users never see one.
-      setAdEligibility('unknown');
       const userId = session.user.id;
+      // Same user (token refresh, tab refocus): keep the resolved eligibility so ads don't reload.
+      if (userId === lastUserId && getAdEligibility() !== 'unknown') return;
+      lastUserId = userId;
+      // New user: show no ads until the plan is known, so paying users never see one.
+      setAdEligibility('unknown');
       // Defer Supabase queries until outside the synchronous auth callback.
       timer = setTimeout(() => {
         timer = undefined;
