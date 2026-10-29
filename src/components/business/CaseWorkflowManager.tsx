@@ -155,11 +155,8 @@ export function CaseWorkflowManager({ caseId: caseIdProp, organizationId: organi
   }, [caseId, organizationId]);
 
   useEffect(() => {
+    // Each call bumps fetchRequestId, so responses from older requests are ignored.
     fetchWorkflowData();
-    return () => {
-      // Invalidate any in-flight request when the case/org changes or on unmount.
-      fetchRequestId.current++;
-    };
   }, [fetchWorkflowData]);
 
   const addTask = async () => {
