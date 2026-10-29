@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { 
-  Sparkles, Upload, Brain, Target, TrendingUp, 
+  Sparkles, Brain, Target, TrendingUp, 
   CheckCircle, AlertCircle, Briefcase, Star
 } from "lucide-react";
 import { toast } from "sonner";
@@ -202,10 +202,6 @@ ${resume}`,
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Upload className="w-4 h-4" />
-            <span>Or upload a PDF resume (coming soon)</span>
-          </div>
         </CardContent>
       </Card>
 

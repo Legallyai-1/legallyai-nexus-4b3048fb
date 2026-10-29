@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { resolveSubscriptionAccess } from "../_shared/subscription-access.ts";
+import { resolveFirmAccess } from "../_shared/firm-access.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -81,8 +82,14 @@ serve(async (req) => {
       plan: access.plan,
     });
 
+    // Business Hub (firm tier): own Firm/Enterprise plan, or active membership in a firm whose owner has one.
+    const firm = await resolveFirmAccess(supabaseClient, user.id, { subscription, paymentRecords });
+    logStep("Firm access resolved", { userId: user.id, firmAccess: firm.firmAccess, source: firm.source });
+
     return new Response(JSON.stringify({
       subscribed: access.entitled,
+      firm_access: firm.firmAccess,
+      firm_access_source: firm.source,
       product_id: null,
       plan: access.plan,
       subscription_end: subscription?.current_period_end || access.activePaymentRecord?.expires_at || null,

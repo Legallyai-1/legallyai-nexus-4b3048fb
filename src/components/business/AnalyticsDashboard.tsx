@@ -18,10 +18,10 @@ import { getSupabaseFunctionHeaders } from '@/lib/supabase-functions';
 import { toast } from 'sonner';
 
 interface AnalyticsDashboardProps {
-  organizationId?: string;
+  organizationId: string;
 }
 
-export function AnalyticsDashboard({ organizationId = 'default-org' }: AnalyticsDashboardProps) {
+export function AnalyticsDashboard({ organizationId }: AnalyticsDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [insights, setInsights] = useState<any>(null);
@@ -70,6 +70,12 @@ export function AnalyticsDashboard({ organizationId = 'default-org' }: Analytics
         badgesRes.json()
       ]);
 
+      const failed = [dashboardRes, insightsRes, badgesRes].find((r) => !r.ok);
+      if (failed || dashboard?.error) {
+        throw new Error(dashboard?.error === 'Forbidden' || failed?.status === 403
+          ? 'Firm analytics are available to your firm\'s owners and admins.'
+          : dashboard?.error || 'Failed to load analytics');
+      }
       setDashboardData(dashboard);
       setInsights(insightsData);
       setBadges(badgesData);
@@ -119,7 +125,15 @@ export function AnalyticsDashboard({ organizationId = 'default-org' }: Analytics
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button variant="outline">
+          <Button variant="outline" disabled={!dashboardData} onClick={() => {
+            const blob = new Blob([JSON.stringify({ exported_at: new Date().toISOString(), range_days: Number(dateRange), dashboard: dashboardData, insights, badges }, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `firm-analytics-${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }}>
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>

@@ -37,17 +37,21 @@ interface Invoice {
   client: string;
   amount: number;
   status: "draft" | "sent" | "paid" | "overdue";
-  dueDate: string;
+  dueDate: string | null;
   createdAt: string;
+  paidAt: string | null;
+  items: { description?: string; hours?: number; rate?: number; amount?: number }[];
 }
 
-const billingStats = [
-  { label: "Unbilled Time", value: "—", icon: Clock, color: "text-yellow-400" },
-  { label: "Outstanding", value: "—", icon: AlertCircle, color: "text-orange-400" },
-  { label: "Collected MTD", value: "—", icon: DollarSign, color: "text-green-400" },
-  { label: "Realization Rate", value: "—", icon: TrendingUp, color: "text-primary" },
-];
-const invoices: Invoice[] = [];
+const money = (n: number) => `$${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+
+function normalizeInvoiceStatus(status: string | null, dueDate: string | null): Invoice["status"] {
+  if (status === "paid") return "paid";
+  if (status === "sent" || status === "overdue") {
+    return dueDate && new Date(dueDate) < new Date(new Date().toDateString()) ? "overdue" : (status as Invoice["status"]);
+  }
+  return "draft";
+}
 
 export function BillingAutomation() {
   const [activeTab, setActiveTab] = useState("time");
@@ -58,6 +62,8 @@ export function BillingAutomation() {
   const [loadError, setLoadError] = useState<string | null>(null);
   // Only roles that can read every org invoice may invoice (see src/lib/invoiceAccess.ts).
   const [canInvoice, setCanInvoice] = useState(false);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [updatingInvoice, setUpdatingInvoice] = useState<string | null>(null);
 
   const loadTimeEntries = useCallback(async () => {
     setIsLoading(true);
@@ -95,17 +101,20 @@ export function BillingAutomation() {
       // so we never read "no invoices" as "unbilled". Entries are shown as unverified instead.
       const billedIds = new Set<string>();
       const PAGE = 1000;
-      const invoiceRows: { items: unknown }[] = [];
+      const invoiceRows: {
+        id: string; invoice_number: string | null; amount: number; status: string | null; due_date: string | null;
+        created_at: string; paid_at: string | null; items: unknown; clients: { full_name?: string | null } | null;
+      }[] = [];
       for (let from = 0; mayInvoice; from += PAGE) {
         const { data: page, error: invoiceError } = await supabase
           .from("invoices")
-          .select("items")
+          .select("id, invoice_number, amount, status, due_date, created_at, paid_at, items, clients(full_name)")
           .eq("organization_id", organizationId)
           .order("id")
           .range(from, from + PAGE - 1);
         // Fail closed: without invoice data we can't tell what is already billed.
         if (invoiceError) throw invoiceError;
-        invoiceRows.push(...(page ?? []));
+        invoiceRows.push(...((page ?? []) as unknown as typeof invoiceRows));
         if (!page || page.length < PAGE) break;
       }
       for (const inv of invoiceRows) {
@@ -115,6 +124,18 @@ export function BillingAutomation() {
           if (typeof id === "string") billedIds.add(id);
         }
       }
+
+      setInvoices(invoiceRows.map((inv) => ({
+        id: inv.id,
+        number: inv.invoice_number ?? inv.id.slice(0, 8),
+        client: inv.clients?.full_name ?? "Client",
+        amount: Number(inv.amount ?? 0),
+        status: normalizeInvoiceStatus(inv.status, inv.due_date),
+        dueDate: inv.due_date,
+        createdAt: inv.created_at,
+        paidAt: inv.paid_at,
+        items: Array.isArray(inv.items) ? (inv.items as Invoice["items"]) : [],
+      })).sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
 
       // Only unbilled entries are kept in state, so selection can never include billed ones.
       setTimeEntries((rows ?? []).filter((r) => !billedIds.has(r.id)).map((r) => {
@@ -135,6 +156,7 @@ export function BillingAutomation() {
     } catch (error) {
       console.error("Time entry load error:", error);
       setCanInvoice(false);
+      setInvoices([]);
       setLoadError(errorMessage(error, "Failed to load time entries"));
     } finally {
       setIsLoading(false);
@@ -222,7 +244,7 @@ export function BillingAutomation() {
 
       toast.success(`Generated invoice ${invoiceNumber} for $${selectedTotal.toLocaleString()}`);
       
-      setTimeEntries(prev => prev.filter(e => !e.selected));
+      await loadTimeEntries();
     } catch (error) {
       console.error("Invoice generation error:", error);
       toast.error(errorMessage(error, "Failed to generate invoice"));
@@ -230,6 +252,64 @@ export function BillingAutomation() {
       setIsGenerating(false);
     }
   };
+
+  const updateInvoiceStatus = async (invoice: Invoice, status: "sent" | "paid") => {
+    if (!canInvoice) return;
+    setUpdatingInvoice(invoice.id);
+    try {
+      const { data, error } = await supabase
+        .from("invoices")
+        .update(status === "paid" ? { status, paid_at: new Date().toISOString() } : { status })
+        .eq("id", invoice.id)
+        .select("id");
+      if (error) throw error;
+      if (!data?.length) throw new Error("You don't have permission to update this invoice.");
+      toast.success(status === "paid" ? `Invoice ${invoice.number} marked paid` : `Invoice ${invoice.number} marked sent`);
+      await loadTimeEntries();
+    } catch (error) {
+      toast.error(errorMessage(error, "Failed to update invoice"));
+    } finally {
+      setUpdatingInvoice(null);
+    }
+  };
+
+  const downloadInvoice = (invoice: Invoice) => {
+    const lines = [
+      `Invoice ${invoice.number}`,
+      `Client: ${invoice.client}`,
+      `Created: ${new Date(invoice.createdAt).toLocaleDateString()}`,
+      invoice.dueDate ? `Due: ${new Date(invoice.dueDate).toLocaleDateString()}` : "",
+      "",
+      ...invoice.items.map((item) =>
+        `${item.description || "Legal services"} | ${item.hours ?? 0} h x ${money(Number(item.rate ?? 0))} = ${money(Number(item.amount ?? 0))}`),
+      "",
+      `Total: ${money(invoice.amount)}`,
+      `Status: ${invoice.status}`,
+    ];
+    const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${invoice.number}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const unbilledValue = timeEntries.reduce((sum, e) => sum + e.hours * e.rate, 0);
+  const unbilledHours = timeEntries.reduce((sum, e) => sum + e.hours, 0);
+  const outstanding = invoices.filter((i) => i.status === "sent" || i.status === "overdue").reduce((s, i) => s + i.amount, 0);
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const collectedMtd = invoices
+    .filter((i) => i.status === "paid" && i.paidAt && new Date(i.paidAt) >= monthStart)
+    .reduce((s, i) => s + i.amount, 0);
+  const paidInvoices = invoices.filter((i) => i.status === "paid");
+  const hideInvoiceStats = !canInvoice || isLoading;
+  const billingStats = [
+    { label: `${canInvoice ? "Unbilled" : "Billable"} time (${unbilledHours.toFixed(1)} h)`, value: isLoading ? "…" : money(unbilledValue), icon: Clock, color: "text-yellow-400" },
+    { label: "Outstanding", value: hideInvoiceStats ? "—" : money(outstanding), icon: AlertCircle, color: "text-orange-400" },
+    { label: "Collected this month", value: hideInvoiceStats ? "—" : money(collectedMtd), icon: DollarSign, color: "text-green-400" },
+    { label: "Invoices", value: hideInvoiceStats ? "—" : String(invoices.length), icon: TrendingUp, color: "text-primary" },
+  ];
 
   const statusColors = {
     unbilled: "bg-yellow-500/20 text-yellow-400",
@@ -254,10 +334,9 @@ export function BillingAutomation() {
             <div className="flex-1">
               <h2 className="text-2xl font-bold flex items-center gap-2">
                 Billing Automation
-                <Badge className="bg-amber-500/20 text-amber-500">Not connected</Badge>
               </h2>
               <p className="text-muted-foreground">
-                Billing records are not connected. No sample entries or payment records are shown.
+                Billable time from your firm's time clock and the invoices you create here. Only your firm's real records are shown.
               </p>
             </div>
             {canInvoice && (
@@ -280,9 +359,11 @@ export function BillingAutomation() {
       </Card>
 
       {/* Stats */}
-      <p className="text-sm text-muted-foreground">
-        Connect billing data before using invoicing or payment reporting. No sample data will be written to your account.
-      </p>
+      {!canInvoice && !isLoading && (
+        <p className="text-sm text-muted-foreground">
+          Invoice totals are visible to firm owners, admins and managers only.
+        </p>
+      )}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {billingStats.map((stat, i) => (
           <Card key={i}>
@@ -305,7 +386,6 @@ export function BillingAutomation() {
           <TabsTrigger value="time">Time Entries</TabsTrigger>
           <TabsTrigger value="invoices">Invoices</TabsTrigger>
           <TabsTrigger value="payments">Payments</TabsTrigger>
-          <TabsTrigger value="automation">Automation Rules</TabsTrigger>
         </TabsList>
 
         <TabsContent value="time" className="mt-4">
@@ -444,7 +524,7 @@ export function BillingAutomation() {
                   {invoices.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center text-muted-foreground">
-                        No connected invoices.
+                        {canInvoice ? "No invoices yet. Select unbilled time entries and choose Generate Invoices." : "Invoices are visible to firm owners, admins and managers."}
                       </TableCell>
                     </TableRow>
                   )}
@@ -454,21 +534,23 @@ export function BillingAutomation() {
                       <TableCell className="font-medium">{invoice.client}</TableCell>
                       <TableCell className="text-right">${invoice.amount.toLocaleString()}</TableCell>
                       <TableCell>{new Date(invoice.createdAt).toLocaleDateString()}</TableCell>
-                      <TableCell>{new Date(invoice.dueDate).toLocaleDateString()}</TableCell>
+                      <TableCell>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : "—"}</TableCell>
                       <TableCell>
                         <Badge className={statusColors[invoice.status]}>{invoice.status}</Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="icon">
-                            <FileText className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" aria-label={`Download invoice ${invoice.number}`} onClick={() => downloadInvoice(invoice)}>
                             <Download className="h-4 w-4" />
                           </Button>
                           {invoice.status === "draft" && (
-                            <Button variant="ghost" size="icon">
-                              <Send className="h-4 w-4" />
+                            <Button variant="ghost" size="sm" disabled={updatingInvoice === invoice.id} onClick={() => updateInvoiceStatus(invoice, "sent")}>
+                              <Send className="h-4 w-4 mr-1" /> Mark sent
+                            </Button>
+                          )}
+                          {(invoice.status === "sent" || invoice.status === "overdue") && (
+                            <Button variant="ghost" size="sm" disabled={updatingInvoice === invoice.id} onClick={() => updateInvoiceStatus(invoice, "paid")}>
+                              <CreditCard className="h-4 w-4 mr-1" /> Mark paid
                             </Button>
                           )}
                         </div>
@@ -486,75 +568,33 @@ export function BillingAutomation() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5" />
-                Payment Processing
+                Payments
               </CardTitle>
-              <CardDescription>Accept payments via multiple methods</CardDescription>
+              <CardDescription>Payments recorded against your invoices</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[
-                  { method: "Credit Card", provider: "Stripe", status: "not connected", icon: CreditCard },
-                  { method: "ACH Transfer", provider: "Bank", status: "not connected", icon: DollarSign },
-                  { method: "Check", provider: "Manual", status: "not connected", icon: FileText },
-                ].map((payment, i) => (
-                  <Card key={i} className="border-2">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="p-2 rounded-lg bg-primary/10">
-                          <payment.icon className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold">{payment.method}</h4>
-                          <p className="text-xs text-muted-foreground">{payment.provider}</p>
-                        </div>
-                      </div>
-                      <Badge variant="outline">{payment.status}</Badge>
-                    </CardContent>
-                  </Card>
+              <p className="text-sm text-muted-foreground mb-4">
+                Online card/ACH collection for client invoices is not set up. Record payments you receive by marking an invoice paid.
+              </p>
+              <div className="space-y-3">
+                {paidInvoices.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No payments recorded yet.</p>
+                ) : paidInvoices.map((invoice) => (
+                  <div key={invoice.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">{invoice.client}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {invoice.number} · {invoice.paidAt ? new Date(invoice.paidAt).toLocaleDateString() : "date not recorded"}
+                      </p>
+                    </div>
+                    <span className="font-semibold">{money(invoice.amount)}</span>
+                  </div>
                 ))}
               </div>
-
-              <div className="mt-6 p-4 border rounded-lg">
-                <h4 className="font-semibold mb-4">Recent Payments</h4>
-                <div className="space-y-3">
-                  <p className="text-sm text-muted-foreground">No payment records are connected.</p>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="automation" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-yellow-400" />
-                Billing Automation Rule Preview
-              </CardTitle>
-              <CardDescription>Configure automatic billing workflows</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {[
-                { name: "Auto-generate monthly invoices", desc: "Generate invoices on the 1st of each month", enabled: true },
-                { name: "Payment reminders", desc: "Send reminders 7 days before due date", enabled: true },
-                { name: "Late payment notices", desc: "Notify clients of overdue invoices", enabled: true },
-                { name: "Time entry reminders", desc: "Remind attorneys to log time daily", enabled: false },
-                { name: "Pre-billing review", desc: "Route invoices for partner approval", enabled: true },
-                { name: "Expense auto-capture", desc: "Automatically capture expenses from receipts", enabled: false },
-              ].map((rule, i) => (
-                <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <h4 className="font-medium">{rule.name}</h4>
-                    <p className="text-sm text-muted-foreground">{rule.desc}</p>
-                  </div>
-                  <Badge variant="outline">
-                    {rule.enabled ? "Sample enabled" : "Sample disabled"}
-                  </Badge>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   );

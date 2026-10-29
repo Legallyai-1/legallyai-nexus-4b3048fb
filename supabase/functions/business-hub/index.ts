@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
     // The service-role client bypasses RLS: firm-scoped actions require membership in that firm.
     // Billing, trust and compliance data are restricted to the firm's owners/admins.
     if (action !== 'document-assembly') {
-      const level = action === 'ai-intake' ? 'member' : 'admin';
+      const level = action === 'ai-intake' || action === 'team' ? 'member' : 'admin';
       if (!await hasOrgAccess(supabase, user.id, organizationId, level)) {
         return new Response(
           JSON.stringify({ error: 'Forbidden' }),
@@ -162,6 +162,10 @@ Deno.serve(async (req) => {
 
       case 'analytics':
         result = await getPracticeAnalytics(supabase, organizationId!);
+        break;
+
+      case 'team':
+        result = await getTeam(supabase, user.id, organizationId!);
         break;
 
       default:
@@ -511,7 +515,44 @@ async function getPracticeAnalytics(supabase: any, organizationId: string) {
   const totalTrustBalance = typedTrustAccounts
     .reduce((sum: number, a: TrustAccount) => sum + Number(a.current_balance), 0);
 
+  // Live firm activity: every figure below is a count/sum of this organization's own rows.
+  const since30 = new Date(Date.now() - 30 * 86_400_000).toISOString();
+  const [clientsRes, casesRes, invoicesRes, timeRes, tasksRes] = await Promise.all([
+    supabase.from('clients').select('id', { count: 'exact', head: true }).eq('organization_id', organizationId),
+    supabase.from('cases').select('status').eq('organization_id', organizationId).limit(5000),
+    supabase.from('invoices').select('amount, status, paid_at, due_date').eq('organization_id', organizationId).limit(5000),
+    supabase.from('time_entries').select('clock_in, clock_out, billable, hourly_rate')
+      .eq('organization_id', organizationId).gte('clock_in', since30).not('clock_out', 'is', null).limit(5000),
+    supabase.from('case_tasks').select('status, due_date').eq('organization_id', organizationId).neq('status', 'completed').limit(5000),
+  ]);
+  const casesByStatus: Record<string, number> = {};
+  for (const c of casesRes.data || []) casesByStatus[c.status] = (casesByStatus[c.status] || 0) + 1;
+  const invoiceRows: { amount: number; status: string | null; paid_at: string | null; due_date: string | null }[] = invoicesRes.data || [];
+  const today = new Date(new Date().toISOString().slice(0, 10));
+  const outstandingInvoices = invoiceRows.filter((i) => i.status === 'sent' || i.status === 'overdue');
+  const hours = (t: { clock_in: string; clock_out: string }) =>
+    Math.max(0, (new Date(t.clock_out).getTime() - new Date(t.clock_in).getTime()) / 3_600_000);
+  const timeRows: { clock_in: string; clock_out: string; billable: boolean | null; hourly_rate: number | null }[] = timeRes.data || [];
+  const openTasks: { status: string; due_date: string | null }[] = tasksRes.data || [];
+
   return {
+    clients: { total: clientsRes.count ?? 0 },
+    cases: { total: (casesRes.data || []).length, byStatus: casesByStatus },
+    invoices: {
+      total: invoiceRows.length,
+      outstandingAmount: outstandingInvoices.reduce((s, i) => s + Number(i.amount || 0), 0),
+      overdueCount: outstandingInvoices.filter((i) => i.status === 'overdue' || (i.due_date && new Date(i.due_date) < today)).length,
+      paidAmount: invoiceRows.filter((i) => i.status === 'paid').reduce((s, i) => s + Number(i.amount || 0), 0),
+    },
+    time: {
+      hoursLast30Days: Math.round(timeRows.reduce((s, t) => s + hours(t), 0) * 10) / 10,
+      billableHoursLast30Days: Math.round(timeRows.filter((t) => t.billable).reduce((s, t) => s + hours(t), 0) * 10) / 10,
+      billableValueLast30Days: Math.round(timeRows.filter((t) => t.billable).reduce((s, t) => s + hours(t) * Number(t.hourly_rate || 0), 0) * 100) / 100,
+    },
+    tasks: {
+      open: openTasks.length,
+      overdue: openTasks.filter((t) => t.due_date && new Date(t.due_date) < today).length,
+    },
     matters: {
       total: matters?.length || 0,
       byStatus: mattersByStatus,
@@ -527,4 +568,59 @@ async function getPracticeAnalytics(supabase: any, organizationId: string) {
       accountCount: typedTrustAccounts.length
     }
   };
+}
+
+// Firm roster for the Business Hub Team tab. Caller must be a member (checked before dispatch).
+// Colleague emails and pending invites are returned only to the firm's owners/admins.
+async function getTeam(supabase: any, userId: string, organizationId: string) {
+  const [orgRes, membersRes, rolesRes] = await Promise.all([
+    supabase.from('organizations').select('owner_id').eq('id', organizationId).maybeSingle(),
+    supabase.from('organization_members').select('user_id, job_title, department, is_active, created_at')
+      .eq('organization_id', organizationId).limit(500),
+    supabase.from('user_roles').select('user_id, role').eq('organization_id', organizationId).limit(1000),
+  ]);
+  if (orgRes.error || membersRes.error || rolesRes.error) throw new Error('Could not load team');
+  const ownerId: string | null = orgRes.data?.owner_id ?? null;
+  const members: { user_id: string; job_title: string | null; department: string | null; is_active: boolean | null; created_at: string }[] = membersRes.data || [];
+  const roles: { user_id: string; role: string }[] = rolesRes.data || [];
+  const isAdmin = ownerId === userId || roles.some((r) => r.user_id === userId && (r.role === 'owner' || r.role === 'admin'));
+
+  const ids = [...new Set([ownerId, ...members.map((m) => m.user_id), ...roles.map((r) => r.user_id)].filter(Boolean))] as string[];
+  const { data: profiles } = ids.length
+    ? await supabase.from('profiles').select('id, full_name, display_name, email').in('id', ids)
+    : { data: [] };
+  const profileById = new Map((profiles || []).map((p: any) => [p.id, p]));
+
+  const roster = ids.map((id) => {
+    const member = members.find((m) => m.user_id === id);
+    const profile: any = profileById.get(id);
+    const memberRoles = roles.filter((r) => r.user_id === id).map((r) => r.role);
+    if (id === ownerId && !memberRoles.includes('owner')) memberRoles.unshift('owner');
+    return {
+      user_id: id,
+      name: profile?.full_name || profile?.display_name || null,
+      email: isAdmin || id === userId ? profile?.email ?? null : null,
+      roles: memberRoles,
+      job_title: member?.job_title ?? null,
+      department: member?.department ?? null,
+      is_active: id === ownerId ? true : member ? member.is_active !== false : true,
+      joined_at: member?.created_at ?? null,
+      is_you: id === userId,
+    };
+  });
+
+  let invites: unknown[] = [];
+  if (isAdmin) {
+    const { data, error } = await supabase
+      .from('organization_invites')
+      .select('id, email, role, expires_at, created_at')
+      .eq('organization_id', organizationId)
+      .is('accepted_at', null)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (!error) invites = data || [];
+  }
+
+  return { members: roster, invites, canManage: isAdmin };
 }

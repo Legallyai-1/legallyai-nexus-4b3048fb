@@ -27,11 +27,11 @@ const features = [
 ];
 
 // Plans by firm size. Prices match the published pricing; checkout lives on /pricing.
-const SALES_MAILTO = "mailto:support@legallyai.ai?subject=LegallyAI%20firm%20plan%20waitlist";
+const SALES_MAILTO = "mailto:support@legallyai.ai?subject=LegallyAI%20firm%20plan%20question";
 const plans = [
-  { name: "Solo", price: "Early access", period: "", seats: "Single seat, coming soon", points: ["Case workspace", "Client portal", "AI drafting & hearing prep"], cta: "Join the waitlist", href: SALES_MAILTO },
+  { name: "Solo", price: "Contact us", period: "", seats: "Working alone? The Firm plan covers you today", points: ["Case workspace", "Client portal", "AI drafting & hearing prep"], cta: "Contact us", href: SALES_MAILTO },
   { name: "Firm", price: "$99", period: "/month", seats: "Your firm's shared workspace", points: ["Case files & client portal", "AI drafting, redlines & research", "Billing & trust accounting"], cta: "Start 7-day free trial", to: "/pricing?plan=firm", highlight: true },
-  { name: "Enterprise", price: "Early access", period: "", seats: "Larger firms, coming soon", points: ["More seats", "Higher AI limits", "Onboarding help"], cta: "Join the waitlist", href: SALES_MAILTO },
+  { name: "Enterprise", price: "Contact sales", period: "", seats: "Larger firms", points: ["More seats", "Higher AI limits", "Onboarding help"], cta: "Contact sales", href: SALES_MAILTO },
 ];
 
 // Factual statements about how the app handles data today. No certifications are claimed.

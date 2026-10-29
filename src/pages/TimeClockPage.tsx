@@ -9,6 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { ensureUserOrganization, findUserOrganization } from "@/lib/organizations";
 import { format, differenceInMinutes, differenceInHours } from "date-fns";
 import { 
   Clock, ChevronLeft, Play, Square, MapPin, 
@@ -17,6 +19,7 @@ import {
 
 interface TimeEntry {
   id: string;
+  case_id: string | null;
   clock_in: string;
   clock_out: string | null;
   description: string | null;
@@ -38,6 +41,11 @@ export default function TimeClockPage() {
   const [hourlyRate, setHourlyRate] = useState("150");
   const [geoEnabled, setGeoEnabled] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [userId, setUserId] = useState<string | null>(null);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [cases, setCases] = useState<{ id: string; title: string }[]>([]);
+  const [loadingEntries, setLoadingEntries] = useState(true);
+  const [busy, setBusy] = useState(false);
 
   // Update current time every second
   useEffect(() => {
@@ -45,33 +53,58 @@ export default function TimeClockPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Demo entries
+  const caseTitle = (caseId: string | null) => cases.find((c) => c.id === caseId)?.title ?? null;
+
+  const loadCases = async (orgId: string) => {
+    const { data, error } = await supabase
+      .from("cases")
+      .select("id, title")
+      .eq("organization_id", orgId)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (!error) setCases(data ?? []);
+  };
+
+  // Load the signed-in user's own time entries (RLS: users manage only their own rows).
   useEffect(() => {
-    setEntries([
-      {
-        id: "1",
-        clock_in: new Date(Date.now() - 28800000).toISOString(),
-        clock_out: new Date(Date.now() - 18000000).toISOString(),
-        description: "Client consultation and case preparation",
-        case_name: "Smith vs. Johnson",
-        billable: true,
-        hourly_rate: 150,
-        clock_in_location: { lat: 40.7128, lng: -74.006 },
-        clock_out_location: { lat: 40.7128, lng: -74.006 },
-      },
-      {
-        id: "2",
-        clock_in: new Date(Date.now() - 86400000).toISOString(),
-        clock_out: new Date(Date.now() - 72000000).toISOString(),
-        description: "Document review and court filing",
-        case_name: "Williams Divorce",
-        billable: true,
-        hourly_rate: 175,
-        clock_in_location: null,
-        clock_out_location: null,
-      },
-    ]);
-  }, []);
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          navigate("/auth");
+          return;
+        }
+        if (cancelled) return;
+        setUserId(user.id);
+        const orgId = await findUserOrganization(user.id).catch(() => null);
+        if (cancelled) return;
+        setOrganizationId(orgId);
+        if (orgId) await loadCases(orgId);
+
+        const { data, error } = await supabase
+          .from("time_entries")
+          .select("id, case_id, clock_in, clock_out, description, billable, hourly_rate, clock_in_location, clock_out_location")
+          .eq("user_id", user.id)
+          .order("clock_in", { ascending: false })
+          .limit(100);
+        if (error) throw error;
+        if (cancelled) return;
+        const rows = (data ?? []).map((r) => ({ ...r, case_name: null })) as unknown as TimeEntry[];
+        const open = rows.find((r) => !r.clock_out) ?? null;
+        setCurrentEntry(open);
+        setIsClockedIn(!!open);
+        if (open?.case_id) setSelectedCase(open.case_id);
+        setEntries(rows.filter((r) => r.clock_out));
+      } catch (error) {
+        console.error("Time entries load error:", error);
+        if (!cancelled) toast.error("Couldn't load your time entries");
+      } finally {
+        if (!cancelled) setLoadingEntries(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [navigate]);
 
   const getLocation = (): Promise<{ lat: number; lng: number } | null> => {
     return new Promise((resolve) => {
@@ -87,38 +120,75 @@ export default function TimeClockPage() {
   };
 
   const clockIn = async () => {
-    const location = await getLocation();
-    const entry: TimeEntry = {
-      id: Date.now().toString(),
-      clock_in: new Date().toISOString(),
-      clock_out: null,
-      description: description || null,
-      case_name: selectedCase || null,
-      billable: isBillable,
-      hourly_rate: isBillable ? parseFloat(hourlyRate) : null,
-      clock_in_location: location,
-      clock_out_location: null,
-    };
-    setCurrentEntry(entry);
-    setIsClockedIn(true);
-    toast.success("Clocked in successfully" + (location ? " with location" : ""));
+    if (!userId || busy) return;
+    const rate = parseFloat(hourlyRate);
+    if (isBillable && !(rate >= 0)) {
+      toast.error("Enter a valid hourly rate");
+      return;
+    }
+    setBusy(true);
+    try {
+      // Clocking in is an explicit action, so it may set up the user's practice if needed.
+      const orgId = organizationId ?? await ensureUserOrganization(userId);
+      if (!organizationId) {
+        setOrganizationId(orgId);
+        void loadCases(orgId);
+      }
+      const location = await getLocation();
+      const caseId = selectedCase && selectedCase !== "none" ? selectedCase : null;
+      const { data, error } = await supabase
+        .from("time_entries")
+        .insert({
+          user_id: userId,
+          organization_id: orgId,
+          case_id: caseId,
+          clock_in: new Date().toISOString(),
+          description: description || null,
+          billable: isBillable,
+          hourly_rate: isBillable ? rate : null,
+          clock_in_location: location,
+        })
+        .select("id, case_id, clock_in, clock_out, description, billable, hourly_rate, clock_in_location, clock_out_location")
+        .single();
+      if (error) throw error;
+      setCurrentEntry({ ...(data as unknown as TimeEntry), case_name: null });
+      setIsClockedIn(true);
+      toast.success("Clocked in" + (location ? " with location" : ""));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Couldn't clock in");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const clockOut = async () => {
-    if (!currentEntry) return;
-    const location = await getLocation();
-    const completedEntry: TimeEntry = {
-      ...currentEntry,
-      clock_out: new Date().toISOString(),
-      description: description || currentEntry.description,
-      clock_out_location: location,
-    };
-    setEntries([completedEntry, ...entries]);
-    setCurrentEntry(null);
-    setIsClockedIn(false);
-    setDescription("");
-    setSelectedCase("");
-    toast.success("Clocked out successfully");
+    if (!currentEntry || busy) return;
+    setBusy(true);
+    try {
+      const location = await getLocation();
+      const update = {
+        clock_out: new Date().toISOString(),
+        description: description || currentEntry.description,
+        clock_out_location: location,
+      };
+      const { data, error } = await supabase
+        .from("time_entries")
+        .update(update)
+        .eq("id", currentEntry.id)
+        .select("id");
+      if (error) throw error;
+      if (!data?.length) throw new Error("This time entry could not be updated");
+      setEntries([{ ...currentEntry, ...update }, ...entries]);
+      setCurrentEntry(null);
+      setIsClockedIn(false);
+      setDescription("");
+      setSelectedCase("");
+      toast.success("Clocked out");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Couldn't clock out");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const calculateDuration = (start: string, end: string | null) => {
@@ -193,9 +263,9 @@ export default function TimeClockPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">No case</SelectItem>
-                      <SelectItem value="Smith vs. Johnson">Smith vs. Johnson</SelectItem>
-                      <SelectItem value="Williams Divorce">Williams Divorce</SelectItem>
-                      <SelectItem value="ABC Corp Merger">ABC Corp Merger</SelectItem>
+                      {cases.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -244,6 +314,7 @@ export default function TimeClockPage() {
                 size="lg"
                 className="w-full h-14 text-lg"
                 onClick={isClockedIn ? clockOut : clockIn}
+                disabled={busy || !userId}
               >
                 {isClockedIn ? (
                   <>
@@ -288,7 +359,7 @@ export default function TimeClockPage() {
               {entries.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Timer className="h-12 w-12 mx-auto mb-4" />
-                  <p>No time entries yet</p>
+                  <p>{loadingEntries ? "Loading your time entries…" : "No time entries yet"}</p>
                   <p className="text-sm">Clock in to start tracking your time</p>
                 </div>
               ) : (
@@ -323,10 +394,10 @@ export default function TimeClockPage() {
                             <Timer className="h-4 w-4" />
                             {calculateDuration(entry.clock_in, entry.clock_out)}
                           </span>
-                          {entry.case_name && (
+                          {caseTitle(entry.case_id) && (
                             <span className="flex items-center gap-1">
                               <FileText className="h-4 w-4" />
-                              {entry.case_name}
+                              {caseTitle(entry.case_id)}
                             </span>
                           )}
                         </div>

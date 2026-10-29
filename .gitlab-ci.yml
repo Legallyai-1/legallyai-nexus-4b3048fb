@@ -7,7 +7,7 @@ unit_and_regression_tests:
   image: node:22-bookworm
   script:
     - npm ci --ignore-scripts --no-audit --no-fund
-    - node --experimental-strip-types --test scripts/auth-validation.test.ts scripts/auth-redirect.test.ts scripts/billing-ownership.test.ts scripts/stripe-webhook.test.ts scripts/stripe-webhook-boundaries.test.ts scripts/stripe-webhook-raw-body.test.ts scripts/stripe-security.test.ts scripts/org-access.test.ts scripts/paid-ai-quota.test.ts scripts/invoice-access.test.ts scripts/checkout-session-verification.test.ts scripts/billing-handlers.test.ts scripts/document-credits.test.ts scripts/checkout-client.test.ts scripts/env-checks.test.ts
+    - node --experimental-strip-types --test scripts/auth-validation.test.ts scripts/auth-redirect.test.ts scripts/billing-ownership.test.ts scripts/stripe-webhook.test.ts scripts/stripe-webhook-boundaries.test.ts scripts/stripe-webhook-raw-body.test.ts scripts/stripe-security.test.ts scripts/org-access.test.ts scripts/paid-ai-quota.test.ts scripts/invoice-access.test.ts scripts/checkout-session-verification.test.ts scripts/billing-handlers.test.ts scripts/document-credits.test.ts scripts/checkout-client.test.ts scripts/env-checks.test.ts scripts/firm-access.test.ts
     - node --test scripts/legal-chat-protocol.test.mjs scripts/legal-knowledge.test.mjs scripts/free-ai-engine.test.mjs scripts/lee-gemini.test.mjs
     - node --experimental-strip-types --test scripts/mutation-result.test.ts scripts/dashboard-data.test.ts scripts/ad-slots.test.ts scripts/tool-catalog.test.ts scripts/seo.test.ts scripts/static-pages.test.ts scripts/ad-routes.test.ts scripts/ad-gating.test.ts scripts/document-export-entitlement.test.ts scripts/consent-mode.test.ts scripts/template-disclaimers.test.ts
     - npm run build
