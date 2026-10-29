@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { arePaymentsEnabled } from "@/lib/env";
+import { HubBrand } from "@/components/brand/HubBrand";
+import { FirmHubOverview, type HubTab } from "@/components/business/FirmHubOverview";
 import { findUserOrganization } from "@/lib/organizations";
 import {
   Building2, Users, FileText, DollarSign, Shield,
   BarChart3, Briefcase, Lock, Globe,
   Loader2, Sparkles, Brain,
-  GitBranch, Award, Activity, AlertCircle
+  GitBranch, Award, Activity, AlertCircle, LayoutGrid, type LucideIcon
 } from "lucide-react";
 
 // Hub tabs load on demand so the hub shell (and the upgrade prompt) stays light.
@@ -29,6 +31,57 @@ const IntegrationHubPanel = named(() => import("@/components/business/Integratio
 const CertificationCenter = named(() => import("@/components/business/CertificationCenter"), "CertificationCenter");
 const CaseWorkflowManager = named(() => import("@/components/business/CaseWorkflowManager"), "CaseWorkflowManager");
 const FirmTeamPanel = named(() => import("@/components/business/FirmTeamPanel"), "FirmTeamPanel");
+
+// Section nav: every item opens a real hub tab (no dead links).
+const NAV: { title: string; items: { tab: HubTab; label: string; icon: LucideIcon }[] }[] = [
+  { title: "AI Workspace", items: [
+    { tab: "overview", label: "Dashboard", icon: Activity },
+    { tab: "practice", label: "Practice & Cases", icon: Briefcase },
+    { tab: "workflows", label: "Case Workflows", icon: GitBranch },
+    { tab: "documents", label: "Documents", icon: FileText },
+    { tab: "intake", label: "AI Intake", icon: Users },
+    { tab: "predictive", label: "Predictive AI", icon: Brain },
+  ] },
+  { title: "Firm & Finance", items: [
+    { tab: "billing", label: "Billing", icon: DollarSign },
+    { tab: "trust", label: "Trust Accounting", icon: Shield },
+    { tab: "analytics", label: "Analytics", icon: BarChart3 },
+    { tab: "team", label: "Team", icon: Users },
+  ] },
+  { title: "Tools & Settings", items: [
+    { tab: "integrations", label: "Integrations", icon: Globe },
+    { tab: "certifications", label: "Certifications", icon: Award },
+  ] },
+];
+
+function HubSidebar({ active, onSelect }: { active: string; onSelect: (tab: HubTab) => void }) {
+  return (
+    <aside className="hub-side sticky top-0 flex h-screen shrink-0 flex-col gap-1 overflow-y-auto px-3 py-5" aria-label="Business Hub sections">
+      <HubBrand className="mb-5 px-3" />
+      <nav className="flex flex-col gap-6">
+        {NAV.map((section) => (
+          <div key={section.title} className="flex flex-col gap-1">
+            <p className="hub-label mb-1 px-3 font-semibold">{section.title}</p>
+            {section.items.map((item) => (
+              <button
+                key={item.tab}
+                type="button"
+                className="hub-side-item"
+                aria-current={active === item.tab ? "page" : undefined}
+                onClick={() => onSelect(item.tab)}
+              >
+                <item.icon className="h-[18px] w-[18px]" aria-hidden="true" /> {item.label}
+              </button>
+            ))}
+          </div>
+        ))}
+      </nav>
+      <Link to="/dashboard" className="hub-side-item mt-auto pt-4">
+        <LayoutGrid className="h-[18px] w-[18px]" aria-hidden="true" /> All LegallyAI tools
+      </Link>
+    </aside>
+  );
+}
 
 type GateState = "checking" | "allowed" | "upgrade" | "error";
 
@@ -146,101 +199,34 @@ export default function BusinessHubPage() {
       : orgError ? <Card><CardContent className="p-6 text-sm text-muted-foreground">{orgError}</CardContent></Card>
       : <NeedsOrganization onSetup={() => setActiveTab("practice")} />;
 
+  const openTab = (tab: string) => {
+    setActiveTab(tab);
+    window.scrollTo({ top: 0 });
+  };
+  const activeLabel = NAV.flatMap((section) => section.items).find((item) => item.tab === activeTab)?.label ?? "Dashboard";
+
   return (
-    <MainLayout>
-      <div className="p-4 sm:p-6 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-display font-bold flex items-center gap-3">
-              <Building2 className="metal-icon h-8 w-8" />
-              Business Hub
-              
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Law firm management tools with AI-assisted drafting
-            </p>
-          </div>
+    <MainLayout sidebar={<HubSidebar active={activeTab} onSelect={openTab} />}>
+      <div className="hub-dash-bg min-h-full p-4 sm:p-6 space-y-4 sm:space-y-6">
+        <div>
+          <p className="hub-label flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5 hub-gold-icon" aria-hidden="true" /> Business Hub</p>
+          <h1 className="hub-dash-title mt-1 text-2xl leading-[30px] sm:text-[28px] sm:leading-[34px] font-semibold">
+            {activeTab === "overview" ? "Firm dashboard" : activeLabel}
+          </h1>
         </div>
 
-        {/* Main Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="flex flex-wrap w-full bg-muted/30 p-1 h-auto gap-1">
-            <TabsTrigger value="overview" className="text-xs lg:text-sm flex items-center gap-1">
-              <Activity className="h-3 w-3" /> Overview
-            </TabsTrigger>
-            <TabsTrigger value="practice" className="text-xs lg:text-sm flex items-center gap-1">
-              <Briefcase className="h-3 w-3" /> Practice
-            </TabsTrigger>
-            <TabsTrigger value="workflows" className="text-xs lg:text-sm flex items-center gap-1">
-              <GitBranch className="h-3 w-3" /> Workflows
-            </TabsTrigger>
-            <TabsTrigger value="predictive" className="text-xs lg:text-sm flex items-center gap-1">
-              <Brain className="h-3 w-3" /> Predictive AI
-            </TabsTrigger>
-            <TabsTrigger value="intake" className="text-xs lg:text-sm flex items-center gap-1">
-              <Users className="h-3 w-3" /> AI Intake
-            </TabsTrigger>
-            <TabsTrigger value="billing" className="text-xs lg:text-sm flex items-center gap-1">
-              <DollarSign className="h-3 w-3" /> Billing
-            </TabsTrigger>
-            <TabsTrigger value="trust" className="text-xs lg:text-sm flex items-center gap-1">
-              <Shield className="h-3 w-3" /> Trust
-            </TabsTrigger>
-            <TabsTrigger value="documents" className="text-xs lg:text-sm flex items-center gap-1">
-              <FileText className="h-3 w-3" /> Documents
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="text-xs lg:text-sm flex items-center gap-1">
-              <BarChart3 className="h-3 w-3" /> Analytics
-            </TabsTrigger>
-            <TabsTrigger value="integrations" className="text-xs lg:text-sm flex items-center gap-1">
-              <Globe className="h-3 w-3" /> Integrations
-            </TabsTrigger>
-            <TabsTrigger value="certifications" className="text-xs lg:text-sm flex items-center gap-1">
-              <Award className="h-3 w-3" /> Certifications
-            </TabsTrigger>
-            <TabsTrigger value="team" className="text-xs lg:text-sm flex items-center gap-1">
-              <Users className="h-3 w-3" /> Team
-            </TabsTrigger>
-          </TabsList>
+        <Tabs value={activeTab} onValueChange={openTab} className="space-y-4 sm:space-y-6">
+          {/* Below md the section nav becomes a scrollable tab strip (the desktop sidebar is hidden). */}
+          <div className="md:hidden"><TabsList className="!flex !flex-nowrap w-full justify-start overflow-x-auto p-1 h-auto gap-1">
+            {NAV.flatMap((section) => section.items).map((item) => (
+              <TabsTrigger key={item.tab} value={item.tab} className="min-h-[44px] shrink-0 text-xs flex items-center gap-1">
+                <item.icon className="h-3.5 w-3.5" /> {item.label}
+              </TabsTrigger>
+            ))}
+          </TabsList></div>
 
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            {/* Quick Actions with Predictive AI */}
-            <div className="grid grid-cols-1 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                    AI-Powered Actions
-                  </CardTitle>
-                  <CardDescription>Automate your practice with intelligent workflows</CardDescription>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {[
-                    { title: "Case Workflows", desc: "Tasks and timelines per case", icon: GitBranch, action: () => setActiveTab("workflows") },
-                    { title: "Predictive AI", desc: "Case outcome forecasts", icon: Brain, action: () => setActiveTab("predictive") },
-                    { title: "Smart Intake", desc: "AI-powered client onboarding", icon: Users, action: () => setActiveTab("intake") },
-                    { title: "Document Assembly", desc: "Generate docs from templates", icon: FileText, action: () => setActiveTab("documents") },
-                    { title: "Billing", desc: "Invoices from logged time", icon: DollarSign, action: () => setActiveTab("billing") },
-                    { title: "Team", desc: "Members, roles and invites", icon: Users, action: () => setActiveTab("team") },
-                  ].map((item, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      className="metal-card rounded-2xl p-4 flex items-start gap-3 text-left"
-                      onClick={item.action}
-                    >
-                      <span className="metal-icon-well h-10 w-10 shrink-0"><item.icon className="h-5 w-5" aria-hidden="true" /></span>
-                      <span className="min-w-0">
-                        <span className="block font-semibold">{item.title}</span>
-                        <span className="block text-xs text-[hsl(218_22%_30%)]">{item.desc}</span>
-                      </span>
-                    </button>
-                  ))}
-                </CardContent>
-              </Card>
-            </div>
+          <TabsContent value="overview" className="mt-0">
+            <FirmHubOverview organizationId={organizationId} onOpenTab={openTab} />
           </TabsContent>
 
           <Suspense fallback={<TabFallback />}>

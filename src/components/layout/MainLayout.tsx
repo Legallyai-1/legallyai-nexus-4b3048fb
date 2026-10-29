@@ -7,7 +7,11 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import { Menu, Search } from "lucide-react";
+import { ChevronDown, LayoutDashboard, LogOut, Menu, Search, Settings } from "lucide-react";
+import { toast } from "sonner";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ActiveOrganizationSwitcher } from "./ActiveOrganizationSwitcher";
 import { getActiveOrganizationId, setActiveOrganizationId } from "@/lib/organizations";
@@ -16,9 +20,11 @@ interface MainLayoutProps {
   children: React.ReactNode;
   showSidebar?: boolean;
   showHeader?: boolean;
+  /** Replaces the app-wide sidebar on desktop (e.g. the Business Hub section nav). The mobile drawer keeps the app nav. */
+  sidebar?: React.ReactNode;
 }
 
-export function MainLayout({ children, showSidebar = true, showHeader = true }: MainLayoutProps) {
+export function MainLayout({ children, showSidebar = true, showHeader = true, sidebar }: MainLayoutProps) {
   const [userRole, setUserRole] = useState<string>("client");
   const [user, setUser] = useState<any>(null);
   const [query, setQuery] = useState("");
@@ -71,7 +77,7 @@ export function MainLayout({ children, showSidebar = true, showHeader = true }: 
   return (
     <div className="hub-theme hub-bg min-h-screen flex w-full text-foreground">
       <div className="hidden md:flex">
-        <AppSidebar userRole={userRole} />
+        {sidebar ?? <AppSidebar userRole={userRole} />}
       </div>
 
       <div className="flex-1 min-w-0 flex flex-col min-h-screen">
@@ -110,12 +116,31 @@ export function MainLayout({ children, showSidebar = true, showHeader = true }: 
                 <ToolLauncher className="border-border bg-white/70 hover:bg-white" />
                 <NotificationCenter />
                 {user && (
-                  <span
-                    className="hidden sm:flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-b from-[hsl(46_95%_80%)] to-[hsl(40_88%_58%)] text-sm font-semibold text-[hsl(222_52%_12%)] shadow"
-                    aria-label="Signed in"
-                  >
-                    {user.user_metadata?.full_name?.[0] || user.email?.[0]?.toUpperCase()}
-                  </span>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      aria-label="Account menu"
+                      className="flex items-center gap-1.5 rounded-full p-0.5 pr-1.5 hover:bg-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(43_95%_52%)]"
+                    >
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-b from-[hsl(46_95%_80%)] to-[hsl(40_88%_58%)] text-sm font-semibold text-[hsl(222_52%_12%)] shadow ring-2 ring-[hsl(43_95%_52%/0.7)]">
+                        {user.user_metadata?.full_name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase()}
+                      </span>
+                      <ChevronDown className="hidden sm:block h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="hub-theme w-56">
+                      <DropdownMenuLabel className="truncate font-normal text-xs text-muted-foreground">{user.email}</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onSelect={() => navigate("/dashboard")}><LayoutDashboard className="mr-2 h-4 w-4" />Dashboard</DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => navigate("/settings")}><Settings className="mr-2 h-4 w-4" />Settings</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onSelect={async () => {
+                          await supabase.auth.signOut();
+                          toast.success("Logged out successfully");
+                          navigate("/");
+                        }}
+                      ><LogOut className="mr-2 h-4 w-4" />Sign out</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
               </div>
             </div>

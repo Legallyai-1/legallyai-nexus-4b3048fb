@@ -1026,3 +1026,171 @@ a:focus-visible > .launcher-icon {
   .lee-burst, .gold-wave > span { animation: none; }
 }
 .lee-partner .text-legal-gold, .lee-partner-title-accent { color: hsl(32 90% 24%); }
+
+/* ---------------------------------------------------------------------------
+   Business Hub dashboard (firm hub), per the Website Designer spec: pearly white
+   background, frosted silver panels, gold (#D4AF37) accents, navy headings.
+   --------------------------------------------------------------------------- */
+.hub-dash-bg {
+  background:
+    radial-gradient(ellipse 55% 45% at 0% 0%, rgba(212, 175, 55, 0.06), transparent 70%),
+    radial-gradient(ellipse 55% 50% at 100% 100%, rgba(148, 163, 184, 0.10), transparent 70%),
+    linear-gradient(180deg, #FBFAF7 0%, #F4F6FA 100%);
+}
+.hub-panel {
+  position: relative;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #FFFFFF 0%, #F3F4F7 55%, #E9ECF1 100%);
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
+  color: #475569;
+}
+.hub-panel-featured {
+  border-color: rgba(212, 175, 55, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 1px rgba(212, 175, 55, 0.35), 0 4px 14px rgba(212, 175, 55, 0.18), 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+.hub-panel h2, .hub-panel h3, .hub-dash-title { color: #0F1E3D; }
+.hub-panel-title { font-size: 16px; line-height: 24px; font-weight: 600; letter-spacing: -0.01em; color: #0F1E3D; }
+.hub-label { font-size: 12px; line-height: 16px; text-transform: uppercase; letter-spacing: 0.06em; color: #64748B; }
+.hub-gold-text { color: #B8932E; }
+.hub-gold-icon { color: #D4AF37; }
+
+.hub-side {
+  width: 248px;
+  background: linear-gradient(180deg, #F7F8FA 0%, #E7EAEF 100%);
+  border-right: 1px solid #E2E8F0;
+}
+.hub-side-item {
+  display: flex;
+  width: 100%;
+  min-height: 40px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+  text-align: left;
+  position: relative;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+.hub-side-item svg { color: #64748B; flex-shrink: 0; }
+.hub-side-item:hover { background: rgba(15, 30, 61, 0.04); color: #0F1E3D; }
+.hub-side-item:focus-visible { outline: none; box-shadow: 0 0 0 2px #D4AF37, 0 6px 22px rgba(212, 175, 55, 0.28); }
+.hub-side-item[aria-current="page"] {
+  background: rgba(212, 175, 55, 0.12);
+  color: #0F1E3D;
+  font-weight: 600;
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.35), 0 4px 14px rgba(212, 175, 55, 0.18);
+}
+.hub-side-item[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 3px;
+  background: #D4AF37;
+}
+.hub-side-item[aria-current="page"] svg { color: #B8932E; }
+
+.hub-progress {
+  height: 6px;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.2);
+}
+.hub-progress > span { display: block; height: 100%; border-radius: 999px; transition: width 0.6s ease; }
+.hub-progress-gold {
+  background: linear-gradient(90deg, #E8C766 0%, #D4AF37 50%, #B8932E 100%);
+  background-size: 200% 100%;
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.45);
+  animation: hub-progress-shimmer 2.5s ease-in-out infinite;
+}
+.hub-progress-done { background: #059669; }
+@keyframes hub-progress-shimmer {
+  0%, 100% { background-position: 0% 0; filter: brightness(1); }
+  50% { background-position: 100% 0; filter: brightness(1.12); }
+}
+
+.hub-workflow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 16px;
+  border-radius: 12px;
+  text-align: center;
+  background: linear-gradient(145deg, #FFFFFF 0%, #F6F7F9 100%);
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.hub-workflow:hover, .hub-workflow:focus-visible {
+  outline: none;
+  transform: translateY(-2px);
+  border-color: rgba(212, 175, 55, 0.6);
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.6), 0 6px 22px rgba(212, 175, 55, 0.28);
+}
+.hub-workflow .hub-workflow-icon { height: 28px; width: 28px; color: #D4AF37; filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.4)); }
+
+.hub-paper {
+  background: #FFFFFF;
+  color: #1E293B;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+  padding: 32px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.hub-highlight {
+  background: rgba(251, 191, 36, 0.18);
+  border-bottom: 2px solid rgba(217, 119, 6, 0.5);
+  border-radius: 2px;
+  padding: 0 3px;
+}
+
+.lee-wave { display: flex; align-items: center; justify-content: center; gap: 4px; height: 20px; }
+.lee-wave > span { width: 3px; height: 6px; border-radius: 4px; background: #D4AF37; box-shadow: 0 0 6px rgba(212, 175, 55, 0.5); }
+.lee-wave[data-active="true"] > span { animation: lee-wave 1.2s ease-in-out infinite alternate; }
+@keyframes lee-wave { 0% { height: 4px; } 100% { height: 20px; } }
+
+.hub-chip {
+  min-height: 32px;
+  border-radius: 999px;
+  border: 1px solid #E2E8F0;
+  background: #FFFFFF;
+  padding: 0 12px;
+  font-size: 12px;
+  color: #334155;
+  transition: border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+.hub-chip:hover:not(:disabled), .hub-chip:focus-visible {
+  outline: none;
+  border-color: #D4AF37;
+  color: #0F1E3D;
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.35), 0 4px 14px rgba(212, 175, 55, 0.18);
+}
+.hub-chip:disabled { opacity: 0.6; }
+
+.hub-chat-input {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 8px;
+  border-radius: 16px;
+  border: 1px solid #E2E8F0;
+  background: #FFFFFF;
+  padding: 4px 4px 4px 16px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.hub-chat-input:focus-within { border-color: #D4AF37; box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.25); }
+
+@media (prefers-reduced-motion: reduce) {
+  .hub-progress-gold, .lee-wave[data-active="true"] > span { animation: none; }
+  .hub-workflow:hover { transform: none; }
+  .hub-dash .animate-lee-alive { animation: none; }
+}
