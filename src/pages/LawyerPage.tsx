@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { LeeAvatar } from "@/components/brand/LeeAvatar";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   FileText, Users, Clock, Lock, Shield, Loader2, ArrowRight, Check, FolderOpen, FileSearch,
@@ -161,11 +162,11 @@ export default function LawyerPage() {
                 Draft faster, review contracts, research with sources, and run cases, clients, billing and trust accounting in one place, with Lee as your AI partner.
               </p>
               <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                <Button size="lg" onClick={startTrial} className="gold-tile border-0 font-semibold">Create firm account <ArrowRight className="ml-1.5 h-4 w-4" /></Button>
+                <Button size="lg" onClick={startTrial} className="font-semibold">Create firm account <ArrowRight className="ml-1.5 h-4 w-4" /></Button>
                 <Button asChild size="lg" variant="outline" className="bg-white/70"><a href={DEMO_MAILTO}><Mail className="mr-1.5 h-4 w-4" />Book a demo</a></Button>
               </div>
             </div>
-            <img src="/lee-mascot.png" alt="Lee, the LegallyAI assistant, holding the scales of justice" width={320} height={480} className="hidden lg:block mx-auto h-80 w-auto drop-shadow-[0_20px_40px_hsl(218_45%_25%/0.35)]" />
+            <LeeAvatar heightClass="h-80" alt="Lee, the LegallyAI assistant, holding the scales of justice" className="hidden lg:flex mx-auto" />
           </div>
         </section>
 

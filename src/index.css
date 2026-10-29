@@ -330,8 +330,41 @@
     0%, 100% { opacity: 0; transform: scale(0.3) translateY(0); }
     50% { opacity: 1; transform: scale(1) translateY(-3px); }
   }
+  /* Lee stage: soft gold aura, expanding pulse ring and a hello-wave tilt every few seconds. */
+  .lee-aura {
+    position: absolute; inset: 10% 5% 5%; border-radius: 9999px; pointer-events: none;
+    background: radial-gradient(circle, hsl(45 95% 62% / 0.45) 0%, hsl(45 95% 62% / 0.12) 45%, transparent 70%);
+    filter: blur(14px);
+    animation: lee-aura 4.5s ease-in-out infinite;
+  }
+  .lee-ring {
+    position: absolute; left: 50%; bottom: 2%; width: 55%; aspect-ratio: 5 / 1; transform: translateX(-50%);
+    border-radius: 50%; pointer-events: none;
+    border: 1.5px solid hsl(43 95% 55% / 0.5);
+    background: radial-gradient(ellipse at center, hsl(43 95% 60% / 0.25), transparent 70%);
+    box-shadow: 0 0 18px hsl(43 95% 55% / 0.45);
+    animation: lee-ring 3s ease-out infinite;
+  }
+  .lee-wave { animation: lee-wave 7s ease-in-out infinite; transform-origin: 50% 85%; }
+  @keyframes lee-aura {
+    0%, 100% { opacity: 0.65; transform: scale(0.95); }
+    50% { opacity: 1; transform: scale(1.06); }
+  }
+  @keyframes lee-ring {
+    0% { opacity: 0.8; transform: translateX(-50%) scale(0.7); }
+    100% { opacity: 0; transform: translateX(-50%) scale(1.35); }
+  }
+  @keyframes lee-wave {
+    0%, 70%, 100% { transform: rotate(0deg); }
+    74% { transform: rotate(-5deg); }
+    78% { transform: rotate(4deg); }
+    82% { transform: rotate(-4deg); }
+    86% { transform: rotate(3deg); }
+    90% { transform: rotate(0deg); }
+  }
   @media (prefers-reduced-motion: reduce) {
-    .animate-lee-alive, .lai-sparkle { animation: none; }
+    .animate-lee-alive, .lai-sparkle, .lee-aura, .lee-ring, .lee-wave { animation: none; }
+    .lee-ring { opacity: 0; }
   }
 
   /* Animations */
@@ -755,3 +788,58 @@ a:focus-visible > .launcher-icon {
 .guide-prose li::marker { color: hsl(40 80% 40%); }
 .guide-link { color: hsl(36 85% 30%); text-decoration: underline; text-underline-offset: 2px; }
 .guide-link:hover { color: hsl(36 85% 22%); }
+
+/* ===========================================================================
+   Site-wide frosted silver/gold look (Dakota's dashboard mockup, Oct 29).
+   <body> carries .hub-theme .hub-bg, so every page, dialog and sheet uses the light tokens.
+   =========================================================================== */
+.hub-theme .dash-bg { background: transparent; }
+
+/* Signature buttons: gold gradient primary with a warm glow; brushed-silver secondary with a gold edge. */
+@layer components {
+.btn-gold {
+  color: hsl(222 52% 12%);
+  background: linear-gradient(160deg, hsl(48 96% 80%) 0%, hsl(43 90% 60%) 55%, hsl(38 82% 48%) 100%);
+  border: 1px solid hsl(40 80% 45% / 0.7);
+  box-shadow: inset 0 1px 0 hsl(50 100% 94% / 0.9), 0 6px 18px -8px hsl(38 85% 40% / 0.7);
+}
+.btn-gold:hover, .btn-gold:focus-visible {
+  filter: brightness(1.04);
+  box-shadow: inset 0 1px 0 hsl(50 100% 94% / 0.9), 0 0 0 1px hsl(45 95% 62% / 0.6), 0 0 22px hsl(43 95% 55% / 0.55);
+}
+.btn-silver {
+  color: hsl(222 52% 14%);
+  background: linear-gradient(165deg, hsl(0 0% 100% / 0.95) 0%, hsl(212 22% 90%) 55%, hsl(214 16% 82%) 100%);
+  border: 1px solid hsl(40 75% 52% / 0.6);
+  box-shadow: inset 0 1px 0 hsl(0 0% 100%), 0 6px 16px -10px hsl(218 45% 20% / 0.45);
+}
+.btn-silver:hover, .btn-silver:focus-visible {
+  border-color: hsl(43 95% 52%);
+  box-shadow: inset 0 1px 0 hsl(0 0% 100%), 0 0 0 1px hsl(45 95% 62% / 0.45), 0 0 18px hsl(43 95% 55% / 0.4);
+}
+.btn-frost {
+  color: hsl(222 52% 14%);
+  background: hsl(0 0% 100% / 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid hsl(214 40% 80% / 0.9);
+}
+.btn-frost:hover { border-color: hsl(43 95% 52%); background: hsl(0 0% 100% / 0.8); }
+}
+
+/* Legacy gold/silver tiles get the same thin gold border + glow on hover as .metal-card. */
+.hub-theme .gold-tile, .hub-theme .silver-tile { border: 1px solid hsl(40 80% 48% / 0.65); }
+.hub-theme .gold-tile:hover, .hub-theme .silver-tile:hover,
+.hub-theme .gold-tile:focus-visible, .hub-theme .silver-tile:focus-visible {
+  box-shadow: 0 0 0 1px hsl(45 95% 62% / 0.5), 0 0 24px hsl(43 95% 55% / 0.45), 0 14px 30px -16px hsl(30 80% 25% / 0.5);
+}
+.hub-theme .silver-tile { box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.9), 0 12px 28px -16px hsl(218 45% 20% / 0.45); }
+
+/* Frosted cards everywhere get a hairline gold edge on hover, like the mockup panels. */
+.hub-theme .glass-card-hover:hover,
+.hub-theme .rounded-lg.border.bg-card:hover,
+.hub-theme .rounded-xl.border.bg-card:hover { border-color: hsl(43 85% 55% / 0.7); }
+.hub-theme .glass-card-hover:hover { box-shadow: 0 0 0 1px hsl(45 95% 62% / 0.35), 0 0 20px hsl(43 95% 55% / 0.3); }
+
+/* Old neon text glows read as blur on light glass; drop them. */
+.hub-theme .text-glow-cyan, .hub-theme .text-glow-purple { text-shadow: none; }

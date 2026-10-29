@@ -19,6 +19,7 @@ import { CompetitorVersusTable } from "@/components/legal/CompetitorVersusTable"
 import { ToolLauncher } from "@/components/layout/ToolLauncher";
 import { TOOL_ICONS } from "@/components/layout/toolIcons";
 import { featuredTools } from "@/lib/toolCatalog";
+import { LeeAvatar } from "@/components/brand/LeeAvatar";
 
 const hubs = [
   { id: "chat", name: "Lee Legal AI", icon: MessageSquare, color: "cyan", path: "/chat", description: "General legal assistant" },
@@ -104,8 +105,8 @@ export default function Index() {
           <div className="container mx-auto max-w-6xl">
             <div className="grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] gap-8 lg:gap-10 items-center">
               <div className="min-w-0 text-center lg:text-left">
-                <div className="flex items-center justify-center lg:justify-start gap-3 mb-5">
-                  <img src="/lee-mascot-sm.png" alt="" width={56} height={84} className="h-16 w-auto drop-shadow-[0_0_18px_hsl(45_90%_60%/0.45)]" fetchPriority="high" />
+                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 mb-5">
+                  <LeeAvatar heightClass="h-32 sm:h-36" alt="Lee, the LegallyAI assistant, waving" priority />
                   <Badge className="bg-legal-gold/15 text-legal-gold border-legal-gold/40">
                     <Sparkles className="w-3 h-3 mr-1" aria-hidden="true" /> Meet Lee, your AI legal partner
                   </Badge>
@@ -150,7 +151,7 @@ export default function Index() {
               <div className="min-w-0">
                 <div className="glass-card rounded-3xl border border-legal-gold/40 shadow-[0_0_40px_hsl(var(--legal-gold)/0.18)] overflow-hidden">
                   <div className="flex items-center gap-3 p-4 border-b border-border/30 bg-gradient-to-r from-legal-gold/15 via-transparent to-transparent">
-                    <img src="/lee-mascot-sm.png" alt="" width={40} height={60} className="h-11 w-auto" loading="lazy" />
+                    <LeeAvatar heightClass="h-12" imageSize="sm" stage={false} />
                     <div className="min-w-0">
                       <h2 className="font-display text-lg font-bold text-foreground flex flex-wrap items-center gap-2">
                         Ask Lee <Badge className="bg-neon-green/20 text-neon-green text-xs">Free</Badge>
@@ -169,7 +170,7 @@ export default function Index() {
                             <button
                               key={suggestion}
                               type="button"
-                              className="rounded-full border border-legal-gold/40 bg-white/5 px-3.5 py-2 text-sm text-foreground hover:bg-legal-gold/10"
+                              className="btn-silver rounded-full px-3.5 py-2 text-sm font-medium"
                               onClick={() => { setChatInput(suggestion); document.getElementById("hero-chat-input")?.focus(); }}
                             >
                               {suggestion}
@@ -309,7 +310,7 @@ export default function Index() {
                   <p className="mt-2 text-muted-foreground max-w-2xl">Case files, clients, drafting, contract review, research, billing and trust accounting, with client data isolated per organization.</p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <Button asChild size="lg" className="gold-tile border-0 font-semibold"><Link to="/lawyers">Explore the firm hub</Link></Button>
+                  <Button asChild size="lg" className="font-semibold"><Link to="/lawyers">Explore the firm hub</Link></Button>
                   <Button asChild size="lg" variant="outline"><a href="mailto:support@legallyai.ai?subject=LegallyAI%20firm%20demo">Book a demo</a></Button>
                 </div>
               </div>
@@ -371,11 +372,11 @@ export default function Index() {
         <section className="py-12 sm:py-16 px-4">
           <div className="container mx-auto max-w-3xl text-center">
             <div className="glass-card p-8 sm:p-12 rounded-3xl border border-legal-gold/30">
-              <img src="/lee-mascot-sm.png" alt="" width={64} height={96} className="mx-auto mb-4 h-20 w-auto" loading="lazy" />
+              <LeeAvatar heightClass="h-24" imageSize="sm" className="mx-auto mb-4" />
               <h2 className="text-2xl sm:text-3xl font-display font-bold mb-3">Ready when you are</h2>
               <p className="text-muted-foreground mb-7">Ask Lee your first question free, no credit card required.</p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button asChild size="lg" className="gold-tile border-0 font-semibold"><Link to="/chat"><MessageSquare className="mr-2 h-5 w-5" />Get legal help</Link></Button>
+                <Button asChild size="lg" className="font-semibold"><Link to="/chat"><MessageSquare className="mr-2 h-5 w-5" />Get legal help</Link></Button>
                 <Button asChild size="lg" variant="outline"><Link to="/lawyers"><Briefcase className="mr-2 h-5 w-5" />For law firms</Link></Button>
               </div>
             </div>

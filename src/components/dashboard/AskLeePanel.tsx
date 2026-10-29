@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mic, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LeeAvatar } from "@/components/brand/LeeAvatar";
 
 interface Props {
   userName?: string;
@@ -34,7 +35,7 @@ export function AskLeePanel({ userType = "lawyer", className = "" }: Props) {
       <div className="relative mt-3 flex flex-1 flex-col items-center justify-center rounded-2xl bg-gradient-to-b from-[hsl(210_60%_92%/0.8)] to-transparent py-5">
         <div className="absolute inset-x-8 top-6 h-36 rounded-full bg-[hsl(45_90%_60%/0.25)] blur-3xl" aria-hidden="true" />
         <div className="relative mb-2 rounded-2xl rounded-bl-sm border border-border/70 bg-white/90 px-3 py-1.5 text-sm font-medium shadow-sm">How can I assist you today?</div>
-        <img src="/lee-mascot.png" alt="Lee, the LegallyAI assistant, holding the scales of justice" width={240} height={360} loading="lazy" className="relative animate-lee-alive h-40 sm:h-48 w-auto drop-shadow-[0_18px_30px_hsl(218_45%_25%/0.35)]" />
+        <LeeAvatar heightClass="h-44 sm:h-52" alt="Lee, the LegallyAI assistant, holding the scales of justice" />
       </div>
 
       <div className="mt-4 flex flex-col gap-2">
