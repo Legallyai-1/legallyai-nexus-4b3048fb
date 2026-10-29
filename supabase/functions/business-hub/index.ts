@@ -1,7 +1,13 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { getAnthropicKey } from "../_shared/anthropic-key.ts";
-import { consumePaidAIQuota, hasPaidAIQuota } from "../_shared/paid-ai-access.ts";
+import { consumePaidAIQuota, hasPaidAIQuota, paidAIQuotaResult } from "../_shared/paid-ai-access.ts";
+
+class DailyAILimitError extends Error {
+  constructor(readonly used: number, readonly limit: number) {
+    super(`You've used today's ${limit} free AI credits. Upgrade for unlimited AI, or try again tomorrow.`);
+  }
+}
 import { hasOrgAccess } from "../_shared/org-access.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -73,6 +79,8 @@ async function callAI(prompt: string, userId: string, authorization: string): Pr
     reason: "business_hub",
   };
   if (!await hasPaidAIQuota(quotaOptions)) {
+    const quota = paidAIQuotaResult(quotaOptions);
+    if (quota?.status === "quota_exceeded") throw new DailyAILimitError(quota.used, quota.limit);
     throw new Error("Paid AI is unavailable or your AI credits are exhausted");
   }
 
@@ -178,6 +186,12 @@ Deno.serve(async (req) => {
     );
 
   } catch (error: unknown) {
+    if (error instanceof DailyAILimitError) {
+      return new Response(
+        JSON.stringify({ error: 'daily_ai_limit_reached', message: error.message, used: error.used, limit: error.limit }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     console.error('Business Hub error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
