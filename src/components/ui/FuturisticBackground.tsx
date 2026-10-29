@@ -16,7 +16,8 @@ export function FuturisticBackground({
   return (
     <div className={cn(
       "min-h-screen relative overflow-hidden",
-      "bg-gradient-to-br from-background via-card to-background",
+      // Transparent: the frosted soft-blue page background (body.hub-bg) shows through.
+      "bg-transparent",
       className
     )}>
       {/* Base gradient overlay */}
@@ -43,10 +44,10 @@ export function FuturisticBackground({
           const isGlowParticle = i % 5 === 0;
           const colorIndex = i % 4;
           const colors = [
-            'hsl(187 100% 50%)', // cyan
-            'hsl(210 100% 60%)', // blue  
-            'hsl(280 100% 65%)', // purple
-            'hsl(199 89% 48%)',  // primary cyan
+            'hsl(43 95% 55%)',  // gold
+            'hsl(210 70% 60%)', // soft blue
+            'hsl(214 20% 70%)', // silver
+            'hsl(45 95% 65%)',  // light gold
           ];
           
           return (
@@ -60,7 +61,7 @@ export function FuturisticBackground({
                 width: `${Math.random() * 4 + 2}px`,
                 height: `${Math.random() * 4 + 2}px`,
                 backgroundColor: colors[colorIndex],
-                opacity: Math.random() * 0.5 + 0.2,
+                opacity: Math.random() * 0.3 + 0.15,
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
                 animation: `float ${Math.random() * 6 + 4}s ease-in-out infinite`,
@@ -79,7 +80,7 @@ export function FuturisticBackground({
         <div 
           className="absolute w-96 h-96 rounded-full opacity-10 blur-3xl animate-float-slow"
           style={{
-            background: 'radial-gradient(circle, hsl(187 100% 50%) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, hsl(43 95% 60%) 0%, transparent 70%)',
             top: '10%',
             left: '20%',
           }}
@@ -87,7 +88,7 @@ export function FuturisticBackground({
         <div 
           className="absolute w-80 h-80 rounded-full opacity-10 blur-3xl animate-float"
           style={{
-            background: 'radial-gradient(circle, hsl(280 100% 65%) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, hsl(210 70% 65%) 0%, transparent 70%)',
             bottom: '20%',
             right: '15%',
             animationDelay: '2s',

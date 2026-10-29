@@ -9,23 +9,23 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow-sm hover:shadow-glow-md",
+        default: "btn-gold",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border-2 border-neon-cyan/50 bg-transparent text-neon-cyan hover:bg-neon-cyan/10 hover:border-neon-cyan hover:shadow-glow-sm",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent/20 hover:text-accent-foreground",
+        outline: "btn-silver",
+        secondary: "btn-frost",
+        ghost: "hover:bg-white/60 hover:text-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         // Futuristic neon variants
-        neon: "bg-gradient-to-r from-neon-cyan to-neon-blue text-background font-bold hover:shadow-glow-lg hover:scale-105 transition-all",
+        neon: "btn-gold font-bold",
         "neon-purple": "bg-gradient-to-r from-neon-purple to-neon-pink text-white font-bold hover:shadow-glow-purple hover:scale-105 transition-all",
         "neon-green": "bg-gradient-to-r from-neon-green to-neon-cyan text-background font-bold hover:shadow-glow-green hover:scale-105 transition-all",
-        "neon-outline": "border-2 border-neon-cyan bg-transparent text-neon-cyan hover:bg-neon-cyan/10 hover:shadow-glow-md font-bold",
-        glass: "bg-white/5 backdrop-blur-md border border-white/10 text-foreground hover:bg-white/10 hover:border-neon-cyan/30 hover:shadow-glow-sm",
+        "neon-outline": "btn-silver font-bold",
+        glass: "btn-frost",
         // Legacy variants
-        gold: "bg-section-premium text-background hover:brightness-110 shadow-lg font-bold",
-        hero: "bg-gradient-to-r from-neon-cyan to-neon-blue text-background hover:scale-105 shadow-glow-md font-bold text-base transition-transform",
+        gold: "btn-gold font-bold",
+        hero: "btn-gold font-bold text-base",
         premium: "bg-gradient-to-r from-section-premium to-neon-orange text-background hover:scale-105 shadow-lg font-bold",
-        legal: "bg-card text-neon-cyan border border-neon-cyan/30 hover:bg-neon-cyan/10 shadow-sm font-semibold",
+        legal: "btn-silver font-semibold",
       },
       size: {
         default: "h-10 px-4 py-2",

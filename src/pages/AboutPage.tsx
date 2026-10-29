@@ -62,7 +62,7 @@ export default function AboutPage() {
               width={320}
               height={480}
               loading="lazy"
-              className="hidden lg:block mx-auto h-80 w-auto drop-shadow-[0_20px_40px_hsl(218_45%_25%/0.35)]"
+              className="hidden lg:block mx-auto h-80 w-auto animate-lee-alive"
             />
           </div>
         </section>
