@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect, type SetStateAction } from "react";
 import { toast } from "sonner";
+import { FreeLimitError, freeLimitChatMessage } from "@/lib/freeQuestions";
 import { streamLegalChat, type HubType, type ChatMessage as LegalChatMessage } from "@/lib/legalChat";
 
 export interface Message {
@@ -77,10 +78,15 @@ export function useAIChat({ hubType, onError }: UseAIChatOptions) {
       return text;
     } catch (error: unknown) {
       if (!isCurrent()) return;
+      if (error instanceof FreeLimitError) {
+        // Keep a visible answer in the chat; the pop-up also opens.
+        setMessages(previous => previous.map(message => message.id === assistantId ? { ...message, content: freeLimitChatMessage(error.detail) } : message));
+        onError?.(error);
+        throw error;
+      }
       setMessages(previous => previous.filter(message => message.id !== assistantId));
       const failure = error instanceof Error ? error : new Error("Failed to get AI response");
-      // The free-limit pop-up explains itself; other failures get a toast.
-      if (failure.name !== "FreeLimitError") toast.error(failure.message);
+      toast.error(failure.message);
       onError?.(failure);
       throw failure;
     } finally {

@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import AdContainer from "@/components/ads/AdContainer";
 import { AD_SLOTS } from "@/lib/adSlots";
 import { streamLegalChat } from "@/lib/legalChat";
+import { FreeLimitError, freeLimitChatMessage } from "@/lib/freeQuestions";
 import { toast } from "sonner";
 import {
   Sparkles, FileText, MessageSquare, Heart, Shield, Briefcase, Users, Gavel, Car, Building2,
@@ -85,6 +86,10 @@ export default function Index() {
       if (!text.trim()) throw new Error("The legal assistant returned an empty response.");
       setChatMessages(prev => [...prev, { role: "assistant", content: text }]);
     } catch (error: any) {
+      if (error instanceof FreeLimitError) {
+        setChatMessages(prev => [...prev, { role: "assistant", content: freeLimitChatMessage(error.detail) }]);
+        return;
+      }
       console.error("Chat error:", error);
       toast.error("Unable to get response. Please try again.");
       setChatMessages(prev => [...prev, { role: "assistant", content: "I apologize, but I'm having trouble connecting. Please try again or visit our full chat page for more options." }]);
