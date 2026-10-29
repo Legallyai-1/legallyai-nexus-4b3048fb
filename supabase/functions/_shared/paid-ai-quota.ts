@@ -5,7 +5,7 @@
 // using a per-user, per-UTC-day subject so the count resets daily. No schema change.
 import { hasSubscriptionEntitlement } from "./document-credits.ts";
 
-export const DEFAULT_FREE_PAID_AI_DAILY_LIMIT = 10;
+export const DEFAULT_FREE_PAID_AI_DAILY_LIMIT = 5;
 
 export function freePaidAIDailyLimit(env: { get(name: string): string | undefined }): number {
   const value = Number(env.get("FREE_PAID_AI_DAILY_LIMIT"));

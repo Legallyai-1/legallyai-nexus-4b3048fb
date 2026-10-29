@@ -70,6 +70,7 @@ test('fails closed on DB/RPC errors, bad cost or missing user', async () => {
 
 test('daily limit env parsing defaults safely', () => {
   const env = (v?: string) => ({ get: () => v });
+  assert.equal(DEFAULT_FREE_PAID_AI_DAILY_LIMIT, 5);
   assert.equal(freePaidAIDailyLimit(env()), DEFAULT_FREE_PAID_AI_DAILY_LIMIT);
   assert.equal(freePaidAIDailyLimit(env('25')), 25);
   for (const bad of ['0', '-3', 'abc', '1.5', '100000']) assert.equal(freePaidAIDailyLimit(env(bad)), DEFAULT_FREE_PAID_AI_DAILY_LIMIT);
