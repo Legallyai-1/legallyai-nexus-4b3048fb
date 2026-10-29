@@ -47,7 +47,7 @@ export default function ContactPage() {
             </h1>
             <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
               Questions about your account, billing or firm plans? Email us at{" "}
-              <a href={`mailto:${SUPPORT_EMAIL}`} className="font-semibold text-[hsl(36_85%_30%)] underline-offset-4 hover:underline break-all">
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="font-semibold text-[hsl(36_85%_30%)] underline-offset-4 hover:underline break-words">
                 {SUPPORT_EMAIL}
               </a>
               . For a legal question, Ask Lee is the fastest place to start.
