@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -151,7 +151,7 @@ async function resolveInvoiceChargeId(
 
 async function resolveUserId(
   stripe: Stripe,
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: SupabaseClient,
   customerId: string | null,
   metadata: Stripe.Metadata | null | undefined,
 ) {
@@ -182,7 +182,7 @@ async function resolveUserId(
 }
 
 async function syncProfileTier(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: SupabaseClient,
   userId: string,
   tier: SubscriptionTier,
 ) {
@@ -200,7 +200,7 @@ async function syncProfileTier(
 }
 
 async function upsertSubscription(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: SupabaseClient,
   input: {
     userId: string;
     customerId: string | null;
@@ -255,7 +255,7 @@ async function upsertSubscription(
 }
 
 async function upsertPaymentRecord(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: SupabaseClient,
   input: {
     userId: string;
     tier: SubscriptionTier;
@@ -315,7 +315,7 @@ async function loadSubscriptionById(stripe: Stripe, subscriptionId: string) {
 
 async function persistStripeSubscription(
   stripe: Stripe,
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: SupabaseClient,
   eventId: string,
   eventCreated: number,
   subscription: Stripe.Subscription,
@@ -350,7 +350,7 @@ async function persistStripeSubscription(
 
 async function handleCheckoutSessionFulfilled(
   stripe: Stripe,
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: SupabaseClient,
   event: Stripe.Event,
 ) {
   const session = event.data.object as Stripe.Checkout.Session;
@@ -411,7 +411,7 @@ async function handleCheckoutSessionFulfilled(
 
 async function handleCheckoutSessionAsyncPaymentFailed(
   stripe: Stripe,
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: SupabaseClient,
   event: Stripe.Event,
 ) {
   const session = event.data.object as Stripe.Checkout.Session;
@@ -453,7 +453,7 @@ async function handleCheckoutSessionAsyncPaymentFailed(
 
 async function handleSubscriptionEvent(
   stripe: Stripe,
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: SupabaseClient,
   event: Stripe.Event,
 ) {
   const eventSubscription = event.data.object as Stripe.Subscription;
@@ -465,7 +465,7 @@ async function handleSubscriptionEvent(
 
 async function handleInvoicePaid(
   stripe: Stripe,
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: SupabaseClient,
   event: Stripe.Event,
 ) {
   const invoice = event.data.object as Stripe.Invoice;
@@ -507,7 +507,7 @@ async function handleInvoicePaid(
 
 async function handleInvoicePaymentFailed(
   stripe: Stripe,
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: SupabaseClient,
   event: Stripe.Event,
 ) {
   const invoice = event.data.object as Stripe.Invoice;
@@ -553,7 +553,7 @@ async function handleInvoicePaymentFailed(
 
 async function handleChargeRefunded(
   stripe: Stripe,
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: SupabaseClient,
   event: Stripe.Event,
 ) {
   const charge = event.data.object as Stripe.Charge;
