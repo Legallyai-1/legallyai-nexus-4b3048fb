@@ -1,6 +1,9 @@
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
+import { lazyWithRetry as lazy } from "@/lib/lazyWithRetry";
+import { ChunkErrorBoundary } from "@/components/ChunkErrorBoundary";
+import { RequireAuth } from "@/components/auth/RequireAuth";
 import { GlowScalesLoader } from "@/components/brand/GlowScales";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { RouteSeo } from "@/components/seo/RouteSeo";
 import { AdsenseRouteLoader } from "@/components/ads/AdsenseRouteLoader";
 import { AnimatePresence } from "framer-motion";
@@ -44,7 +47,6 @@ const AcceptInvitePage = lazy(() => import("@/pages/AcceptInvitePage"));
 const AIAssistantsPage = lazy(() => import("@/pages/AIAssistantsPage"));
 const OnboardingPage = lazy(() => import("@/pages/OnboardingPage"));
 const PayrollPage = lazy(() => import("@/pages/PayrollPage"));
-const JobBoardPage = lazy(() => import("@/pages/JobBoardPage"));
 const WorkplaceLegalAidPage = lazy(() => import("@/pages/WorkplaceLegalAidPage"));
 const ProBonoPage = lazy(() => import("@/pages/ProBonoPage"));
 const DocumentTemplatesPage = lazy(() => import("@/pages/DocumentTemplatesPage"));
@@ -73,8 +75,12 @@ const NotificationsPage = lazy(() => import("@/pages/NotificationsPage"));
 const LoadingFallback = () => <GlowScalesLoader />;
 
 // Module-level so pages are not remounted on every router re-render (e.g. query-string changes).
+// lazyWithRetry hard-reloads once when a chunk from an older deploy is gone; if that still
+// fails, ChunkErrorBoundary shows a Reload button instead of a blank page.
 const LazyRoute = ({ children }: { children: React.ReactNode }) => (
-  <Suspense fallback={<LoadingFallback />}>{children}</Suspense>
+  <ChunkErrorBoundary>
+    <Suspense fallback={<LoadingFallback />}>{children}</Suspense>
+  </ChunkErrorBoundary>
 );
 
 export function AnimatedRoutes() {
@@ -121,9 +127,10 @@ export function AnimatedRoutes() {
         <Route path="/payment-success" element={<PageTransition><LazyRoute><PaymentSuccessPage /></LazyRoute></PageTransition>} />
         <Route path="/ai-assistants" element={<PageTransition><LazyRoute><AIAssistantsPage /></LazyRoute></PageTransition>} />
         <Route path="/onboarding" element={<PageTransition><LazyRoute><OnboardingPage /></LazyRoute></PageTransition>} />
-        <Route path="/payroll" element={<PageTransition><LazyRoute><PayrollPage /></LazyRoute></PageTransition>} />
-        <Route path="/jobs" element={<PageTransition><LazyRoute><JobBoardPage /></LazyRoute></PageTransition>} />
-        <Route path="/job-board" element={<PageTransition><LazyRoute><JobBoardPage /></LazyRoute></PageTransition>} />
+        <Route path="/payroll" element={<PageTransition><LazyRoute><RequireAuth><PayrollPage /></RequireAuth></LazyRoute></PageTransition>} />
+        {/* No real job-postings source exists, so the old job board routes go to workplace rights help. */}
+        <Route path="/jobs" element={<Navigate to="/workplace-legal-aid" replace />} />
+        <Route path="/job-board" element={<Navigate to="/workplace-legal-aid" replace />} />
         <Route path="/workplace-legal-aid" element={<PageTransition><LazyRoute><WorkplaceLegalAidPage /></LazyRoute></PageTransition>} />
         <Route path="/pro-bono" element={<PageTransition><LazyRoute><ProBonoPage /></LazyRoute></PageTransition>} />
         <Route path="/templates" element={<PageTransition><LazyRoute><DocumentTemplatesPage /></LazyRoute></PageTransition>} />
@@ -139,7 +146,7 @@ export function AnimatedRoutes() {
         <Route path="/dui-hub" element={<PageTransition><LazyRoute><DUIHubPage /></LazyRoute></PageTransition>} />
         <Route path="/will-hub" element={<PageTransition><LazyRoute><WillHubPage /></LazyRoute></PageTransition>} />
         <Route path="/marriage-divorce" element={<PageTransition><LazyRoute><MarriageDivorcePage /></LazyRoute></PageTransition>} />
-        <Route path="/store-assets" element={<PageTransition><LazyRoute><StoreAssetsPage /></LazyRoute></PageTransition>} />
+        <Route path="/store-assets" element={<PageTransition><LazyRoute><RequireAuth><StoreAssetsPage /></RequireAuth></LazyRoute></PageTransition>} />
         <Route path="/notifications" element={<PageTransition><LazyRoute><NotificationsPage /></LazyRoute></PageTransition>} />
         <Route path="/about" element={<PageTransition><LazyRoute><AboutPage /></LazyRoute></PageTransition>} />
         <Route path="/contact" element={<PageTransition><LazyRoute><ContactPage /></LazyRoute></PageTransition>} />

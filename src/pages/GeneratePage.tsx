@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Layout } from "@/components/layout/Layout";
+import { AuthAwareLayout } from "@/components/layout/AuthAwareLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { 
@@ -313,16 +313,16 @@ export default function GeneratePage() {
 
   if (isCheckingAuth) {
     return (
-      <Layout>
+      <AuthAwareLayout>
         <div className="flex items-center justify-center min-h-screen">
           <Loader2 className="h-8 w-8 animate-spin text-legal-gold" />
         </div>
-      </Layout>
+      </AuthAwareLayout>
     );
   }
 
   return (
-    <Layout>
+    <AuthAwareLayout>
       <section className="py-12 md:py-20 bg-background min-h-screen">
         <div className="container mx-auto px-4">
           {/* Header */}
@@ -554,6 +554,6 @@ export default function GeneratePage() {
           {/* Ad Banner - Mobile */}
         </div>
       </section>
-    </Layout>
+    </AuthAwareLayout>
   );
 }

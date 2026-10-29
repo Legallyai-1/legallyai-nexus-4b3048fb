@@ -42,11 +42,11 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
   "/workplace-legal-aid": pub("Workplace legal help | LegallyAI", "Get help with wages, discrimination, leave and wrongful termination questions, and organize your evidence."),
   "/will-hub": pub("Wills and estate planning help | LegallyAI", "Plan a will, understand estate basics and prepare documents to review with Lee's help."),
   "/marriage-divorce": pub("Marriage and divorce help | LegallyAI", "Understand divorce steps, forms and timelines, and prepare for each stage with help from Lee."),
+  "/consultations": pub("Prepare for a lawyer consultation | LegallyAI", "Get a consultation summary, document checklist and questions to ask, plus where to find free and low-cost lawyers."),
   "/court-records": pub("Court records and filing help | LegallyAI", "Find where to look up court records and how to prepare and file the paperwork for your case."),
   "/legal-academy": pub("Legal Academy – learn law with AI | LegallyAI", "Short courses and AI tutoring that explain legal basics in plain English."),
   "/pro-bono": pub("Free and low-cost legal aid | LegallyAI", "Find pro bono and legal aid resources and prepare your case before you reach out."),
   // Noindex until the job board is live (page is a placeholder).
-  "/jobs": { title: "Legal job board | LegallyAI", description: "Browse legal jobs for attorneys, paralegals and legal staff.", indexable: false },
   "/about": pub("About LegallyAI – Ask Lee and firm hubs | LegallyAI", "LegallyAI pairs Ask Lee, an AI legal assistant for everyday people, with AI workspaces for law firms. Legal information, not advice."),
   "/contact": pub("Contact us | LegallyAI", "Email LegallyAI about your account, billing, refunds or firm plans, or ask Lee a legal question. Legal information, not legal advice."),
   "/guides": pub("Legal guides in plain English | LegallyAI", "Step-by-step guides to evictions, leases, small claims, traffic tickets, custody, divorce and powers of attorney. Legal information, not advice."),

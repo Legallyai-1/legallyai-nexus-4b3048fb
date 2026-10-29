@@ -56,7 +56,8 @@ export default function EmployeePortalPage() {
         const [{ data: profileRow }, orgId, { data: timeRows }] = await Promise.all([
           supabase
             .from("profiles")
-            .select("full_name, display_name, email, phone, location, avatar_url")
+            // Only columns that exist on production public.profiles (display_name does not; selecting it returned 400).
+            .select("full_name, email, phone, location, avatar_url")
             .eq("id", user.id)
             .maybeSingle(),
           findUserOrganization(user.id).catch(() => null),
@@ -68,7 +69,7 @@ export default function EmployeePortalPage() {
             .limit(50),
         ]);
         if (cancelled) return;
-        setProfile(profileRow ?? {
+        setProfile(profileRow ? { ...profileRow, display_name: null } : {
           full_name: (user.user_metadata?.full_name as string | undefined) ?? null,
           display_name: null,
           email: user.email ?? "",

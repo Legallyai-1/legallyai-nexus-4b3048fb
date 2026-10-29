@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Layout } from "@/components/layout/Layout";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +49,25 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  // "Send Test" is a developer/admin tool; regular users never see it.
+  const [canSendTest, setCanSendTest] = useState<boolean>(import.meta.env.DEV);
+
+  useEffect(() => {
+    if (!user || import.meta.env.DEV) return;
+    let active = true;
+    supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .limit(1)
+      .then(({ data }) => {
+        if (active) setCanSendTest(Boolean(data && data.length > 0));
+      });
+    return () => {
+      active = false;
+    };
+  }, [user]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -201,16 +220,16 @@ export default function NotificationsPage() {
 
   if (loading) {
     return (
-      <Layout>
+      <MainLayout>
         <div className="flex items-center justify-center min-h-screen">
           <Loader2 className="h-8 w-8 animate-spin text-neon-cyan" />
         </div>
-      </Layout>
+      </MainLayout>
     );
   }
 
   return (
-    <Layout>
+    <MainLayout>
       <FuturisticBackground>
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           {/* Header */}
@@ -225,14 +244,16 @@ export default function NotificationsPage() {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                onClick={sendTestNotification}
-                disabled={sending}
-              >
-                {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
-                Send Test
-              </Button>
+              {canSendTest && (
+                <Button
+                  variant="outline"
+                  onClick={sendTestNotification}
+                  disabled={sending}
+                >
+                  {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
+                  Send Test
+                </Button>
+              )}
               {unreadCount > 0 && (
                 <Button variant="neon" onClick={markAllAsRead}>
                   <Check className="h-4 w-4 mr-2" />
@@ -251,10 +272,12 @@ export default function NotificationsPage() {
                 <p className="text-muted-foreground mb-4">
                   You'll receive notifications here when there's activity on your account.
                 </p>
-                <Button variant="outline" onClick={sendTestNotification} disabled={sending}>
-                  {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
-                  Send Test Notification
-                </Button>
+                {canSendTest && (
+                  <Button variant="outline" onClick={sendTestNotification} disabled={sending}>
+                    {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
+                    Send Test Notification
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -320,6 +343,6 @@ export default function NotificationsPage() {
           )}
         </div>
       </FuturisticBackground>
-    </Layout>
+    </MainLayout>
   );
 }

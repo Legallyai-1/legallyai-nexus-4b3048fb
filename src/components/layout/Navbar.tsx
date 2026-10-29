@@ -24,7 +24,6 @@ const menuLinks = [
   { name: "Custody helper", path: "/custody" },
   { name: "Workplace legal aid", path: "/workplace-legal-aid" },
   { name: "Pro bono", path: "/pro-bono" },
-  { name: "Job board", path: "/jobs" },
   { name: "Client portal", path: "/client-portal" },
   { name: "Dashboard", path: "/dashboard" },
 ];

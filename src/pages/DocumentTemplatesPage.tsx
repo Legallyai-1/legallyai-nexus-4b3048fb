@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { GlowScales } from "@/components/brand/GlowScales";
 import { useNavigate } from "react-router-dom";
-import { Layout } from "@/components/layout/Layout";
+import { AuthAwareLayout } from "@/components/layout/AuthAwareLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -172,7 +172,7 @@ export default function DocumentTemplatesPage() {
   };
 
   return (
-    <Layout>
+    <AuthAwareLayout>
       <FuturisticBackground>
         {/* Hero */}
         <section className="relative py-16 overflow-hidden">
@@ -394,6 +394,6 @@ export default function DocumentTemplatesPage() {
           </DialogContent>
         </Dialog>
       </FuturisticBackground>
-    </Layout>
+    </AuthAwareLayout>
   );
 }

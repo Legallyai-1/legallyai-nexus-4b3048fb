@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Layout } from "@/components/layout/Layout";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -183,16 +183,16 @@ const InvoicesPage = () => {
 
   if (loading) {
     return (
-      <Layout>
+      <MainLayout>
         <div className="min-h-screen flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-neon-cyan" />
         </div>
-      </Layout>
+      </MainLayout>
     );
   }
 
   return (
-    <Layout>
+    <MainLayout>
       <div className="flex">
         <div className="flex-1 min-h-screen bg-background py-8">
           <div className="container mx-auto px-4">
@@ -437,7 +437,7 @@ const InvoicesPage = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    </MainLayout>
   );
 };
 

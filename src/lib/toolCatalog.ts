@@ -33,7 +33,6 @@ export const TOOL_CATALOG: ToolEntry[] = [
   { title: "Marriage & Divorce", path: "/marriage-divorce", icon: "marriage", description: "Divorce and family law", group: "Legal help hubs" },
   { title: "Legal Academy", path: "/legal-academy", icon: "academy", description: "Learn the law step by step", group: "Learn & find help" },
   { title: "Pro Bono", path: "/pro-bono", icon: "probono", description: "Free legal aid near you", group: "Learn & find help" },
-  { title: "Job Board", path: "/jobs", icon: "jobs", description: "Legal jobs and postings", group: "Learn & find help" },
   { title: "Support", path: "/support", icon: "support", description: "Get help with LegallyAI", group: "Learn & find help" },
   { title: "Lawyer Hub", path: "/lawyers", icon: "lawyer", description: "Portal for attorneys", group: "Firm & business" },
   { title: "Dashboard", path: "/dashboard", icon: "dashboard", description: "Your AI workspace", group: "Firm & business" },
