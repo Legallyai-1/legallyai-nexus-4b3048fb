@@ -64,3 +64,13 @@ export async function openCheckoutInNewTab(
     throw error;
   }
 }
+
+export const CHECKOUT_TIMEOUT_MESSAGE =
+  "Checkout is taking too long to respond. No payment was taken. Check your connection and try again.";
+
+/** Rejects with `message` if `promise` has not settled within `ms`, so a stalled request can never leave a button spinning. */
+export function withTimeout<T>(promise: PromiseLike<T>, ms: number, message = CHECKOUT_TIMEOUT_MESSAGE): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error(message)), ms); });
+  return Promise.race([Promise.resolve(promise), timeout]).finally(() => clearTimeout(timer));
+}

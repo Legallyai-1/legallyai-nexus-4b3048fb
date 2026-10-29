@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Layout } from "@/components/layout/Layout";
+import { AuthAwareLayout } from "@/components/layout/AuthAwareLayout";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { arePaymentsEnabled } from "@/lib/env";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { parseStripeCheckoutUrl, readCheckoutError } from "@/lib/checkout";
+import { parseStripeCheckoutUrl, readCheckoutError, withTimeout } from "@/lib/checkout";
 
 type Offer = {
   key: string; name: string; price: string; period: string; description: string; audience: "individual" | "firm";
@@ -56,14 +56,15 @@ export default function PricingPage() {
     setErrorMessage("");
     const useTrial = offer.trial === true && !noTrial.has(offer.key);
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
+      // Local session read (the server re-verifies the token). Bounded so a stalled auth refresh can't hang the button.
+      const { data: { session } } = await withTimeout(supabase.auth.getSession(), 10_000);
+      if (!session?.user) {
         navigate(`/signup?returnTo=${encodeURIComponent(`/pricing?plan=${offer.key}`)}`);
         return;
       }
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
+      const { data, error } = await withTimeout(supabase.functions.invoke("create-checkout", {
         body: { priceId: offer.priceId, mode: offer.mode, trial: useTrial, ...(seatsFor(offer) > 0 ? { extraSeats: seatsFor(offer) } : {}) },
-      });
+      }), 30_000);
       if (error || typeof data?.error === "string") {
         const failure = await readCheckoutError(error, data);
         if (failure.trialUnavailable && useTrial) {
@@ -137,7 +138,7 @@ export default function PricingPage() {
   );
 
   return (
-    <Layout>
+    <AuthAwareLayout>
       <div className="hub-theme hub-bg text-foreground">
         <section className="container mx-auto px-4 py-12 sm:py-16 max-w-6xl">
           <header className="text-center max-w-3xl mx-auto mb-10">
@@ -156,6 +157,6 @@ export default function PricingPage() {
           </footer>
         </section>
       </div>
-    </Layout>
+    </AuthAwareLayout>
   );
 }

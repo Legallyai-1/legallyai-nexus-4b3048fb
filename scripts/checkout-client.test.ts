@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { CHECKOUT_FALLBACK_MESSAGE, openCheckoutInNewTab, parseStripeCheckoutUrl, readCheckoutError } from '../src/lib/checkout.ts';
+import { CHECKOUT_FALLBACK_MESSAGE, CHECKOUT_TIMEOUT_MESSAGE, openCheckoutInNewTab, withTimeout, parseStripeCheckoutUrl, readCheckoutError } from '../src/lib/checkout.ts';
 import { createCheckoutHandler } from '../supabase/functions/_shared/create-checkout-handler.ts';
 
 const STRIPE_URL = 'https://checkout.stripe.com/c/pay/cs_test_1';
@@ -94,4 +94,28 @@ test('every price the UI sells is allowlisted server-side and fulfilled by the w
     assert.ok(allowed.has(id), `${id} missing from create-checkout allowlist`);
     assert.ok(webhook.has(id), `${id} not fulfilled by the webhook`);
   }
+});
+
+test('stalled checkout requests reject with a readable message instead of spinning forever', async () => {
+  await assert.rejects(withTimeout(new Promise(() => {}), 20), { message: CHECKOUT_TIMEOUT_MESSAGE });
+  assert.equal(await withTimeout(Promise.resolve('ok'), 20), 'ok');
+  await assert.rejects(withTimeout(Promise.reject(new Error('boom')), 20), { message: 'boom' });
+});
+
+test('pricing checkout bounds the auth and checkout calls and sends signed-out users to sign-up', () => {
+  const page = readFileSync(new URL('../src/pages/PricingPage.tsx', import.meta.url), 'utf8');
+  assert.match(page, /withTimeout\(supabase\.auth\.getSession\(\)/);
+  assert.match(page, /withTimeout\(supabase\.functions\.invoke\("create-checkout"/);
+  assert.match(page, /\/signup\?returnTo=/);
+  assert.match(page, /<AuthAwareLayout>/);
+});
+
+test('sign-in Stripe link runs once per user per session and never throws', async () => {
+  const { linkStripeCustomer } = await import('../src/lib/stripe-link.ts');
+  const store = new Map<string, string>(); const storage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v) };
+  let calls = 0;
+  const ok = (async (url: string, init: any) => { calls++; assert.equal(url, '/api/webhooks/stripe?action=link-customer'); assert.equal(init.headers.Authorization, 'Bearer tok'); return new Response(JSON.stringify({ linked: true })); }) as typeof fetch;
+  assert.equal(await linkStripeCustomer('tok', 'user-v', ok, storage), true);
+  assert.equal(await linkStripeCustomer('tok', 'user-v', ok, storage), false); assert.equal(calls, 1);
+  assert.equal(await linkStripeCustomer('tok', 'user-w', (async () => { throw new Error('offline'); }) as typeof fetch, storage), false);
 });

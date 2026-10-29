@@ -3,6 +3,7 @@ import { AnimatedRoutes } from '@/components/AnimatedRoutes';
 import { getAdEligibility, resolveAdEligibility, setAdEligibility, setStoredSubscriptionTier } from '@/lib/subscription';
 import { supabase } from '@/integrations/supabase/client';
 import { getSupabaseSessionSafely, subscribeToSupabaseAuthState } from '@/integrations/supabase/helpers';
+import { linkStripeCustomer } from '@/lib/stripe-link';
 const SpeedInsights = () => null;
 import { FreeLimitDialog } from '@/components/paywall/FreeLimitDialog';
 
@@ -56,6 +57,14 @@ function App() {
             if (disposed || request !== revision) return;
             if (error) setAdEligibility(resolveAdEligibility({ signedIn: true, failed: true }));
             else applyTier(data?.subscription_tier);
+            // Free account: claim a paid Stripe subscription billed to this verified email (customers moved from the old backend).
+            if (!error && (data?.subscription_tier ?? 'free') === 'free' && session.user.email_confirmed_at) {
+              const linked = await linkStripeCustomer(session.access_token, userId);
+              if (linked && !disposed && request === revision) {
+                const { data: refreshed } = await supabase.from('profiles').select('subscription_tier').eq('id', userId).maybeSingle();
+                if (!disposed && request === revision) applyTier(refreshed?.subscription_tier);
+              }
+            }
           } catch {
             if (!disposed && request === revision) setAdEligibility(resolveAdEligibility({ signedIn: true, failed: true }));
           }
