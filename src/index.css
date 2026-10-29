@@ -1175,3 +1175,24 @@ a:focus-visible > .launcher-icon {
   .hub-workflow:hover { transform: none; }
   .hub-dash .animate-lee-alive { animation: none; }
 }
+
+/* Hub gold trim (Dakota, Oct 29): every silver hub panel gets the same thin gold edge + soft gold glow.
+   Border/shadow only; layout, sizes and silver fills are unchanged. Hover/active states above still brighten it. */
+.hub-theme .glass-card:not(.lee-partner):not(:hover),
+.hub-theme .glass-panel:not(.lee-partner),
+.hub-theme .metal-card:not(:hover):not([data-active="true"]):not([aria-current="page"]):not([data-state="active"]),
+.hub-theme .rounded-lg.border.bg-card:not(.lee-partner),
+.hub-theme .rounded-xl.border.bg-card:not(.lee-partner):not(:hover),
+.hub-theme [role="tablist"],
+.hub-panel {
+  border-color: hsl(43 80% 55% / 0.75);
+  box-shadow:
+    0 0 0 1px hsl(43 85% 55% / 0.25),
+    0 0 14px hsl(43 95% 55% / 0.16),
+    inset 0 1px 0 hsl(0 0% 100%),
+    0 16px 34px -20px hsl(222 35% 20% / 0.45);
+}
+.silver-sidebar { border-right-color: hsl(43 80% 55% / 0.75); box-shadow: 1px 0 0 hsl(43 85% 55% / 0.3), 6px 0 18px -10px hsl(43 95% 55% / 0.3); }
+.hub-side { border-right-color: hsl(43 80% 55% / 0.75); box-shadow: 1px 0 0 hsl(43 85% 55% / 0.3), 6px 0 18px -10px hsl(43 95% 55% / 0.3); }
+.hub-theme input.border-input,
+.hub-theme textarea.border-input { border-color: hsl(43 75% 55% / 0.7); }
