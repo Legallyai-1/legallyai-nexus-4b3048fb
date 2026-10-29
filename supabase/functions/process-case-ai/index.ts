@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 import { getAnthropicKey } from "../_shared/anthropic-key.ts";
-import { consumePaidAIQuota, hasPaidAIQuota } from "../_shared/paid-ai-access.ts";
+import { consumePaidAIQuota, hasPaidAIQuota, paidAIQuotaResult } from "../_shared/paid-ai-access.ts";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const TABLE = Deno.env.get("SUPABASE_TABLE_CASES") ?? "cases_imported";
@@ -125,10 +125,19 @@ serve(async (req) => {
       supabaseUrl: SUPABASE_URL,
       serviceRoleKey: SUPABASE_KEY,
       anonKey: Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      cost: 3,
+      cost: 1,
       reason: "case_analysis",
     };
     if (!await hasPaidAIQuota(quotaOptions)) {
+      const quota = paidAIQuotaResult(quotaOptions);
+      if (quota?.status === "quota_exceeded") {
+        return new Response(JSON.stringify({
+          error: "daily_ai_limit_reached",
+          message: `You've used today's ${quota.limit} free AI requests. Upgrade for unlimited AI analysis, or try again tomorrow.`,
+          used: quota.used,
+          limit: quota.limit,
+        }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
       return new Response(JSON.stringify({ error: "Paid AI analysis is unavailable for this account or deployment." }), {
         status: 402,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -169,7 +178,7 @@ serve(async (req) => {
     const custodyNotes = await callAI("CustodiAI", custodyMsg);
 
     if (!defensePlan || !clientSummary || !custodyNotes) {
-      return new Response(JSON.stringify({ error: "AI services are temporarily unavailable. No analysis was saved or charged." }), {
+      return new Response(JSON.stringify({ error: "AI services are temporarily unavailable. No analysis was saved." }), {
         status: 503,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
