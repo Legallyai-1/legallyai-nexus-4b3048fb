@@ -94,7 +94,7 @@ export async function consumeDocumentCredit(db: Db, userId: string, now = new Da
       .eq("user_id", userId)
       .in("status", ACTIVE_PAYMENT_STATUSES);
     update = rawValue === undefined || rawValue === null
-      ? update.is("metadata->documents_remaining", null)
+      ? update.is("metadata->>documents_remaining", null) // missing key or JSON null
       : update.eq("metadata->>documents_remaining", String(rawValue));
 
     const { data: updated, error: updateError } = await update.select("id");

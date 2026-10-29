@@ -16,7 +16,6 @@ function fakeDb(rows: Row[]) {
     if (column === 'metadata->>documents_remaining') {
       const v = row.metadata?.documents_remaining; return v === undefined || v === null ? null : String(v);
     }
-    if (column === 'metadata->documents_remaining') return row.metadata?.documents_remaining ?? null;
     return row[column];
   };
   return {
@@ -70,6 +69,13 @@ test('two purchases buy two generations; other users and refunded/expired rows a
   assert.deepEqual(await consumeDocumentCredit(db, 'u1'), { ok: false, reason: 'exhausted' });
   assert.equal(rows[2].metadata.documents_remaining, 1);
   assert.equal(rows[3].metadata.documents_remaining, 1);
+});
+
+test('a JSON null allowance counts as one credit and can be spent once', async () => {
+  const rows = [record({ metadata: { documents_remaining: null } })];
+  const db = fakeDb(rows);
+  assert.equal((await consumeDocumentCredit(db, 'u1')).ok, true);
+  assert.deepEqual(await consumeDocumentCredit(db, 'u1'), { ok: false, reason: 'exhausted' });
 });
 
 test('users with no purchase are reported as no_purchase, not exhausted', async () => {
