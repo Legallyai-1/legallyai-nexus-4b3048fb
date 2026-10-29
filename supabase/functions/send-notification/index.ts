@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { adminOrgIds, userInAnyOrg } from "../_shared/org-access.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,22 +59,15 @@ serve(async (req) => {
       throw new Error("Missing required fields: userId, title, message");
     }
 
-    // Authorization check: Users can only send notifications to themselves
-    // Unless they have admin/owner role in an organization
+    // Authorization check: users can notify themselves. Notifying someone else requires being an
+    // owner/admin of a firm the target also belongs to (no cross-firm messages).
     if (userId !== authUser.id) {
-      const { data: roleData, error: roleError } = await supabaseClient
-        .from('organization_members')
-        .select('role')
-        .eq('user_id', authUser.id)
-        .in('role', ['admin', 'owner'])
-        .limit(1);
-      
-      if (roleError || !roleData || roleData.length === 0) {
-        logStep("Authorization denied - not admin", { callerUserId: authUser.id, targetUserId: userId });
+      const orgIds = await adminOrgIds(supabaseClient, authUser.id);
+      if (!await userInAnyOrg(supabaseClient, userId, orgIds)) {
+        logStep("Authorization denied - target not in caller's firm", { callerUserId: authUser.id });
         throw new Error('Not authorized to send notifications to other users');
       }
-      
-      logStep("Admin authorization granted", { role: roleData[0]?.role });
+      logStep("Admin authorization granted");
     }
 
     logStep("Creating notification", { userId, type, hub });

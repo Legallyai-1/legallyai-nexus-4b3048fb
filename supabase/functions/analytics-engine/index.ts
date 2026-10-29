@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { hasOrgAccess } from "../_shared/org-access.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -43,6 +44,14 @@ serve(async (req) => {
 
     const body: AnalyticsRequest = await req.json();
     const { action, organization_id, date_range } = body;
+
+    // The service-role client bypasses RLS: only members of this firm may read its analytics.
+    if (!await hasOrgAccess(supabase, userData.user.id, organization_id, 'member')) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     let result: any = null;
 

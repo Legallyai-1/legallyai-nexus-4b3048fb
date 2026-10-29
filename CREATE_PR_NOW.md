@@ -60,7 +60,7 @@ Follow these steps (30 minutes total):
 
 1. **Set Supabase secret** (2 min)
    ```bash
-   supabase secrets set VERCEL_AI_GATEWAY_KEY=vck_7EiVIwkOq21kPm8Fv3jES5jObEacxQKrzRyN2IRKlufttoVieP4L6kYJ
+   supabase secrets set VERCEL_AI_GATEWAY_KEY=<VERCEL_AI_GATEWAY_KEY - stored in Supabase secrets, never commit>
    ```
 
 2. **Add Vercel variables** (5 min)

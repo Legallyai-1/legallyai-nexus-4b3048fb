@@ -48,7 +48,7 @@ When this environment variable is missing, the function **cannot connect to the 
 
 ```bash
 # Step 1: Set the environment variable
-supabase secrets set VERCEL_AI_GATEWAY_KEY=vck_7EiVIwkOq21kPm8Fv3jES5jObEacxQKrzRyN2IRKlufttoVieP4L6kYJ
+supabase secrets set VERCEL_AI_GATEWAY_KEY=<VERCEL_AI_GATEWAY_KEY - stored in Supabase secrets, never commit>
 
 # Step 2: Redeploy the function
 supabase functions deploy legal-chat
@@ -66,7 +66,7 @@ supabase functions deploy legal-chat
 4. Click **Add new variable**
 5. Enter:
    - **Name:** `VERCEL_AI_GATEWAY_KEY`
-   - **Value:** `vck_7EiVIwkOq21kPm8Fv3jES5jObEacxQKrzRyN2IRKlufttoVieP4L6kYJ`
+   - **Value:** `<VERCEL_AI_GATEWAY_KEY - stored in Supabase secrets, never commit>`
 6. Click **Save**
 7. Redeploy the function:
    ```bash
@@ -221,7 +221,7 @@ supabase functions logs legal-chat --tail
 
 The key should look like:
 ```
-vck_7EiVIwkOq21kPm8Fv3jES5jObEacxQKrzRyN2IRKlufttoVieP4L6kYJ
+<VERCEL_AI_GATEWAY_KEY - stored in Supabase secrets, never commit>
 ```
 
 - Starts with `vck_`

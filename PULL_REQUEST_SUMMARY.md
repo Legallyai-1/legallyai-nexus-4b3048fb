@@ -348,7 +348,7 @@ VITE_SUPABASE_PROJECT_ID=whdljtbtqisoszbrzdwq
 
 **Required Variables (Backend):**
 ```env
-VERCEL_AI_GATEWAY_KEY=vck_7EiVIwkOq21kPm8Fv3jES5jObEacxQKrzRyN2IRKlufttoVieP4L6kYJ
+VERCEL_AI_GATEWAY_KEY=<VERCEL_AI_GATEWAY_KEY - stored in Supabase secrets, never commit>
 ```
 
 ### Configuration Files
@@ -500,7 +500,7 @@ vite v5.4.21 building for production...
 
 **Step 1: Set Supabase Secret (2 min)**
 ```bash
-supabase secrets set VERCEL_AI_GATEWAY_KEY=vck_7EiVIwkOq21kPm8Fv3jES5jObEacxQKrzRyN2IRKlufttoVieP4L6kYJ
+supabase secrets set VERCEL_AI_GATEWAY_KEY=<VERCEL_AI_GATEWAY_KEY - stored in Supabase secrets, never commit>
 supabase functions deploy legal-chat
 ```
 
