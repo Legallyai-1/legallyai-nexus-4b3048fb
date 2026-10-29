@@ -38,7 +38,7 @@ function PanelTitle({ children, action }: { children: React.ReactNode; action?: 
 
 function TitleLink({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
   return (
-    <button type="button" onClick={onClick} className="inline-flex min-h-[32px] items-center gap-1 rounded-md px-1 text-xs font-medium hub-gold-text hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]">
+    <button type="button" onClick={onClick} className="inline-flex min-h-[44px] md:min-h-[32px] items-center gap-1 rounded-md px-1 text-xs font-medium hub-gold-text hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]">
       {children} <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
     </button>
   );
@@ -245,14 +245,14 @@ function AskLeePanel({ docForReview }: { docForReview: DocPreview | null }) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type a message or instruction..."
-          className="min-w-0 flex-1 bg-transparent text-sm text-[#0F1E3D] placeholder:text-slate-500 focus:outline-none"
+          className="min-w-0 flex-1 self-stretch bg-transparent text-sm text-[#0F1E3D] placeholder:text-slate-500 focus:outline-none"
           autoComplete="off"
         />
         <button
           type="submit"
           aria-label="Send message"
           disabled={isLoading || !input.trim()}
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[#B8932E] hover:bg-[rgba(212,175,55,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] disabled:opacity-50"
+          className="inline-flex h-11 w-11 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-xl text-[#B8932E] hover:bg-[rgba(212,175,55,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] disabled:opacity-50"
         >
           {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </button>
@@ -277,10 +277,10 @@ export function FirmHubOverview({ organizationId, onOpenTab }: Props) {
   const insightsEmpty = ins && !ins.cases && !ins.matters && !ins.clients && !ins.openTasks && !ins.hours30 && !ins.outstanding;
 
   return (
-    <div className="hub-dash flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:items-start lg:gap-6">
+    <div className="hub-dash flex flex-col gap-4 xl:grid xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] xl:items-start xl:gap-6">
       {/* Left column (desktop). On small screens the wrappers dissolve so cards follow the mobile order. */}
-      <div className="contents lg:flex lg:flex-col lg:gap-6">
-        <section className="hub-panel hub-panel-featured order-2 p-4 sm:p-6 lg:order-none" aria-labelledby="live-title">
+      <div className="contents xl:flex xl:flex-col xl:gap-6">
+        <section className="hub-panel hub-panel-featured order-2 p-4 sm:p-6 xl:order-none" aria-labelledby="live-title">
           <PanelTitle action={<TitleLink onClick={() => onOpenTab("workflows")}>All case tasks</TitleLink>}>
             <span id="live-title">Live Case Progress</span>
           </PanelTitle>
@@ -322,7 +322,7 @@ export function FirmHubOverview({ organizationId, onOpenTab }: Props) {
           )}
         </section>
 
-        <section className="hub-panel order-3 p-4 sm:p-6 lg:order-none" aria-labelledby="workflows-title">
+        <section className="hub-panel order-3 p-4 sm:p-6 xl:order-none" aria-labelledby="workflows-title">
           <PanelTitle><span id="workflows-title">AI Workflows</span></PanelTitle>
           <div className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0">
             {workflows.map((w) => (
@@ -335,7 +335,7 @@ export function FirmHubOverview({ organizationId, onOpenTab }: Props) {
           </div>
         </section>
 
-        <section className="hub-panel order-5 p-4 sm:p-6 lg:order-none" aria-labelledby="insights-title">
+        <section className="hub-panel order-5 p-4 sm:p-6 xl:order-none" aria-labelledby="insights-title">
           <PanelTitle action={ins && !insightsEmpty ? <TitleLink onClick={() => onOpenTab("analytics")}>Full analytics</TitleLink> : undefined}>
             <span id="insights-title">Firm Insights</span>
           </PanelTitle>
@@ -364,8 +364,8 @@ export function FirmHubOverview({ organizationId, onOpenTab }: Props) {
       </div>
 
       {/* Right column (desktop). */}
-      <div className="contents lg:flex lg:flex-col lg:gap-6">
-        <section className="hub-panel order-4 p-4 sm:p-6 lg:order-none" aria-labelledby="doc-title">
+      <div className="contents xl:flex xl:flex-col xl:gap-6">
+        <section className="hub-panel order-4 p-4 sm:p-6 xl:order-none" aria-labelledby="doc-title">
           <PanelTitle action={<TitleLink onClick={() => onOpenTab("documents")}>Documents</TitleLink>}>
             <span id="doc-title">Document Workspace</span>
           </PanelTitle>
@@ -391,7 +391,7 @@ export function FirmHubOverview({ organizationId, onOpenTab }: Props) {
           )}
         </section>
 
-        <div className="order-1 lg:order-none">
+        <div className="order-1 xl:order-none">
           <AskLeePanel docForReview={latestDoc.doc} />
         </div>
       </div>
