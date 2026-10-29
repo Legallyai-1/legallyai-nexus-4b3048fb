@@ -313,7 +313,7 @@ export function BillingAutomation() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Unbilled Time Entries</CardTitle>
+                  <CardTitle>{canInvoice ? "Unbilled Time Entries" : "Billable Time Entries"}</CardTitle>
                   <CardDescription>
                     {canInvoice ? "Select entries to generate invoices" : "Read-only view of your billable time"}
                   </CardDescription>
