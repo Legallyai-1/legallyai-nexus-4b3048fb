@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,71 @@ export function BillingAutomation() {
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const loadTimeEntries = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError(null);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setTimeEntries([]);
+        return;
+      }
+      const organizationId = await ensureUserOrganization(user.id);
+
+      // RLS limits rows to the user's own entries (plus org entries for privileged roles).
+      const { data: rows, error } = await supabase
+        .from("time_entries")
+        .select("id, user_id, clock_in, clock_out, description, hourly_rate, billable, cases(title)")
+        .eq("organization_id", organizationId)
+        .eq("billable", true)
+        .not("clock_out", "is", null)
+        .order("clock_in", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+
+      // Entries already referenced by an invoice's items are treated as billed.
+      const billedIds = new Set<string>();
+      const { data: invoiceRows } = await supabase
+        .from("invoices")
+        .select("items")
+        .eq("organization_id", organizationId);
+      for (const inv of invoiceRows ?? []) {
+        if (!Array.isArray(inv.items)) continue;
+        for (const item of inv.items) {
+          const id = (item as { time_entry_id?: unknown } | null)?.time_entry_id;
+          if (typeof id === "string") billedIds.add(id);
+        }
+      }
+
+      setTimeEntries((rows ?? []).map((r) => {
+        const ms = new Date(r.clock_out as string).getTime() - new Date(r.clock_in).getTime();
+        const hours = Math.max(0, Math.round((ms / 3_600_000) * 100) / 100);
+        const caseRow = r.cases as { title?: string } | null;
+        return {
+          id: r.id,
+          date: r.clock_in,
+          attorney: r.user_id === user.id ? "You" : "Team member",
+          matter: caseRow?.title ?? "General",
+          description: r.description ?? "",
+          hours,
+          rate: Number(r.hourly_rate ?? 0),
+          status: billedIds.has(r.id) ? "billed" : "unbilled",
+        };
+      }));
+    } catch (error) {
+      console.error("Time entry load error:", error);
+      setLoadError(errorMessage(error, "Failed to load time entries"));
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadTimeEntries();
+  }, [loadTimeEntries]);
 
   const selectedEntries = timeEntries.filter(e => e.selected);
   const selectedTotal = selectedEntries.reduce((sum, e) => sum + (e.hours * e.rate), 0);
@@ -112,6 +177,7 @@ export function BillingAutomation() {
         due_date: dueDate.toISOString().split("T")[0],
         notes: `Generated from ${selectedEntries.length} time entries`,
         items: selectedEntries.map(e => ({
+          time_entry_id: e.id,
           description: e.description,
           hours: e.hours,
           rate: e.rate,
@@ -255,14 +321,29 @@ export function BillingAutomation() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {timeEntries.filter(e => e.status === "unbilled").length === 0 && (
+                  {isLoading && (
                     <TableRow>
                       <TableCell colSpan={9} className="text-center text-muted-foreground">
-                        No connected time entries.
+                        Loading time entries...
                       </TableCell>
                     </TableRow>
                   )}
-                  {timeEntries.filter(e => e.status === "unbilled").map((entry) => (
+                  {!isLoading && loadError && (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center text-destructive">
+                        {loadError}{" "}
+                        <Button variant="link" size="sm" onClick={() => void loadTimeEntries()}>Retry</Button>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {!isLoading && !loadError && timeEntries.filter(e => e.status === "unbilled").length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center text-muted-foreground">
+                        No unbilled time entries.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {!isLoading && !loadError && timeEntries.filter(e => e.status === "unbilled").map((entry) => (
                     <TableRow key={entry.id} className={entry.selected ? "bg-primary/5" : ""}>
                       <TableCell>
                         <Checkbox 
