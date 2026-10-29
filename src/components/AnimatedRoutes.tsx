@@ -61,7 +61,9 @@ const WillHubPage = lazy(() => import("@/pages/WillHubPage"));
 const MarriageDivorcePage = lazy(() => import("@/pages/MarriageDivorcePage"));
 const EnhancedCustodyPage = lazy(() => import("@/pages/EnhancedCustodyPage"));
 const EnhancedParolePage = lazy(() => import("@/pages/EnhancedParolePage"));
-const NotFound = lazy(() => import("@/pages/NotFound"));
+const AboutPage = lazy(() => import("@/pages/AboutPage"));
+const ContactPage = lazy(() => import("@/pages/ContactPage"));
+const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 const StoreAssetsPage = lazy(() => import("@/pages/StoreAssetsPage"));
 const NotificationsPage = lazy(() => import("@/pages/NotificationsPage"));
 
@@ -137,7 +139,9 @@ export function AnimatedRoutes() {
         <Route path="/marriage-divorce" element={<PageTransition><LazyRoute><MarriageDivorcePage /></LazyRoute></PageTransition>} />
         <Route path="/store-assets" element={<PageTransition><LazyRoute><StoreAssetsPage /></LazyRoute></PageTransition>} />
         <Route path="/notifications" element={<PageTransition><LazyRoute><NotificationsPage /></LazyRoute></PageTransition>} />
-        <Route path="*" element={<PageTransition><LazyRoute><NotFound /></LazyRoute></PageTransition>} />
+        <Route path="/about" element={<PageTransition><LazyRoute><AboutPage /></LazyRoute></PageTransition>} />
+        <Route path="/contact" element={<PageTransition><LazyRoute><ContactPage /></LazyRoute></PageTransition>} />
+        <Route path="*" element={<PageTransition><LazyRoute><NotFoundPage /></LazyRoute></PageTransition>} />
       </Routes>
     </AnimatePresence>
     </>
