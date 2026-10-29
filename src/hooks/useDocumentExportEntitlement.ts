@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
@@ -22,17 +22,32 @@ export function useDocumentExportEntitlement() {
   const [hasPaid, setHasPaid] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
 
+  // Only the latest verify-payment call may update state (no stale overwrites).
+  const latestVerifyRef = useRef(0);
+
   const verifyPayment = useCallback(async () => {
+    const requestId = ++latestVerifyRef.current;
     setIsVerifying(true);
     try {
       const { data, error } = await supabase.functions.invoke("verify-payment");
-      setHasPaid(!error && data?.hasPaid === true);
+      if (requestId !== latestVerifyRef.current) return;
+      if (error) {
+        // Transport/server error: keep the previous entitlement instead of revoking it.
+        console.error("Payment verification error:", error);
+        return;
+      }
+      setHasPaid(data?.hasPaid === true);
     } catch (error) {
-      console.error("Error verifying payment:", error);
-      setHasPaid(false);
+      if (requestId === latestVerifyRef.current) console.error("Error verifying payment:", error);
     } finally {
-      setIsVerifying(false);
+      if (requestId === latestVerifyRef.current) setIsVerifying(false);
     }
+  }, []);
+
+  const clearEntitlement = useCallback(() => {
+    latestVerifyRef.current += 1; // invalidate in-flight checks
+    setHasPaid(false);
+    setIsVerifying(false);
   }, []);
 
   useEffect(() => {
@@ -44,14 +59,14 @@ export function useDocumentExportEntitlement() {
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user && paymentsEnabled) void verifyPayment();
-      else setHasPaid(false);
+      if (!session?.user) clearEntitlement();
+      else if (paymentsEnabled) void verifyPayment();
     });
     return () => {
       active = false;
       subscription.unsubscribe();
     };
-  }, [paymentsEnabled, verifyPayment]);
+  }, [paymentsEnabled, verifyPayment, clearEntitlement]);
 
   const userId = user?.id;
   useEffect(() => {
@@ -84,6 +99,7 @@ export function useDocumentExportEntitlement() {
       navigate("/auth");
       return;
     }
+    toast.info("Downloading documents costs $5. Opening checkout…");
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: { priceId: DOCUMENT_EXPORT_PRICE_ID, mode: DOCUMENT_EXPORT_CHECKOUT_MODE },
@@ -111,7 +127,6 @@ export function useDocumentExportEntitlement() {
         toast.info("Checking your purchase, please try again in a moment.");
         return;
       }
-      toast.info("Downloading documents costs $5. Opening checkout…");
       void startCheckout();
     },
     [canExport, isVerifying, startCheckout],
