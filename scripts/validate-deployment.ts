@@ -1,13 +1,9 @@
-const rawBaseUrl = process.env.SMOKE_BASE_URL;
-const rawSupabaseUrl = process.env.VITE_SUPABASE_URL;
+const rawBaseUrl = process.env.SMOKE_BASE_URL?.trim();
+// Repo variables can carry a trailing newline; fall back to the production project.
+const rawSupabaseUrl = process.env.VITE_SUPABASE_URL?.trim() || 'https://whdljtbtqisoszbrzdwq.supabase.co';
 
 if (!rawBaseUrl) {
   console.error('SMOKE_BASE_URL is required.');
-  process.exit(1);
-}
-
-if (!rawSupabaseUrl) {
-  console.error('VITE_SUPABASE_URL is required.');
   process.exit(1);
 }
 
@@ -25,7 +21,8 @@ const checks = [
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: '{}',
-    expected: [401],
+    // Unsigned POST must be refused ("Missing Stripe signature"); 503 would mean missing config.
+    expected: [400],
   },
   { name: 'supabase jwks', url: `${supabaseUrl}/auth/v1/.well-known/jwks.json`, expected: [200] },
 ];

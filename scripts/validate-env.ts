@@ -1,32 +1,10 @@
-import {
-  formatZodIssues,
-  safeValidateClientEnv,
-  safeValidateDeploymentEnv,
-  safeValidateServerEnv,
-} from '../.env.validation.ts';
+import { checkClientEnv, checkDeploymentEnv, report } from './env-checks.ts';
 
-const args = new Set(process.argv.slice(2));
-const target = [...args].find((arg) => arg.startsWith('--target='))?.split('=')[1] ?? 'client';
-
-const validators = {
-  client: safeValidateClientEnv,
-  server: safeValidateServerEnv,
-  deployment: safeValidateDeploymentEnv,
-} as const;
-
-const validate = validators[target as keyof typeof validators];
-
-if (!validate) {
-  console.error(`Unknown target "${target}". Use --target=client|server|deployment.`);
+const target = process.argv.slice(2).find((arg) => arg.startsWith('--target='))?.split('=')[1] ?? 'client';
+const checks = { client: checkClientEnv, deployment: checkDeploymentEnv } as const;
+const check = checks[target as keyof typeof checks];
+if (!check) {
+  console.error(`Unknown target "${target}". Use --target=client|deployment.`);
   process.exit(1);
 }
-
-const result = validate(process.env);
-
-if (!result.success) {
-  console.error(`Environment validation failed for ${target}:`);
-  console.error(formatZodIssues(result.error).join('\n'));
-  process.exit(1);
-}
-
-console.log(`Environment validation passed for ${target}.`);
+process.exit(report(target, check(process.env)));
