@@ -33,8 +33,8 @@ jobs:
       VITE_SUPABASE_PROJECT_ID: ${{ vars.VITE_SUPABASE_PROJECT_ID || secrets.VITE_SUPABASE_PROJECT_ID }}
       VITE_ADSENSE_CLIENT_ID: ${{ vars.VITE_ADSENSE_CLIENT_ID || secrets.VITE_ADSENSE_CLIENT_ID }}
       VITE_ENABLE_ADSENSE: ${{ vars.VITE_ENABLE_ADSENSE || secrets.VITE_ENABLE_ADSENSE || 'true' }}
-      VITE_ENABLE_PAYMENTS: ${{ vars.VITE_ENABLE_PAYMENTS || secrets.VITE_ENABLE_PAYMENTS || 'false' }}
-      ENABLE_PAYMENTS: ${{ vars.ENABLE_PAYMENTS || secrets.ENABLE_PAYMENTS || 'false' }}
+      VITE_ENABLE_PAYMENTS: ${{ vars.VITE_ENABLE_PAYMENTS || secrets.VITE_ENABLE_PAYMENTS }}
+      ENABLE_PAYMENTS: ${{ vars.ENABLE_PAYMENTS || secrets.ENABLE_PAYMENTS }}
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID || secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID || secrets.VERCEL_PROJECT_ID }}
@@ -76,7 +76,8 @@ jobs:
       VITE_SUPABASE_PROJECT_ID: ${{ vars.VITE_SUPABASE_PROJECT_ID || secrets.VITE_SUPABASE_PROJECT_ID }}
       VITE_ADSENSE_CLIENT_ID: ${{ vars.VITE_ADSENSE_CLIENT_ID || secrets.VITE_ADSENSE_CLIENT_ID }}
       VITE_ENABLE_ADSENSE: ${{ vars.VITE_ENABLE_ADSENSE || secrets.VITE_ENABLE_ADSENSE || 'true' }}
-      VITE_ENABLE_PAYMENTS: ${{ vars.VITE_ENABLE_PAYMENTS || secrets.VITE_ENABLE_PAYMENTS || 'false' }}
+      # No default: when unset, the Vercel project env decides (a 'false' default once risked disabling checkout).
+      VITE_ENABLE_PAYMENTS: ${{ vars.VITE_ENABLE_PAYMENTS || secrets.VITE_ENABLE_PAYMENTS }}
       IS_PRODUCTION: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_production == 'true')) }}
     steps:
       - name: Checkout
@@ -99,14 +100,21 @@ jobs:
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_SCOPE: ${{ vars.VERCEL_ORG_ID || secrets.VERCEL_ORG_ID || 'team_ACIjhOlfoTDfEvu93dbW4ThU' }}
-          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID || secrets.VERCEL_PROJECT_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID || secrets.VERCEL_PROJECT_ID || 'prj_KSzIDIhU2EzZo8Fr24KQOMogqEmZ' }}
         run: |
           set -euo pipefail
+          # Repo variables can carry trailing whitespace/newlines; strip before passing to the CLI.
+          VERCEL_SCOPE=$(printf '%s' "$VERCEL_SCOPE" | tr -d '[:space:]')
+          VERCEL_PROJECT_ID=$(printf '%s' "$VERCEL_PROJECT_ID" | tr -d '[:space:]')
           vercel_args=(--yes --token "$VERCEL_TOKEN" --scope "$VERCEL_SCOPE" --project "$VERCEL_PROJECT_ID")
           if [ "$IS_PRODUCTION" = "true" ]; then
             vercel_args+=(--prod)
           fi
-          vercel_args+=(--build-env "VITE_ENABLE_PAYMENTS=$VITE_ENABLE_PAYMENTS")
+          # Only override the Vercel project env when the repo explicitly sets the flag.
+          payments_flag=$(printf '%s' "${VITE_ENABLE_PAYMENTS:-}" | tr -d '[:space:]')
+          if [ "$payments_flag" = "true" ] || [ "$payments_flag" = "false" ]; then
+            vercel_args+=(--build-env "VITE_ENABLE_PAYMENTS=$payments_flag")
+          fi
           set +e
           deploy_output=$(npx --yes vercel@62.2.0 deploy --cwd "$GITHUB_WORKSPACE" "${vercel_args[@]}" 2>&1)
           deploy_status=$?
