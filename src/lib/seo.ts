@@ -45,6 +45,8 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
   "/pro-bono": pub("Free and low-cost legal aid | LegallyAI", "Find pro bono and legal aid resources and prepare your case before you reach out."),
   // Noindex until the job board is live (page is a placeholder).
   "/jobs": { title: "Legal job board | LegallyAI", description: "Browse legal jobs for attorneys, paralegals and legal staff.", indexable: false },
+  "/about": pub("About LegallyAI – Ask Lee and firm hubs | LegallyAI", "LegallyAI pairs Ask Lee, an AI legal assistant for everyday people, with AI workspaces for law firms. Legal information, not advice."),
+  "/contact": pub("Contact us | LegallyAI", "Email LegallyAI about your account, billing, refunds or firm plans, or ask Lee a legal question. Legal information, not legal advice."),
   "/support": pub("Support | LegallyAI", "Get help with your LegallyAI account, billing or features from the support team."),
   "/terms": pub("Terms of service | LegallyAI", "The terms that apply when you use LegallyAI and Lee, the AI legal assistant."),
   "/privacy": pub("Privacy policy | LegallyAI", "How LegallyAI collects, uses and protects your information."),
