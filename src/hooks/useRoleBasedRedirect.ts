@@ -8,8 +8,10 @@ interface UserRoleData {
   isLoading: boolean;
   redirectPath: string;
 }
+// Default landing after sign-in. Owners/admins land on the dashboard too: anyone who creates a
+// workspace becomes its owner, so /admin (firm settings) is opened from the sidebar, not on login.
 const roleToPath: Record<AppRole, string> = {
-  owner: "/admin", admin: "/admin", manager: "/dashboard",
+  owner: "/dashboard", admin: "/dashboard", manager: "/dashboard",
   lawyer: "/dashboard", paralegal: "/dashboard",
   employee: "/employee", client: "/client-portal",
 };

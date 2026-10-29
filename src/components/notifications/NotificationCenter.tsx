@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatTimeAgo } from "@/lib/timeAgo";
 import { Bell, X, Check, Calendar, FileText, MessageSquare, DollarSign, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -6,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDistanceToNow } from "date-fns";
 
 interface Notification {
   id: string;
@@ -214,7 +214,7 @@ export function NotificationCenter({ triggerClassName }: { triggerClassName?: st
                           {notification.description}
                         </p>
                         <p className="text-xs text-muted-foreground/70 mt-2">
-                          {formatDistanceToNow(notification.timestamp, { addSuffix: true })}
+                          {formatTimeAgo(notification.timestamp)}
                         </p>
                       </div>
                     </div>

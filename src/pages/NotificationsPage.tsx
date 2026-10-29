@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatTimeAgo } from "@/lib/timeAgo";
 import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,6 @@ import {
   MessageSquare, Calendar, FileText, DollarSign, AlertCircle 
 } from "lucide-react";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
-import { formatDistanceToNow } from "date-fns";
 import type { User } from "@supabase/supabase-js";
 
 interface Notification {
@@ -309,7 +309,7 @@ export default function NotificationsPage() {
                                 {notification.message}
                               </p>
                               <p className="text-xs text-muted-foreground/70 mt-2">
-                                {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                                {formatTimeAgo(notification.created_at)}
                               </p>
                             </div>
                             <div className="flex items-center gap-1">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatTimeAgo } from "@/lib/timeAgo";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +10,6 @@ import {
 import type { User } from "@supabase/supabase-js";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { AskLeePanel } from "@/components/dashboard/AskLeePanel";
-import { formatDistanceToNow } from "date-fns";
 import { findUserOrganization } from "@/lib/organizations";
 import { errorMessage } from "@/lib/mutationResult";
 import { formatAppointmentWhen, loadDashboardData, type DashboardStats } from "@/lib/dashboardData";
@@ -95,7 +95,7 @@ export default function DashboardPage() {
           id: c.id,
           action: `Case status: ${c.status}`,
           case_title: c.title,
-          time: formatDistanceToNow(new Date(c.updatedAt), { addSuffix: true }),
+          time: formatTimeAgo(c.updatedAt),
         }))
       );
       if (data.failed.length) {
