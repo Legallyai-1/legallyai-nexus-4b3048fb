@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { getAnthropicKey } from "../_shared/anthropic-key.ts";
 import { consumePaidAIQuota, hasPaidAIQuota } from "../_shared/paid-ai-access.ts";
+import { hasOrgAccess } from "../_shared/org-access.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -115,6 +116,18 @@ Deno.serve(async (req) => {
     const { action, organizationId, matterId, templateId, variables, intakeData, billingData } = body;
 
     console.log(`Business Hub action: ${action} by user ${user.id}`);
+
+    // The service-role client bypasses RLS: firm-scoped actions require membership in that firm.
+    // Billing, trust and compliance data are restricted to the firm's owners/admins.
+    if (action !== 'document-assembly') {
+      const level = action === 'ai-intake' ? 'member' : 'admin';
+      if (!await hasOrgAccess(supabase, user.id, organizationId, level)) {
+        return new Response(
+          JSON.stringify({ error: 'Forbidden' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
 
     let result: any;
 
@@ -244,6 +257,11 @@ async function assembleDocument(supabase: any, userId: string, authorization: st
     .single();
 
   if (error) throw error;
+
+  // Private firm templates are only usable by that firm's members (service role bypasses RLS).
+  const templateAllowed = template.is_public === true || template.created_by === userId ||
+    (template.organization_id && await hasOrgAccess(supabase, userId, template.organization_id, 'member'));
+  if (!templateAllowed) throw new Error('Template not found');
 
   let assembledContent = template.content || '';
   

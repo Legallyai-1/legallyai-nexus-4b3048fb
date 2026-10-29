@@ -140,7 +140,7 @@ Before merging, verify:
 
 ### Step 1: Set Supabase Secret (2 min)
 ```bash
-supabase secrets set VERCEL_AI_GATEWAY_KEY=vck_7EiVIwkOq21kPm8Fv3jES5jObEacxQKrzRyN2IRKlufttoVieP4L6kYJ
+supabase secrets set VERCEL_AI_GATEWAY_KEY=<VERCEL_AI_GATEWAY_KEY - stored in Supabase secrets, never commit>
 supabase functions deploy legal-chat
 ```
 

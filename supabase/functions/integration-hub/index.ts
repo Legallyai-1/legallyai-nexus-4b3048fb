@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { hasOrgAccess, isSafeOutboundUrl } from "../_shared/org-access.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -68,6 +69,18 @@ serve(async (req) => {
 
     const body: IntegrationRequest = await req.json();
     const { action, integration_name, organization_id, config, webhook_url } = body;
+
+    // The service-role client bypasses RLS: every action except the static catalog needs firm access.
+    // Reading is for members; connecting, disconnecting, syncing and webhook tests are for owners/admins.
+    if (action !== 'get_available') {
+      const level = action === 'list' ? 'member' : 'admin';
+      if (!await hasOrgAccess(supabase, userData.user.id, organization_id, level)) {
+        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
 
     let result: any = null;
 
@@ -200,6 +213,12 @@ serve(async (req) => {
         if (!webhook_url) {
           throw new Error('Webhook URL required');
         }
+        if (!isSafeOutboundUrl(webhook_url)) {
+          return new Response(JSON.stringify({ error: 'Webhook URL must be a public https URL' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
 
         try {
           const testPayload = {
@@ -211,6 +230,8 @@ serve(async (req) => {
 
           await fetch(webhook_url, {
             method: 'POST',
+            redirect: 'manual',
+            signal: AbortSignal.timeout(5000),
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(testPayload)
           });
