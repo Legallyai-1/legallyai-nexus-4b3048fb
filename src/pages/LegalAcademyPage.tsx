@@ -269,20 +269,6 @@ export default function LegalAcademyPage() {
                     </Button>
                   </Card>
 
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <Card className="glass-card p-4 text-center">
-                      <p className="text-3xl font-display font-bold text-neon-cyan mb-1">92%</p>
-                      <p className="text-xs text-muted-foreground">Average pass rate</p>
-                    </Card>
-                    <Card className="glass-card p-4 text-center">
-                      <p className="text-3xl font-display font-bold text-neon-purple mb-1">10,000+</p>
-                      <p className="text-xs text-muted-foreground">Practice questions</p>
-                    </Card>
-                    <Card className="glass-card p-4 text-center">
-                      <p className="text-3xl font-display font-bold text-neon-green mb-1">50</p>
-                      <p className="text-xs text-muted-foreground">State exams covered</p>
-                    </Card>
-                  </div>
                 </div>
               </TabsContent>
 
@@ -353,7 +339,7 @@ export default function LegalAcademyPage() {
                 Ready to Start Your Legal Education?
               </h2>
               <p className="text-muted-foreground mb-6">
-                Join thousands of students learning law with AI-powered courses and tutoring.
+                Start learning law with AI-powered courses and tutoring.
               </p>
               <div className="flex flex-wrap justify-center gap-4">
                 <Button variant="neon" size="lg">

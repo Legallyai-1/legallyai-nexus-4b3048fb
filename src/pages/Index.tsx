@@ -1,10 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import AdBanner from "@/components/ads/AdBanner";
@@ -12,16 +11,15 @@ import AdContainer from "@/components/ads/AdContainer";
 import AdMobBanner, { ADMOB_AD_UNITS } from "@/components/ads/AdMobBanner";
 import { streamLegalChat } from "@/lib/legalChat";
 import { toast } from "sonner";
-import { 
-  Scale, Sparkles, FileText, MessageSquare, Heart, Shield, 
-  Briefcase, GraduationCap, Users, Gavel, Car, Building2,
-  Home, Zap, Star, ArrowRight, Check, Send, Loader2, Mic, Brain
+import {
+  Sparkles, FileText, MessageSquare, Heart, Shield, Briefcase, Users, Gavel, Car, Building2,
+  Home, ArrowRight, Check, Send, Loader2, FolderOpen, CalendarClock, Landmark, Lock, ChevronDown,
 } from "lucide-react";
 import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
-import { PerplexityLegalSearch } from "@/components/legal/PerplexityLegalSearch";
-import { ContractRedlineStudio } from "@/components/legal/ContractRedlineStudio";
-import { SettlementEstimator } from "@/components/legal/SettlementEstimator";
 import { CompetitorVersusTable } from "@/components/legal/CompetitorVersusTable";
+import { ToolLauncher } from "@/components/layout/ToolLauncher";
+import { TOOL_ICONS } from "@/components/layout/toolIcons";
+import { featuredTools } from "@/lib/toolCatalog";
 
 const hubs = [
   { id: "chat", name: "Lee Legal AI", icon: MessageSquare, color: "cyan", path: "/chat", description: "General legal assistant" },
@@ -34,11 +32,13 @@ const hubs = [
   { id: "workplace", name: "WorkAI", icon: Building2, color: "orange", path: "/workplace-legal-aid", description: "Employment rights" },
 ];
 
-const features = [
-  { title: "AI Document Generation", description: "Create legal document drafts with AI", icon: FileText },
-  { title: "Legal Chat Assistant", description: "Get answers to your legal questions 24/7", icon: MessageSquare },
-  { title: "Court Prep Tools", description: "Prepare for hearings with simulations", icon: Gavel },
-  { title: "Law Firm Management", description: "Complete practice management suite", icon: Briefcase },
+// The self-help workspace for people handling their own case. All of these are existing features:
+// answers saved from chat land in the case file, deadlines become calendar reminders.
+const myCases = [
+  { title: "Case file", description: "Save Lee's answers, notes and facts in one place", icon: FolderOpen, path: "/cases" },
+  { title: "Deadlines", description: "Court dates and reminders on your calendar", icon: CalendarClock, path: "/appointments" },
+  { title: "Documents", description: "Draft letters, motions and agreements", icon: FileText, path: "/generate" },
+  { title: "Court prep", description: "Find your court and its official forms", icon: Landmark, path: "/court-records" },
 ];
 
 const pricingTiers = [
@@ -100,7 +100,6 @@ interface ChatMessage {
 }
 
 export default function Index() {
-  const navigate = useNavigate();
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -139,109 +138,95 @@ export default function Index() {
     }
   };
 
+  const individualTiers = pricingTiers.filter((t) => t.name === "Free" || t.name === "Premium");
+  const firmTiers = pricingTiers.filter((t) => t.name !== "Free" && t.name !== "Premium");
+
   return (
     <Layout>
       <FuturisticBackground>
-        {/* Hero Section with Ask Lee */}
-        <section className="dash-bg relative min-h-[90vh] flex items-center justify-center px-4 py-12 overflow-x-clip">
+        {/* Hero: one promise, two clear paths (people who need help / law firms) + live Ask Lee chat. */}
+        <section className="dash-bg relative flex items-center px-4 py-10 sm:py-14 overflow-x-clip">
           <div className="container mx-auto max-w-6xl">
-            <div className="grid lg:grid-cols-2 gap-8 items-center">
-              <div className="text-center lg:text-left">
-                <img src="/lee-mascot.png" alt="Lee, the LegallyAI assistant, waving" width={160} height={240} className="mx-auto lg:mx-0 mb-4 h-40 w-auto animate-lee-alive drop-shadow-[0_0_30px_hsl(45_90%_60%/0.45)] animate-fade-in" />
-                <Badge className="bg-legal-gold/15 text-legal-gold border-legal-gold/40 mb-6 animate-fade-in">
-                  <Sparkles className="w-3 h-3 mr-1" /> Meet Lee, your AI legal partner
-                </Badge>
-                
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-6 animate-fade-in" style={{ animationDelay: "100ms" }}>
-                  <span className="text-foreground">Get clear answers about </span>
-                  <span className="gold-text">
-                    your legal situation
-                  </span>
+            <div className="grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] gap-8 lg:gap-10 items-center">
+              <div className="min-w-0 text-center lg:text-left">
+                <div className="flex items-center justify-center lg:justify-start gap-3 mb-5">
+                  <img src="/lee-mascot-sm.png" alt="" width={56} height={84} className="h-16 w-auto drop-shadow-[0_0_18px_hsl(45_90%_60%/0.45)]" fetchPriority="high" />
+                  <Badge className="bg-legal-gold/15 text-legal-gold border-legal-gold/40">
+                    <Sparkles className="w-3 h-3 mr-1" aria-hidden="true" /> Meet Lee, your AI legal partner
+                  </Badge>
+                </div>
+
+                <h1 className="text-[2rem] leading-tight sm:text-5xl lg:text-[3.4rem] font-display font-bold mb-5 break-words">
+                  <span className="text-foreground">Legal help that </span>
+                  <span className="gold-text">works for you</span>
                 </h1>
-                
-                <p className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0 mb-8 animate-fade-in" style={{ animationDelay: "200ms" }}>
-                  Ask Lee about custody, criminal defense, work, housing, estate planning and more. Lee explains your options in plain English, links you to the official court resources for your state, and keeps your case file, deadlines and appointments together.
+                <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0 mb-7">
+                  Handling your own case? Lee explains your options in plain English and keeps your case file, deadlines and documents together. Running a practice? One AI workspace from solo attorney to full firm.
                 </p>
-                
-                <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-fade-in" style={{ animationDelay: "300ms" }}>
-                  <Button size="lg" className="w-full sm:w-auto whitespace-normal text-base sm:text-lg px-6 sm:px-8 py-6 gold-tile border-0 font-semibold hover:brightness-105" onClick={() => document.getElementById("hero-chat-input")?.focus()}>
-                    <MessageSquare className="mr-2 h-5 w-5" />
-                    Ask Lee free: 5 questions, no card
-                  </Button>
-                  <Link to="/pricing" className="w-full sm:w-auto">
-                    <Button size="lg" variant="outline" className="w-full sm:w-auto text-base sm:text-lg px-6 sm:px-8 py-6 border-neon-gold/50 text-neon-gold hover:bg-neon-gold/10">
-                      <Briefcase className="mr-2 h-5 w-5" />
-                      For law firms
-                    </Button>
+
+                <div className="grid sm:grid-cols-2 gap-3 max-w-xl mx-auto lg:mx-0 text-left">
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById("hero-chat-input")?.focus()}
+                    className="group rounded-2xl gold-tile p-4 sm:p-5 transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider opacity-75"><Users className="h-3.5 w-3.5" aria-hidden="true" /> For individuals</span>
+                    <span className="mt-1.5 flex items-center justify-between gap-2 font-display text-lg font-bold">Get legal help <ArrowRight className="h-5 w-5 shrink-0 transition-transform group-hover:translate-x-1" aria-hidden="true" /></span>
+                    <span className="mt-1 block text-sm opacity-80">Ask Lee free: 5 questions, no card</span>
+                  </button>
+                  <Link
+                    to="/lawyers"
+                    className="group rounded-2xl silver-tile p-4 sm:p-5 transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider opacity-75"><Briefcase className="h-3.5 w-3.5" aria-hidden="true" /> For law firms</span>
+                    <span className="mt-1.5 flex items-center justify-between gap-2 font-display text-lg font-bold">Explore the firm hub <ArrowRight className="h-5 w-5 shrink-0 transition-transform group-hover:translate-x-1" aria-hidden="true" /></span>
+                    <span className="mt-1 block text-sm opacity-80">Solo, firm and enterprise plans</span>
                   </Link>
                 </div>
-                
-                <div className="flex flex-wrap justify-center lg:justify-start gap-4 mt-8 animate-fade-in" style={{ animationDelay: "400ms" }}>
-                  <Badge variant="outline" className="text-muted-foreground">
-                    <Check className="w-3 h-3 mr-1 text-neon-green" /> Official state court links in every answer
-                  </Badge>
-                  <Badge variant="outline" className="text-muted-foreground">
-                    <Check className="w-3 h-3 mr-1 text-neon-green" /> Private: no names or case numbers needed
-                  </Badge>
-                  <Badge variant="outline" className="text-muted-foreground">
-                    <Star className="w-3 h-3 mr-1 text-neon-gold" /> Legal information, not legal advice
-                  </Badge>
-                </div>
+
+                <ul className="flex flex-wrap justify-center lg:justify-start gap-x-5 gap-y-2 mt-6 text-sm text-muted-foreground">
+                  <li className="flex items-center gap-1.5"><Check className="w-4 h-4 text-neon-green" aria-hidden="true" /> Official state court links</li>
+                  <li className="flex items-center gap-1.5"><Lock className="w-4 h-4 text-neon-green" aria-hidden="true" /> No names or case numbers needed</li>
+                  <li className="flex items-center gap-1.5"><Shield className="w-4 h-4 text-legal-gold" aria-hidden="true" /> Legal information, not legal advice</li>
+                </ul>
               </div>
 
-              <div className="animate-fade-in" style={{ animationDelay: "200ms" }}>
-                <div className="glass-card rounded-2xl border-2 border-neon-cyan/40 shadow-[0_0_40px_hsl(var(--neon-cyan)/0.3)] overflow-hidden">
-                  <div className="bg-gradient-to-r from-neon-cyan/20 via-neon-purple/20 to-neon-pink/20 p-4 border-b border-border/30">
-                    <div className="flex items-center gap-3">
-                      <AnimatedAIHead variant="cyan" size="md" />
-                      <div>
-                        <h3 className="font-display text-xl font-bold text-foreground flex items-center gap-2">
-                          Ask Lee
-                          <Badge className="bg-neon-green/20 text-neon-green text-xs">Free AI</Badge>
-                        </h3>
-                        <p className="text-xs text-muted-foreground">Legal information • Sign in for full AI answers</p>
-                      </div>
+              {/* Ask Lee chat: roomy on phones (chips wrap, full-width input). */}
+              <div className="min-w-0">
+                <div className="glass-card rounded-3xl border border-legal-gold/40 shadow-[0_0_40px_hsl(var(--legal-gold)/0.18)] overflow-hidden">
+                  <div className="flex items-center gap-3 p-4 border-b border-border/30 bg-gradient-to-r from-legal-gold/15 via-transparent to-transparent">
+                    <img src="/lee-mascot-sm.png" alt="" width={40} height={60} className="h-11 w-auto" loading="lazy" />
+                    <div className="min-w-0">
+                      <h2 className="font-display text-lg font-bold text-foreground flex flex-wrap items-center gap-2">
+                        Ask Lee <Badge className="bg-neon-green/20 text-neon-green text-xs">Free</Badge>
+                      </h2>
+                      <p className="text-xs text-muted-foreground">Legal information · sign in for your case file</p>
                     </div>
                   </div>
 
-                  <ScrollArea className="h-[280px] p-4" ref={scrollRef}>
+                  <ScrollArea className="h-[260px] sm:h-[300px] p-4" ref={scrollRef}>
                     {chatMessages.length === 0 ? (
-                      <div className="text-center py-8">
-                        <Brain className="h-12 w-12 text-neon-cyan/50 mx-auto mb-3" />
-                        <p className="text-foreground text-sm mb-2">
-                          Hi! I can help you understand legal topics and prepare for next steps.
-                        </p>
-                        <p className="text-xs text-muted-foreground mb-4">
-                          I provide legal information, not legal advice. Verify deadlines and court rules.
-                        </p>
+                      <div className="py-4 text-center">
+                        <p className="text-foreground text-sm mb-1">How can I help with your legal situation today?</p>
+                        <p className="text-xs text-muted-foreground mb-4">Verify deadlines and court rules for your state.</p>
                         <div className="flex flex-wrap gap-2 justify-center">
-                          {["Draft an NDA", "Custody rights", "Tenant rights"].map((suggestion) => (
-                            <Button
+                          {["Custody rights", "Fight a ticket", "Tenant rights", "Draft an NDA"].map((suggestion) => (
+                            <button
                               key={suggestion}
-                              variant="outline"
-                              size="sm"
-                              className="text-xs"
-                              onClick={() => setChatInput(suggestion)}
+                              type="button"
+                              className="rounded-full border border-legal-gold/40 bg-white/5 px-3.5 py-2 text-sm text-foreground hover:bg-legal-gold/10"
+                              onClick={() => { setChatInput(suggestion); document.getElementById("hero-chat-input")?.focus(); }}
                             >
                               {suggestion}
-                            </Button>
+                            </button>
                           ))}
                         </div>
                       </div>
                     ) : (
-                      <div className="space-y-4">
+                      <div className="space-y-4" aria-live="polite">
                         {chatMessages.map((msg, i) => (
-                          <div
-                            key={i}
-                            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                          >
-                            <div
-                              className={`max-w-[85%] rounded-xl px-4 py-2 ${
-                                msg.role === "user"
-                                  ? "bg-neon-cyan/20 text-foreground"
-                                  : "bg-muted/50 text-foreground"
-                              }`}
-                            >
+                          <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                            <div className={`max-w-[88%] rounded-xl px-4 py-2 ${msg.role === "user" ? "bg-legal-gold/20 text-foreground" : "bg-muted/50 text-foreground"}`}>
                               <ChatMarkdown content={msg.content} />
                             </div>
                           </div>
@@ -249,7 +234,7 @@ export default function Index() {
                         {isLoading && (
                           <div className="flex justify-start">
                             <div className="bg-muted/50 rounded-xl px-4 py-2">
-                              <Loader2 className="h-4 w-4 animate-spin text-neon-cyan" />
+                              <Loader2 className="h-4 w-4 animate-spin text-legal-gold" aria-label="Lee is typing" />
                             </div>
                           </div>
                         )}
@@ -257,48 +242,76 @@ export default function Index() {
                     )}
                   </ScrollArea>
 
-                  <div className="p-4 border-t border-border/30 bg-background/50">
+                  <form className="p-3 sm:p-4 border-t border-border/30 bg-background/50" onSubmit={(e) => { e.preventDefault(); void handleSendMessage(); }}>
                     <div className="flex gap-2">
                       <Input
                         id="hero-chat-input"
                         aria-label="Ask Lee a legal question"
                         value={chatInput}
                         onChange={(e) => setChatInput(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                        placeholder="Ask Lee about any legal question..."
-                        className="flex-1"
+                        placeholder="Ask a legal question..."
+                        className="h-11 min-w-0 flex-1 rounded-full text-base sm:text-sm"
                       />
-                      <Button
-                        variant="neon"
-                        size="icon"
-                        onClick={handleSendMessage}
-                        disabled={isLoading || !chatInput.trim()}
-                      >
-                        {isLoading ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-neon-cyan" />
-                        ) : (
-                          <Send className="h-4 w-4" />
-                        )}
+                      <Button type="submit" size="icon" className="h-11 w-11 shrink-0 rounded-full gold-tile border-0" disabled={isLoading || !chatInput.trim()} aria-label="Send question">
+                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                       </Button>
                     </div>
-                    <div className="flex items-center justify-between mt-2">
-                      <p className="text-xs text-muted-foreground">
-                        Free legal AI • No credit card required
-                      </p>
-                      <Link to="/chat" className="text-xs text-neon-cyan hover:underline">
-                        Full Chat →
-                      </Link>
+                    <div className="flex items-center justify-between gap-2 mt-2">
+                      <p className="text-xs text-muted-foreground">Free · no credit card</p>
+                      <Link to="/chat" className="text-xs font-medium text-legal-gold hover:underline">Open full chat →</Link>
                     </div>
-                  </div>
+                  </form>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Perplexity-Style Legal Answer Engine with Grounded Citations & Dynamic Hub Teleport */}
-        <section className="py-8 px-4 container mx-auto max-w-6xl">
-          <PerplexityLegalSearch />
+        {/* Individuals: the self-help workspace + featured tools. */}
+        <section className="py-12 sm:py-16 px-4" aria-labelledby="my-cases-heading">
+          <div className="container mx-auto max-w-6xl">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-legal-gold">For people handling their own case</p>
+                <h2 id="my-cases-heading" className="mt-1 text-2xl sm:text-3xl font-display font-bold">Your case, organized</h2>
+                <p className="mt-1 text-muted-foreground max-w-2xl">Everything Lee helps you with can be saved to My Cases, with a free account.</p>
+              </div>
+              <Button asChild variant="outline" className="self-start sm:self-auto border-legal-gold/50 text-legal-gold hover:bg-legal-gold/10">
+                <Link to="/cases">Open My Cases <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" /></Link>
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {myCases.map((item) => (
+                <Link key={item.title} to={item.path} className="metal-card rounded-2xl p-4">
+                  <span className="metal-icon-well h-10 w-10"><item.icon className="h-5 w-5" aria-hidden="true" /></span>
+                  <h3 className="mt-3 font-semibold">{item.title}</h3>
+                  <p className="mt-0.5 text-sm text-[hsl(218_22%_30%)]">{item.description}</p>
+                </Link>
+              ))}
+            </div>
+
+            <div className="mt-10 flex items-center justify-between gap-3">
+              <h2 className="text-xl sm:text-2xl font-display font-bold">Popular tools</h2>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="hidden sm:inline">All tools</span>
+                <ToolLauncher />
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3">
+              {featuredTools().map((tool) => {
+                const Icon = TOOL_ICONS[tool.icon];
+                return (
+                  <Link key={tool.path} to={tool.path} className="metal-card rounded-2xl p-4 flex items-start gap-3">
+                    <span className="metal-icon-well h-10 w-10 shrink-0"><Icon className="h-5 w-5" aria-hidden="true" /></span>
+                    <span className="min-w-0">
+                      <span className="block font-semibold leading-tight">{tool.title}</span>
+                      <span className="mt-0.5 block text-sm text-[hsl(218_22%_30%)]">{tool.description}</span>
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
         </section>
 
         <AdContainer position="inline" className="container mx-auto px-4 mb-8">
@@ -306,174 +319,110 @@ export default function Index() {
         </AdContainer>
         <AdMobBanner adUnitId={ADMOB_AD_UNITS.HOME_BANNER} size="banner" className="mb-4" />
 
-        <section className="py-20 px-4">
+        {/* Specialist hubs: every hub is Lee focused on one area of law. */}
+        <section className="py-12 sm:py-16 px-4" aria-labelledby="hubs-heading">
           <div className="container mx-auto max-w-6xl">
-            <div className="text-center mb-12">
-              <Badge className="bg-neon-purple/20 text-neon-purple border-neon-purple/30 mb-4">
-                <Zap className="w-3 h-3 mr-1" /> One legal AI, a specialist for every need
-              </Badge>
-              <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-                Lee&apos;s Legal Hubs
-              </h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Every hub is Lee, focused on your situation: custody, defense, work, estate planning and more. Each one keeps your case file, deadlines and appointments together.
-              </p>
-            </div>
-            
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {hubs.map((hub, i) => (
-                <Link
-                  key={hub.id}
-                  to={hub.path}
-                  className={`${i === 0 ? "gold-tile" : "silver-tile"} group relative flex min-h-[132px] flex-col justify-between overflow-hidden rounded-2xl p-5 transition-transform duration-300 hover:-translate-y-1 animate-fade-in`}
-                  style={{ animationDelay: `${i * 50}ms` }}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="font-display text-lg font-bold leading-tight">{hub.name}</h3>
-                      <p className="mt-1 text-xs opacity-70">{hub.description}</p>
-                    </div>
-                    <span className="rounded-xl bg-white/45 p-2 shadow-sm"><hub.icon className="h-5 w-5" aria-hidden="true" /></span>
-                  </div>
-                  <div className="mt-4 flex items-center justify-between text-sm font-semibold">
-                    <span>Talk to {hub.name.replace(" Legal AI", "")}</span>
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
-                  </div>
+            <h2 id="hubs-heading" className="text-2xl sm:text-3xl font-display font-bold">Lee&apos;s legal hubs</h2>
+            <p className="mt-1 mb-6 text-muted-foreground max-w-2xl">Lee, focused on your situation: custody, defense, work, estate planning and more.</p>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {hubs.map((hub) => (
+                <Link key={hub.id} to={hub.path} className="metal-card group rounded-2xl p-4 flex flex-col justify-between min-h-[112px]">
+                  <span className="flex items-start justify-between gap-2">
+                    <span className="min-w-0">
+                      <span className="block font-display font-bold leading-tight break-words">{hub.name}</span>
+                      <span className="mt-1 block text-xs text-[hsl(218_22%_30%)]">{hub.description}</span>
+                    </span>
+                    <hub.icon className="metal-icon h-5 w-5 shrink-0" aria-hidden="true" />
+                  </span>
+                  <span className="mt-3 flex items-center gap-1 text-sm font-semibold">Open <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" /></span>
                 </Link>
               ))}
             </div>
-            
-            <div className="text-center mt-8">
-              <Link to="/ai-assistants">
-                <Button variant="outline" size="lg">
-                  View All AI Assistants <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
+            <div className="text-center mt-6">
+              <Button asChild variant="outline"><Link to="/ai-assistants">View all AI assistants <ArrowRight className="ml-2 h-4 w-4" /></Link></Button>
             </div>
           </div>
         </section>
 
-        {/* Spellbook-Grade Contract Redline & Risk Analyzer Section */}
-        <section className="py-12 px-4 container mx-auto max-w-6xl">
-          <ContractRedlineStudio />
-        </section>
-
-        {/* EvenUp-Grade Settlement & Damages Claim Estimator Section */}
-        <section className="py-12 px-4 container mx-auto max-w-6xl">
-          <SettlementEstimator />
-        </section>
-
-        {/* Market Dominance: Head-to-Head Competitor Comparison Table */}
-        <section className="py-12 px-4 container mx-auto max-w-6xl">
-          <CompetitorVersusTable />
-        </section>
-
-        <section className="py-20 px-4 bg-background/50">
+        {/* Law firms: short pitch, primary CTA goes to the firm landing page. */}
+        <section className="py-12 sm:py-16 px-4" aria-labelledby="firms-heading">
           <div className="container mx-auto max-w-6xl">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-                Everything You Need
-              </h2>
-              <p className="text-muted-foreground">
-                Comprehensive legal tools powered by advanced AI
-              </p>
-            </div>
-            
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {features.map((feature, i) => (
-                <div 
-                  key={i}
-                  className="glass-card p-6 rounded-2xl text-center animate-fade-in"
-                  style={{ animationDelay: `${i * 100}ms` }}
-                >
-                  <div className="inline-flex p-3 rounded-xl bg-neon-cyan/20 mb-4">
-                    <feature.icon className="h-6 w-6 text-neon-cyan" />
-                  </div>
-                  <h3 className="font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground">{feature.description}</p>
+            <div className="glass-card rounded-3xl p-6 sm:p-10 border border-legal-gold/30">
+              <div className="grid lg:grid-cols-[minmax(0,1fr)_auto] gap-6 items-center">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-legal-gold">For law firms</p>
+                  <h2 id="firms-heading" className="mt-1 text-2xl sm:text-3xl font-display font-bold">One AI workspace, from solo attorney to full firm</h2>
+                  <p className="mt-2 text-muted-foreground max-w-2xl">Case files, clients, drafting, contract review, research, billing and trust accounting, with client data isolated per organization.</p>
                 </div>
-              ))}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button asChild size="lg" className="gold-tile border-0 font-semibold"><Link to="/lawyers">Explore the firm hub</Link></Button>
+                  <Button asChild size="lg" variant="outline"><a href="mailto:support@legallyai.ai?subject=LegallyAI%20firm%20demo">Book a demo</a></Button>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="py-20 px-4">
+        <section className="py-12 sm:py-16 px-4" aria-labelledby="pricing-heading">
           <div className="container mx-auto max-w-6xl">
-            <div className="text-center mb-12">
-              <Badge className="bg-neon-gold/20 text-neon-gold border-neon-gold/30 mb-4">
-                Simple Pricing
-              </Badge>
-              <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-                Start Free, Upgrade When Ready
-              </h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Every paid plan includes a 7-day free trial. Free remains ad-supported so we can keep core AI tools accessible.
-              </p>
+            <div className="text-center mb-8">
+              <h2 id="pricing-heading" className="text-2xl sm:text-4xl font-display font-bold mb-3">Start free, upgrade when ready</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">Free stays ad-supported so core tools remain accessible. Paid plans include a 7-day free trial where eligible.</p>
             </div>
-            
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {pricingTiers.map((tier, i) => (
-                <div 
-                  key={tier.name}
-                  className={`glass-card p-6 rounded-2xl relative animate-fade-in ${
-                    tier.popular ? "border-2 border-neon-cyan shadow-glow" : "border border-border/50"
-                  }`}
-                  style={{ animationDelay: `${i * 100}ms` }}
-                >
-                  {tier.popular && (
-                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-neon-cyan text-background">
-                      Most Popular
-                    </Badge>
-                  )}
-                  <h3 className="text-xl font-bold mb-2">{tier.name}</h3>
-                  <div className="mb-4">
-                    <span className="text-4xl font-bold">{tier.price}</span>
-                    <span className="text-muted-foreground">{tier.period}</span>
-                  </div>
+            <h3 className="sr-only">Plans for individuals</h3>
+            <div className="grid md:grid-cols-2 gap-5 max-w-3xl mx-auto">
+              {individualTiers.map((tier) => (
+                <div key={tier.name} className={`glass-card p-6 rounded-2xl relative ${tier.popular ? "border-2 border-legal-gold/70" : "border border-border/50"}`}>
+                  {tier.popular && <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 gold-tile border-0">Most popular</Badge>}
+                  <h4 className="text-xl font-bold mb-2">{tier.name}</h4>
+                  <p className="mb-4"><span className="text-4xl font-bold">{tier.price}</span><span className="text-muted-foreground">{tier.period}</span></p>
                   <ul className="space-y-2 mb-6">
                     {tier.features.map((feature) => (
-                      <li key={feature} className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-neon-green" />
-                        {feature}
-                      </li>
+                      <li key={feature} className="flex items-center gap-2"><Check className="h-4 w-4 text-neon-green shrink-0" aria-hidden="true" />{feature}</li>
                     ))}
                   </ul>
-                  <Link to={tier.path}>
-                    <Button 
-                      className="w-full" 
-                      variant={tier.popular ? "neon" : "outline"}
-                    >
-                      {tier.cta}
-                    </Button>
-                  </Link>
+                  <Button asChild className={`w-full ${tier.popular ? "gold-tile border-0 font-semibold" : ""}`} variant={tier.popular ? "default" : "outline"}>
+                    <Link to={tier.path}>{tier.cta}</Link>
+                  </Button>
                 </div>
+              ))}
+            </div>
+            <div className="mt-6 grid sm:grid-cols-3 gap-3 max-w-4xl mx-auto">
+              {firmTiers.map((tier) => (
+                <Link key={tier.name} to="/lawyers#plans" className="glass-card rounded-2xl border border-border/50 p-4 hover:border-legal-gold/60">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">Law firms</p>
+                  <p className="font-semibold">{tier.name}</p>
+                  <p><span className="text-2xl font-bold">{tier.price}</span> <span className="text-sm text-muted-foreground">{tier.period}</span></p>
+                </Link>
               ))}
             </div>
           </div>
         </section>
 
-        <section className="py-20 px-4">
+        {/* Comparison: collapsed by default to keep the page short. */}
+        <section className="pb-12 px-4">
+          <div className="container mx-auto max-w-6xl">
+            <details className="group glass-card rounded-2xl border border-border/50">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-5 font-display font-semibold [&::-webkit-details-marker]:hidden">
+                Compare LegallyAI with other legal tools
+                <ChevronDown className="h-5 w-5 transition-transform group-open:rotate-180" aria-hidden="true" />
+              </summary>
+              <div className="border-t border-border/40 p-2 sm:p-4">
+                <CompetitorVersusTable />
+              </div>
+            </details>
+          </div>
+        </section>
+
+        <section className="py-12 sm:py-16 px-4">
           <div className="container mx-auto max-w-3xl text-center">
-            <div className="glass-card p-12 rounded-3xl border border-neon-cyan/30">
-              <AnimatedAIHead variant="cyan" size="lg" className="mx-auto mb-6" />
-              <h2 className="text-3xl font-display font-bold mb-4">
-                Ready to Get Started?
-              </h2>
-              <p className="text-muted-foreground mb-8">
-                Join thousands using AI-powered legal assistance. Free chat, no credit card required.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/chat">
-                  <Button size="lg" variant="neon">
-                    <MessageSquare className="mr-2" />
-                    Start Free Chat
-                  </Button>
-                </Link>
-                <Link to="/pricing">
-                  <Button size="lg" variant="outline">
-                    View Plans & Trials
-                  </Button>
-                </Link>
+            <div className="glass-card p-8 sm:p-12 rounded-3xl border border-legal-gold/30">
+              <img src="/lee-mascot-sm.png" alt="" width={64} height={96} className="mx-auto mb-4 h-20 w-auto" loading="lazy" />
+              <h2 className="text-2xl sm:text-3xl font-display font-bold mb-3">Ready when you are</h2>
+              <p className="text-muted-foreground mb-7">Ask Lee your first question free, no credit card required.</p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button asChild size="lg" className="gold-tile border-0 font-semibold"><Link to="/chat"><MessageSquare className="mr-2 h-5 w-5" />Get legal help</Link></Button>
+                <Button asChild size="lg" variant="outline"><Link to="/lawyers"><Briefcase className="mr-2 h-5 w-5" />For law firms</Link></Button>
               </div>
             </div>
           </div>

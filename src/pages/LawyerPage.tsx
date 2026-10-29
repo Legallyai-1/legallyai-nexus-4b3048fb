@@ -1,55 +1,46 @@
 import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  FileText, Users, Clock, Lock, Shield, Loader2, ArrowRight, Check, FolderOpen, FileSearch,
+  BookOpenCheck, Receipt, CalendarClock, KeyRound, CreditCard, Building2, Mail,
+} from "lucide-react";
+import { toast } from "sonner";
 import { GlowScales } from "@/components/brand/GlowScales";
-import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Scale, FileText, Users, BarChart3, Clock, 
-  CheckCircle, ArrowRight, Lock, Shield, Loader2, Sparkles
-} from "lucide-react";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
-import { AnimatedAIHead } from "@/components/ui/AnimatedAIHead";
 import { loginSchema, lawyerSignupSchema } from "@/lib/validations/auth";
 
+// Every capability listed here is a working part of the app.
 const features = [
-  {
-    icon: FileText,
-    title: "Document Templates",
-    description: "Access professional legal document templates",
-    color: "neon-green",
-  },
-  {
-    icon: Users,
-    title: "Client Management",
-    description: "Organize clients, cases, and documents in one place",
-    color: "neon-cyan",
-  },
-  {
-    icon: BarChart3,
-    title: "Analytics Dashboard",
-    description: "Track billable hours, case progress, and revenue",
-    color: "neon-blue",
-  },
-  {
-    icon: Clock,
-    title: "Time Tracking",
-    description: "Automatic time tracking for billing accuracy",
-    color: "neon-purple",
-  },
+  { icon: FolderOpen, title: "Case files & AI analysis", description: "Matters, notes, documents and AI summaries in one workspace" },
+  { icon: Users, title: "Clients & client portal", description: "Client records, intake and a secure portal for clients" },
+  { icon: FileText, title: "AI document drafting", description: "First drafts of letters, motions and agreements" },
+  { icon: FileSearch, title: "Contract redline", description: "Clause-level risk flags and suggested redlines" },
+  { icon: BookOpenCheck, title: "Legal research", description: "Answers with links to official sources" },
+  { icon: Receipt, title: "Billing & trust accounting", description: "Time, invoices and trust ledgers in the Business Hub" },
+  { icon: CalendarClock, title: "Deadlines & calendar", description: "Court dates and appointments with reminders" },
+  { icon: Clock, title: "Time tracking", description: "Clock time against matters for accurate billing" },
 ];
 
-const benefits = [
-  "Faster first drafts of common documents",
-  "AI-powered research assistance",
-  "State-specific compliance checks",
-  "Secure client portal",
-  "E-signature integration",
-  "Court deadline reminders",
+// Plans by firm size. Prices match the published pricing; checkout lives on /pricing.
+const plans = [
+  { name: "Solo", price: "$29", period: "/month", seats: "1 attorney or paralegal seat", points: ["Full case workspace", "Client portal", "AI drafting & hearing prep"], cta: "Start 7-day trial", to: "/pricing" },
+  { name: "Firm", price: "$99", period: "/month + $25 per extra seat", seats: "3 seats included", points: ["Everything in Solo", "Team roles & access", "Client communication"], cta: "Start 7-day trial", to: "/pricing", highlight: true },
+  { name: "Enterprise", price: "$149", period: "/user/month · 10-seat minimum", seats: "10+ seats", points: ["Highest AI limits", "Premium support", "Advanced firm tools"], cta: "Contact us", href: "mailto:support@legallyai.ai?subject=LegallyAI%20Enterprise" },
 ];
+
+// Factual statements about how the app handles data today. No certifications are claimed.
+const security = [
+  { icon: Building2, title: "Data isolated per organization", description: "Database row-level security policies keep each firm's records separate." },
+  { icon: KeyRound, title: "Role-based access", description: "Owner, admin and staff roles control who sees which hub features." },
+  { icon: Lock, title: "Encrypted in transit", description: "All traffic to legallyai.ai is served over HTTPS." },
+  { icon: CreditCard, title: "Payments by Stripe", description: "Card details go to Stripe Checkout; LegallyAI never stores card numbers." },
+];
+
+const DEMO_MAILTO = "mailto:support@legallyai.ai?subject=LegallyAI%20firm%20demo";
 
 export default function LawyerPage() {
   const navigate = useNavigate();
@@ -137,191 +128,175 @@ export default function LawyerPage() {
     }
   };
 
+  const startTrial = () => {
+    setIsLogin(false);
+    setErrors({});
+    document.getElementById("account")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <Layout>
-      <FuturisticBackground>
-        {/* Hero */}
-        <section className="relative py-20 overflow-hidden">
-          <div className="container mx-auto px-4 relative">
-            <div className="max-w-4xl mx-auto text-center">
-              {/* Animated AI Head */}
-              <div className="flex justify-center mb-6">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-neon-green/20 blur-3xl rounded-full scale-150" />
-                  <AnimatedAIHead variant="green" size="lg" />
-                </div>
-              </div>
-
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neon-green/10 border border-neon-green/30 mb-6">
-                <GlowScales className="h-4 w-4 text-neon-green" />
-                <span className="text-sm font-medium text-neon-green">For Legal Professionals</span>
-              </div>
-              <h1 className="font-display text-4xl md:text-5xl font-bold mb-6 text-foreground">
-                Lawyer <span className="text-neon-green">Portal</span>
-              </h1>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Streamline your practice with AI-powered document generation, 
-                client management, and legal research tools.
+      <div className="hub-theme hub-bg text-foreground">
+        {/* Hero: one line of value, two CTAs. */}
+        <section className="px-4 pt-10 pb-12 sm:pt-16">
+          <div className="container mx-auto max-w-6xl grid lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] gap-8 items-center">
+            <div className="min-w-0">
+              <p className="inline-flex items-center gap-2 rounded-full metal-card px-3 py-1 text-xs font-semibold uppercase tracking-wider">
+                <GlowScales className="h-4 w-4" sparkles={false} /> For law firms
               </p>
+              <h1 className="mt-4 font-display text-3xl sm:text-5xl font-bold leading-tight break-words">
+                The AI workspace for your practice, <span className="gold-text">from solo to enterprise</span>
+              </h1>
+              <p className="mt-4 text-lg text-muted-foreground max-w-2xl">
+                Draft faster, review contracts, research with sources, and run cases, clients, billing and trust accounting in one place, with Lee as your AI partner.
+              </p>
+              <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                <Button size="lg" onClick={startTrial} className="gold-tile border-0 font-semibold">Start free trial <ArrowRight className="ml-1.5 h-4 w-4" /></Button>
+                <Button asChild size="lg" variant="outline" className="bg-white/70"><a href={DEMO_MAILTO}><Mail className="mr-1.5 h-4 w-4" />Book a demo</a></Button>
+              </div>
+            </div>
+            <img src="/lee-mascot.png" alt="Lee, the LegallyAI assistant, holding the scales of justice" width={320} height={480} className="hidden lg:block mx-auto h-80 w-auto drop-shadow-[0_20px_40px_hsl(218_45%_25%/0.35)]" />
+          </div>
+        </section>
+
+        <section className="px-4 py-10" aria-labelledby="features-heading">
+          <div className="container mx-auto max-w-6xl">
+            <h2 id="features-heading" className="font-display text-2xl sm:text-3xl font-bold">Built for how firms work</h2>
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {features.map((feature) => (
+                <div key={feature.title} className="metal-card rounded-2xl p-4">
+                  <span className="metal-icon-well h-10 w-10"><feature.icon className="h-5 w-5" aria-hidden="true" /></span>
+                  <h3 className="mt-3 font-semibold">{feature.title}</h3>
+                  <p className="mt-1 text-sm text-[hsl(218_22%_30%)]">{feature.description}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
-        <div className="py-20">
-          <div className="container mx-auto px-4">
-            <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
-              {/* Left Column - Features */}
-              <div>
-                <h2 className="font-display text-3xl font-bold text-foreground mb-8">
-                  Built for <span className="text-neon-green">Modern</span> Law Practices
-                </h2>
-
-                <div className="grid sm:grid-cols-2 gap-4 mb-8">
-                  {features.map((feature, i) => (
-                    <div 
-                      key={i} 
-                      className="glass-card-hover p-5 rounded-xl"
-                    >
-                      <div className={`w-10 h-10 rounded-xl bg-${feature.color}/10 flex items-center justify-center mb-3`}>
-                        <feature.icon className={`h-5 w-5 text-${feature.color}`} />
-                      </div>
-                      <h3 className="font-semibold text-foreground mb-1">{feature.title}</h3>
-                      <p className="text-sm text-muted-foreground">{feature.description}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="glass-card p-6 rounded-xl border-neon-green/20 bg-gradient-to-br from-neon-green/5 to-neon-cyan/5">
-                  <h3 className="font-display text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-neon-green" />
-                    Why Lawyers Choose LegallyAI
-                  </h3>
-                  <ul className="space-y-3">
-                    {benefits.map((benefit, i) => (
-                      <li key={i} className="flex items-center gap-3">
-                        <CheckCircle className="h-5 w-5 text-neon-green shrink-0" />
-                        <span className="text-foreground">{benefit}</span>
-                      </li>
+        <section id="plans" className="px-4 py-10 scroll-mt-20" aria-labelledby="plans-heading">
+          <div className="container mx-auto max-w-6xl">
+            <h2 id="plans-heading" className="font-display text-2xl sm:text-3xl font-bold">Plans by firm size</h2>
+            <p className="mt-1 text-muted-foreground">Paid plans include a 7-day free trial where eligible. Prices before tax.</p>
+            <div className="mt-6 grid md:grid-cols-3 gap-4">
+              {plans.map((plan) => (
+                <div key={plan.name} className="metal-card rounded-3xl p-6 flex flex-col" data-active={plan.highlight ? "true" : undefined}>
+                  <h3 className="font-display text-xl font-bold">{plan.name}</h3>
+                  <p className="mt-2"><span className="text-4xl font-bold">{plan.price}</span> <span className="text-sm text-[hsl(218_22%_30%)]">{plan.period}</span></p>
+                  <p className="mt-1 text-sm font-medium">{plan.seats}</p>
+                  <ul className="mt-4 space-y-2 flex-1">
+                    {plan.points.map((point) => (
+                      <li key={point} className="flex items-center gap-2 text-sm"><Check className="metal-icon h-4 w-4 shrink-0" aria-hidden="true" />{point}</li>
                     ))}
                   </ul>
-                </div>
-              </div>
-
-              {/* Right Column - Login Form */}
-              <div className="lg:pl-8">
-                <div className="glass-card p-8 rounded-2xl border-neon-green/20">
-                  <div className="flex items-center gap-2 mb-6">
-                    <Lock className="h-5 w-5 text-neon-green" />
-                    <h2 className="font-display text-2xl font-semibold text-foreground">
-                      {isLogin ? "Lawyer Login" : "Create Account"}
-                    </h2>
-                  </div>
-
-                  <form onSubmit={handleSubmit} className="space-y-5">
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="text-foreground">Email Address</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={email}
-                        onChange={(e) => {
-                          setEmail(e.target.value);
-                          if (errors.email) validateField("email", e.target.value);
-                        }}
-                        onBlur={() => validateField("email", email)}
-                        placeholder="you@lawfirm.com"
-                        className={`bg-muted/50 border-border/50 focus:border-neon-green/50 focus:shadow-glow-green transition-all ${errors.email ? "border-destructive" : ""}`}
-                        aria-invalid={!!errors.email}
-                      />
-                      {errors.email && (
-                        <p className="text-sm text-destructive">{errors.email}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="password" className="text-foreground">Password</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        value={password}
-                        onChange={(e) => {
-                          setPassword(e.target.value);
-                          if (errors.password) validateField("password", e.target.value);
-                        }}
-                        onBlur={() => validateField("password", password)}
-                        placeholder="••••••••"
-                        className={`bg-muted/50 border-border/50 focus:border-neon-green/50 focus:shadow-glow-green transition-all ${errors.password ? "border-destructive" : ""}`}
-                        aria-invalid={!!errors.password}
-                      />
-                      {errors.password && (
-                        <p className="text-sm text-destructive">{errors.password}</p>
-                      )}
-                      {!isLogin && (
-                        <p className="text-xs text-muted-foreground">
-                          Min 8 chars with uppercase, lowercase, and number
-                        </p>
-                      )}
-                    </div>
-
-                    {!isLogin && (
-                      <div className="space-y-2">
-                        <Label htmlFor="bar" className="text-foreground">Bar Number (Optional)</Label>
-                        <Input
-                          id="bar"
-                          placeholder="Your state bar number"
-                          className="bg-muted/50 border-border/50 focus:border-neon-green/50 focus:shadow-glow-green transition-all"
-                        />
-                      </div>
-                    )}
-
-                    <Button type="submit" variant="neon-green" size="lg" className="w-full" disabled={isLoading}>
-                      {isLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <>
-                          {isLogin ? "Sign In" : "Create Account"}
-                          <ArrowRight className="h-4 w-4" />
-                        </>
-                      )}
+                  {plan.href ? (
+                    <Button asChild variant="outline" className="mt-5 bg-white/70"><a href={plan.href}>{plan.cta}</a></Button>
+                  ) : (
+                    <Button asChild className={`mt-5 ${plan.highlight ? "gold-tile border-0 font-semibold" : ""}`} variant={plan.highlight ? "default" : "outline"}>
+                      <Link to={plan.to!}>{plan.cta}</Link>
                     </Button>
-                  </form>
-
-                  <div className="mt-6 text-center">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsLogin(!isLogin);
-                        setErrors({});
-                      }}
-                      className="text-sm text-muted-foreground hover:text-neon-green transition-colors"
-                    >
-                      {isLogin
-                        ? "Don't have an account? Sign up"
-                        : "Already have an account? Sign in"}
-                    </button>
-                  </div>
-
-                  <div className="mt-6 pt-6 border-t border-border/30">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Shield className="h-4 w-4 text-neon-green" />
-                      <span>Client data is isolated per organization</span>
-                    </div>
-                  </div>
+                  )}
                 </div>
-
-                <div className="mt-6 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    Need help? Contact{" "}
-                    <a href="mailto:lawyers@legallyai.ai" className="text-neon-green hover:underline">
-                      lawyers@legallyai.ai
-                    </a>
-                  </p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
-        </div>
-      </FuturisticBackground>
+        </section>
+
+        <section className="px-4 py-10" aria-labelledby="security-heading">
+          <div className="container mx-auto max-w-6xl">
+            <h2 id="security-heading" className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-2"><Shield className="metal-icon h-7 w-7" aria-hidden="true" /> Security & data handling</h2>
+            <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {security.map((item) => (
+                <div key={item.title} className="glass-panel rounded-2xl p-4">
+                  <item.icon className="metal-icon h-5 w-5" aria-hidden="true" />
+                  <h3 className="mt-2 font-semibold">{item.title}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground">Lee provides legal information to support your work; attorneys remain responsible for advice given to clients.</p>
+          </div>
+        </section>
+
+        <section id="account" className="px-4 py-12 scroll-mt-20">
+          <div className="container mx-auto max-w-md">
+            <div className="glass-panel p-6 sm:p-8 rounded-3xl">
+              <div className="flex items-center gap-2 mb-6">
+                <Lock className="metal-icon h-5 w-5" aria-hidden="true" />
+                <h2 className="font-display text-2xl font-semibold">{isLogin ? "Lawyer sign in" : "Create your firm account"}</h2>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email address</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (errors.email) validateField("email", e.target.value);
+                    }}
+                    onBlur={() => validateField("email", email)}
+                    placeholder="you@lawfirm.com"
+                    className={`bg-white/80 ${errors.email ? "border-destructive" : ""}`}
+                    aria-invalid={!!errors.email}
+                  />
+                  {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    autoComplete={isLogin ? "current-password" : "new-password"}
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (errors.password) validateField("password", e.target.value);
+                    }}
+                    onBlur={() => validateField("password", password)}
+                    placeholder="••••••••"
+                    className={`bg-white/80 ${errors.password ? "border-destructive" : ""}`}
+                    aria-invalid={!!errors.password}
+                  />
+                  {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+                  {!isLogin && <p className="text-xs text-muted-foreground">Min 8 chars with uppercase, lowercase, and number</p>}
+                </div>
+
+                {!isLogin && (
+                  <div className="space-y-2">
+                    <Label htmlFor="bar">Bar number (optional)</Label>
+                    <Input id="bar" placeholder="Your state bar number" className="bg-white/80" />
+                  </div>
+                )}
+
+                <Button type="submit" size="lg" className="w-full gold-tile border-0 font-semibold" disabled={isLoading}>
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>{isLogin ? "Sign in" : "Create account"} <ArrowRight className="h-4 w-4" /></>}
+                </Button>
+              </form>
+
+              <div className="mt-6 text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsLogin(!isLogin);
+                    setErrors({});
+                  }}
+                  className="text-sm text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
+                >
+                  {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+                </button>
+              </div>
+            </div>
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              Questions? <a href="mailto:lawyers@legallyai.ai" className="font-medium text-[hsl(36_85%_30%)] hover:underline">lawyers@legallyai.ai</a>
+            </p>
+          </div>
+        </section>
+      </div>
     </Layout>
   );
 }

@@ -510,3 +510,187 @@
     animation: circuit-flow 2s linear infinite;
   }
 }
+
+/* ===========================================================================
+   Hub theme: light "enterprise legal AI" look (frosted glass over soft steel blue,
+   navy text, warm gold accents). Scoped to .hub-theme so the public site keeps its look.
+   Every shadcn component inside a hub reads these tokens, so hubs inherit it automatically.
+   =========================================================================== */
+.hub-theme {
+  --background: 213 38% 93%;
+  --foreground: 222 52% 14%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 52% 14%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 52% 14%;
+  --primary: 42 90% 52%;
+  --primary-foreground: 222 52% 12%;
+  --secondary: 214 36% 90%;
+  --secondary-foreground: 222 52% 14%;
+  --muted: 214 32% 91%;
+  --muted-foreground: 218 22% 34%;
+  --accent: 42 85% 92%;
+  --accent-foreground: 222 52% 14%;
+  --destructive: 0 72% 46%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 28% 80%;
+  --input: 214 28% 82%;
+  --ring: 40 90% 46%;
+
+  /* Accent tokens re-tuned for light surfaces (readable text contrast on white). */
+  --legal-gold: 34 88% 34%;
+  --neon-cyan: 34 88% 34%;
+  --neon-blue: 214 70% 38%;
+  --neon-purple: 222 34% 38%;
+  --neon-pink: 28 80% 38%;
+  --neon-green: 152 70% 26%;
+  --neon-orange: 28 85% 38%;
+  --glass-bg: 0 0% 100% / 0.66;
+  --glass-border: 214 40% 70% / 0.45;
+  --glass-shadow: 0 10px 30px -12px hsl(218 45% 30% / 0.28);
+
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 222 52% 14%;
+  --sidebar-accent: 42 85% 92%;
+  --sidebar-border: 214 28% 82%;
+
+  color: hsl(var(--foreground));
+  color-scheme: light;
+}
+
+.hub-bg {
+  background:
+    radial-gradient(ellipse 55% 45% at 90% 0%, hsl(42 90% 70% / 0.22) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 55% at 0% 100%, hsl(210 70% 75% / 0.35) 0%, transparent 60%),
+    /* faint office-tower silhouette: tall soft columns on the right */
+    repeating-linear-gradient(90deg, transparent 0 46px, hsl(214 40% 70% / 0.10) 46px 48px),
+    linear-gradient(135deg, hsl(210 45% 95%) 0%, hsl(213 38% 89%) 45%, hsl(214 32% 82%) 100%);
+  background-attachment: fixed;
+}
+
+.hub-theme .glass-panel,
+.hub-theme .glass-card,
+.launcher-panel {
+  background: linear-gradient(160deg, hsl(0 0% 100% / 0.82), hsl(210 40% 98% / 0.62));
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  border: 1px solid hsl(214 40% 80% / 0.8);
+  box-shadow: 0 18px 40px -18px hsl(218 45% 25% / 0.35), inset 0 1px 0 hsl(0 0% 100% / 0.9);
+  color: hsl(var(--foreground));
+}
+
+/* Cards rendered by shadcn <Card> (bg-card) become frosted too. */
+.hub-theme .bg-card {
+  background-color: hsl(0 0% 100% / 0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.hub-theme .rounded-lg.border.bg-card,
+.hub-theme .rounded-xl.border.bg-card {
+  border-radius: 1.25rem;
+  box-shadow: 0 14px 34px -20px hsl(218 45% 25% / 0.4);
+}
+
+.hub-theme .gold-text {
+  background: linear-gradient(90deg, hsl(38 90% 40%), hsl(30 85% 32%));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hub-nav-active {
+  background: linear-gradient(90deg, hsl(45 95% 80%), hsl(42 90% 62%));
+  color: hsl(222 52% 12%);
+  box-shadow: 0 0 0 1px hsl(42 90% 55% / 0.6), 0 6px 18px -8px hsl(40 90% 45% / 0.7);
+}
+
+/* ---------------------------------------------------------------------------
+   Signature component: brushed-silver card with a thin gold border and gold icons.
+   Hover / focus / active / selected tabs get a brighter gold border and a warm glow.
+   Used for hub tabs, AI workflow tiles, launcher items, featured tools and stat cards.
+   Text stays deep navy on silver (contrast > 10:1).
+   --------------------------------------------------------------------------- */
+.metal-card {
+  position: relative;
+  color: hsl(222 52% 13%);
+  background:
+    linear-gradient(115deg, transparent 0%, hsl(0 0% 100% / 0.55) 22%, transparent 38%),
+    repeating-linear-gradient(90deg, hsl(0 0% 100% / 0.06) 0 2px, hsl(215 20% 60% / 0.05) 2px 4px),
+    linear-gradient(165deg, hsl(210 25% 98%) 0%, hsl(212 18% 88%) 48%, hsl(214 14% 78%) 100%);
+  border: 1px solid hsl(40 75% 52% / 0.65);
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.95),
+    inset 0 -1px 0 hsl(214 20% 60% / 0.35),
+    0 12px 28px -16px hsl(218 45% 20% / 0.45);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+.metal-card .metal-icon,
+.metal-icon {
+  color: hsl(36 85% 34%);
+}
+.metal-icon-well {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.9rem;
+  color: hsl(36 85% 34%);
+  background: linear-gradient(160deg, hsl(0 0% 100%), hsl(212 20% 88%));
+  border: 1px solid hsl(40 75% 52% / 0.55);
+  box-shadow: inset 0 1px 0 hsl(0 0% 100%), 0 3px 8px -4px hsl(218 45% 20% / 0.4);
+}
+.metal-card:hover,
+.metal-card:focus-visible,
+.metal-card[data-active="true"],
+.metal-card[aria-current="page"],
+.metal-card[aria-selected="true"],
+.metal-card[data-state="active"],
+.gold-glow-card {
+  border-color: hsl(43 95% 52%);
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.95),
+    0 0 0 1px hsl(45 95% 62% / 0.55),
+    0 0 24px hsl(43 95% 55% / 0.45),
+    0 14px 30px -16px hsl(30 80% 25% / 0.5);
+}
+.metal-card:hover { transform: translateY(-2px); }
+.metal-card:focus-visible { outline: 2px solid hsl(222 52% 20%); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .metal-card, .metal-card:hover { transition: none; transform: none; }
+}
+
+/* Hub tabs (shadcn/Radix Tabs) adopt the signature look automatically inside hubs. */
+.hub-theme [role="tablist"] {
+  background: hsl(212 25% 90% / 0.7);
+  border: 1px solid hsl(214 25% 80%);
+  border-radius: 1rem;
+  padding: 0.3rem;
+  height: auto;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.hub-theme [role="tab"] {
+  border-radius: 0.75rem;
+  border: 1px solid transparent;
+  color: hsl(222 40% 22%);
+}
+.hub-theme [role="tab"][data-state="active"] {
+  color: hsl(222 52% 12%);
+  background: linear-gradient(165deg, hsl(210 25% 99%), hsl(212 18% 88%));
+  border-color: hsl(43 95% 52%);
+  box-shadow: 0 0 0 1px hsl(45 95% 62% / 0.45), 0 0 16px hsl(43 95% 55% / 0.4);
+}
+.hub-theme [role="tab"] svg { color: hsl(36 85% 34%); }
+
+/* Launcher items use the same silver/gold well. */
+.launcher-icon {
+  background: linear-gradient(160deg, hsl(0 0% 100%), hsl(212 20% 86%));
+  color: hsl(36 85% 34%);
+  border: 1px solid hsl(40 75% 52% / 0.6);
+  box-shadow: inset 0 1px 0 hsl(0 0% 100%), 0 4px 10px -6px hsl(218 45% 20% / 0.45);
+}
+a:hover > .launcher-icon,
+a:focus-visible > .launcher-icon {
+  background: linear-gradient(160deg, hsl(0 0% 100%), hsl(212 20% 90%));
+  border-color: hsl(43 95% 52%);
+  box-shadow: 0 0 0 1px hsl(45 95% 62% / 0.5), 0 0 16px hsl(43 95% 55% / 0.5);
+}

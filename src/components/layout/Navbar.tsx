@@ -1,32 +1,31 @@
-import { useState } from "react";
-import { GlowScales } from "@/components/brand/GlowScales";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Menu, X, ArrowLeft, ArrowRight, MessageSquare, Briefcase } from "lucide-react";
+import { GlowScales } from "@/components/brand/GlowScales";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Scale, Sparkles, Zap, ChevronDown, ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { ActiveOrganizationSwitcher } from "./ActiveOrganizationSwitcher";
+import { ToolLauncher } from "./ToolLauncher";
 
-const navLinks = [
-  { name: "Home", path: "/" },
-  { name: "Generate", path: "/generate" },
-  { name: "AI Assistants", path: "/ai-assistants" },
-  { name: "Templates", path: "/templates" },
-  { name: "For Lawyers", path: "/lawyers" },
-  { name: "Pricing", path: "/pricing" },
+// Two audiences, two links: people who need legal help, and law firms.
+const audienceLinks = [
+  { name: "Get legal help", path: "/chat", icon: MessageSquare },
+  { name: "For law firms", path: "/lawyers", icon: Briefcase },
 ];
 
-const moreLinks = [
-  { name: "Custody Helper", path: "/custody" },
-  { name: "Workplace Legal Aid", path: "/workplace-legal-aid" },
-  { name: "Pro Bono", path: "/pro-bono" },
-  { name: "Job Board", path: "/jobs" },
-  { name: "Client Portal", path: "/client-portal" },
+// Everything else lives in the menu (and in the tools launcher).
+const menuLinks = [
+  { name: "Home", path: "/" },
+  { name: "My cases", path: "/cases" },
+  { name: "Document generator", path: "/generate" },
+  { name: "AI assistants", path: "/ai-assistants" },
+  { name: "Templates", path: "/templates" },
+  { name: "Pricing", path: "/pricing" },
+  { name: "Custody helper", path: "/custody" },
+  { name: "Workplace legal aid", path: "/workplace-legal-aid" },
+  { name: "Pro bono", path: "/pro-bono" },
+  { name: "Job board", path: "/jobs" },
+  { name: "Client portal", path: "/client-portal" },
   { name: "Dashboard", path: "/dashboard" },
 ];
 
@@ -35,205 +34,107 @@ export function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const handleBack = () => {
-    navigate(-1);
-  };
-
-  const handleForward = () => {
-    navigate(1);
-  };
+  useEffect(() => setIsOpen(false), [location.pathname]);
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setIsOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
-      {/* Glow effect at top */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-legal-cyan to-transparent" />
-      
-      {/* Main navbar container */}
-      <div className="bg-background/60 backdrop-blur-xl border-b border-white/10">
-        <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
-          {/* Logo - Clickable to navigate home with smooth scroll */}
-          <Link 
-            to="/" 
+      <div className="bg-background/70 backdrop-blur-xl border-b border-white/10">
+        <nav aria-label="Main" className="container mx-auto px-3 sm:px-4 h-16 flex items-center gap-2">
+          <Link
+            to="/"
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="flex items-center gap-2 group cursor-pointer transition-opacity duration-200 hover:opacity-80"
+            className="flex items-center gap-2 shrink-0 font-display font-bold text-lg sm:text-xl hover:opacity-90"
+            aria-label="LegallyAI home"
           >
-            <div className="relative">
-              {/* Glow ring */}
-              <div className="absolute inset-0 bg-legal-gold/20 rounded-full blur-md group-hover:bg-legal-gold/40 transition-all duration-300" />
-              <div className="relative bg-background/50 p-2 rounded-xl border border-legal-gold/30 group-hover:border-legal-gold/60 transition-all duration-300">
-                <GlowScales className="h-6 w-6 text-legal-gold transition-transform group-hover:scale-110" />
-              </div>
-              <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-legal-cyan animate-pulse" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-display text-xl font-bold leading-none">
-                <span className="text-foreground">Legally</span>
-                <span className="text-legal-gold">AI</span>
-              </span>
-              <span className="text-[9px] text-legal-cyan/70 tracking-widest uppercase">Legal Intelligence</span>
-            </div>
+            <GlowScales className="h-7 w-7" />
+            <span className="text-foreground">
+              legally<span className="text-legal-gold">ai</span><span className="hidden sm:inline">.ai</span>
+            </span>
           </Link>
 
-          {/* Back/Forward Navigation Buttons */}
           <div className="hidden md:flex items-center gap-1 ml-4">
-            <button
-              onClick={handleBack}
-              className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200 text-muted-foreground hover:text-foreground"
-              aria-label="Go back"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-            <button
-              onClick={handleForward}
-              className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200 text-muted-foreground hover:text-foreground"
-              aria-label="Go forward"
-            >
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
-
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center gap-1 bg-white/5 backdrop-blur-sm rounded-full px-2 py-1.5 border border-white/10">
-            {navLinks.map((link) => (
+            {audienceLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
+                aria-current={location.pathname === link.path ? "page" : undefined}
                 className={cn(
-                  "relative px-4 py-2 rounded-full text-sm font-medium transition-all duration-300",
+                  "inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition-colors",
                   location.pathname === link.path
-                    ? "text-legal-cyan"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-legal-gold/15 text-legal-gold ring-1 ring-legal-gold/40"
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/5",
                 )}
               >
-                {location.pathname === link.path && (
-                  <>
-                    <div className="absolute inset-0 bg-legal-cyan/10 rounded-full" />
-                    <div className="absolute inset-0 rounded-full border border-legal-cyan/30" />
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-legal-cyan shadow-[0_0_10px_hsl(var(--legal-cyan))]" />
-                  </>
-                )}
-                <span className="relative">{link.name}</span>
-              </Link>
-            ))}
-            
-            {/* More Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger className="px-4 py-2 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-all duration-300 flex items-center gap-1">
-                More <ChevronDown className="h-3 w-3" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                {moreLinks.map((link) => (
-                  <DropdownMenuItem key={link.path} asChild>
-                    <Link to={link.path} className="w-full cursor-pointer">
-                      {link.name}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          {/* Desktop CTA */}
-          <div className="hidden lg:flex items-center gap-3">
-            <ActiveOrganizationSwitcher />
-            <Button
-              asChild
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-foreground hover:bg-white/5"
-            >
-              <Link to="/login">Sign In</Link>
-            </Button>
-            <Button
-              asChild
-              size="sm"
-              className="relative overflow-hidden bg-gradient-to-r from-legal-gold to-legal-gold/80 text-background hover:from-legal-gold/90 hover:to-legal-gold/70 border-0 shadow-[0_0_20px_hsl(var(--legal-gold)/0.3)]"
-            >
-              <Link to="/signup">
-                <Zap className="h-4 w-4 mr-1" />
-                Get Started
-                {/* Shine effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-              </Link>
-            </Button>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="lg:hidden relative p-2 text-foreground"
-            aria-label="Toggle menu"
-          >
-            <div className="absolute inset-0 bg-white/5 rounded-lg border border-white/10" />
-            {isOpen ? <X className="relative h-6 w-6" /> : <Menu className="relative h-6 w-6" />}
-          </button>
-        </nav>
-      </div>
-
-      {/* Mobile Menu */}
-      {isOpen && (
-        <div className="lg:hidden absolute top-16 left-0 right-0 bg-background/95 backdrop-blur-xl border-b border-white/10 animate-fade-in">
-          {/* Decorative grid */}
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:20px_20px]" />
-          
-          <div className="relative container mx-auto px-4 py-4 flex flex-col gap-2">
-            <ActiveOrganizationSwitcher className="px-4" />
-            {navLinks.map((link, index) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                onClick={() => setIsOpen(false)}
-                className={cn(
-                  "relative px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300",
-                  "animate-fade-in",
-                  location.pathname === link.path
-                    ? "text-legal-cyan bg-legal-cyan/10 border border-legal-cyan/30"
-                    : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
-                )}
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                {location.pathname === link.path && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1/2 bg-legal-cyan rounded-r-full shadow-[0_0_10px_hsl(var(--legal-cyan))]" />
-                )}
+                <link.icon className="h-4 w-4" aria-hidden="true" />
                 {link.name}
               </Link>
             ))}
-            
-            {/* More Links in Mobile */}
-            <div className="mt-4 pt-4 border-t border-white/10">
-              <p className="text-xs text-muted-foreground px-4 mb-2">More</p>
-              {moreLinks.map((link, index) => (
+          </div>
+
+          <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+            <ActiveOrganizationSwitcher containerClassName="hidden xl:block" />
+            <ToolLauncher />
+            <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex text-muted-foreground hover:text-foreground hover:bg-white/5">
+              <Link to="/login">Sign in</Link>
+            </Button>
+            <Button asChild size="sm" className="hidden lg:inline-flex gold-tile border-0 font-semibold hover:brightness-105">
+              <Link to="/signup">Start free</Link>
+            </Button>
+            <button
+              type="button"
+              onClick={() => setIsOpen((v) => !v)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 text-foreground hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label={isOpen ? "Close menu" : "Open menu"}
+              aria-expanded={isOpen}
+              aria-controls="site-menu"
+            >
+              {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
+        </nav>
+      </div>
+
+      {isOpen && (
+        <>
+          <button type="button" aria-label="Close menu" tabIndex={-1} className="fixed inset-0 top-16 bg-black/30" onClick={() => setIsOpen(false)} />
+          <div id="site-menu" className="absolute right-0 top-16 w-full sm:w-80 sm:right-4 sm:top-[4.5rem] max-h-[calc(100dvh-5rem)] overflow-y-auto bg-background/95 backdrop-blur-xl border border-white/10 sm:rounded-2xl shadow-2xl animate-fade-in">
+            <div className="p-4 flex flex-col gap-1">
+              <div className="grid grid-cols-2 gap-2 mb-2 md:hidden">
+                {audienceLinks.map((link) => (
+                  <Link key={link.path} to={link.path} className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-legal-gold/40 bg-legal-gold/10 px-3 py-3 text-sm font-semibold text-legal-gold">
+                    <link.icon className="h-4 w-4" aria-hidden="true" /> {link.name}
+                  </Link>
+                ))}
+              </div>
+              <ActiveOrganizationSwitcher className="px-2 xl:hidden" />
+              {menuLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
-                  onClick={() => setIsOpen(false)}
-                  className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-lg"
+                  aria-current={location.pathname === link.path ? "page" : undefined}
+                  className={cn(
+                    "rounded-lg px-3 py-2.5 text-sm",
+                    location.pathname === link.path ? "bg-legal-gold/10 text-legal-gold font-medium" : "text-muted-foreground hover:bg-white/5 hover:text-foreground",
+                  )}
                 >
                   {link.name}
                 </Link>
               ))}
-            </div>
-            
-            <div className="flex gap-2 mt-4 pt-4 border-t border-white/10">
-              <Link to="/login" className="flex-1" onClick={() => setIsOpen(false)}>
-                <Button 
-                  variant="outline" 
-                  className="w-full bg-white/5 border-white/20 hover:bg-white/10 hover:border-white/30"
-                >
-                  Sign In
-                </Button>
-              </Link>
-              <Link to="/signup" className="flex-1" onClick={() => setIsOpen(false)}>
-                <Button 
-                  className="w-full bg-gradient-to-r from-legal-gold to-legal-gold/80 text-background hover:from-legal-gold/90 hover:to-legal-gold/70"
-                >
-                  <Zap className="h-4 w-4 mr-1" />
-                  Get Started
-                </Button>
-              </Link>
+              <div className="mt-3 flex items-center gap-2 border-t border-white/10 pt-3">
+                <button type="button" onClick={() => navigate(-1)} aria-label="Go back" className="rounded-lg border border-white/10 bg-white/5 p-2 text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /></button>
+                <button type="button" onClick={() => navigate(1)} aria-label="Go forward" className="rounded-lg border border-white/10 bg-white/5 p-2 text-muted-foreground hover:text-foreground"><ArrowRight className="h-4 w-4" /></button>
+                <Link to="/login" className="ml-auto"><Button variant="outline" size="sm" className="bg-white/5 border-white/20">Sign in</Button></Link>
+                <Link to="/signup"><Button size="sm" className="gold-tile border-0 font-semibold">Start free</Button></Link>
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </header>
   );

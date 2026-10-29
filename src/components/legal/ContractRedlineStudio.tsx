@@ -99,15 +99,15 @@ export function ContractRedlineStudio() {
     <Card className="glass-card border-neon-cyan/30 shadow-[0_0_30px_hsl(var(--neon-cyan)/0.15)] overflow-hidden">
       <CardHeader className="bg-gradient-to-r from-neon-cyan/15 via-neon-purple/10 to-transparent border-b border-border/40">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-neon-cyan/20 p-2 text-neon-cyan">
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="hidden sm:block shrink-0 rounded-xl bg-neon-cyan/20 p-2 text-neon-cyan">
               <FileCheck className="h-6 w-6" />
             </div>
-            <div>
-              <CardTitle className="text-xl font-display flex items-center gap-2">
+            <div className="min-w-0">
+              <CardTitle className="text-lg sm:text-xl font-display flex flex-wrap items-center gap-x-2 gap-y-1 leading-snug">
                 AI Contract Redline & Risk Analyzer
-                <Badge className="bg-neon-gold/20 text-neon-gold border-neon-gold/40 text-xs">
-                  <Sparkles className="w-3 h-3 mr-1" /> Spellbook-Grade
+                <Badge className="bg-legal-gold/15 text-legal-gold border-legal-gold/40 text-xs whitespace-nowrap">
+                  <Sparkles className="w-3 h-3 mr-1" /> AI redline
                 </Badge>
               </CardTitle>
               <CardDescription>
@@ -125,11 +125,11 @@ export function ContractRedlineStudio() {
         </div>
       </CardHeader>
 
-      <CardContent className="p-6 space-y-6">
+      <CardContent className="p-4 sm:p-6 space-y-6">
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <FileText className="w-4 h-4 text-neon-cyan" /> Contract Text / Paste Agreement:
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <label className="text-sm font-semibold text-foreground flex items-center gap-2 min-w-0">
+              <FileText className="w-4 h-4 shrink-0 text-neon-cyan" /> Paste your contract
             </label>
             <Button 
               variant="ghost" 

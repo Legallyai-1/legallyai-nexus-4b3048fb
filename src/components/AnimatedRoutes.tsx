@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { GlowScalesLoader } from "@/components/brand/GlowScales";
 import { Routes, Route, useLocation } from "react-router-dom";
+import { RouteSeo } from "@/components/seo/RouteSeo";
 import { AnimatePresence } from "framer-motion";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { Loader2 } from "lucide-react";
@@ -13,6 +14,9 @@ import AuthPage from "@/pages/AuthPage";
 
 // Lazy load all other pages
 const GeneratePage = lazy(() => import("@/pages/GeneratePage"));
+const ContractReviewPage = lazy(() => import("@/pages/tools/StandaloneToolPages").then((m) => ({ default: m.ContractReviewPage })));
+const SettlementEstimatorPage = lazy(() => import("@/pages/tools/StandaloneToolPages").then((m) => ({ default: m.SettlementEstimatorPage })));
+const LegalResearchPage = lazy(() => import("@/pages/tools/StandaloneToolPages").then((m) => ({ default: m.LegalResearchPage })));
 const ChatPage = lazy(() => import("@/pages/ChatPage"));
 const CustodyPage = lazy(() => import("@/pages/CustodyPage"));
 const LawyerPage = lazy(() => import("@/pages/LawyerPage"));
@@ -73,10 +77,15 @@ export function AnimatedRoutes() {
 
   // Helper to wrap lazy-loaded components
   return (
+    <>
+    <RouteSeo />
     <AnimatePresence mode="sync">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<PageTransition><Index /></PageTransition>} />
         <Route path="/generate" element={<PageTransition><LazyRoute><GeneratePage /></LazyRoute></PageTransition>} />
+        <Route path="/contract-review" element={<PageTransition><LazyRoute><ContractReviewPage /></LazyRoute></PageTransition>} />
+        <Route path="/settlement-estimator" element={<PageTransition><LazyRoute><SettlementEstimatorPage /></LazyRoute></PageTransition>} />
+        <Route path="/research" element={<PageTransition><LazyRoute><LegalResearchPage /></LazyRoute></PageTransition>} />
         <Route path="/chat" element={<PageTransition><LazyRoute><ChatPage /></LazyRoute></PageTransition>} />
         <Route path="/custody" element={<PageTransition><LazyRoute><CustodyPage /></LazyRoute></PageTransition>} />
         <Route path="/enhanced-custody" element={<PageTransition><LazyRoute><EnhancedCustodyPage /></LazyRoute></PageTransition>} />
@@ -129,5 +138,6 @@ export function AnimatedRoutes() {
         <Route path="*" element={<PageTransition><LazyRoute><NotFound /></LazyRoute></PageTransition>} />
       </Routes>
     </AnimatePresence>
+    </>
   );
 }
