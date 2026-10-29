@@ -15,7 +15,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { requestHubDocument, useDocumentCheckout } from "@/hooks/useHubDocumentGeneration";
-import type { GeneratedDocumentResult } from "@/lib/document-export-entitlement";
+import { canExportHubDocument, type GeneratedDocumentResult } from "@/lib/document-export-entitlement";
+import { arePaymentsEnabled } from "@/lib/env";
 import { HubDocumentStatus } from "@/components/hub/HubDocumentStatus";
 
 interface Document {
@@ -172,7 +173,8 @@ export function DocuAI({
 
   // Generated documents (they carry content) export only when the server unlocked
   // that exact document; user-uploaded file entries are not gated.
-  const canExportDoc = (doc: Document) => !doc.content || doc.entitlement?.exportUnlocked === true;
+  const canExportDoc = (doc: Document) =>
+    !doc.content || canExportHubDocument(doc.entitlement ?? null, arePaymentsEnabled());
 
   const handleDownload = (doc: Document) => {
     if (!canExportDoc(doc)) {

@@ -5,6 +5,7 @@ import {
   CONTENTION_RETRY_MESSAGE,
   DOCUMENT_EXPORT_CHECKOUT_MODE,
   DOCUMENT_EXPORT_PRICE_ID,
+  canExportHubDocument,
   invokeWithContentionRetry,
   parseGenerateDocumentResponse,
   shouldOfferDocumentPurchase,
@@ -41,6 +42,15 @@ test("fails closed: missing fields never unlock export or claim AI", () => {
   assert.equal(parseGenerateDocumentResponse(null), null);
 });
 
+test("export gate matches /generate: server unlock, or payments disabled", () => {
+  const locked = parseGenerateDocumentResponse({ document: "w", mode: "template", exportUnlocked: false, purchaseRequired: true });
+  const unlocked = parseGenerateDocumentResponse({ document: "d", mode: "ai", exportUnlocked: true });
+  assert.equal(canExportHubDocument(locked, true), false);
+  assert.equal(canExportHubDocument(unlocked, true), true);
+  assert.equal(canExportHubDocument(locked, false), true, "nothing to buy when payments are disabled");
+  assert.equal(canExportHubDocument(null, false), false);
+});
+
 const ok: GenerateInvokeOutcome = { data: { document: "d" }, status: 200, errorMessage: null };
 const busy: GenerateInvokeOutcome = { data: null, status: 409, errorMessage: "busy" };
 const noWait = async () => {};
@@ -71,7 +81,7 @@ test("hub generators gate exports on the server's exportUnlocked", () => {
   for (const file of ["DocumentGenerator.tsx", "DocuAI.tsx"]) {
     const src = readFileSync(new URL(`../src/components/hub/${file}`, import.meta.url), "utf8");
     assert.ok(src.includes("requestHubDocument"), `${file} uses the shared generate-document call`);
-    assert.ok(src.includes("exportUnlocked"), `${file} gates on exportUnlocked`);
+    assert.ok(src.includes("canExportHubDocument"), `${file} gates on the server unlock`);
     assert.ok(!src.includes("functions.invoke('generate-document'") && !src.includes('functions.invoke("generate-document"'), `${file} has no ungated direct call`);
   }
 });

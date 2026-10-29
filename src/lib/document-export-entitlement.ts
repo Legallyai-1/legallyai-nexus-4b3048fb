@@ -34,6 +34,15 @@ export function parseGenerateDocumentResponse(data: unknown): GeneratedDocumentR
   };
 }
 
+/**
+ * Export gate, consistent with /generate: when payments are disabled for the deployment
+ * nothing can be bought, so exports stay open; otherwise only the server's explicit unlock counts.
+ */
+export function canExportHubDocument(result: GeneratedDocumentResult | null, paymentsEnabled: boolean): boolean {
+  if (!result) return false;
+  return !paymentsEnabled || result.exportUnlocked;
+}
+
 /** Show "Buy this document – $5" only when the server asks for a purchase and paid AI exists. */
 export function shouldOfferDocumentPurchase(result: GeneratedDocumentResult | null, paymentsEnabled: boolean): boolean {
   return Boolean(result && paymentsEnabled && result.paidAiAvailable && result.purchaseRequired);

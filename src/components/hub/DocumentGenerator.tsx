@@ -10,7 +10,8 @@ import { FileText, Sparkles, Download, Copy, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { requestHubDocument, useDocumentCheckout } from "@/hooks/useHubDocumentGeneration";
-import type { GeneratedDocumentResult } from "@/lib/document-export-entitlement";
+import { canExportHubDocument, type GeneratedDocumentResult } from "@/lib/document-export-entitlement";
+import { arePaymentsEnabled } from "@/lib/env";
 import { HubDocumentStatus } from "@/components/hub/HubDocumentStatus";
 
 interface DocumentField {
@@ -49,7 +50,7 @@ export function DocumentGenerator({
   const navigate = useNavigate();
   const startCheckout = useDocumentCheckout();
   const generatedDocument = result?.document ?? "";
-  const canExport = result?.exportUnlocked === true;
+  const canExport = canExportHubDocument(result, arePaymentsEnabled());
 
   const colorClasses = {
     pink: "border-neon-pink/30 from-neon-pink/20",
