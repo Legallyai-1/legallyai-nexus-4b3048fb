@@ -1,8 +1,13 @@
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
+if (!process.env.QA_PLAYWRIGHT_PATH) {
+  console.error('QA_PLAYWRIGHT_PATH is not set. Point it at playwright/index.mjs, e.g. QA_PLAYWRIGHT_PATH="$PWD/.playwright-qa/node_modules/playwright/index.mjs".');
+  process.exit(2);
+}
 const { chromium } = await import(pathToFileURL(process.env.QA_PLAYWRIGHT_PATH).href);
-const base = process.env.QA_BASE_URL || 'https://www.legallyai.ai';
+// CI points QA_BASE_URL at a local preview of this commit's build; the production default is for manual spot checks only.
+const base = (process.env.QA_BASE_URL || 'https://www.legallyai.ai').replace(/\/+$/, '');
 const output = 'interactive-login-results';
 await mkdir(output, { recursive: true });
 const results = [];
@@ -84,7 +89,7 @@ try {
   }
 } finally {
   await browser.close();
-  const report = { generatedAt: new Date().toISOString(), testedCommit: process.env.CI_COMMIT_SHA || process.env.GITHUB_SHA || null, baseUrl: base, scope: 'Live rendered login interactions. All authentication token responses are mocked; all other non-read requests are blocked.', realAuthenticationVerified: false, successfulLoginVerified: false, sessionPersistenceVerified: false, logoutVerified: false, protectedRoutesVerified: false, results };
+  const report = { generatedAt: new Date().toISOString(), testedCommit: process.env.CI_COMMIT_SHA || process.env.GITHUB_SHA || null, baseUrl: base, scope: 'Rendered login interactions against baseUrl. All authentication token responses are mocked; all other non-read requests are blocked.', realAuthenticationVerified: false, successfulLoginVerified: false, sessionPersistenceVerified: false, logoutVerified: false, protectedRoutesVerified: false, results };
   await writeFile(`${output}/report.json`, JSON.stringify(report, null, 2) + '\n');
 }
 if (results.length !== 10 || results.some(result => result.status !== 'passed')) process.exitCode = 1;
