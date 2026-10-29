@@ -5,22 +5,23 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getSupabaseBrowserConfig } from "@/lib/env";
 
-// Ask Supabase once per page load whether the Google provider is switched on, so the button
-// never sends people to a raw "provider is not enabled" error page.
+// Ask Supabase whether the Google provider is switched on, so the button never sends people
+// to a raw "provider is not enabled" error page. Only a successful answer is cached; a network
+// or server failure is retried on the next mount instead of hiding the button until reload.
 let googleEnabledPromise: Promise<boolean> | null = null;
 function isGoogleProviderEnabled(): Promise<boolean> {
   if (!googleEnabledPromise) {
-    googleEnabledPromise = (async () => {
-      try {
-        const { url, publicKey } = getSupabaseBrowserConfig();
-        const res = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: publicKey } });
-        if (!res.ok) return false;
-        const settings = await res.json();
-        return settings?.external?.google === true;
-      } catch {
-        return false;
-      }
+    const attempt = (async () => {
+      const { url, publicKey } = getSupabaseBrowserConfig();
+      const res = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: publicKey } });
+      if (!res.ok) throw new Error(`auth settings ${res.status}`);
+      const settings = await res.json();
+      return settings?.external?.google === true;
     })();
+    googleEnabledPromise = attempt.catch(() => {
+      googleEnabledPromise = null;
+      return false;
+    });
   }
   return googleEnabledPromise;
 }
@@ -68,7 +69,7 @@ export function GoogleSignInButton({ returnPath = "/login", label = "Continue wi
   };
 
   return (
-    <div className="space-y-4">
+    <div className="mb-6 space-y-4">
       <button
         type="button"
         onClick={() => void handleClick()}
