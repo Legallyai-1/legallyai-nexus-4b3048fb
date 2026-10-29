@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { errorMessage, requireAffectedRows } from "@/lib/mutationResult";
 import { toast } from "sonner";
 import { Users, Search, Plus, Phone, Mail, FileText, ArrowLeft, Loader2, Trash2 } from "lucide-react";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
@@ -121,16 +122,22 @@ export default function ClientsPage() {
     if (!confirm("Are you sure you want to delete this client?")) return;
 
     try {
-      const { error } = await supabase
+      if (!user) throw new Error("You must be signed in");
+      const organizationId = await ensureUserOrganization(user.id);
+      const { data, error } = await supabase
         .from('clients')
         .delete()
-        .eq('id', clientId);
+        .eq('id', clientId)
+        .eq('organization_id', organizationId)
+        .select('id');
 
       if (error) throw error;
+      requireAffectedRows(data, "deleted");
       toast.success("Client deleted");
-      setClients(clients.filter(c => c.id !== clientId));
-    } catch (error: any) {
-      toast.error("Failed to delete client");
+      setClients(prev => prev.filter(c => c.id !== clientId));
+    } catch (error: unknown) {
+      console.error("Error deleting client:", error);
+      toast.error(errorMessage(error, "Failed to delete client"));
     }
   };
 

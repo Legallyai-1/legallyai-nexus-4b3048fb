@@ -96,7 +96,7 @@ export default function SettingsPage() {
         setPhone(data.phone || "");
         setLocation(data.location || "");
         setTimezone(data.timezone || "America/New_York");
-        setEarnings({ balance: 0, lifetime: data.credits * 0.01 });
+        setEarnings({ balance: 0, lifetime: (Number(data.credits) || 0) * 0.01 });
       }
     } catch (error) {
       console.error('Error:', error);

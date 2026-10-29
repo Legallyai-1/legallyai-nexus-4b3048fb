@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { errorMessage, requireAffectedRows } from "@/lib/mutationResult";
 import { toast } from "sonner";
 import { 
   Scale, Plus, Search, Filter, FileText, Calendar, 
@@ -97,11 +98,12 @@ export default function CasesPage() {
         setCases(casesData || []);
 
         // Fetch clients for dropdown
-        const { data: clientsData } = await supabase
+        const { data: clientsData, error: clientsError } = await supabase
           .from('clients')
           .select('id, full_name')
           .eq('organization_id', organizationId)
           .order('full_name');
+        if (clientsError) console.error("Error fetching clients for case form:", clientsError);
 
         setClients(clientsData || []);
       }
@@ -125,6 +127,11 @@ export default function CasesPage() {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {
         navigate("/auth");
+        return;
+      }
+
+      if (!organizationId) {
+        toast.error("Your organization is still loading. Please try again.");
         return;
       }
 
@@ -160,27 +167,36 @@ export default function CasesPage() {
     if (!confirm("Are you sure you want to delete this case?")) return;
 
     try {
-      const { error } = await supabase.from('cases').delete().eq('id', caseId);
+      if (!organizationId) throw new Error("Your organization is still loading. Please try again.");
+      const { data, error } = await supabase.from('cases').delete()
+        .eq('id', caseId).eq('organization_id', organizationId).select('id');
       if (error) throw error;
+      requireAffectedRows(data, "deleted");
       toast.success("Case deleted");
-      setCases(cases.filter(c => c.id !== caseId));
-    } catch (error: any) {
-      toast.error("Failed to delete case");
+      setCases(prev => prev.filter(c => c.id !== caseId));
+    } catch (error: unknown) {
+      console.error("Error deleting case:", error);
+      toast.error(errorMessage(error, "Failed to delete case"));
     }
   };
 
   const handleStatusChange = async (caseId: string, newStatus: CaseStatus) => {
     try {
-      const { error } = await supabase
+      if (!organizationId) throw new Error("Your organization is still loading. Please try again.");
+      const { data, error } = await supabase
         .from('cases')
         .update({ status: newStatus })
-        .eq('id', caseId);
+        .eq('id', caseId)
+        .eq('organization_id', organizationId)
+        .select('id');
 
       if (error) throw error;
-      setCases(cases.map(c => c.id === caseId ? { ...c, status: newStatus } : c));
+      requireAffectedRows(data, "updated");
+      setCases(prev => prev.map(c => c.id === caseId ? { ...c, status: newStatus } : c));
       toast.success("Status updated");
-    } catch (error: any) {
-      toast.error("Failed to update status");
+    } catch (error: unknown) {
+      console.error("Error updating case status:", error);
+      toast.error(errorMessage(error, "Failed to update status"));
     }
   };
 
