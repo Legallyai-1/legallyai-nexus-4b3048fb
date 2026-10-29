@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import Stripe from "https://esm.sh/stripe@18.5.0";
 import { resolveSubscriptionAccess } from "../_shared/subscription-access.ts";
+import { getMappedBillingCustomerId } from "../_shared/billing-ownership.ts";
+import { verifyCheckoutSession, type CheckoutVerification } from "../_shared/checkout-session-verification.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -44,6 +47,37 @@ serve(async (req) => {
     }
 
     const userId = userData.user.id;
+
+    // Optional checkout reference from /payment-success. Never trusted: it is re-read from Stripe and must
+    // belong to this user (client_reference_id / metadata.user_id and mapped customer) before it is echoed back.
+    let requestedSessionId: unknown = undefined;
+    if (req.method === "POST") {
+      try { requestedSessionId = (await req.json())?.session_id; } catch { requestedSessionId = undefined; }
+    }
+    let checkout: CheckoutVerification | null = null;
+    if (requestedSessionId !== undefined && requestedSessionId !== null) {
+      const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+      if (!stripeKey) {
+        return new Response(JSON.stringify({ error: "Billing is temporarily unavailable." }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 503,
+        });
+      }
+      const { data: mapping } = await supabaseClient
+        .from("subscriptions")
+        .select("user_id, stripe_customer_id")
+        .eq("user_id", userId)
+        .maybeSingle();
+      const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+      checkout = await verifyCheckoutSession(stripe, requestedSessionId, userId, getMappedBillingCustomerId(userId, mapping));
+      if (!checkout.verified) {
+        logStep("Checkout session rejected", { userId, reason: checkout.reason });
+        return new Response(JSON.stringify({ error: "This checkout reference could not be verified for your account.", reason: checkout.reason }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 403,
+        });
+      }
+    }
     const [
       { data: profile, error: profileError },
       { data: subscription, error: subscriptionError },
@@ -100,6 +134,9 @@ serve(async (req) => {
       isActive: access.activeSubscription || access.activePayment,
       current_period_end: subscription?.current_period_end || access.activePaymentRecord?.expires_at || null,
       cancel_at_period_end: subscription?.cancel_at_period_end || false,
+      checkout: checkout && checkout.verified
+        ? { verified: true, paid: checkout.paid, session_id: checkout.sessionId, amount_total: checkout.amountTotal, currency: checkout.currency }
+        : null,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

@@ -3,6 +3,8 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { trackPurchaseConversion } from "@/lib/googleAds";
+import { getPurchaseConversion } from "@/lib/purchaseConversion";
 
 type VerificationState = "checking" | "active" | "pending" | "error" | "signin" | "missing";
 
@@ -22,11 +24,13 @@ export default function PaymentSuccessPage() {
       if (cancelled) return;
       try {
         attempts += 1;
-        const { data, error } = await supabase.functions.invoke("verify-payment");
+        const { data, error } = await supabase.functions.invoke("verify-payment", { body: { session_id: sessionId } });
         if (cancelled) return;
         if (error || data?.error) { setState("error"); return; }
         if (data?.hasPaid === true && data?.isActive === true) {
           setState("active");
+          const conversion = getPurchaseConversion(sessionId, data?.checkout);
+          if (conversion) trackPurchaseConversion(conversion);
           return;
         }
         if (attempts >= 6) { setState("pending"); return; }
