@@ -25,5 +25,57 @@
       "source": "/(generate|contract-review|settlement-estimator|research|chat|custody|enhanced-custody|lawyers|pricing|signup|login|auth|accept-invite|forgot-password|reset-password|dashboard|cases|clients|settings|appointments|messages|timeclock|employee|admin|disclaimer|terms|privacy|client-portal|invoices|consultations|payment-success|ai-assistants|onboarding|payroll|jobs|job-board|workplace-legal-aid|pro-bono|templates|tickets-defense|probation-parole|enhanced-parole|legal-academy|quiz|telephony|support|court-records|business-hub|dui-hub|will-hub|marriage-divorce|store-assets|notifications|about|contact|guides|guides/how-to-respond-to-an-eviction-notice|guides/how-to-read-a-lease-before-signing|guides/small-claims-court-step-by-step|guides/how-to-fight-a-traffic-ticket|guides/how-child-custody-is-decided|guides/how-to-file-for-divorce-without-a-lawyer|guides/how-a-power-of-attorney-works)",
       "destination": "/index.html"
     }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), microphone=(self), geolocation=(), payment=(self \"https://checkout.stripe.com\"), usb=(), interest-cohort=()"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin-allow-popups"
+        },
+        {
+          "key": "Reporting-Endpoints",
+          "value": "csp-endpoint=\"/api/csp-report\""
+        },
+        {
+          "key": "Report-To",
+          "value": "{\"group\":\"csp-endpoint\",\"max_age\":10886400,\"endpoints\":[{\"url\":\"https://www.legallyai.ai/api/csp-report\"}]}"
+        },
+        {
+          "key": "Content-Security-Policy-Report-Only",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://*.googleadservices.com https://www.googletagservices.com https://www.googletagmanager.com https://adservice.google.com https://adservice.google.ca https://adservice.google.co.uk https://adservice.google.com.au https://adservice.google.de https://adservice.google.fr https://adservice.google.es https://adservice.google.it https://adservice.google.nl https://adservice.google.co.in https://adservice.google.com.mx https://adservice.google.com.br https://adservice.google.co.jp https://*.google.com https://*.gstatic.com https://cdn.ampproject.org https://fundingchoicesmessages.google.com https://*.adtrafficquality.google https://js.stripe.com; connect-src 'self' https://whdljtbtqisoszbrzdwq.supabase.co wss://whdljtbtqisoszbrzdwq.supabase.co https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.adtrafficquality.google https://fundingchoicesmessages.google.com https://csi.gstatic.com https://*.google.com https://*.doubleclick.net https://*.google-analytics.com https://*.googletagmanager.com; img-src 'self' https: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; frame-src https://*.googlesyndication.com https://*.doubleclick.net https://www.google.com https://*.google.com https://fundingchoicesmessages.google.com https://*.adtrafficquality.google https://js.stripe.com https://checkout.stripe.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://checkout.stripe.com; object-src 'none'; report-uri /api/csp-report; report-to csp-endpoint"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    }
   ]
 }
