@@ -319,6 +319,9 @@ export default function AuthPage() {
                 <Button type="submit" variant="gold" className="w-full" disabled={isLoading}>
                   {isLoading ? "Creating Account..." : "Create Account"}
                 </Button>
+                <p className="mt-3 text-center text-xs text-muted-foreground">
+                  By signing up you agree to the <Link to="/terms" className="underline hover:text-foreground">Terms of Service</Link> and <Link to="/privacy" className="underline hover:text-foreground">Privacy Policy</Link>.
+                </p>
               </form>
             </TabsContent>
           </Tabs>

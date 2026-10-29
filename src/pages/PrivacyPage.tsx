@@ -13,7 +13,7 @@ const PrivacyPage = () => {
           </Button>
           
           <h1 className="text-4xl font-bold text-foreground mb-8">Privacy Policy</h1>
-          <p className="text-muted-foreground mb-8">Last Updated: December 10, 2024</p>
+          <p className="text-muted-foreground mb-8">Last Updated: October 29, 2026</p>
           
           <div className="prose prose-invert max-w-none space-y-8 text-foreground/90">
             
@@ -53,25 +53,15 @@ const PrivacyPage = () => {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-foreground mb-4">3. AI and Machine Learning</h2>
-              <p>Our Service uses artificial intelligence (AI) and machine learning technologies to provide legal document generation, chat assistance, and other features:</p>
-              <ul className="list-disc pl-6 space-y-2">
-                <li><strong>AI Processing:</strong> Your inputs (text, voice, documents) are processed by AI systems to generate responses and documents</li>
-                <li><strong>No Training on Personal Data:</strong> We do not use your personal legal documents or case details to train our AI models without explicit consent</li>
-                <li><strong>Third-Party AI:</strong> We use third-party AI services (Anthropic Claude) which have their own privacy practices</li>
-                <li><strong>Voice Input:</strong> Where offered, voice input uses your browser's built-in speech recognition, which is handled by your browser provider under its own privacy policy</li>
-              </ul>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">3. AI Processing and Subprocessors</h2>
+              <p>When you chat with Lee or a topic guide or generate a document, the text you submit is sent to the AI providers below to produce a response. Depending on availability, your request may be routed to any of them: Anthropic (Claude), Google (Gemini, including Google Search grounding), Groq, OpenRouter and the model providers it routes to, xAI (Grok), a custom OpenAI-compatible model endpoint we operate or contract, and Supabase. Some providers may keep request logs for a limited time under their own terms.</p>
+              <p className="mt-2">We don&apos;t use your conversations to train AI models. Where offered, voice input uses your browser&apos;s built-in speech recognition, which your browser provider handles under its own privacy policy.</p>
+              <p className="mt-2"><strong>Sensitive information:</strong> Don&apos;t enter names, case numbers, Social Security numbers, financial account numbers, health information, or information about children unless you need to. Legal questions can reveal sensitive facts, so share only what you need. Conversations with an AI are not protected by attorney-client privilege.</p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-foreground mb-4">4. Advertising and Analytics</h2>
-              <p>We use advertising services to support our free tier and analytics to improve our Service:</p>
-              <ul className="list-disc pl-6 space-y-2">
-                <li><strong>Google AdSense:</strong> We display targeted advertisements through Google AdSense. Google may use cookies and other tracking technologies to serve relevant ads</li>
-                <li><strong>Ad Personalization:</strong> You may opt out of personalized advertising through your Google account settings or browser privacy settings</li>
-                <li><strong>Analytics:</strong> We use analytics tools to understand how users interact with our Service</li>
-                <li><strong>Premium Users:</strong> Paid subscribers may experience reduced or no advertising</li>
-              </ul>
+              <h2 className="text-2xl font-semibold text-foreground mb-4">4. Advertising and Cookies</h2>
+              <p>We show ads to free-plan visitors on a few public pages through Google AdSense. Google and its partners use cookies and device identifiers to serve and measure ads and, where you allow it, to personalize them. Paid subscribers don&apos;t see ads. You can manage ad personalization at <a href="https://adssettings.google.com" className="underline" target="_blank" rel="noopener noreferrer">adssettings.google.com</a>. Learn how Google uses data: <a href="https://policies.google.com/technologies/partner-sites" className="underline" target="_blank" rel="noopener noreferrer">policies.google.com/technologies/partner-sites</a>.</p>
             </section>
 
             <section>
@@ -95,7 +85,7 @@ const PrivacyPage = () => {
               <ul className="list-disc pl-6 space-y-2">
                 <li><strong>With your consent:</strong> When you authorize us to share information</li>
                 <li><strong>Service providers:</strong> Third parties that help us operate the Service (payment processors, cloud hosting, AI providers)</li>
-                <li><strong>Advertising partners:</strong> To display relevant advertisements (anonymized data only)</li>
+                <li><strong>Advertising partners:</strong> Google AdSense receives cookie, device and IP data to serve and measure ads (see section 4)</li>
                 <li><strong>Legal requirements:</strong> When required by law, subpoena, or legal process</li>
                 <li><strong>Business transfers:</strong> In connection with mergers, acquisitions, or asset sales</li>
                 <li><strong>Protection of rights:</strong> To protect our rights, privacy, safety, or property</li>
@@ -118,21 +108,27 @@ const PrivacyPage = () => {
               <p>We implement appropriate technical and organizational measures to protect your personal data, including:</p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>Encryption of data in transit (TLS/SSL)</li>
-                <li>Secure data centers with industry-standard protections</li>
-                <li>Employee training on data protection</li>
+                <li>Hosting and database providers (Vercel, Supabase) that apply their own documented security controls</li>
               </ul>
               <p className="mt-2">However, no method of transmission over the Internet is 100% secure. We cannot guarantee absolute security.</p>
             </section>
 
             <section>
               <h2 className="text-2xl font-semibold text-foreground mb-4">9. Data Retention</h2>
-              <p>We retain your personal data only as long as necessary to fulfill the purposes outlined in this Privacy Policy, unless a longer retention period is required by law:</p>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Account data is retained while your account is active</li>
-                <li>Legal documents and case files may be retained for the applicable statute of limitations period</li>
-                <li>Chat history is retained for service improvement and may be deleted upon request</li>
-                <li>Payment records are retained as required for tax and legal compliance</li>
-              </ul>
+              <p>We keep personal data only as long as we need it for the purposes in this policy, unless the law requires longer. To delete your data, email <a href="mailto:support@legallyai.ai" className="underline">support@legallyai.ai</a>.</p>
+              <div className="overflow-x-auto mt-3">
+                <table className="w-full text-sm text-left">
+                  <thead><tr className="border-b border-border"><th scope="col" className="py-2 pr-4">Data</th><th scope="col" className="py-2">Kept for</th></tr></thead>
+                  <tbody>
+                    <tr className="border-b border-border/60"><td className="py-2 pr-4 align-top">Account profile</td><td className="py-2 align-top">While your account is open, and up to 30 days after you ask us to delete it</td></tr>
+                    <tr className="border-b border-border/60"><td className="py-2 pr-4 align-top">Chat history</td><td className="py-2 align-top">While your account is open, or until you ask us to delete it</td></tr>
+                    <tr className="border-b border-border/60"><td className="py-2 pr-4 align-top">Generated documents and case files</td><td className="py-2 align-top">Until you delete them or close your account</td></tr>
+                    <tr className="border-b border-border/60"><td className="py-2 pr-4 align-top">Anonymous free-question counters (hashed IP)</td><td className="py-2 align-top">Only as long as needed to apply the free-question limit</td></tr>
+                    <tr className="border-b border-border/60"><td className="py-2 pr-4 align-top">Billing records</td><td className="py-2 align-top">As long as tax and accounting law requires (generally up to 7 years)</td></tr>
+                    <tr className="border-b border-border/60"><td className="py-2 pr-4 align-top">Server and security logs</td><td className="py-2 align-top">As set by our hosting providers, typically 90 days or less</td></tr>
+                  </tbody>
+                </table>
+              </div>
             </section>
 
             <section>
@@ -206,7 +202,7 @@ const PrivacyPage = () => {
               <ul className="list-disc pl-6 space-y-2">
                 <li>Stripe (payment processing)</li>
                 <li>Google (AdSense advertising). Manage ad personalization at <a href="https://adssettings.google.com" className="underline" target="_blank" rel="noopener noreferrer">adssettings.google.com</a></li>
-                <li>Anthropic (AI chat and document processing)</li>
+                <li>AI providers listed in section 3 (Anthropic, Google, Groq, OpenRouter, xAI, a custom model endpoint, Supabase)</li>
                 <li>Supabase (database and authentication) and Vercel (hosting)</li>
               </ul>
             </section>
@@ -217,8 +213,6 @@ const PrivacyPage = () => {
               <ul className="list-disc pl-6 space-y-2">
                 <li>Device identifiers and push notification tokens</li>
                 <li>App usage analytics and crash reports</li>
-                <li>Microphone access for voice input (only when granted permission)</li>
-                <li>Camera access for document scanning (only when granted permission)</li>
               </ul>
             </section>
 

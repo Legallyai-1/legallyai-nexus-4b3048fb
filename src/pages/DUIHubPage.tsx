@@ -108,16 +108,6 @@ const DUIHubPage = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-card/50 border-orange-500/20">
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium">Win Rate</CardTitle>
-                    <TrendingUp className="h-4 w-4 text-orange-400" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">87%</div>
-                    <p className="text-xs text-muted-foreground">+5% from last quarter</p>
-                  </CardContent>
-                </Card>
 
                 <Card className="bg-card/50 border-yellow-500/20">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">

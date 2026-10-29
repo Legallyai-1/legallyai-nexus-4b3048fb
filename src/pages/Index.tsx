@@ -270,7 +270,7 @@ export default function Index() {
 
         <AdContainer slot="9777464779" className="my-8" />
 
-        {/* Specialist hubs: every hub is Lee focused on one area of law. */}
+        {/* Topic hubs: every hub is Lee focused on one area of law. */}
         <section className="py-12 sm:py-16 px-4" aria-labelledby="hubs-heading">
           <div className="container mx-auto max-w-6xl">
             <h2 id="hubs-heading" className="text-2xl sm:text-3xl font-display font-bold">Lee&apos;s legal hubs</h2>
