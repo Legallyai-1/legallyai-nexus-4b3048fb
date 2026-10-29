@@ -15,8 +15,9 @@ interface LeeAvatarProps {
   burst?: boolean;
 }
 
-// Lee, alive: the animation Dakota liked on the Oct 23 dashboard (float, sway, breathing gold glow,
-// see .animate-lee-alive) plus a periodic hello-wave tilt, a soft pulse ring and twinkling sparkles.
+// Lee, alive: only the original Oct 23 motion Dakota likes (gentle float, slight sway, breathing gold
+// glow, see .animate-lee-alive). No extra wave/shake on Lee; the aura, ring, sparkles and burst behind
+// him only pulse softly.
 // All motion stops under prefers-reduced-motion (see index.css).
 export function LeeAvatar({ heightClass = "h-40", alt = "", stage = true, priority = false, imageSize = "lg", className, burst = false }: LeeAvatarProps) {
   const small = imageSize === "sm";
@@ -32,7 +33,7 @@ export function LeeAvatar({ heightClass = "h-40", alt = "", stage = true, priori
           <span className="lai-sparkle" style={{ bottom: "28%", right: "4%", animationDelay: "1.9s" }} aria-hidden="true" />
         </>
       )}
-      <span className="lee-wave relative inline-block">
+      <span className="relative inline-block">
         <img
           src={small ? "/lee-mascot-sm.png" : "/lee-mascot.png"}
           alt={alt}
