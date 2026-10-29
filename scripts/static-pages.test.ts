@@ -9,11 +9,11 @@ const routes = [...readFileSync(new URL("../src/components/AnimatedRoutes.tsx", 
 
 test("static pricing page carries its own meta and readable content", () => {
   const html = renderStaticPage(template, "/pricing");
-  assert.match(html, /<title>Pricing – free, Premium and Firm plans \| LegallyAI<\/title>/);
+  assert.match(html, /<title>Pricing – individuals and law firms \| LegallyAI<\/title>/);
   assert.match(html, /<link rel="canonical" href="https:\/\/www\.legallyai\.ai\/pricing" \/>/);
   assert.match(html, /<meta property="og:url" content="https:\/\/www\.legallyai\.ai\/pricing" \/>/);
   assert.match(html, /<meta name="robots" content="index, follow" \/>/);
-  assert.match(html, /<h1[^>]*>Pricing – free, Premium and Firm plans<\/h1>/);
+  assert.match(html, /<h1[^>]*>Pricing – individuals and law firms<\/h1>/);
   assert.match(html, /<script type="module"/, "SPA entry must remain");
   assert.equal((html.match(/<div id="root">/g) ?? []).length, 1);
 });

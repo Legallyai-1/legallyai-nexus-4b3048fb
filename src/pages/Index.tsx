@@ -41,13 +41,13 @@ const myCases = [
   { title: "Court prep", description: "Find your court and its official forms", icon: Landmark, path: "/court-records" },
 ];
 
-// Plans match /pricing and /lawyers. Only Premium, Per Document and Firm are sold online today.
+// Plans match /pricing and /lawyers.
 const pricingTiers = [
   { name: "Free", price: "$0", period: "", features: ["5 free Ask Lee questions", "Try the self-help hubs", "No card needed", "Ad-supported"], cta: "Get started", path: "/signup", popular: false, audience: "individual" },
   { name: "Premium", price: "$9.99", period: "/month", features: ["7-day free trial on your first subscription", "More Ask Lee answers", "Document drafting", "Ad-free experience"], cta: "Start 7-day free trial", path: "/pricing?plan=premium", popular: true, audience: "individual" },
-  { name: "Solo", price: "Early access", period: "", features: [], cta: "", path: "/lawyers#plans", popular: false, audience: "firm" },
+  { name: "Solo", price: "$29", period: "/month", features: [], cta: "", path: "/lawyers#plans", popular: false, audience: "firm" },
   { name: "Firm", price: "$99", period: "/month", features: [], cta: "", path: "/lawyers#plans", popular: false, audience: "firm" },
-  { name: "Enterprise", price: "Early access", period: "", features: [], cta: "", path: "/lawyers#plans", popular: false, audience: "firm" },
+  { name: "Enterprise", price: "$299", period: "/month", features: [], cta: "", path: "/lawyers#plans", popular: false, audience: "firm" },
 ];
 
 interface ChatMessage {

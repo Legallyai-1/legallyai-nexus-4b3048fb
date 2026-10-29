@@ -8,6 +8,9 @@ export const FIRM_TIERS: ReadonlySet<string> = new Set(["pro", "enterprise"]);
 // deno-lint-ignore no-explicit-any
 type Db = any;
 
+// Solo is a one-seat plan: it unlocks the hub for the subscriber only, never for organization staff.
+export const SOLO_PRICE_ID = "price_1UVwxE0QhWGUtGKv3tjz0A3I";
+
 export type FirmAccessSource = "own_plan" | "organization_owner_plan" | null;
 
 export function planGrantsFirmAccess(
@@ -20,13 +23,15 @@ export function planGrantsFirmAccess(
   return false;
 }
 
+/** Whether an organization owner's plan covers their staff (Firm or Enterprise; not Solo). */
 async function userHasFirmPlan(db: Db, userId: string): Promise<boolean> {
   const [{ data: subscription, error: subError }, { data: payments, error: payError }] = await Promise.all([
-    db.from("subscriptions").select("status, tier, current_period_end, cancel_at_period_end").eq("user_id", userId).maybeSingle(),
+    db.from("subscriptions").select("status, tier, current_period_end, cancel_at_period_end, stripe_price_id").eq("user_id", userId).maybeSingle(),
     db.from("payment_records").select("tier, expires_at, status, metadata, verified_at").eq("user_id", userId)
       .order("verified_at", { ascending: false }),
   ]);
   if (subError || payError) return false;
+  if (subscription?.stripe_price_id === SOLO_PRICE_ID) return false;
   return planGrantsFirmAccess(subscription ?? null, payments ?? []);
 }
 
