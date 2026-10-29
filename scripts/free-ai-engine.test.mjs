@@ -77,3 +77,22 @@ test("grounding notes contain only verified official links", () => {
   assert.match(n, /sba\.gov/);
   assert.doesNotMatch(n, /http:\/\//);
 });
+
+test("total budget stops a slow provider chain so the in-house answer can be used", async () => {
+  const providers = [{ name: "a", baseUrl: "https://a", apiKey: "k", model: "m" }, { name: "b", baseUrl: "https://b", apiKey: "k", model: "m" }];
+  const calls = [];
+  const slow = (url, init) => { calls.push(url); return new Promise((_, reject) => init.signal.addEventListener("abort", () => reject(new Error("aborted")))); };
+  const started = Date.now();
+  const result = await ai.callFreeModel(providers, "sys", [{ role: "user", content: "hi" }], slow, 5000, 1200);
+  assert.equal(result, null);
+  assert.ok(Date.now() - started < 3000);
+  assert.deepEqual(calls, ["https://a/chat/completions"]);
+});
+
+test("malformed JSON from one provider fails over to the next", async () => {
+  const providers = [{ name: "a", baseUrl: "https://a", apiKey: "k", model: "m" }, { name: "b", baseUrl: "https://b", apiKey: "k", model: "m" }];
+  const fetchImpl = async (url) => url.startsWith("https://a")
+    ? new Response("not json", { status: 200 })
+    : new Response(JSON.stringify({ choices: [{ message: { content: " ok " } }] }), { status: 200 });
+  assert.deepEqual(await ai.callFreeModel(providers, "sys", [{ role: "user", content: "hi" }], fetchImpl), { text: "ok", provider: "b" });
+});
