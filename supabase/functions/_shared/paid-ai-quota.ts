@@ -38,7 +38,7 @@ export async function reservePaidAIQuota(opts: {
   now?: Date;
 }): Promise<PaidAIQuotaResult> {
   const { admin, userId, cost, limit } = opts;
-  if (!userId || !Number.isSafeInteger(cost) || cost <= 0 || cost > limit) return { status: "unavailable" };
+  if (!userId || !Number.isSafeInteger(cost) || cost <= 0) return { status: "unavailable" };
   try {
     const [profileRes, subscriptionRes, paymentsRes] = await Promise.all([
       admin.from("profiles").select("id, subscription_tier").eq("id", userId).maybeSingle(),
@@ -48,6 +48,7 @@ export async function reservePaidAIQuota(opts: {
     if (profileRes.error || !profileRes.data || subscriptionRes.error || paymentsRes.error) return { status: "unavailable" };
     const access = resolveSubscriptionAccess(profileRes.data.subscription_tier || "free", subscriptionRes.data, paymentsRes.data);
     if (access.entitled) return { status: "subscriber" };
+    if (cost > limit) return { status: "quota_exceeded", used: 0, limit };
 
     const subject = paidAIQuotaSubject(userId, opts.now ?? new Date());
     let used = 0;

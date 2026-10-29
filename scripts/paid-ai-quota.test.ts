@@ -48,6 +48,7 @@ test('quota resets on a new UTC day and multi-unit cost is charged per unit', as
 test('active subscribers are unlimited and not counted', async () => {
   const { admin, calls } = fakeAdmin({ subscription: { status: 'active', tier: 'premium', current_period_end: '2099-01-01T00:00:00Z', cancel_at_period_end: false } });
   assert.deepEqual(await reservePaidAIQuota({ admin, userId: 'u1', cost: 1, limit: 1, now: day }), { status: 'subscriber' });
+  assert.deepEqual(await reservePaidAIQuota({ admin, userId: 'u1', cost: 5, limit: 1, now: day }), { status: 'subscriber' });
   assert.equal(calls.length, 0);
 });
 
@@ -55,8 +56,9 @@ test('fails closed on missing profile, DB/RPC errors, bad cost or missing user',
   assert.equal((await reservePaidAIQuota({ admin: fakeAdmin({ profile: false }).admin, userId: 'u1', cost: 1, limit: 5 })).status, 'unavailable');
   assert.equal((await reservePaidAIQuota({ admin: fakeAdmin({ dbError: true }).admin, userId: 'u1', cost: 1, limit: 5 })).status, 'unavailable');
   assert.equal((await reservePaidAIQuota({ admin: fakeAdmin({ rpcError: true }).admin, userId: 'u1', cost: 1, limit: 5 })).status, 'unavailable');
-  for (const cost of [0, -1, 1.5, 6]) assert.equal((await reservePaidAIQuota({ admin: fakeAdmin().admin, userId: 'u1', cost, limit: 5 })).status, 'unavailable', String(cost));
+  for (const cost of [0, -1, 1.5]) assert.equal((await reservePaidAIQuota({ admin: fakeAdmin().admin, userId: 'u1', cost, limit: 5 })).status, 'unavailable', String(cost));
   assert.equal((await reservePaidAIQuota({ admin: fakeAdmin().admin, userId: '', cost: 1, limit: 5 })).status, 'unavailable');
+  assert.equal((await reservePaidAIQuota({ admin: fakeAdmin().admin, userId: 'u1', cost: 6, limit: 5 })).status, 'quota_exceeded');
 });
 
 test('daily limit env parsing defaults safely', () => {

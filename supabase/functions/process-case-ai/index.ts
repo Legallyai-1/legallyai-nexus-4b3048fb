@@ -125,7 +125,7 @@ serve(async (req) => {
       supabaseUrl: SUPABASE_URL,
       serviceRoleKey: SUPABASE_KEY,
       anonKey: Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      cost: 3,
+      cost: 1,
       reason: "case_analysis",
     };
     if (!await hasPaidAIQuota(quotaOptions)) {
@@ -133,7 +133,7 @@ serve(async (req) => {
       if (quota?.status === "quota_exceeded") {
         return new Response(JSON.stringify({
           error: "daily_ai_limit_reached",
-          message: `You've used today's ${quota.limit} free AI credits. Upgrade for unlimited AI analysis, or try again tomorrow.`,
+          message: `You've used today's ${quota.limit} free AI requests. Upgrade for unlimited AI analysis, or try again tomorrow.`,
           used: quota.used,
           limit: quota.limit,
         }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -178,7 +178,7 @@ serve(async (req) => {
     const custodyNotes = await callAI("CustodiAI", custodyMsg);
 
     if (!defensePlan || !clientSummary || !custodyNotes) {
-      return new Response(JSON.stringify({ error: "AI services are temporarily unavailable. No analysis was saved or charged." }), {
+      return new Response(JSON.stringify({ error: "AI services are temporarily unavailable. No analysis was saved." }), {
         status: 503,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

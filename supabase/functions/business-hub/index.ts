@@ -5,7 +5,7 @@ import { consumePaidAIQuota, hasPaidAIQuota, paidAIQuotaResult } from "../_share
 
 class DailyAILimitError extends Error {
   constructor(readonly used: number, readonly limit: number) {
-    super(`You've used today's ${limit} free AI credits. Upgrade for unlimited AI, or try again tomorrow.`);
+    super(`You've used today's ${limit} free AI requests. Upgrade for unlimited AI, or try again tomorrow.`);
   }
 }
 import { hasOrgAccess } from "../_shared/org-access.ts";
