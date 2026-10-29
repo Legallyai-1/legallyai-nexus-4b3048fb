@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -1037,40 +1037,46 @@ a:focus-visible > .launcher-icon {
     radial-gradient(ellipse 55% 50% at 100% 100%, rgba(148, 163, 184, 0.10), transparent 70%),
     linear-gradient(180deg, #FBFAF7 0%, #F4F6FA 100%);
 }
+/* Gemini reference typography: Plus Jakarta Sans for the whole hub, headings included (not the app's display face). */
+.hub-dash-bg, .hub-side { font-family: 'Plus Jakarta Sans', var(--font-body); }
+.hub-dash-bg :is(h1, h2, h3, h4) { font-family: 'Plus Jakarta Sans', var(--font-body); letter-spacing: -0.01em; }
 .hub-panel {
   position: relative;
-  border-radius: 16px;
+  border-radius: 12px;
   background: linear-gradient(145deg, #FFFFFF 0%, #F3F4F7 55%, #E9ECF1 100%);
   border: 1px solid rgba(203, 213, 225, 0.9);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 20px rgba(15, 23, 42, 0.07);
   color: #475569;
 }
 .hub-panel-featured {
-  border-color: rgba(212, 175, 55, 0.45);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 1px rgba(212, 175, 55, 0.35), 0 4px 14px rgba(212, 175, 55, 0.18), 0 8px 24px rgba(15, 23, 42, 0.06);
+  border-color: rgba(212, 175, 55, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 25px rgba(212, 175, 55, 0.16), 0 4px 20px rgba(15, 23, 42, 0.06);
 }
 .hub-panel h2, .hub-panel h3, .hub-dash-title { color: #0F1E3D; }
-.hub-panel-title { font-size: 16px; line-height: 24px; font-weight: 600; letter-spacing: -0.01em; color: #0F1E3D; }
+.hub-panel-title { font-size: 16px; line-height: 24px; font-weight: 700; letter-spacing: -0.01em; color: #0F1E3D; }
 .hub-label { font-size: 12px; line-height: 16px; text-transform: uppercase; letter-spacing: 0.06em; color: #64748B; }
-.hub-gold-text { color: #B8932E; }
+/* Gold text darkened from #B8932E so small gold text keeps 4.5:1 on the silver panels (WCAG AA). */
+.hub-gold-text { color: #8A6A12; }
+/* Large (24px bold) gold figures only need 3:1, so they can stay brighter. */
+.hub-metric { font-size: 24px; line-height: 32px; font-weight: 700; color: #A07D1C; font-variant-numeric: tabular-nums; }
 .hub-gold-icon { color: #D4AF37; }
 
 .hub-side {
-  width: 248px;
+  width: 250px;
   background: linear-gradient(180deg, #F7F8FA 0%, #E7EAEF 100%);
   border-right: 1px solid #E2E8F0;
 }
 .hub-side-item {
   display: flex;
   width: 100%;
-  min-height: 40px;
+  min-height: 44px;
   align-items: center;
-  gap: 12px;
-  padding: 0 12px;
-  border-radius: 10px;
+  gap: 16px;
+  padding: 0 16px;
+  border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
-  color: #334155;
+  color: #475569;
   text-align: left;
   position: relative;
   transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
@@ -1079,22 +1085,24 @@ a:focus-visible > .launcher-icon {
 .hub-side-item:hover { background: rgba(15, 30, 61, 0.04); color: #0F1E3D; }
 .hub-side-item:focus-visible { outline: none; box-shadow: 0 0 0 2px #D4AF37, 0 6px 22px rgba(212, 175, 55, 0.28); }
 .hub-side-item[aria-current="page"] {
-  background: rgba(212, 175, 55, 0.12);
-  color: #0F1E3D;
+  background: linear-gradient(90deg, rgba(212, 175, 55, 0.2), rgba(212, 175, 55, 0) 100%);
+  color: #8A6A12;
   font-weight: 600;
-  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.35), 0 4px 14px rgba(212, 175, 55, 0.18);
+  box-shadow: inset 5px 0 15px rgba(212, 175, 55, 0.08);
 }
 .hub-side-item[aria-current="page"]::before {
   content: "";
   position: absolute;
   left: 0;
-  top: 8px;
-  bottom: 8px;
-  width: 3px;
-  border-radius: 3px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 8px 0 0 8px;
   background: #D4AF37;
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.55);
 }
-.hub-side-item[aria-current="page"] svg { color: #B8932E; }
+.hub-side-item[aria-current="page"] svg { color: #D4AF37; filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.45)); }
+.hub-side-section { font-size: 11px; line-height: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #556274; padding-left: 16px; margin-bottom: 4px; }
 
 .hub-progress {
   height: 6px;
@@ -1105,12 +1113,12 @@ a:focus-visible > .launcher-icon {
 }
 .hub-progress > span { display: block; height: 100%; border-radius: 999px; transition: width 0.6s ease; }
 .hub-progress-gold {
-  background: linear-gradient(90deg, #E8C766 0%, #D4AF37 50%, #B8932E 100%);
+  background: linear-gradient(90deg, #E0A927 0%, #F2C94C 50%, #D4AF37 100%);
   background-size: 200% 100%;
-  box-shadow: 0 0 8px rgba(212, 175, 55, 0.45);
+  box-shadow: 0 0 10px rgba(224, 169, 39, 0.65);
   animation: hub-progress-shimmer 2.5s ease-in-out infinite;
 }
-.hub-progress-done { background: #059669; }
+.hub-progress-done { background: #10B981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.35); }
 @keyframes hub-progress-shimmer {
   0%, 100% { background-position: 0% 0; filter: brightness(1); }
   50% { background-position: 100% 0; filter: brightness(1.12); }
@@ -1120,78 +1128,86 @@ a:focus-visible > .launcher-icon {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   padding: 24px 16px;
   border-radius: 12px;
   text-align: center;
-  background: linear-gradient(145deg, #FFFFFF 0%, #F6F7F9 100%);
-  border: 1px solid rgba(203, 213, 225, 0.9);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease;
 }
-.hub-workflow:hover, .hub-workflow:focus-visible {
-  outline: none;
+.hub-workflow:hover {
   transform: translateY(-2px);
-  border-color: rgba(212, 175, 55, 0.6);
-  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.6), 0 6px 22px rgba(212, 175, 55, 0.28);
+  border-color: #D4AF37;
+  background: linear-gradient(0deg, rgba(224, 169, 39, 0.03), rgba(224, 169, 39, 0.03)), #FFFFFF;
+  box-shadow: 0 4px 15px rgba(224, 169, 39, 0.16);
 }
-.hub-workflow .hub-workflow-icon { height: 28px; width: 28px; color: #D4AF37; filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.4)); }
+.hub-workflow:focus-visible {
+  outline: none;
+  border-color: #D4AF37;
+  box-shadow: 0 0 0 2px #D4AF37, 0 4px 15px rgba(224, 169, 39, 0.2);
+}
+.hub-workflow .hub-workflow-icon { height: 28px; width: 28px; color: #E0A927; filter: drop-shadow(0 0 8px rgba(224, 169, 39, 0.45)); }
+.hub-workflow-title { font-size: 14px; line-height: 20px; font-weight: 600; color: #0F1E3D; }
+.hub-workflow-desc { font-size: 11px; line-height: 16px; color: #64748B; }
 
 .hub-paper {
   background: #FFFFFF;
   color: #1E293B;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
-  padding: 32px;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 13px;
-  line-height: 1.7;
+  border-radius: 8px;
+  border: 2px solid #E2E8F0;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  font-family: "Courier New", Courier, "Liberation Mono", monospace;
+  font-size: 11px;
+  line-height: 1.6;
 }
+.hub-paper:focus-visible { outline: none; border-color: #D4AF37; box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.25), inset 0 2px 10px rgba(0, 0, 0, 0.05); }
+.hub-paper-tag { text-align: center; font-weight: 700; margin-bottom: 12px; border-bottom: 2px solid #475569; padding-bottom: 8px; color: #0F172A; text-transform: uppercase; }
 .hub-highlight {
-  background: rgba(251, 191, 36, 0.18);
-  border-bottom: 2px solid rgba(217, 119, 6, 0.5);
+  background: rgba(245, 158, 11, 0.2);
+  border-bottom: 2px solid #F59E0B;
   border-radius: 2px;
-  padding: 0 3px;
+  padding: 2px 4px;
 }
 
 .lee-wave { display: flex; align-items: center; justify-content: center; gap: 4px; height: 20px; }
-.lee-wave > span { width: 3px; height: 6px; border-radius: 4px; background: #D4AF37; box-shadow: 0 0 6px rgba(212, 175, 55, 0.5); }
-.lee-wave[data-active="true"] > span { animation: lee-wave 1.2s ease-in-out infinite alternate; }
+.lee-wave > span { width: 3px; height: 4px; border-radius: 4px; background: #E0A927; box-shadow: 0 0 6px rgba(224, 169, 39, 0.5); animation: lee-wave 1.2s ease-in-out infinite alternate; }
+.lee-wave[data-active="true"] > span { animation-duration: 0.6s; }
 @keyframes lee-wave { 0% { height: 4px; } 100% { height: 20px; } }
 
 .hub-chip {
-  min-height: 32px;
-  border-radius: 999px;
+  min-height: 31px;
+  border-radius: 20px;
   border: 1px solid #E2E8F0;
   background: #FFFFFF;
   padding: 0 12px;
-  font-size: 12px;
-  color: #334155;
-  transition: border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  font-size: 11px;
+  line-height: 15px;
+  color: #475569;
+  transition: border-color 0.3s ease, color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
 }
 @media (max-width: 767px) { .hub-chip { min-height: 44px; } }
-.hub-chip:hover:not(:disabled), .hub-chip:focus-visible {
-  outline: none;
-  border-color: #D4AF37;
-  color: #0F1E3D;
-  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.35), 0 4px 14px rgba(212, 175, 55, 0.18);
-}
+.hub-chip:hover:not(:disabled) { border-color: #D4AF37; color: #8A6A12; background: rgba(224, 169, 39, 0.05); }
+.hub-chip:focus-visible { outline: none; border-color: #D4AF37; color: #8A6A12; box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.6); }
 .hub-chip:disabled { opacity: 0.6; }
 
 .hub-chat-input {
   display: flex;
-  min-height: 48px;
+  min-height: 44px;
   align-items: center;
   gap: 8px;
-  border-radius: 16px;
+  border-radius: 24px;
   border: 1px solid #E2E8F0;
   background: #FFFFFF;
-  padding: 4px 4px 4px 16px;
+  padding: 2px 4px 2px 16px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .hub-chat-input:focus-within { border-color: #D4AF37; box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.25); }
 
 @media (prefers-reduced-motion: reduce) {
-  .hub-progress-gold, .lee-wave[data-active="true"] > span { animation: none; }
+  .hub-progress-gold, .lee-wave > span { animation: none; }
+  .lee-wave > span { height: 10px; }
   .hub-workflow:hover { transform: none; }
   .hub-dash .animate-lee-alive { animation: none; }
 }

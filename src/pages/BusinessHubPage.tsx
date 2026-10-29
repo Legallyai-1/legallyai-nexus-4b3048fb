@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { arePaymentsEnabled } from "@/lib/env";
 import { HubBrand } from "@/components/brand/HubBrand";
+import { cn } from "@/lib/utils";
 import { FirmHubOverview, type HubTab } from "@/components/business/FirmHubOverview";
 import { findUserOrganization } from "@/lib/organizations";
 import {
@@ -56,12 +57,15 @@ const NAV: { title: string; items: { tab: HubTab; label: string; icon: LucideIco
 
 function HubSidebar({ active, onSelect }: { active: string; onSelect: (tab: HubTab) => void }) {
   return (
-    <aside className="hub-side sticky top-0 flex h-screen shrink-0 flex-col gap-1 overflow-y-auto px-3 py-5" aria-label="Business Hub sections">
-      <HubBrand className="mb-5 px-3" />
-      <nav className="flex flex-col gap-6">
+    // The silver background is on the full-height aside (it stretches with the page); only the inner
+    // column is sticky at viewport height, so the background never stops at 100vh on long pages.
+    <aside className="hub-side flex shrink-0 self-stretch" aria-label="Business Hub sections">
+      <div className="sticky top-0 flex h-screen w-full flex-col gap-1 overflow-y-auto px-3 pb-5 pt-4">
+      <HubBrand className="mb-4 min-h-[40px] px-4" />
+      <nav className="flex flex-col gap-5">
         {NAV.map((section) => (
           <div key={section.title} className="flex flex-col gap-1">
-            <p className="hub-label mb-1 px-3 font-semibold">{section.title}</p>
+            <p className="hub-side-section">{section.title}</p>
             {section.items.map((item) => (
               <button
                 key={item.tab}
@@ -76,9 +80,10 @@ function HubSidebar({ active, onSelect }: { active: string; onSelect: (tab: HubT
           </div>
         ))}
       </nav>
-      <Link to="/dashboard" className="hub-side-item mt-auto pt-4">
+      <Link to="/dashboard" className="hub-side-item mt-auto shrink-0">
         <LayoutGrid className="h-[18px] w-[18px]" aria-hidden="true" /> All LegallyAI tools
       </Link>
+      </div>
     </aside>
   );
 }
@@ -207,15 +212,16 @@ export default function BusinessHubPage() {
 
   return (
     <MainLayout sidebar={<HubSidebar active={activeTab} onSelect={openTab} />}>
-      <div className="hub-dash-bg min-h-full p-4 sm:p-6 space-y-4 sm:space-y-6">
-        <div>
+      <div className={cn("hub-dash-bg min-h-full p-4 sm:p-6", activeTab !== "overview" && "space-y-4 sm:space-y-6")}>
+        {/* The dashboard itself has no visible page title (as in the Gemini layout); screen readers still get the h1. */}
+        <div className={activeTab === "overview" ? "sr-only" : undefined}>
           <p className="hub-label flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5 hub-gold-icon" aria-hidden="true" /> Business Hub</p>
           <h1 className="hub-dash-title mt-1 text-2xl leading-[30px] sm:text-[28px] sm:leading-[34px] font-semibold">
             {activeTab === "overview" ? "Firm dashboard" : activeLabel}
           </h1>
         </div>
 
-        <Tabs value={activeTab} onValueChange={openTab} className="space-y-4 sm:space-y-6">
+        <Tabs value={activeTab} onValueChange={openTab} className="space-y-4 md:space-y-0">
           {/* Below md the section nav becomes a scrollable tab strip (the desktop sidebar is hidden). */}
           <div className="md:hidden"><TabsList className="!flex !flex-nowrap w-full justify-start overflow-x-auto p-1 h-auto gap-1">
             {NAV.flatMap((section) => section.items).map((item) => (
