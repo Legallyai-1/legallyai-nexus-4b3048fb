@@ -47,7 +47,7 @@ export default function AdminPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-          navigate('/auth');
+          navigate('/auth', { replace: true });
           return;
         }
 
@@ -61,13 +61,13 @@ export default function AdminPage() {
         if (error) {
           console.error('Error checking role:', error);
           toast.error('Failed to verify access');
-          navigate('/dashboard');
+          navigate('/dashboard', { replace: true });
           return;
         }
 
         if (!roleData?.length) {
           toast.error('Access denied. Admin privileges required.');
-          navigate('/dashboard');
+          navigate('/dashboard', { replace: true });
           return;
         }
 

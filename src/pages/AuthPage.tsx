@@ -111,7 +111,7 @@ export default function AuthPage() {
     const typeToPath: Record<UserType, string> = {
       individual: "/ai-assistants",
       lawyer: "/dashboard",
-      lawfirm: "/admin",
+      lawfirm: "/dashboard", // a brand-new account has no firm role yet; /admin would only bounce
       employee: "/employee",
       student: "/legal-academy",
     };

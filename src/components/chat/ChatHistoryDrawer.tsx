@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
+import { formatTimeAgo } from "@/lib/timeAgo";
 import { History, Loader2, MessageSquare, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { formatDistanceToNow } from "date-fns";
 import type { Message } from "@/hooks/useAIChat";
 
 interface SavedConversation {
@@ -77,7 +77,7 @@ export function ChatHistoryDrawer({ userId, refreshKey, onSelect }: Props) {
                 <MessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-neon-cyan" aria-hidden="true" />
                 <span className="min-w-0">
                   <span className="block truncate text-sm">{titleFor(c.messages)}</span>
-                  <span className="block text-xs text-muted-foreground">{c.hub_type !== "general" ? `${c.hub_type} · ` : ""}{formatDistanceToNow(new Date(c.updated_at), { addSuffix: true })}</span>
+                  <span className="block text-xs text-muted-foreground">{c.hub_type !== "general" ? `${c.hub_type} · ` : ""}{formatTimeAgo(c.updated_at)}</span>
                 </span>
               </button>
               <Button variant="ghost" size="icon" className="h-7 w-7 opacity-60 hover:opacity-100" aria-label="Delete conversation" onClick={() => remove(c.id)}><Trash2 className="h-3.5 w-3.5" /></Button>

@@ -126,10 +126,13 @@ export function AppSidebar({ userRole = "client", notificationCount = 0 }: AppSi
   })).filter(section => section.items.length > 0);
 
   return (
+    // The silver background lives on the outer aside, which stretches to the full page height;
+    // the inner column is the sticky, viewport-tall nav (previously the bg stopped at 100vh).
     <aside className={cn(
-      "flex flex-col h-screen sticky top-0 silver-sidebar transition-all duration-300",
+      "flex shrink-0 self-stretch silver-sidebar transition-all duration-300",
       collapsed ? "w-16" : "w-64"
     )}>
+      <div className="sticky top-0 flex h-screen w-full min-w-0 flex-col">
       {/* Header */}
       <div className="flex h-16 items-center justify-between px-4 border-b border-border/70">
         {collapsed ? <GlowScales className="sr-only" sparkles={false} /> : <HubBrand />}
@@ -210,6 +213,7 @@ export function AppSidebar({ userRole = "client", notificationCount = 0 }: AppSi
           <LogOut className="h-4 w-4" />
           {!collapsed && <span>Logout</span>}
         </button>
+      </div>
       </div>
     </aside>
   );
