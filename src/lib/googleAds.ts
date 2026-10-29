@@ -2,6 +2,7 @@
 // AND the visitor accepted ad measurement in the consent banner (src/components/AdsConsentBanner.tsx).
 // Conversion labels come from Google Ads > Goals > Conversions > (action) > Tag setup.
 import type { PurchaseConversion } from './purchaseConversion';
+import { isGoogleCmpActive } from './consent';
 
 type Gtag = (...args: unknown[]) => void;
 declare global {
@@ -11,6 +12,7 @@ declare global {
 const adsId = (import.meta.env.VITE_GOOGLE_ADS_ID || '').trim();
 const enabled = /^AW-\d+$/.test(adsId);
 const CONSENT_KEY = 'legallyai-ads-consent';
+const GTAG_SCRIPT_ID = 'legallyai-google-ads-gtag';
 export type AdsConsent = 'granted' | 'denied';
 
 export const isGoogleAdsConfigured = () => enabled;
@@ -24,20 +26,28 @@ export function getAdsConsent(): AdsConsent | null {
 
 export function setAdsConsent(value: AdsConsent) {
   try { window.localStorage.setItem(CONSENT_KEY, value); } catch { /* storage unavailable */ }
+  // Where Google's certified consent tool runs (EEA/UK/CH), it alone updates Consent Mode; never override it.
+  if (typeof window !== 'undefined' && window.gtag && !isGoogleCmpActive()) {
+    window.gtag('consent', 'update', { ad_storage: value, ad_user_data: value });
+  }
   if (value === 'granted') initGoogleAds();
 }
 
 export function initGoogleAds() {
-  if (!enabled || typeof window === 'undefined' || window.gtag || getAdsConsent() !== 'granted') return;
+  if (!enabled || typeof window === 'undefined' || getAdsConsent() !== 'granted') return;
+  if (document.getElementById(GTAG_SCRIPT_ID)) return;
   window.dataLayer = window.dataLayer || [];
+  // index.html normally defines gtag (with Consent Mode defaults) before this runs; keep a fallback.
   // gtag.js requires the `arguments` object, not a spread array.
-  window.gtag = function gtag() {
+  window.gtag = window.gtag || function gtag() {
     // eslint-disable-next-line prefer-rest-params
     window.dataLayer!.push(arguments);
   };
+  if (!isGoogleCmpActive()) window.gtag('consent', 'update', { ad_storage: 'granted', ad_user_data: 'granted' });
   window.gtag('js', new Date());
   window.gtag('config', adsId);
   const script = document.createElement('script');
+  script.id = GTAG_SCRIPT_ID;
   script.async = true;
   script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(adsId)}`;
   document.head.appendChild(script);

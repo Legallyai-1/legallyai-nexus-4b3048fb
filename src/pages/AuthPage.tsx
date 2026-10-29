@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Scale, Building2, User, KeyRound, Briefcase, Users, GraduationCap } from "lucide-react";
 import { loginSchema, signupSchema } from "@/lib/validations/auth";
 import { useRoleBasedRedirect } from "@/hooks/useRoleBasedRedirect";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 
 type UserType = "individual" | "lawyer" | "lawfirm" | "employee" | "student";
 
@@ -170,6 +171,7 @@ export default function AuthPage() {
           <CardDescription>Sign in to your LegallyAI workspace</CardDescription>
         </CardHeader>
         <CardContent>
+          <GoogleSignInButton returnPath="/auth" />
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="login">Login</TabsTrigger>
