@@ -117,8 +117,7 @@ Please create a complete, professional legal document that is ready for review. 
 
   const handleCopy = () => {
     if (!canExport) return;
-    navigator.clipboard.writeText(generatedDocument);
-    toast.success("Copied to clipboard!");
+    navigator.clipboard.writeText(generatedDocument).then(() => toast.success("Copied to clipboard!")).catch(() => toast.error("Couldn't copy. Select the text and copy it manually."));
   };
 
   const handleDownload = () => {

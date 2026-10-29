@@ -447,8 +447,7 @@ export function DocuAI({
                   <Download className="w-4 h-4" /> Download
                 </Button>
                 <Button variant="outline" className="gap-2" onClick={() => {
-                  navigator.clipboard.writeText(`https://legallyai.ai/documents/${selectedDoc.id}`);
-                  toast.success("Link copied to clipboard");
+                  navigator.clipboard.writeText(`https://legallyai.ai/documents/${selectedDoc.id}`).then(() => toast.success("Link copied to clipboard")).catch(() => toast.error("Couldn't copy. Select the text and copy it manually."));
                 }}>
                   <Copy className="w-4 h-4" /> Copy Link
                 </Button>
