@@ -56,7 +56,7 @@
         },
         {
           "key": "Reporting-Endpoints",
-          "value": "csp-endpoint=\"https://www.legallyai.ai/api/csp-report\""
+          "value": "csp-endpoint=\"/api/csp-report\""
         },
         {
           "key": "Report-To",

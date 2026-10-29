@@ -10,7 +10,8 @@ const stripQuery = (value: unknown): string => {
   const v = value.slice(0, 500);
   try {
     const u = new URL(v);
-    return `${u.origin}${u.pathname}`;
+    // Only keep origin+path for web URLs; data:/blob:/extension URLs log just the scheme (no payload).
+    return u.protocol === 'http:' || u.protocol === 'https:' ? `${u.origin}${u.pathname}` : u.protocol;
   } catch {
     return v.split(/[?#]/)[0]; // 'inline', 'eval', 'data', etc.
   }
@@ -34,8 +35,16 @@ async function readBody(req: VercelRequest): Promise<string> {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Cache-Control', 'no-store');
+  // Browsers preflight cross-origin report delivery (apex / preview hosts); allow it so reports aren't dropped.
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Max-Age', '86400');
+    return res.status(204).end();
+  }
   if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
+    res.setHeader('Allow', 'POST, OPTIONS');
     return res.status(405).end();
   }
   const len = Number(req.headers['content-length'] ?? 0);
@@ -52,7 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   for (const item of items.slice(0, MAX_REPORTS)) {
     const r = item?.['csp-report'] ?? item?.body ?? item ?? {};
     console.log('[csp-report]', JSON.stringify({
-      mode: r.disposition ?? 'report',
+      mode: String(r.disposition ?? 'report').slice(0, 20),
       directive: String(r['effective-directive'] ?? r.effectiveDirective ?? r['violated-directive'] ?? '').slice(0, 100),
       blocked: stripQuery(r['blocked-uri'] ?? r.blockedURL),
       page: stripQuery(r['document-uri'] ?? r.documentURL ?? item?.url),
