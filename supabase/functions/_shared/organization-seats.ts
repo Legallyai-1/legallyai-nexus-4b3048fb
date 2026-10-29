@@ -88,6 +88,16 @@ export function hasFreeSeat(seats: Pick<OrganizationSeats, "limit" | "used">): b
   return seats.limit === null || seats.used < seats.limit;
 }
 
+/** Message raised by the organization_members seat-limit trigger (migration 20261029181637). */
+export const SEAT_LIMIT_DB_MESSAGE = "Seat limit reached for this plan. Add seats in Settings.";
+
+/** True when a database/RPC error is the seat-limit trigger, so callers can answer 409 instead of 500. */
+export function isSeatLimitDbError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const e = error as { code?: unknown; message?: unknown };
+  return e.code === "P0001" && typeof e.message === "string" && e.message.startsWith("Seat limit reached for this plan");
+}
+
 export function seatLimitMessage(seats: Pick<OrganizationSeats, "planName" | "limit">): string {
   const n = seats.limit ?? 0;
   if (seats.planName === "Solo") {
