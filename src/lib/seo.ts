@@ -19,14 +19,14 @@ const app = (title: string): RouteSeo => ({
 
 export const DEFAULT_SEO: RouteSeo = pub(
   "LegallyAI – Ask Lee, your AI legal partner",
-  "Get clear legal help from Lee, organize your case, draft documents and prepare for court. Plus an AI workspace for law firms of every size.",
+  "Get legal help from Lee, organize your case and draft documents, plus an AI workspace for law firms. Legal information, not legal advice.",
 );
 
 export const ROUTE_SEO: Record<string, RouteSeo> = {
   "/": DEFAULT_SEO,
   "/chat": pub("Ask Lee – free AI legal help | LegallyAI", "Ask Lee a legal question in plain English and get next steps, forms and deadlines to check. Legal information, not legal advice."),
   "/lawyers": pub("AI for law firms, solo to enterprise | LegallyAI", "Case files, client portal, AI drafting, contract redlines, research, billing and trust accounting in one workspace for your firm."),
-  "/pricing": pub("Pricing – free, Premium and firm plans | LegallyAI", "Start free with Lee. Premium is $9.99/month, single documents are $5, and law firm plans start at $29/month."),
+  "/pricing": pub("Pricing – free, Premium and Firm plans | LegallyAI", "Start free with Lee. Premium is $9.99/mo, documents $5, Firm $99/mo with a 7-day trial on your first subscription. Solo and Enterprise: waitlist."),
   "/generate": pub("AI legal document generator | LegallyAI", "Draft letters, motions, agreements and court forms with Lee, then review and edit before you file or send."),
   "/contract-review": pub("AI contract review and redline | LegallyAI", "Paste a lease, NDA or employment agreement. Lee flags risky clauses and suggests fairer wording you can export."),
   "/settlement-estimator": pub("Settlement estimator | LegallyAI", "Get a rough settlement range for your claim from the details you enter, with the factors that move the number."),
@@ -43,7 +43,8 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
   "/court-records": pub("Court records and filing help | LegallyAI", "Find where to look up court records and how to prepare and file the paperwork for your case."),
   "/legal-academy": pub("Legal Academy – learn law with AI | LegallyAI", "Short courses and AI tutoring that explain legal basics in plain English."),
   "/pro-bono": pub("Free and low-cost legal aid | LegallyAI", "Find pro bono and legal aid resources and prepare your case before you reach out."),
-  "/jobs": pub("Legal job board | LegallyAI", "Browse legal jobs for attorneys, paralegals and legal staff."),
+  // Noindex until the job board is live (page is a placeholder).
+  "/jobs": { title: "Legal job board | LegallyAI", description: "Browse legal jobs for attorneys, paralegals and legal staff.", indexable: false },
   "/support": pub("Support | LegallyAI", "Get help with your LegallyAI account, billing or features from the support team."),
   "/terms": pub("Terms of service | LegallyAI", "The terms that apply when you use LegallyAI and Lee, the AI legal assistant."),
   "/privacy": pub("Privacy policy | LegallyAI", "How LegallyAI collects, uses and protects your information."),
