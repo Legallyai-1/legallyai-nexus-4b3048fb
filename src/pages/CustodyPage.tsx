@@ -315,18 +315,6 @@ Create detailed custody plan with: 1) Legal framework for ${formData.state}, 2) 
                 </Card>
               </TabsContent>
 
-              {/* AI Assistant */}
-              <TabsContent value="assistant">
-                <div className="max-w-4xl mx-auto">
-                  <HubAssistant
-                    assistantName="CustodiAI"
-                    variant="purple"
-                    hubType="custody"
-                    placeholder="Ask about custody, upload documents, or request help with paperwork..."
-                    welcomeMessage="I'm CustodiAI, your child custody assistant. I can help you:\n\n• Generate custody agreements and parenting plans\n• Calculate child support estimates\n• Prepare for court hearings\n• Analyze documents you upload\n• Answer questions about custody law\n\nHow can I help you today?"
-                  />
-                </div>
-              </TabsContent>
 
               {/* Documents */}
               <TabsContent value="documents">
