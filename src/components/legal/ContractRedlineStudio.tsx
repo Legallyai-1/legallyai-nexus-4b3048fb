@@ -240,7 +240,7 @@ export function ContractRedlineStudio() {
               <div className="space-y-4">
                 {clauses.map((clause) => (
                   <div key={clause.id} className="rounded-xl border border-border/70 overflow-hidden bg-background/50">
-                    <div className="px-4 py-3 bg-muted/40 border-b border-border/40 flex items-center justify-between">
+                    <div className="px-4 py-3 bg-muted/40 border-b border-border/40 flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <Badge className={
                           clause.severity === "high" 

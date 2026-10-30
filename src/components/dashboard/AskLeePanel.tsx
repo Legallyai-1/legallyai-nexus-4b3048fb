@@ -26,7 +26,7 @@ export function AskLeePanel({ userType = "lawyer", className = "" }: Props) {
   };
 
   return (
-    <aside aria-labelledby="ask-lee-title" className={`lee-partner rounded-3xl p-4 sm:p-5 flex flex-col ${className}`}>
+    <aside aria-labelledby="ask-lee-title" className={`lee-partner min-w-0 rounded-3xl p-4 sm:p-5 flex flex-col ${className}`}>
       <div className="flex items-center justify-between gap-2">
         <h2 id="ask-lee-title" className="font-display text-lg font-semibold">Ask Lee <span className="text-muted-foreground">·</span> <span className="lee-partner-title-accent">AI Partner</span></h2>
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground"><span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" aria-hidden="true" />Online</span>

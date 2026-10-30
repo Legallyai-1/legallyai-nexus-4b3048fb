@@ -1196,3 +1196,9 @@ a:focus-visible > .launcher-icon {
 .hub-side { border-right-color: hsl(43 80% 55% / 0.75); box-shadow: 1px 0 0 hsl(43 85% 55% / 0.3), 6px 0 18px -10px hsl(43 95% 55% / 0.3); }
 .hub-theme input.border-input,
 .hub-theme textarea.border-input { border-color: hsl(43 75% 55% / 0.7); }
+
+/* Crowded tab bars (grid-cols-5..9 on a phone squash labels on top of each other).
+   Lay any grid tablist out as one row that scrolls sideways when it does not fit. */
+[role="tablist"].grid { display: flex; flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+[role="tablist"].grid::-webkit-scrollbar { display: none; }
+[role="tablist"].grid > [role="tab"] { flex: 1 0 auto; }

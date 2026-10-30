@@ -135,7 +135,7 @@ export function PerplexityLegalSearch() {
         <div className="rounded-[14px] bg-background/95 backdrop-blur-xl p-4 sm:p-5 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/40 pb-3">
             <div className="flex items-center gap-2">
-              <img src="/lee-mascot.png" alt="Lee" className="w-8 h-8 rounded-full border border-neon-cyan/40 p-0.5 animate-lee-alive" />
+              <img src="/lee-mascot.png" alt="Lee" className="w-8 h-8 object-contain rounded-full border border-neon-cyan/40 p-0.5 animate-lee-alive" />
               <span className="font-display font-semibold text-sm text-foreground flex items-center gap-1.5">
                 Lee Answer Engine <span className="text-muted-foreground font-normal">· Perplexity for Law</span>
               </span>

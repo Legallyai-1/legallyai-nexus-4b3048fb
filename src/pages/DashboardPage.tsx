@@ -139,7 +139,7 @@ export default function DashboardPage() {
   return (
     <MainLayout>
       <div className="min-h-full p-4 md:p-6">
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           {/* ===== Main column ===== */}
           <div className="min-w-0 space-y-8">
             {/* Live AI Processing */}

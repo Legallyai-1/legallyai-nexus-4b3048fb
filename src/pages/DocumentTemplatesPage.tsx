@@ -329,7 +329,7 @@ export default function DocumentTemplatesPage() {
         {/* CTA */}
         <section className="py-16">
           <div className="container mx-auto px-4">
-            <div className="glass-card p-8 rounded-2xl border-neon-blue/20 bg-gradient-to-r from-neon-blue/5 to-neon-cyan/5 max-w-4xl mx-auto text-center">
+            <div className="glass-card p-5 sm:p-8 rounded-2xl border-neon-blue/20 bg-gradient-to-r from-neon-blue/5 to-neon-cyan/5 max-w-4xl mx-auto text-center">
               <h2 className="font-display text-2xl font-bold text-foreground mb-4">
                 Can't Find What You Need?
               </h2>
