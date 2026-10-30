@@ -250,12 +250,12 @@ const EnhancedCustodyPage = () => {
                   </div>
 
                   <div className="flex flex-wrap gap-2">
-                    <Button className="flex-1">
+                    <Button className="flex-1" disabled title="Coming soon">
                       <Shield className="mr-2 h-4 w-4" />
-                      Run Conflict Check
+                      Run Conflict Check (Coming soon)
                     </Button>
-                    <Button className="flex-1" variant="outline">
-                      Generate Risk Score
+                    <Button className="flex-1" variant="outline" disabled title="Coming soon">
+                      Generate Risk Score (Coming soon)
                     </Button>
                   </div>
                 </CardContent>

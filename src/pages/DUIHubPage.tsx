@@ -103,8 +103,8 @@ const DUIHubPage = () => {
                     <GlowScales className="h-4 w-4 text-red-400" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">12</div>
-                    <p className="text-xs text-muted-foreground">3 hearings this week</p>
+                    <div className="text-2xl font-bold">0</div>
+                    <p className="text-xs text-muted-foreground">No cases yet</p>
                   </CardContent>
                 </Card>
 
@@ -131,19 +131,7 @@ const DUIHubPage = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {[
-                      { date: "Dec 15", event: "DMV Hearing", status: "upcoming", type: "hearing" },
-                      { date: "Dec 20", event: "Arraignment - Case #2024-001", status: "upcoming", type: "court" },
-                      { date: "Jan 5", event: "Pre-trial Conference", status: "scheduled", type: "meeting" },
-                    ].map((item, i) => (
-                      <div key={i} className="flex items-center gap-4 p-3 rounded-lg bg-muted/30">
-                        <div className="text-sm font-medium w-20">{item.date}</div>
-                        <div className="flex-1">{item.event}</div>
-                        <Badge variant={item.status === "upcoming" ? "default" : "secondary"}>
-                          {item.status}
-                        </Badge>
-                      </div>
-                    ))}
+                    <p className="text-sm text-muted-foreground">No cases yet</p>
                   </div>
                 </CardContent>
               </Card>
@@ -342,33 +330,7 @@ const DUIHubPage = () => {
                   </div>
 
                   <div className="space-y-3">
-                    {[
-                      { name: "John D.", location: "Los Angeles, CA", distance: "12 mi", bac: "0.11", status: "new" },
-                      { name: "Sarah M.", location: "San Diego, CA", distance: "28 mi", bac: "0.09", status: "contacted" },
-                      { name: "Mike R.", location: "Orange County, CA", distance: "35 mi", bac: "0.15", status: "new" },
-                    ].map((lead, i) => (
-                      <div key={i} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                            {lead.name.charAt(0)}
-                          </div>
-                          <div>
-                            <p className="font-medium">{lead.name}</p>
-                            <p className="text-sm text-muted-foreground flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              {lead.location} ({lead.distance})
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Badge variant="outline">BAC: {lead.bac}</Badge>
-                          <Badge variant={lead.status === "new" ? "default" : "secondary"}>
-                            {lead.status}
-                          </Badge>
-                          <Button size="sm">Contact</Button>
-                        </div>
-                      </div>
-                    ))}
+                    <p className="text-sm text-muted-foreground">No leads yet</p>
                   </div>
                 </CardContent>
               </Card>
@@ -387,43 +349,25 @@ const DUIHubPage = () => {
                     <Card className="bg-muted/30">
                       <CardContent className="pt-4">
                         <p className="text-sm text-muted-foreground">Total Billed</p>
-                        <p className="text-2xl font-bold">$45,250</p>
+                        <p className="text-2xl font-bold">$0</p>
                       </CardContent>
                     </Card>
                     <Card className="bg-muted/30">
                       <CardContent className="pt-4">
                         <p className="text-sm text-muted-foreground">Contingency Pending</p>
-                        <p className="text-2xl font-bold">$12,500</p>
+                        <p className="text-2xl font-bold">$0</p>
                       </CardContent>
                     </Card>
                     <Card className="bg-muted/30">
                       <CardContent className="pt-4">
                         <p className="text-sm text-muted-foreground">Collected</p>
-                        <p className="text-2xl font-bold text-green-500">$38,750</p>
+                        <p className="text-2xl font-bold text-green-500">$0</p>
                       </CardContent>
                     </Card>
                   </div>
 
                   <div className="space-y-3">
-                    {[
-                      { case: "DUI-2024-001", client: "John D.", type: "Flat Fee", amount: 5000, status: "paid" },
-                      { case: "DUI-2024-002", client: "Sarah M.", type: "Contingency", amount: 7500, status: "pending" },
-                      { case: "DUI-2024-003", client: "Mike R.", type: "Hourly", amount: 3250, status: "invoiced" },
-                    ].map((item, i) => (
-                      <div key={i} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                        <div>
-                          <p className="font-medium">{item.case}</p>
-                          <p className="text-sm text-muted-foreground">{item.client}</p>
-                        </div>
-                        <div className="text-right">
-                          <Badge variant="outline">{item.type}</Badge>
-                          <p className="font-semibold">${item.amount.toLocaleString()}</p>
-                        </div>
-                        <Badge variant={item.status === "paid" ? "default" : "secondary"}>
-                          {item.status}
-                        </Badge>
-                      </div>
-                    ))}
+                    <p className="text-sm text-muted-foreground">No billing records yet</p>
                   </div>
                 </CardContent>
               </Card>
