@@ -185,7 +185,7 @@ const EnhancedCustodyPage = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Parent 1 Name</Label>
                       <Input
@@ -213,7 +213,7 @@ const EnhancedCustodyPage = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>State</Label>
                       <Select defaultValue="CA">
@@ -302,7 +302,7 @@ const EnhancedCustodyPage = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <Card className="bg-purple-500/10">
                       <CardContent className="pt-4 text-center">
                         <p className="text-2xl font-bold">15</p>
@@ -384,7 +384,7 @@ const EnhancedCustodyPage = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <Card className="bg-muted/30">
                       <CardContent className="pt-4 text-center">
                         <p className="text-2xl font-bold">$1,550</p>
@@ -434,7 +434,7 @@ const EnhancedCustodyPage = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Parent 1 Monthly Income</Label>
                       <Input 
@@ -455,7 +455,7 @@ const EnhancedCustodyPage = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>Custody % (Parent 1)</Label>
                       <Select 
@@ -560,7 +560,7 @@ const EnhancedCustodyPage = () => {
                     ))}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Button variant="outline">
                       <FileText className="mr-2 h-4 w-4" />
                       Generate Court Report
@@ -599,7 +599,7 @@ const EnhancedCustodyPage = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {[
                       { name: "Custody Order", date: "Nov 15, 2024", type: "Court Order" },
                       { name: "Parenting Plan", date: "Nov 15, 2024", type: "Agreement" },
