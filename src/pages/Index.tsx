@@ -244,7 +244,7 @@ export default function Index() {
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {myCases.map((item) => (
-                <Link key={item.title} to={item.path} className="metal-card rounded-2xl p-4">
+                <Link key={item.title} to={item.path} className="metal-card rounded-2xl p-3 sm:p-4">
                   <span className="metal-icon-well h-10 w-10"><item.icon className="h-5 w-5" aria-hidden="true" /></span>
                   <h3 className="mt-3 font-semibold">{item.title}</h3>
                   <p className="mt-0.5 text-sm text-[hsl(218_22%_30%)]">{item.description}</p>
@@ -263,10 +263,10 @@ export default function Index() {
               {featuredTools().map((tool) => {
                 const Icon = TOOL_ICONS[tool.icon];
                 return (
-                  <Link key={tool.path} to={tool.path} className="metal-card rounded-2xl p-4 flex items-start gap-3">
-                    <span className="metal-icon-well h-10 w-10 shrink-0"><Icon className="h-5 w-5" aria-hidden="true" /></span>
+                  <Link key={tool.path} to={tool.path} className="metal-card rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-start gap-2 sm:gap-3">
+                    <span className="metal-icon-well h-9 w-9 sm:h-10 sm:w-10 shrink-0"><Icon className="h-5 w-5" aria-hidden="true" /></span>
                     <span className="min-w-0">
-                      <span className="block font-semibold leading-tight">{tool.title}</span>
+                      <span className="block font-semibold leading-tight break-words">{tool.title}</span>
                       <span className="mt-0.5 block text-sm text-[hsl(218_22%_30%)]">{tool.description}</span>
                     </span>
                   </Link>
@@ -285,7 +285,7 @@ export default function Index() {
             <p className="mt-1 mb-6 text-muted-foreground max-w-2xl">Lee, focused on your situation: custody, defense, work, estate planning and more.</p>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {hubs.map((hub) => (
-                <Link key={hub.id} to={hub.path} className="metal-card group rounded-2xl p-4 flex flex-col justify-between min-h-[112px]">
+                <Link key={hub.id} to={hub.path} className="metal-card group rounded-2xl p-3 sm:p-4 flex flex-col justify-between min-h-[112px]">
                   <span className="flex items-start justify-between gap-2">
                     <span className="min-w-0">
                       <span className="block font-display font-bold leading-tight break-words">{hub.name}</span>

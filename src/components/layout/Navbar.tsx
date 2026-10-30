@@ -45,6 +45,20 @@ export function Navbar() {
     <header className="fixed top-0 left-0 right-0 z-50">
       <div className="bg-background/70 backdrop-blur-xl border-b border-white/10">
         <nav aria-label="Main" className="container mx-auto px-3 sm:px-4 h-16 flex items-center gap-2">
+          {location.pathname !== "/" && (
+            <button
+              type="button"
+              onClick={() => {
+                const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
+                if (idx > 0) navigate(-1); else navigate("/");
+              }}
+              aria-label="Go back"
+              data-testid="header-back"
+              className="shrink-0 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[hsl(43_75%_55%/0.6)] bg-white/80 text-foreground hover:bg-white"
+            >
+              <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+            </button>
+          )}
           <Link
             to="/"
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
