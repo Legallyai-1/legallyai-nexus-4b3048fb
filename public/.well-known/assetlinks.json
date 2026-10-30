@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ai.legallyai.app",
+      "sha256_cert_fingerprints": [
+        "7C:1B:17:7E:FD:FA:A8:0E:2C:FE:56:24:AD:C2:42:FF:3A:1A:1C:9F:DF:6D:74:B5:42:2C:CD:71:D3:3B:BB:D8"
+      ]
+    }
+  }
+]
