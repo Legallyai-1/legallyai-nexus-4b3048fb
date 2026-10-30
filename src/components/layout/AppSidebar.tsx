@@ -150,7 +150,7 @@ export function AppSidebar({ userRole = "client", notificationCount = 0 }: AppSi
       </div>
 
       {/* Navigation */}
-      <ScrollArea className="flex-1 py-4">
+      <ScrollArea className="min-h-0 flex-1 py-4">
         {filteredSections.map((section, idx) => (
           <div key={section.title} className={cn("px-3", idx > 0 && "mt-4")}>
             {!collapsed && (

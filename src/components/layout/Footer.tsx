@@ -80,12 +80,12 @@ export function Footer() {
             <h4 className="font-display text-lg font-semibold mb-4 text-legal-gold">
               Product
             </h4>
-            <ul className="space-y-2">
+            <ul className="space-y-1">
               {footerLinks.product.map((link) => (
                 <li key={link.path}>
                   <Link
                     to={link.path}
-                    className="text-muted-foreground hover:text-legal-gold transition-colors"
+                    className="inline-block py-1 text-muted-foreground hover:text-legal-gold transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -99,12 +99,12 @@ export function Footer() {
             <h4 className="font-display text-lg font-semibold mb-4 text-legal-gold">
               Resources
             </h4>
-            <ul className="space-y-2">
+            <ul className="space-y-1">
               {footerLinks.resources.map((link) => (
                 <li key={link.path}>
                   <Link
                     to={link.path}
-                    className="text-muted-foreground hover:text-legal-gold transition-colors"
+                    className="inline-block py-1 text-muted-foreground hover:text-legal-gold transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -118,12 +118,12 @@ export function Footer() {
             <h4 className="font-display text-lg font-semibold mb-4 text-legal-gold">
               Legal
             </h4>
-            <ul className="space-y-2">
+            <ul className="space-y-1">
               {footerLinks.legal.map((link) => (
                 <li key={link.path}>
                   <Link
                     to={link.path}
-                    className="text-muted-foreground hover:text-legal-gold transition-colors"
+                    className="inline-block py-1 text-muted-foreground hover:text-legal-gold transition-colors"
                   >
                     {link.name}
                   </Link>

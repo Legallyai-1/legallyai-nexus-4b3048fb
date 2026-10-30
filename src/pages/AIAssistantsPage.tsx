@@ -262,7 +262,7 @@ export default function AIAssistantsPage() {
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className={`flex items-center gap-2 mb-2 ${assistant.premium ? "pr-16" : ""}`}>
                         <div className={`p-1.5 rounded-lg ${assistant.iconBg}`}>
                           <assistant.icon className="w-4 h-4 text-foreground" />
                         </div>
