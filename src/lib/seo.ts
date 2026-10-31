@@ -30,7 +30,7 @@ export const ROUTE_SEO: Record<string, RouteSeo> = {
   "/lawyers": pub("AI for law firms, solo to enterprise | LegallyAI", "Case files, client portal, AI drafting, contract redlines, research, billing and trust accounting in one workspace for your firm."),
   "/pricing": pub("Pricing – individuals and law firms | LegallyAI", "Start free with Lee. Premium $9.99/mo, documents $5. Law firms: Solo $29/mo, Firm $99/mo (3 seats), Enterprise $299/mo (10 seats), extra seats $25/mo."),
   "/generate": pub("AI legal document generator | LegallyAI", "Draft letters, motions, agreements and court forms with Lee, then review and edit before you file or send."),
-  "/contract-review": pub("AI contract review and redline | LegallyAI", "Paste a lease, NDA or employment agreement. Lee flags risky clauses and suggests fairer wording you can export."),
+  "/contract-review": pub("Contract excerpt review | LegallyAI", "Discuss a short contract excerpt with Lee and explore a clearly labeled sample redline. General legal information, not a full-document legal review."),
   "/settlement-estimator": pub("Settlement estimator | LegallyAI", "Get a rough settlement range for your claim from the details you enter, with the factors that move the number."),
   "/research": pub("AI legal research | LegallyAI", "Search laws and court rules in plain English and get clear answers. Check key points with your court or a licensed attorney."),
   "/templates": pub("Legal document templates | LegallyAI", "Browse ready-to-edit legal templates for common situations and fill them in with help from Lee."),

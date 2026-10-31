@@ -1,4 +1,6 @@
+// deno-lint-ignore no-import-prefix -- Preserve the deployed, pinned dependency without an import-map change.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+// deno-lint-ignore no-import-prefix -- Preserve the deployed, pinned dependency without an import-map change.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 import { getAnthropicKey } from "../_shared/anthropic-key.ts";
@@ -9,18 +11,23 @@ import { buildGroundedSystem, callFreeModel, FREE_AI_FOOTER, getFreeProviders } 
 import { callGemini, composeAnswer, getGeminiConfig } from "../_shared/gemini.ts";
 import { leeSystemPrompt, personaFor } from "../_shared/lee-personas.ts";
 import { checkFreeQuestion, freeQuestionLimit, normalizeDeviceId } from "../_shared/free-question-gate.ts";
+import { isRecord, legalNoticeSuffix, streamAnthropicCompletion } from "../_shared/chat-stream.ts";
 
 // Supabase Edge Runtime built-in AI (free, no API key). Undefined outside Supabase.
-// deno-lint-ignore no-explicit-any
-declare const Supabase: any;
-// deno-lint-ignore no-explicit-any
-let embeddingSession: any = null;
+interface EmbeddingSession {
+  run(text: string, options: { mean_pool: boolean; normalize: boolean }): Promise<unknown>;
+}
+declare const Supabase: { ai?: { Session?: new (model: string) => EmbeddingSession } } | undefined;
+let embeddingSession: EmbeddingSession | null = null;
 async function embedText(text: string): Promise<number[] | null> {
   try {
     if (typeof Supabase === "undefined" || !Supabase?.ai?.Session) return null;
     embeddingSession ??= new Supabase.ai.Session("gte-small");
     const output = await embeddingSession.run(text.slice(0, 2000), { mean_pool: true, normalize: true });
-    return Array.from(output as ArrayLike<number>);
+    if (!Array.isArray(output) && !ArrayBuffer.isView(output)) return null;
+    const values: unknown[] = Array.from(output as ArrayLike<unknown>);
+    return values.every((value): value is number => typeof value === "number" && Number.isFinite(value))
+      ? values : null;
   } catch (error) {
     console.warn("built-in embedding unavailable", error instanceof Error ? error.message : error);
     return null;
@@ -166,71 +173,6 @@ function getProvider(): ModelProvider | null {
   return null;
 }
 
-async function streamCompletion(
-  provider: ModelProvider,
-  system: string,
-  messages: ChatMessage[],
-  onDelta: (chunk: string) => void,
-): Promise<string> {
-  let fullText = "";
-
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": provider.apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({ model: provider.model, max_tokens: 1024, system, messages, stream: true }),
-  });
-  if (!response.ok || !response.body) {
-    const errText = await response.text().catch(() => "");
-    throw new Error(`Anthropic request failed: ${response.status} ${errText}`);
-  }
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  let sawMessageStop = false;
-
-  const processChunk = (chunk: string) => {
-    const dataLine = chunk.split("\n").find((line) => line.startsWith("data:"));
-    if (!dataLine) return;
-    let event: Record<string, any>;
-    try {
-      event = JSON.parse(dataLine.slice(5).trim());
-    } catch {
-      return;
-    }
-    if (event.type === "error") {
-      throw new Error("Anthropic stream returned an error event.");
-    }
-    if (event.type === "message_stop") {
-      sawMessageStop = true;
-    }
-    if (event.type === "content_block_delta" && event.delta?.type === "text_delta") {
-      fullText += event.delta.text;
-      onDelta(event.delta.text);
-    }
-  };
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const chunks = buffer.split("\n\n");
-    buffer = chunks.pop() ?? "";
-    for (const chunk of chunks) {
-      processChunk(chunk);
-    }
-  }
-
-  buffer += decoder.decode();
-  if (buffer.trim()) processChunk(buffer);
-  if (!sawMessageStop) throw new Error("Anthropic stream ended before completion.");
-
-  return fullText;
-}
-
 async function callOnce(provider: ModelProvider, system: string, userText: string): Promise<string> {
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -245,10 +187,13 @@ async function callOnce(provider: ModelProvider, system: string, userText: strin
       system,
       messages: [{ role: "user", content: userText }],
     }),
+    signal: AbortSignal.timeout(15_000),
   });
   if (!response.ok) return "";
-  const result = await response.json();
-  return result?.content?.find((b: { type?: string }) => b.type === "text")?.text?.trim() ?? "";
+  const result: unknown = await response.json();
+  if (!isRecord(result) || !Array.isArray(result.content)) return "";
+  const block: unknown = result.content.find((value: unknown) => isRecord(value) && value.type === "text");
+  return isRecord(block) && typeof block.text === "string" ? block.text.trim() : "";
 }
 
 async function persistHistory(
@@ -298,9 +243,11 @@ serve(async (req) => {
     });
   }
 
-  let payload: { messages?: unknown; hub_type?: unknown; session_id?: unknown; stream?: unknown; device_id?: unknown };
+  let payload: Record<string, unknown>;
   try {
-    payload = await req.json();
+    const body: unknown = await req.json();
+    if (!isRecord(body)) throw new Error("Expected a JSON object.");
+    payload = body;
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
       status: 400,
@@ -394,13 +341,15 @@ serve(async (req) => {
       }
     : null;
   let provider: ModelProvider | null = null;
-  if (paidAIQuotaOptions && Deno.env.get("ENABLE_PAID_AI") === "true") {
+  if (paidAIQuotaOptions && Deno.env.get("ENABLE_PAID_AI") === "true" && !isEmergency(lastUserMessage)) {
     const configuredProvider = getProvider();
     if (configuredProvider && await hasPaidAIQuota(paidAIQuotaOptions)) {
       provider = configuredProvider;
     }
   }
 
+  const streamAbort = new AbortController();
+  const streamSignal = AbortSignal.any([req.signal, streamAbort.signal]);
   const stream = new ReadableStream({
     async start(controller) {
       let fullText = "";
@@ -408,20 +357,37 @@ serve(async (req) => {
       let completed = false;
       let engine = "paid";
       let paidUsed = false;
+      let paidStreamed = false;
+      let interrupted = false;
       try {
         if (provider) {
-          // Paid model first; if it fails or quota cannot be recorded, fall back to the free path below
-          // instead of failing the whole request.
+          // Confirm the existing atomic reservation before emitting paid content.
+          // Fall back only before the first token, never concatenate unrelated answers.
           try {
-            const paidText = await streamCompletion(provider, system, messages, () => {});
-            if (paidText.trim() && paidAIQuotaOptions && await consumePaidAIQuota(paidAIQuotaOptions)) {
-              fullText = paidText;
+            if (paidAIQuotaOptions && await consumePaidAIQuota(paidAIQuotaOptions)) {
+              fullText = await streamAnthropicCompletion({
+                provider, system, messages, signal: streamSignal,
+                onDelta: (chunk) => {
+                  paidStreamed = true;
+                  fullText += chunk;
+                  controller.enqueue(sseEvent({ delta: chunk }));
+                },
+              });
               paidUsed = true;
             } else {
-              console.warn("legal-chat paid AI unavailable after completion; using free path");
+              console.warn("legal-chat paid quota unavailable; using free path");
             }
-          } catch (error) {
-            console.warn("legal-chat paid AI failed; using free path", error instanceof Error ? error.message : error);
+          } catch {
+            if (streamSignal.aborted) throw new Error("Chat request cancelled.");
+            if (paidStreamed) {
+              paidUsed = true;
+              interrupted = true;
+              const warning = "\n\nThe response was interrupted and may be incomplete. Please retry before relying on it.";
+              fullText += warning;
+              controller.enqueue(sseEvent({ delta: warning }));
+            } else {
+              console.warn("legal-chat paid AI unavailable; using free path");
+            }
           }
         }
         if (paidUsed) {
@@ -467,15 +433,18 @@ serve(async (req) => {
             "For anything urgent or with a deadline, contact the court clerk, a local legal aid office, or a licensed attorney.";
           engine = "fallback";
         }
-        controller.enqueue(sseEvent({ delta: fullText }));
-        completed = true;
+        const notice = legalNoticeSuffix(fullText);
+        fullText += notice;
+        if (!paidStreamed) controller.enqueue(sseEvent({ delta: fullText }));
+        else if (notice) controller.enqueue(sseEvent({ delta: notice }));
+        completed = !interrupted;
 
-        if (paidUsed && provider && fullText.trim() && needsReview(fullText)) {
+        if (paidUsed && !interrupted && provider && fullText.trim() && needsReview(fullText)) {
           const reviewerSystem =
             "You are a legal-accuracy reviewer. Given a draft answer from another AI assistant, reply with exactly " +
             "'OK' if it is accurate and appropriately hedged, or otherwise a corrective note under 60 words " +
             "flagging overconfident claims, missing disclaimers, or inaccuracies. Do not repeat the whole answer.";
-          const note = await callOnce(provider, reviewerSystem, fullText);
+          const note = await callOnce(provider, reviewerSystem, fullText).catch(() => "");
           reviewed = Boolean(note);
           if (note && !/^ok\.?$/i.test(note.trim())) {
             controller.enqueue(sseEvent({ reviewer_note: note }));
@@ -487,14 +456,17 @@ serve(async (req) => {
           hub_type: hubType,
           session_id: sessionId,
           reviewed,
+          interrupted,
           mode: paidUsed ? "paid" : hubType === "support" ? "no-cost" : "in-house",
           engine: paidUsed ? "paid" : hubType === "support" ? "no-cost" : engine,
           persona: personaFor(hubType).name,
           free_questions: gate && !gate.subscriber ? { used: gate.used, limit: gate.limit } : null,
         }));
-      } catch (error) {
-        console.error("legal-chat pipeline failed", error);
-        controller.enqueue(sseEvent({ error: "The AI service could not complete this request. Please try again later." }));
+      } catch {
+        console.error("legal-chat pipeline failed");
+        if (!streamSignal.aborted) {
+          controller.enqueue(sseEvent({ error: "The AI service could not complete this request. Please try again later." }));
+        }
       } finally {
         if (completed && userId && fullText.trim()) {
           const finalMessages: ChatMessage[] = [...messages, { role: "assistant", content: fullText }];
@@ -504,8 +476,11 @@ serve(async (req) => {
             console.error("legal-chat history persistence failed", error);
           }
         }
-        controller.close();
+        if (!streamAbort.signal.aborted) controller.close();
       }
+    },
+    cancel() {
+      streamAbort.abort();
     },
   });
 
@@ -532,7 +507,7 @@ serve(async (req) => {
       const cut = buffer.lastIndexOf("\n\n");
       if (cut >= 0) buffer = buffer.slice(cut + 2);
     }
-    return new Response(JSON.stringify({ answer, hub_type: hubType, session_id: sessionId, persona: done.persona ?? personaFor(hubType).name, mode: done.mode ?? null, engine: done.engine ?? null, free_questions: done.free_questions ?? null }), {
+    return new Response(JSON.stringify({ answer, hub_type: hubType, session_id: sessionId, persona: done.persona ?? personaFor(hubType).name, mode: done.mode ?? null, engine: done.engine ?? null, interrupted: done.interrupted === true, free_questions: done.free_questions ?? null }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

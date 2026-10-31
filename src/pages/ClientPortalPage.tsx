@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { LexiAssistant } from "@/components/dashboard/LexiAssistant";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface Case {
   id: string;
@@ -25,7 +26,7 @@ interface Appointment {
   start_time: string;
   end_time: string;
   status: string;
-  is_virtual: boolean;
+  is_virtual: boolean | null;
   meeting_link: string | null;
 }
 
@@ -39,7 +40,7 @@ interface Invoice {
 }
 
 const ClientPortalPage = () => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [cases, setCases] = useState<Case[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);

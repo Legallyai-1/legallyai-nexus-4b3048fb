@@ -18,10 +18,10 @@ import { ensureUserOrganization } from "@/lib/organizations";
 interface Message {
   id: string;
   sender_id: string;
-  recipient_id: string;
+  recipient_id: string | null;
   content: string;
   created_at: string;
-  is_read: boolean;
+  is_read: boolean | null;
 }
 
 interface Conversation {
@@ -77,6 +77,7 @@ export default function MessagesPage() {
       const partnersMap = new Map<string, Conversation>();
 
       sentMessages?.forEach(msg => {
+        if (!msg.recipient_id) return;
         if (!partnersMap.has(msg.recipient_id)) {
           partnersMap.set(msg.recipient_id, {
             id: msg.recipient_id,
@@ -122,8 +123,8 @@ export default function MessagesPage() {
       }
 
       setConversations(Array.from(partnersMap.values()));
-    } catch (error: any) {
-      console.error("Error fetching conversations:", error);
+    } catch {
+      console.error("Error fetching conversations");
       toast.error("Failed to load messages");
     } finally {
       setLoading(false);
@@ -131,6 +132,7 @@ export default function MessagesPage() {
   };
 
   const loadMessages = async (conversation: Conversation) => {
+    if (!userId) return;
     setSelectedConversation(conversation);
     
     try {
@@ -150,8 +152,8 @@ export default function MessagesPage() {
         .eq('sender_id', conversation.other_user_id)
         .eq('recipient_id', userId);
 
-    } catch (error: any) {
-      console.error("Error loading messages:", error);
+    } catch {
+      console.error("Error loading messages");
       toast.error("Failed to load conversation");
     }
   };
@@ -181,8 +183,8 @@ export default function MessagesPage() {
       setMessages([...messages, data]);
       setNewMessage("");
       toast.success("Message sent");
-    } catch (error: any) {
-      console.error("Error sending message:", error);
+    } catch {
+      console.error("Error sending message");
       toast.error("Failed to send message");
     } finally {
       setIsSending(false);

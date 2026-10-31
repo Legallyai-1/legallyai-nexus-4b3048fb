@@ -25,7 +25,7 @@ function ToolShell({ title, intro, children }: { title: string; intro: string; c
 
 export function ContractReviewPage() {
   return (
-    <ToolShell title="Contract Redline & Risk Analyzer" intro="Paste a contract and Lee flags risky clauses, explains them in plain language and suggests redlines.">
+    <ToolShell title="Contract excerpt review" intro="Discuss a short contract excerpt with Lee. Explore a labeled sample redline; this is general information, not a full-document legal review.">
       <ContractRedlineStudio />
     </ToolShell>
   );

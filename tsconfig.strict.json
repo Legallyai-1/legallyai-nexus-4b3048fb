@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true
+  },
+  "include": [
+    "src/lib/contract-review-input.ts",
+    "supabase/functions/_shared/chat-stream.ts"
+  ]
+}

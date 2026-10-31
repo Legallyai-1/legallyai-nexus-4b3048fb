@@ -111,8 +111,8 @@ export default function AppointmentsPage() {
 
         setClients(clientsData || []);
       }
-    } catch (error: any) {
-      console.error("Error fetching data:", error);
+    } catch {
+      console.error("Error fetching appointments");
       toast.error("Failed to load appointments");
     } finally {
       setLoading(false);
@@ -123,6 +123,10 @@ export default function AppointmentsPage() {
     e.preventDefault();
     if (!newAppointment.title.trim()) {
       toast.error("Title is required");
+      return;
+    }
+    if (!organizationId) {
+      toast.error("Organization is not ready. Please reload and try again.");
       return;
     }
 
@@ -160,9 +164,9 @@ export default function AppointmentsPage() {
       
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) fetchData(session.user.id);
-    } catch (error: any) {
-      console.error("Error creating appointment:", error);
-      toast.error(error.message || "Failed to schedule appointment");
+    } catch {
+      console.error("Error creating appointment");
+      toast.error("Failed to schedule appointment. Please check your details and retry.");
     } finally {
       setIsSubmitting(false);
     }

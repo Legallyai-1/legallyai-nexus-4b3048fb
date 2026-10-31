@@ -24,11 +24,11 @@ interface TrustAccount {
   account_name: string;
   account_number: string | null;
   bank_name: string | null;
-  account_type: string;
+  account_type: string | null;
   current_balance: number;
   last_reconciled_at: string | null;
   reconciled_balance: number | null;
-  status: string;
+  status: string | null;
 }
 
 interface TrustTransaction {
@@ -39,7 +39,7 @@ interface TrustTransaction {
   description: string | null;
   reference_number: string | null;
   payee: string | null;
-  reconciled: boolean;
+  reconciled: boolean | null;
   matter: { name: string } | null;
   client: { full_name: string } | null;
 }
@@ -394,7 +394,7 @@ export function TrustAccounting() {
                             : 'Never'}
                         </p>
                       </div>
-                      <Badge className={statusColors[account.status]}>{account.status}</Badge>
+                      <Badge className={statusColors[account.status ?? ""]}>{account.status ?? "Unknown"}</Badge>
                       <Button variant="outline" size="sm">
                         View Details
                       </Button>

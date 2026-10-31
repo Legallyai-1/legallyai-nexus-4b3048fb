@@ -23,14 +23,14 @@ interface Matter {
   name: string;
   description: string | null;
   practice_area: string | null;
-  status: string;
-  billing_type: string;
-  hourly_rate: number;
+  status: string | null;
+  billing_type: string | null;
+  hourly_rate: number | null;
   budget: number | null;
-  open_date: string;
+  open_date: string | null;
   statute_of_limitations: string | null;
   client: { full_name: string } | null;
-  responsible_attorney: { full_name: string } | null;
+  responsible_attorney: { full_name: string | null } | null;
 }
 
 export function PracticeManagement() {
@@ -361,7 +361,7 @@ export function PracticeManagement() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="font-semibold text-lg">{matter.name}</h3>
-                      <Badge className={statusColors[matter.status] || statusColors.pending}>{matter.status}</Badge>
+                      <Badge className={statusColors[matter.status ?? ""] || statusColors.pending}>{matter.status ?? "Unknown"}</Badge>
                       {matter.practice_area && <Badge variant="outline">{matter.practice_area}</Badge>}
                     </div>
                     <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
@@ -374,7 +374,7 @@ export function PracticeManagement() {
                       )}
                       <span className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
-                        Opened: {new Date(matter.open_date).toLocaleDateString()}
+                        Opened: {matter.open_date ? new Date(matter.open_date).toLocaleDateString() : "Not set"}
                       </span>
                       {matter.responsible_attorney && (
                         <span className="flex items-center gap-1">
@@ -388,11 +388,11 @@ export function PracticeManagement() {
                   <div className="flex items-center gap-6">
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">Billing</p>
-                      <p className="font-semibold capitalize">{matter.billing_type.replace('_', ' ')}</p>
+                      <p className="font-semibold capitalize">{matter.billing_type?.replace('_', ' ') ?? "Not set"}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">Rate</p>
-                      <p className="font-semibold text-green-400">${matter.hourly_rate}/hr</p>
+                      <p className="font-semibold text-green-400">{matter.hourly_rate === null ? "Not set" : `$${matter.hourly_rate}/hr`}</p>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
