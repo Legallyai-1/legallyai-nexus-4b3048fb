@@ -13,10 +13,9 @@ import { FreeLimitError, freeLimitChatMessage } from "@/lib/freeQuestions";
 import { toast } from "sonner";
 import {
   Sparkles, FileText, MessageSquare, Heart, Shield, Briefcase, Users, Gavel, Car, Building2,
-  Home, ArrowRight, Check, Send, Loader2, FolderOpen, CalendarClock, Landmark, Lock, ChevronDown,
+  Home, ArrowRight, Check, Send, Loader2, FolderOpen, CalendarClock, Landmark, Lock,
 } from "lucide-react";
 import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
-import { CompetitorVersusTable } from "@/components/legal/CompetitorVersusTable";
 import { ToolLauncher } from "@/components/layout/ToolLauncher";
 import { TOOL_ICONS } from "@/components/layout/toolIcons";
 import { featuredTools } from "@/lib/toolCatalog";
@@ -157,7 +156,7 @@ export default function Index() {
                   <div className="flex items-center gap-3 px-5 pt-4 pb-3 border-b border-white/70">
                     <div className="min-w-0">
                       <h2 className="font-display text-lg font-bold text-foreground flex flex-wrap items-center gap-2">
-                        Ask Lee <span className="text-muted-foreground">·</span> <span className="lee-partner-title-accent">AI Partner</span> <Badge className="bg-neon-green/20 text-neon-green text-xs">Free</Badge>
+                        Ask Lee <span className="text-muted-foreground">·</span> <span className="lee-partner-title-accent">AI Legal Info Assistant</span> <Badge className="bg-neon-green/20 text-neon-green text-xs">Free</Badge>
                       </h2>
                       <p className="text-xs text-muted-foreground">Legal information · sign in for your case file</p>
                     </div>
@@ -357,21 +356,6 @@ export default function Index() {
                 </Link>
               ))}
             </div>
-          </div>
-        </section>
-
-        {/* Comparison: collapsed by default to keep the page short. */}
-        <section className="pb-12 px-4">
-          <div className="container mx-auto max-w-6xl">
-            <details className="group glass-card rounded-2xl border border-border/50">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-5 font-display font-semibold [&::-webkit-details-marker]:hidden">
-                Compare LegallyAI with other legal tools
-                <ChevronDown className="h-5 w-5 transition-transform group-open:rotate-180" aria-hidden="true" />
-              </summary>
-              <div className="border-t border-border/40 p-2 sm:p-4">
-                <CompetitorVersusTable />
-              </div>
-            </details>
           </div>
         </section>
 

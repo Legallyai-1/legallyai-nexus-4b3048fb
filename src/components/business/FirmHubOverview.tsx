@@ -190,7 +190,7 @@ function AskLeePanel({ docForReview }: { docForReview: DocPreview | null }) {
     <section className="hub-panel hub-panel-featured flex flex-col p-4 sm:p-5" aria-labelledby="ask-lee-title">
       <div className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
         <h2 id="ask-lee-title" className="hub-panel-title flex items-center gap-2 !text-[15px]">
-          <Sparkles className="h-4 w-4 hub-gold-icon" aria-hidden="true" /> Ask Lee · AI Partner
+          <Sparkles className="h-4 w-4 hub-gold-icon" aria-hidden="true" /> Ask Lee · AI Legal Info Assistant
         </h2>
         <span className={cn("flex items-center gap-1.5 text-xs font-semibold", responding ? "text-amber-700" : "text-emerald-700")} aria-live="polite">
           <span className={cn("h-2 w-2 rounded-full", responding ? "bg-amber-500" : "bg-emerald-500")} aria-hidden="true" />

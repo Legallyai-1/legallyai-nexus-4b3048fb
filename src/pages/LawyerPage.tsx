@@ -158,7 +158,7 @@ export default function LawyerPage() {
                 The AI workspace for your practice, <span className="gold-text">from solo to enterprise</span>
               </h1>
               <p className="mt-4 text-lg text-muted-foreground max-w-2xl">
-                Draft faster, review contracts, research with sources, and run cases, clients, billing and trust accounting in one place, with Lee as your AI partner.
+                Draft faster, review contracts, research with sources, and run cases, clients, billing and trust accounting in one place, with Lee as your AI assistant.
               </p>
               <div className="mt-6 flex flex-col sm:flex-row gap-3">
                 <Button size="lg" onClick={startTrial} className="font-semibold">Create firm account <ArrowRight className="ml-1.5 h-4 w-4" /></Button>

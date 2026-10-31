@@ -28,13 +28,13 @@ export function AskLeePanel({ userType = "lawyer", className = "" }: Props) {
   return (
     <aside aria-labelledby="ask-lee-title" className={`lee-partner min-w-0 rounded-3xl p-4 sm:p-5 flex flex-col ${className}`}>
       <div className="flex items-center justify-between gap-2">
-        <h2 id="ask-lee-title" className="font-display text-lg font-semibold">Ask Lee <span className="text-muted-foreground">·</span> <span className="lee-partner-title-accent">AI Partner</span></h2>
+        <h2 id="ask-lee-title" className="font-display text-lg font-semibold">Ask Lee <span className="text-muted-foreground">·</span> <span className="lee-partner-title-accent">AI Legal Info Assistant</span></h2>
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground"><span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" aria-hidden="true" />Online</span>
       </div>
 
       <div className="relative mt-3 flex flex-1 flex-col items-center justify-center py-4">
         <LeeAvatar heightClass="h-44 sm:h-52" alt="Lee, the LegallyAI assistant, holding the scales of justice" />
-        <p className="relative mt-3 font-display text-lg font-bold">Ask Lee <span className="text-muted-foreground">·</span> <span className="lee-partner-title-accent">AI Partner</span></p>
+        <p className="relative mt-3 font-display text-lg font-bold">Ask Lee <span className="text-muted-foreground">·</span> <span className="lee-partner-title-accent">AI Legal Info Assistant</span></p>
         <p className="relative text-sm text-muted-foreground">How can I assist you today?</p>
       </div>
 

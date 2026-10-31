@@ -88,7 +88,7 @@ export default function ChatPage() {
           <div className="container mx-auto max-w-4xl flex flex-wrap items-center gap-3">
             <AnimatedAIHead variant="cyan" size="sm" />
             <div className="flex-1 min-w-[12rem]">
-              <h1 className="font-display text-lg font-semibold">Ask Lee <span className="text-muted-foreground">·</span> <span className="lee-partner-title-accent">AI Partner</span></h1>
+              <h1 className="font-display text-lg font-semibold">Ask Lee <span className="text-muted-foreground">·</span> <span className="lee-partner-title-accent">AI Legal Info Assistant</span></h1>
               <p className="text-sm text-muted-foreground">Plain-English legal research for your state.</p>
             </div>
             <ChatHistoryDrawer userId={user?.id ?? null} refreshKey={historyKey} onSelect={(sid, saved) => { loadConversation(sid, saved); setInput(""); }} />
