@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
 
 const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions';
 const MAX_QUERY_LENGTH = 1000;
@@ -26,6 +27,24 @@ function isRateLimited(key: string): boolean {
   return entry.count > RATE_LIMIT_MAX_REQUESTS;
 }
 
+function getBearerToken(req: VercelRequest): string | null {
+  const header = req.headers.authorization;
+  if (typeof header !== 'string') return null;
+  const match = /^Bearer\s+(.+)$/i.exec(header.trim());
+  return match ? match[1] : null;
+}
+
+async function getAuthenticatedUserId(req: VercelRequest): Promise<string | null> {
+  const token = getBearerToken(req);
+  const url = process.env.SUPABASE_URL;
+  const serverKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!token || !url || !serverKey) return null;
+  const client = createClient(url, serverKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { data, error } = await client.auth.getUser(token);
+  if (error || !data.user) return null;
+  return data.user.id;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Cache-Control', 'no-store');
 
@@ -38,7 +57,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(503).json({ error: 'Legal research is temporarily unavailable.' });
   }
 
-  const clientKey = getClientKey(req);
+  let userId: string | null = null;
+  try {
+    userId = await getAuthenticatedUserId(req);
+  } catch (error) {
+    console.error('Legal research auth check failed', error);
+  }
+  if (!userId) {
+    return res.status(401).json({ error: 'Please sign in to use legal research.' });
+  }
+
+  const clientKey = `${userId}:${getClientKey(req)}`;
   if (isRateLimited(clientKey)) {
     return res.status(429).json({ error: 'Too many requests. Please try again shortly.' });
   }

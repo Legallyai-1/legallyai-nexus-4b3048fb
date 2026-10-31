@@ -392,8 +392,10 @@ export default function SettingsPage() {
                   {(plan?.name === "Firm" || plan?.name === "Enterprise") && (
                     <AddSeatsControl onChanged={(seats) => setPlan((p) => (p ? { ...p, seats } : p))} />
                   )}
-                  <Button variant="outline" className="w-full justify-start text-destructive" onClick={() => toast.error("Please contact support to delete your account")}>
-                    Delete Account
+                  <Button asChild variant="outline" className="w-full justify-start text-destructive">
+                    <a href={`mailto:support@legallyai.ai?subject=${encodeURIComponent("Delete my LegallyAI account")}`}>
+                      Request Account Deletion (email support)
+                    </a>
                   </Button>
                 </CardContent>
               </Card>

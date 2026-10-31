@@ -62,7 +62,6 @@ const DUIHubPage = lazy(() => import("@/pages/DUIHubPage"));
 const WillHubPage = lazy(() => import("@/pages/WillHubPage"));
 const MarriageDivorcePage = lazy(() => import("@/pages/MarriageDivorcePage"));
 const EnhancedCustodyPage = lazy(() => import("@/pages/EnhancedCustodyPage"));
-const EnhancedParolePage = lazy(() => import("@/pages/EnhancedParolePage"));
 const AboutPage = lazy(() => import("@/pages/AboutPage"));
 const ContactPage = lazy(() => import("@/pages/ContactPage"));
 const GuidesIndexPage = lazy(() => import("@/pages/GuidesIndexPage"));
@@ -136,7 +135,7 @@ export function AnimatedRoutes() {
         <Route path="/templates" element={<PageTransition><LazyRoute><DocumentTemplatesPage /></LazyRoute></PageTransition>} />
         <Route path="/tickets-defense" element={<PageTransition><LazyRoute><TicketsDefensePage /></LazyRoute></PageTransition>} />
         <Route path="/probation-parole" element={<PageTransition><LazyRoute><ProbationParolePage /></LazyRoute></PageTransition>} />
-        <Route path="/enhanced-parole" element={<PageTransition><LazyRoute><EnhancedParolePage /></LazyRoute></PageTransition>} />
+        <Route path="/enhanced-parole" element={<Navigate to="/probation-parole" replace />} />
         <Route path="/legal-academy" element={<PageTransition><LazyRoute><LegalAcademyPage /></LazyRoute></PageTransition>} />
         <Route path="/quiz" element={<PageTransition><LazyRoute><QuizPage /></LazyRoute></PageTransition>} />
         <Route path="/telephony" element={<PageTransition><LazyRoute><TelephonyPage /></LazyRoute></PageTransition>} />

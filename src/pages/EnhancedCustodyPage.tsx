@@ -114,11 +114,10 @@ const EnhancedCustodyPage = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-4 w-full">
+            <TabsList className="grid grid-cols-3 w-full">
               <TabsTrigger value="intake">Intake</TabsTrigger>
               <TabsTrigger value="generate">Generate</TabsTrigger>
               <TabsTrigger value="support">Support Estimate</TabsTrigger>
-              <TabsTrigger value="more">More tools</TabsTrigger>
             </TabsList>
             <TabsContent value="generate" className="space-y-6">
               <DocumentGenerator
@@ -216,25 +215,6 @@ const EnhancedCustodyPage = () => {
                     </div>
                   </div>
 
-                  <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
-                    <div className="flex items-center gap-2 mb-2">
-                      <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                      <span className="font-medium text-yellow-500">Conflict Check</span>
-                    </div>
-                    <p className="text-sm">
-                      AI will automatically scan for conflicts with other cases in the system.
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    <Button className="flex-1" disabled title="Coming soon">
-                      <Shield className="mr-2 h-4 w-4" />
-                      Run Conflict Check (Coming soon)
-                    </Button>
-                    <Button className="flex-1" variant="outline" disabled title="Coming soon">
-                      Generate Risk Score (Coming soon)
-                    </Button>
-                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -342,26 +322,6 @@ const EnhancedCustodyPage = () => {
             </TabsContent>
 
 
-            <TabsContent value="more" className="space-y-6">
-              <Card className="bg-card/50">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="h-5 w-5" />
-                    Coming soon
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm text-muted-foreground">
-                  <p>
-                    These custody tools are not built yet, so we are not showing them: shared custody calendar,
-                    co-parent messaging, expense tracker, violation log, document storage and the custody factors checklist.
-                  </p>
-                  <p>
-                    For now, use the Intake and Generate tabs to draft a parenting plan or custody motion, or ask Lee a question.
-                    Always check deadlines and filings with your court or a licensed family-law attorney.
-                  </p>
-                </CardContent>
-              </Card>
-            </TabsContent>
           </Tabs>
         </motion.div>
       </div>
