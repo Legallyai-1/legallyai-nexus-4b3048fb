@@ -84,12 +84,12 @@ export default function Index() {
       });
       if (!text.trim()) throw new Error("The legal assistant returned an empty response.");
       setChatMessages(prev => [...prev, { role: "assistant", content: text }]);
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof FreeLimitError) {
         setChatMessages(prev => [...prev, { role: "assistant", content: freeLimitChatMessage(error.detail) }]);
         return;
       }
-      console.error("Chat error:", error);
+      console.error("Chat request failed");
       toast.error("Unable to get response. Please try again.");
       setChatMessages(prev => [...prev, { role: "assistant", content: "I apologize, but I'm having trouble connecting. Please try again or visit our full chat page for more options." }]);
     } finally {
@@ -275,7 +275,7 @@ export default function Index() {
           </div>
         </section>
 
-        <AdContainer slot={AD_SLOTS.HOME_MID} className="my-8" />
+        {AD_SLOTS.HOME_MID && <AdContainer slot={AD_SLOTS.HOME_MID} className="my-8" />}
 
         {/* Topic hubs: every hub is Lee focused on one area of law. */}
         <section className="py-12 sm:py-16 px-4" aria-labelledby="hubs-heading">
@@ -303,7 +303,7 @@ export default function Index() {
         </section>
 
         {/* Law firms: short pitch, primary CTA goes to the firm landing page. */}
-        <AdContainer slot={AD_SLOTS.HOME_LOWER} size="rectangle" className="my-8" />
+        {AD_SLOTS.HOME_LOWER && <AdContainer slot={AD_SLOTS.HOME_LOWER} size="rectangle" className="my-8" />}
 
         <section className="py-12 sm:py-16 px-4" aria-labelledby="firms-heading">
           <div className="container mx-auto max-w-6xl">

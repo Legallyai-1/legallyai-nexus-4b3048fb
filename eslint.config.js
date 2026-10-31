@@ -32,4 +32,23 @@ export default tseslint.config(
       "@typescript-eslint/no-explicit-any": "off",
     },
   },
+  {
+    files: [
+      "src/pages/AppointmentsPage.tsx",
+      "src/pages/ClientPortalPage.tsx",
+      "src/pages/Index.tsx",
+      "src/pages/MessagesPage.tsx",
+      "src/pages/NotificationsPage.tsx",
+      "src/pages/OnboardingPage.tsx",
+      "src/pages/tools/StandaloneToolPages.tsx",
+      "src/components/business/PracticeManagement.tsx",
+      "src/components/business/TrustAccounting.tsx",
+      "src/components/legal/ContractRedlineStudio.tsx",
+      "src/lib/contract-review-input.ts",
+      "src/lib/seo.ts",
+      "supabase/functions/_shared/chat-stream.ts",
+      "supabase/functions/legal-chat/index.ts",
+    ],
+    rules: { "@typescript-eslint/no-explicit-any": "error" },
+  },
 );

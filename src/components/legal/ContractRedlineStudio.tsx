@@ -3,13 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  ShieldAlert, ShieldCheck, FileCheck, ArrowRight, Sparkles, 
+  FileCheck, Sparkles,
   AlertTriangle, Copy, Check, Download, FileText
 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { CONTRACT_EXCERPT_LIMIT, prepareContractExcerpt } from "@/lib/contract-review-input";
 
 interface RedlineClause {
   id: string;
@@ -29,8 +29,6 @@ The Contractor shall indemnify, defend, and hold harmless the Client from any an
 11. Termination:
 The Client may terminate this Agreement immediately without cause. The Contractor may terminate only upon ninety (90) days written notice.`;
 
-const REVIEW_LIMIT = 2000; // matches the chat hand-off limit
-
 export function ContractRedlineStudio() {
   const [contractText, setContractText] = useState(SAMPLE_CONTRACT);
   const navigate = useNavigate();
@@ -38,8 +36,8 @@ export function ContractRedlineStudio() {
   // The clause cards below are a worked example for the sample agreement only.
   const analyzed = isSample;
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [inputError, setInputError] = useState<string | null>(null);
 
-  const riskScore = 84; // example score for the sample agreement
   const clauses: RedlineClause[] = [
     {
       id: "non-compete",
@@ -47,7 +45,7 @@ export function ContractRedlineStudio() {
       severity: "high",
       original: "for a period of twenty-four (24) months following termination, the Contractor shall not provide any services to any entity in the same industry anywhere in North America.",
       recommended: "for a period of six (6) months following termination, the Contractor shall not directly solicit the Client's active accounts with whom Contractor personally worked during the term.",
-      explanation: "A 24-month nationwide ban on an independent contractor is often legally unenforceable in many states (and strictly void in California, Minnesota, etc.), and severely restricts your ability to earn a living."
+      explanation: "This example limits future work by duration, geography and industry. Ask a licensed attorney whether any restriction or proposed alternative is permitted in your jurisdiction."
     },
     {
       id: "unlimited-liability",
@@ -55,7 +53,7 @@ export function ContractRedlineStudio() {
       severity: "high",
       original: "The Contractor's liability under this Agreement shall be unlimited.",
       recommended: "Each party's maximum aggregate liability shall be capped at the total fees paid or payable to Contractor under this Agreement in the preceding six (6) months, except for gross negligence or willful misconduct.",
-      explanation: "Unlimited liability exposes your personal and business assets to catastrophic risk. Standard industry practice requires mutual indemnification and an aggregate liability cap."
+      explanation: "This example states no liability cap. The proposed cap is an illustration, not a recommended amount; ask an attorney which limits and exceptions fit the agreement."
     },
     {
       id: "termination-imbalance",
@@ -63,25 +61,26 @@ export function ContractRedlineStudio() {
       severity: "medium",
       original: "The Client may terminate immediately without cause. The Contractor may terminate only upon ninety (90) days written notice.",
       recommended: "Either party may terminate this Agreement without cause upon providing thirty (30) days prior written notice to the other party.",
-      explanation: "90 days binds you to work while the client can drop you overnight. Equal 30-day notice is standard and fair."
+      explanation: "The example gives the parties different notice periods. Discuss termination rights, payment obligations and a suitable notice period with an attorney."
     }
   ];
 
   const handleAnalyze = () => {
     if (!contractText.trim()) {
-      toast.error("Please paste or upload a contract to analyze.");
+      setInputError("Paste a contract excerpt to discuss with Lee.");
       return;
     }
     if (isSample) {
       document.getElementById("redline-sample-results")?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
-    // Real review: hand the user's text to Lee in the chat.
-    const prompt = `Review this contract clause by clause. Flag one-sided or risky terms, explain why in plain English, and suggest fairer wording:\n\n`;
-    const room = REVIEW_LIMIT - prompt.length;
-    const text = contractText.trim();
-    if (text.length > room) toast.info(`Lee will review the first ${room.toLocaleString()} characters. Paste the rest as a follow-up.`);
-    navigate(`/chat?q=${encodeURIComponent(prompt + text.slice(0, room))}`);
+    const result = prepareContractExcerpt(contractText);
+    if (!result.ok) {
+      setInputError(result.error);
+      return;
+    }
+    setInputError(null);
+    navigate(`/chat?q=${encodeURIComponent(result.prompt)}`);
   };
 
   const handleCopy = (text: string, id: string) => {
@@ -96,7 +95,7 @@ export function ContractRedlineStudio() {
   };
 
   const handleExport = () => {
-    const report = `LEGALLYAI - SAMPLE CONTRACT REDLINE (example agreement)\nLegal information, not legal advice.\nExample risk score: ${riskScore}/100\n\n` +
+    const report = `LEGALLYAI - SAMPLE CONTRACT REDLINE (example agreement)\nLegal information, not legal advice. Not a review of your contract. Consult a licensed attorney before using any example wording.\n\n` +
       clauses.map(c => `[${c.severity.toUpperCase()} RISK] ${c.title}\nORIGINAL: ${c.original}\nRECOMMENDED: ${c.recommended}\nWHY: ${c.explanation}\n\n`).join("\n");
     const blob = new Blob([report], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
@@ -118,13 +117,13 @@ export function ContractRedlineStudio() {
             </div>
             <div className="min-w-0">
               <CardTitle className="text-lg sm:text-xl font-display flex flex-wrap items-center gap-x-2 gap-y-1 leading-snug">
-                AI Contract Redline & Risk Analyzer
+                Contract excerpt review
                 <Badge className="bg-legal-gold/15 text-legal-gold border-legal-gold/40 text-xs whitespace-nowrap">
                   <Sparkles className="w-3 h-3 mr-1" /> AI redline
                 </Badge>
               </CardTitle>
               <CardDescription>
-                Paste any lease, NDA, employment, or freelance agreement. Lee highlights aggressive clauses and rewrites them into fair legal language.
+                Discuss a short contract excerpt with Lee in chat. This is not a full-document review or a legal risk assessment.
               </CardDescription>
             </div>
           </div>
@@ -141,76 +140,48 @@ export function ContractRedlineStudio() {
       <CardContent className="p-4 sm:p-6 space-y-6">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <label className="text-sm font-semibold text-foreground flex items-center gap-2 min-w-0">
-              <FileText className="w-4 h-4 shrink-0 text-neon-cyan" /> Paste your contract
+            <label htmlFor="contract-excerpt" className="text-sm font-semibold text-foreground flex items-center gap-2 min-w-0">
+              <FileText className="w-4 h-4 shrink-0 text-neon-cyan" /> Paste a contract excerpt
             </label>
             <Button 
               variant="ghost" 
               size="sm" 
               className="text-xs text-muted-foreground hover:text-foreground"
-              onClick={() => setContractText(SAMPLE_CONTRACT)}
+              onClick={() => { setContractText(SAMPLE_CONTRACT); setInputError(null); }}
             >
               Reset to Sample Agreement
             </Button>
           </div>
           <Textarea 
+            id="contract-excerpt"
+            aria-describedby="contract-excerpt-help"
+            aria-invalid={Boolean(inputError)}
             value={contractText}
-            onChange={(e) => setContractText(e.target.value)}
+            onChange={(e) => { setContractText(e.target.value); setInputError(null); }}
             rows={5}
             className="font-mono text-xs leading-relaxed bg-background/60 border-border/60 focus-visible:ring-neon-cyan"
             placeholder="Paste your contract clauses here..."
           />
+          <p id="contract-excerpt-help" className="text-sm text-muted-foreground">
+            {contractText.trim().length.toLocaleString()} / {CONTRACT_EXCERPT_LIMIT.toLocaleString()} characters for chat.
+            Remove names and confidential information. AI chats are not attorney-client privileged.
+          </p>
+          {inputError && <p role="alert" className="text-sm text-destructive">{inputError}</p>}
           <div className="flex justify-end">
             <Button variant="neon" onClick={handleAnalyze} className="px-6">
-              <Sparkles className="w-4 h-4 mr-2" /> {isSample ? "See the sample redline" : "Review my contract with Lee"}
+              <Sparkles className="w-4 h-4 mr-2" /> {isSample ? "See the sample redline" : "Discuss excerpt with Lee"}
             </Button>
           </div>
         </div>
 
         {!isSample && (
-          <p className="text-sm text-muted-foreground">Lee will review your text in the chat, flag risky clauses and suggest fairer wording. The worked example below appears only for the sample agreement.</p>
+          <p className="text-sm text-muted-foreground">Your entire excerpt will open in chat. Oversized drafts stay here so you can choose what to send; nothing is silently removed.</p>
         )}
         {analyzed && (
           <div id="redline-sample-results" className="space-y-6 pt-4 border-t border-border/40 animate-fade-in scroll-mt-20">
             <p role="note" className="rounded-lg border border-legal-gold/40 bg-legal-gold/10 px-3 py-2 text-sm">
-              <strong>Sample analysis</strong> of the example agreement above, to show what a review looks like. Paste your own contract and choose &ldquo;Review my contract with Lee&rdquo; for a review of your text.
+              <strong>Sample analysis</strong> of the example agreement above, not a review of your document. Example wording requires attorney review for your circumstances and jurisdiction.
             </p>
-            {/* Risk Dashboard */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 rounded-xl border border-destructive/40 bg-destructive/10 flex items-center gap-4">
-                <div className="rounded-full bg-destructive/20 p-3 text-destructive">
-                  <ShieldAlert className="w-7 h-7" />
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground uppercase font-semibold">Example risk score</div>
-                  <div className="text-2xl font-bold text-destructive font-display">{riskScore}/100</div>
-                  <div className="text-xs text-destructive/90">High Risk · Severe Clauses Found</div>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-xl border border-amber-500/40 bg-amber-500/10 flex items-center gap-4">
-                <div className="rounded-full bg-amber-500/20 p-3 text-amber-400">
-                  <AlertTriangle className="w-7 h-7" />
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground uppercase font-semibold">Flagged Clauses</div>
-                  <div className="text-2xl font-bold text-amber-400 font-display">3 Critical</div>
-                  <div className="text-xs text-muted-foreground">2 High Risk · 1 Medium</div>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-xl border border-neon-green/40 bg-neon-green/10 flex items-center gap-4">
-                <div className="rounded-full bg-neon-green/20 p-3 text-neon-green">
-                  <ShieldCheck className="w-7 h-7" />
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground uppercase font-semibold">Missing Protections</div>
-                  <div className="text-2xl font-bold text-neon-green font-display">2 Missing</div>
-                  <div className="text-xs text-muted-foreground">Severability · Dispute Cure Period</div>
-                </div>
-              </div>
-            </div>
-
             {/* Mascot Lee Advice Banner */}
             <div className="p-4 rounded-xl bg-gradient-to-r from-neon-gold/15 via-background to-neon-purple/10 border border-neon-gold/30 flex items-start gap-4">
               <img 
@@ -226,7 +197,9 @@ export function ContractRedlineStudio() {
                   </Badge>
                 </h4>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  &ldquo;Do not sign this draft as-is! The 2-year nationwide non-compete could prevent you from taking any other work in your field, and the unlimited liability clause puts your personal savings on the line. Use the redlined clauses below in your counter-offer.&rdquo;
+                  This example raises questions about future work, liability and termination notice.
+                  The wording below is illustrative only. A licensed attorney should review the full agreement
+                  and applicable law before you rely on any change.
                 </p>
               </div>
             </div>

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { FuturisticBackground } from "@/components/ui/FuturisticBackground";
 import type { User } from "@supabase/supabase-js";
+import type { LucideIcon } from "lucide-react";
 
 interface Notification {
   id: string;
@@ -22,12 +23,12 @@ interface Notification {
   message: string;
   is_read: boolean;
   created_at: string;
-  hub?: string;
-  reference_id?: string;
-  reference_type?: string;
+  hub?: string | null;
+  reference_id?: string | null;
+  reference_type?: string | null;
 }
 
-const notificationIcons: Record<string, any> = {
+const notificationIcons: Record<string, LucideIcon> = {
   message: MessageSquare,
   appointment: Calendar,
   case: FileText,

@@ -56,22 +56,22 @@ export default function OnboardingPage() {
       const { error: orgError } = await supabase.rpc("create_organization_atomic", {
         p_name: formData.firmName,
         p_slug: buildOrganizationSlug(formData.firmName, user.id),
-        p_description: formData.description || null,
-        p_address: formData.address || null,
-        p_city: formData.city || null,
-        p_state: formData.state || null,
-        p_zip_code: formData.zipCode || null,
-        p_phone: formData.phone || null,
-        p_email: formData.email || null,
-        p_website: formData.website || null,
+        p_description: formData.description || undefined,
+        p_address: formData.address || undefined,
+        p_city: formData.city || undefined,
+        p_state: formData.state || undefined,
+        p_zip_code: formData.zipCode || undefined,
+        p_phone: formData.phone || undefined,
+        p_email: formData.email || undefined,
+        p_website: formData.website || undefined,
       });
 
       if (orgError) throw orgError;
 
       toast.success("Law firm created successfully!");
       navigate("/dashboard");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to create organization");
+    } catch {
+      toast.error("Failed to create organization. Please check your details and retry.");
     } finally {
       setIsLoading(false);
     }
